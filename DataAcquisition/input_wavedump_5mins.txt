@@ -1,0 +1,5 @@
+s
+W
+sleep 10
+s
+q
