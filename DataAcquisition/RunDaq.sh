@@ -9,22 +9,35 @@
 
 # Requirements:
 
-# Environment variable 'Testing_DIR'
-# which is the parent path from which 
-# certain paths used here will be relative 
-# to and which is (or can be) set in 
-# ~user1/.bashrc (or otherwise).
+# Environment variable 'BinaryData_DIR'
+# which is the parent path in which 
+# folders used to store data will be
+# created in and which is (or can be) set 
+# in e.g. ~user1/.bashrc (or otherwise).
 
 # How to run,:
 # At terminal prompt do:
 # $ ./RunDaq.sh
 
+# Warning: This script presumes that raw data
+# does not exist for the PMTs being tested.
+# Should raw data exist already in the 
+# target location (folder specific to PMT 
+# serial number) this will be overwritten.
+
+# Set location
+
+location="Test"
+#location="Edinburgh"
+#location="Boulby"
+
 #--------------------------
 # Introductory Message
 
-echo -e "/n"
+echo -e "\n"
+echo -e "\n"
 echo You have executed RunDaq.sh 
-echo -e "/n"
+echo -e "\n"
 echo This script will help to run the
 echo DAQ and manage the output data.
 
@@ -50,6 +63,7 @@ echo -e "\n"
 echo PMT list: ${pmtList[*]}
 echo -e "\n"
 echo Is this correct?
+echo Enter: y or n
 
 read isCorrect
 
@@ -68,17 +82,23 @@ fi
 # Make directory structure for storing data
 
 echo -e "\n"
-echo parent folder is: $BinaryData_DIR
+echo parent folder is: 
+echo $BinaryData_DIR
+
+echo -e "\n"
+echo raw data storage folders:
 
 for pmtNumber in "${pmtList[@]}"
 do
 
 iPMT_DIR=$BinaryData_DIR/PMT$pmtNumber
 
+echo $iPMT_DIR
+
+mkdir -p  $iPMT_DIR/SPEtest
 mkdir -p  $iPMT_DIR/APTest
 mkdir -p  $iPMT_DIR/DarkRateTest
 mkdir -p  $iPMT_DIR/GainTest
-mkdir -p  $iPMT_DIR/SPEtest
 
 done
 
@@ -101,19 +121,61 @@ do
     read isReady
 done
 
-
+#------------------------------------------
 # SPE - acquire data for five mins
+# .... coding in progress ....
 
 echo -e "\n"
 echo Running wavedump with SPE configuration
 echo which will take 5 mins
-echo  ... pausing for 10 seconds first
+echo  ... pausing for 5 seconds first
+echo "(Ctrl-C to quit )"
 
-sleep 10
 
-#wavedump_G_SPE_DR < inputSPE.txt
+if    [ "$location" = "Boulby" ]
+then
+    sleep 10
+    wavedump_G_SPE_DR < input_wavedump_10secs.txt
+elif  [ "$location" = "Edinburgh" ]
+then
+    sleep 10
+    wavedump < input_wavedump_10secs.txt
+elif  [ "$location" = "Test" ]
+then
+    echo -e "\n"
+    echo Test Mode
+    cat input_wavedump_10secs.txt
+else
+    echo -e "\n"
+    echo Unknown location
+    exit
+fi
 
-cat ./input_wavedump_5mins.txt 
+iPMT=0;
+for pmtNumber in "${pmtList[@]}"
+do
+
+    if  [ "$location" != "Test" ]
+    then
+	iPMT_DIR=$BinaryData_DIR/PMT$pmtNumber
+
+	echo -e "\n"
+	echo Moving raw data to:
+	echo $iPMT_DIR
+
+	mv wave_$iPMT.dat $iPMT_DIR/SPEtest/
+    fi
+
+((iPMT++))
+
+done
+
+echo -e "\n"
+echo The SPE data has been acquired
+echo and was moved to the storage
+echo location.
+#------------------------------------------
+
 
 echo -e "\n"
 echo The End.

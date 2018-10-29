@@ -1,4 +1,11 @@
-#include "ns.h"
+#include "./src/atmap.h"
+#include "./src/command_parse.h"
+#include "./src/dist.h"
+#include "./src/file.h"
+#include "./src/ns.h"
+#include "./src/stats.h"
+#include "./src/utility.h"
+
 //Standard library include files.
 #include <cstdlib>
 #include <fstream>
@@ -21,7 +28,8 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-	randomSeedTime();
+  // !!!!!
+  //randomSeedTime();
 	
 
 	
@@ -145,10 +153,13 @@ int main(int argc, char **argv)
 	//Include a counter to know the code is still running
 	//cout << "got here " << endl;
 	int counter = 0;
-	for (int w=0; w<4; w++){
+	//!!!!!
+	//for (int w=0; w<4; w++){
+	for (int w=0; w<1; w++){
 
 		char filename[200]= "";
-		sprintf(filename,"../../Data/wave_%d.dat",w);
+		//sprintf(filename,"../../Data/wave_%d.dat",w);
+		sprintf(filename,"/home/lhcbuser/watchman/Wrapper/Wavedump_Wrapper/DataAcquisition/BinaryData/PMT0001/SPEtest/wave_0.dat",w);
 		ifstream fin(filename);
 		
 		for (int i=0; i<6; i++){
@@ -168,6 +179,7 @@ int main(int argc, char **argv)
 			for (int i=0; i<1030; i++){
 				//Read in result.
 				float result=0.;
+				//!!!!!!!!
 				fin.read((char*)&result,sizeof(float));
 			
 				if (i<1024){
