@@ -26,20 +26,33 @@ Modified
   03 11 2018
 
 Modifications:
+  (Completed)
   Added comments
   Removed dependency on non-standard libraries
   namely ns.h.
-  Commented out randomSeedTime() as this depends
-  on the non-standard libraries
+  Commented out randomSeedTime() as this is not
+  used.
   Added the header for TH1D
   Added nChs variable to accommodate generalising 
-  the code to any number of channels
+  the code to any number of channels/PMTs
   Array lengths are initialised to nChs where appropriate
   Renamed variables: 
      variables read in from HVscan now end in  _file
-     Gain array was changed to HV_step
+     Gain array was changed to HVs_step
   In loops the iterators are now more descriptive 
      i or w were replaced with iCh or iPMT or iRow for example
+   New paths for binary input files and root output files
+   to allow SPE_Gen to run independently of Data Aquistion process.
+   doComment bool added - to switch on/off commenting to aid debugging
+   
+   (In Progress)
+   Generalise to VME or desktop digitiser
+   
+   (To Do)
+   Charge calculation used numbers that are 
+   not described well.  Change to the use of 
+   variables with names that give explainations..  
+
  **/ 
 
 // Presumably "non-standard.h"
@@ -184,8 +197,6 @@ int main(int argc, char **argv)
     
   }// end: while(answer!='Y'
   //======================================================================================================
-  
-
    
    char   digitiser = 'V';
    int    nBins = 102;
@@ -305,7 +316,10 @@ int main(int argc, char **argv)
        
        if (maxtime>60.0 && maxtime<124.0){
 	 //Define the accumulators
-	 double A0=0;double A1=0;double A2=0;double A3=0;double A4=0;double A5=0;double A6=0;
+	 double A0=0;double A1=0;
+	 double A2=0;double A3=0;
+	 double A4=0;double A5=0;
+	 double A6=0;
 	 
 	 //!!for (int i=1; i<=1024; i++){
 	 for (int i=1; i<=102; i++){
@@ -353,7 +367,7 @@ int main(int argc, char **argv)
 	 SPE[iCh]->Fill(WaveCharge);
        }
 
-     }
+    }
 
     totalwaves[iCh]=counter;
 
