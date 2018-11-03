@@ -2,4 +2,4 @@
 *.d
 *.o
 *~
-./DataAcquisition/Instructions.txt
+DataAcquisition/Instructions.txt
