@@ -78,13 +78,13 @@ int main(int argc, char **argv)
   // Keep hard code number of channels as temp measure 
   static const int nChs = 1;
   
-  int PMT[nChs];
+  int PMTs[nChs];
   for (int iCh = 0 ; iCh < nChs ; iCh++)
-    PMT[iCh] = 0;
+    PMTs[iCh] = 0;
   
-  int   HV_Steps[nChs];
+  int   HVs_Step[nChs];
   for (int iCh = 0 ; iCh < nChs ; iCh++)
-    HV_Steps[iCh] = 0;
+    HVs_Step[iCh] = 0;
     
   //======= Read in HV data  ======= 
   string   hvfile = "../HVScan.txt";
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
    //========================================================================================================
 
    char answer = 'N';
-   int  iTest;
+   int  iStep;
    char histname[200]= "";
    
    // Determine PMT number and the Voltage =====================================================
@@ -137,24 +137,24 @@ int main(int argc, char **argv)
      for ( int iCh = 0 ; iCh < nChs ; iCh++ ){
        cout << "Input the PMT number in Channel " << iCh << "  \n" ;
        cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
-       cin  >> PMT[iCh]; 
+       cin  >> PMTs[iCh]; 
        cout << endl;
      }
      
-    cout << "Please Specify which HV Test (1, 2, 3, 4, or 5)" << endl;
-    cin  >> iTest;
+    cout << "Please Specify which HV Step (1, 2, 3, 4, or 5)" << endl;
+    cin  >> iStep;
     
-    iTest--;
+    iStep--;
     
     for (int iPMT = 0; iPMT < 125 ; iPMT++){
       for(int iCh = 0; iCh < nChs; iCh++){
 	
-	if (PMT[iCh] == PMT_file[iPMT]){
+	if (PMTs[iCh] == PMT_file[iPMT]){
 	  
-	  HV_Steps[iCh] = HV_steps_file[iPMT][iTest];
+	  HVs_Step[iCh] = HV_steps_file[iPMT][iStep];
 	  
 	  if(doComment)
-	    printf("HV_Steps %d \n", HV_steps_file[iPMT][iTest]);
+	    printf("HVs_Step %d \n", HV_steps_file[iPMT][iStep]);
 	  
 	}
       }
@@ -164,12 +164,12 @@ int main(int argc, char **argv)
      
      for (int iCh = 0; iCh < nChs ; iCh++){
        
-       if (PMT[iCh] < 10)
-	 sprintf(histname,"NB000%d is in Channel %d Biased at %d Volts \n",PMT[iCh], iCh, HV_Steps[iCh]);
-       else if (PMT[iCh] >= 10 && PMT[iCh] < 100)
-	 sprintf(histname,"NB00%d is in Channel %d Biased at %d Volts \n",PMT[iCh],  iCh, HV_Steps[iCh]);
+       if (PMTs[iCh] < 10)
+	 sprintf(histname,"NB000%d is in Channel %d Biased at %d Volts \n",PMTs[iCh], iCh, HVs_Step[iCh]);
+       else if (PMTs[iCh] >= 10 && PMTs[iCh] < 100)
+	 sprintf(histname,"NB00%d is in Channel %d Biased at %d Volts \n",PMTs[iCh],  iCh, HVs_Step[iCh]);
        else 
-	 sprintf(histname,"NB0%d is in Channel %d  Biased at %d Volts \n",PMT[iCh],  iCh, HV_Steps[iCh]);
+	 sprintf(histname,"NB0%d is in Channel %d  Biased at %d Volts \n",PMTs[iCh],  iCh, HVs_Step[iCh]);
        
        cout << "  " << histname ;
      }
@@ -188,11 +188,13 @@ int main(int argc, char **argv)
   // Store waveform for processing
   TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",1024,0,204.8);
   
-  //Single Photoelectron Spectra with averaged accumulators
+  //TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",102,0,204);
+
+  // Single Photoelectron Spectra with averaged accumulators
   TH1D **SPE = new TH1D*[nChs];	
-  for (int w = 0 ; w < nChs ; w++){
-    sprintf(histname, "SPE%d",w);
-    SPE[w] = new TH1D(histname,"Single Photo-Electron; Charge (mV-ns); Counts",1500.0,-500.0,2000.0);
+  for (int iCh = 0 ; iCh < nChs ; iCh++){
+    sprintf(histname, "SPE%d",iCh);
+    SPE[iCh] = new TH1D(histname,"Single Photo-Electron; Charge (mV-ns); Counts",1500.0,-500.0,2000.0);
   }
   
   int totalwaves[nChs];
@@ -326,16 +328,21 @@ int main(int argc, char **argv)
   for (int iCh = 0 ; iCh < nChs ; iCh++)
     SPE[iCh]->Draw("Same");
   
-  for (int i = 0 ; i < nChs ; i++){
+  TString fileName = "";
+
+  fileName = "../../../RootData/PMT_NB0";
+  
+  for (int iCh = 0 ; iCh < nChs ; iCh++){
     
-    if (PMT[i]<10)		
-      sprintf(histname, "HV_SPE/PMT_NB000%d_HV%d.root",PMT[i], HV_Steps[i]);
-    if (PMT[i]>=10 && PMT[i] <100)
-      sprintf(histname, "HV_SPE/PMT_NB00%d_HV%d.root",PMT[i], HV_Steps[i]);
-    if (PMT[i]>=100)
-      sprintf(histname, "HV_SPE/PMT_NB0%d_HV%d.root",PMT[i],  HV_Steps[i]);
+    if (PMTs[iCh] < 100)
+      fileName += "0";
     
-    SPE[i]->SaveAs(histname);
+    if (PMTs[iCh] < 10)
+      fileName += "0";
+
+    fileName.Form("%d_HV%d.root", PMTs[iCh], HVs_Step[iCh]);
+    
+    SPE[iCh]->SaveAs(fileName);
   }
   
   ta->Run();
