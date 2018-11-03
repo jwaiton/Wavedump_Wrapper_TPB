@@ -3,3 +3,4 @@
 *.o
 *~
 DataAcquisition/Instructions.txt
+./Wrapper/Gain_Test/SPE_Gen

@@ -186,9 +186,9 @@ int main(int argc, char **argv)
   //======================================================================================================
   
   // Store waveform for processing
-  TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",1024,0,204.8);
+  //TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",1024,0,204.8);
   
-  //TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",102,0,204);
+  TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",102,0,204);
 
   // Single Photoelectron Spectra with averaged accumulators
   TH1D **SPE = new TH1D*[nChs];	
@@ -334,13 +334,14 @@ int main(int argc, char **argv)
   
   for (int iCh = 0 ; iCh < nChs ; iCh++){
     
-    if (PMTs[iCh] < 100)
+    if (PMTs[iCh] < 100){
       fileName += "0";
+      
+      if (PMTs[iCh] < 10)
+	fileName += "0";
+    }
     
-    if (PMTs[iCh] < 10)
-      fileName += "0";
-
-    fileName.Form("%d_HV%d.root", PMTs[iCh], HVs_Step[iCh]);
+    fileName.Form(fileName + "%d_HV%d.root", PMTs[iCh], HVs_Step[iCh]);
     
     SPE[iCh]->SaveAs(fileName);
   }
