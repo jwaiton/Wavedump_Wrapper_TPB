@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# A shell script to assist in the recording 
+# A master shell script to assist in the recording 
 # of raw data for Watchman PMT tests
  
 # Author:
 # gary.smith@ed.ac.uk
-# 24 10 18
+# 31 10 18
 
 # Requirements:
 
@@ -15,7 +15,10 @@
 # created in and which is (or can be) set 
 # in e.g. ~user1/.bashrc (or otherwise).
 
-# How to run,:
+# Shell scripts
+#    SPE_DAQ.sh
+
+# How to run:
 # At terminal prompt do:
 # $ ./RunDaq.sh
 
@@ -27,7 +30,7 @@
 
 # Set location
 
-location="Test"
+export location="Test"
 #location="Edinburgh"
 #location="Boulby"
 
@@ -44,15 +47,16 @@ echo DAQ and manage the output data.
 #--------------------------
 # Determine PMT numbers
 
-echo How many PMTs are you testing? e.g. 4
+# echo How many PMTs are you testing? e.g. 4
+# read nPMTs
 
-read nPMTs
+nPMTs=2
 
 for ((iPMT=0;iPMT<$nPMTs;iPMT++)); do
 
     echo -e "\n"
     echo For PMT $iPMT
-    echo Enter the PMT number using a four number format 
+    echo Enter the serial number using a four number format 
     echo E.g. enter: 0034
 
     read pmtList[iPMT]
@@ -67,13 +71,20 @@ echo Enter: y or n
 
 read isCorrect
 
-if [ "$isCorrect" != "Y" ] && [ "$isCorrect" != "y" ]
+if [ "$isCorrect" == "Y" ]
+   then
+   isCorrect=y
+fi
+
+if [ "$isCorrect" != "y" ]
 then 
     echo " Error in PMT list " 
     echo " Try running the script again "
     echo " Exiting "
     exit
 fi
+
+export pmtList
 
 # PMT numbers have been determined
 #-------------------------------------
@@ -82,11 +93,11 @@ fi
 # Make directory structure for storing data
 
 echo -e "\n"
-echo parent folder is: 
+echo Parent folder is: 
 echo $BinaryData_DIR
 
 echo -e "\n"
-echo raw data storage folders:
+echo Raw data storage folders:
 
 for pmtNumber in "${pmtList[@]}"
 do
@@ -104,78 +115,32 @@ done
 
 echo -e "\n"
 echo The directory structure for storing 
-echo output data has been created.
+echo output data exists or has been created.
 #------------------------------------------
 
 
 #------------------------------------------
 # Run the DAQ
 
-isReady=N
+hvList=(1000 1100 1200 1300 1400)
 
-while [ "$isReady" != "Y" ] && [ "$isReady" != "y" ] 
+# Gain test
+iSetting=1
+for hv in "${hvList[@]}" 
 do
-    echo -e "\n"
-    echo Ready for the nominal voltage SPE run ?
-    echo Enter: y or n
-    read isReady
+./GAIN_DAQ.sh $iSetting $hv 
+((iSetting++))
 done
 
+# SPE / Nominal voltage test
+./SPE_DAQ.sh
+
+# Afterpulsing test
+ 
+# Dark Counts
+
+# End of Data Acquisition
 #------------------------------------------
-# SPE - acquire data for five mins
-# .... coding in progress ....
-
-echo -e "\n"
-echo Running wavedump with SPE configuration
-echo which will take 5 mins
-echo  ... pausing for 5 seconds first
-echo "(Ctrl-C to quit )"
-
-
-if    [ "$location" = "Boulby" ]
-then
-    sleep 10
-    wavedump_G_SPE_DR < input_wavedump_10secs.txt
-elif  [ "$location" = "Edinburgh" ]
-then
-    sleep 10
-    wavedump < input_wavedump_10secs.txt
-elif  [ "$location" = "Test" ]
-then
-    echo -e "\n"
-    echo Test Mode
-    cat input_wavedump_10secs.txt
-else
-    echo -e "\n"
-    echo Unknown location
-    exit
-fi
-
-iPMT=0;
-for pmtNumber in "${pmtList[@]}"
-do
-
-    if  [ "$location" != "Test" ]
-    then
-	iPMT_DIR=$BinaryData_DIR/PMT$pmtNumber
-
-	echo -e "\n"
-	echo Moving raw data to:
-	echo $iPMT_DIR
-
-	mv wave_$iPMT.dat $iPMT_DIR/SPEtest/
-    fi
-
-((iPMT++))
-
-done
-
-echo -e "\n"
-echo The SPE data has been acquired
-echo and was moved to the storage
-echo location.
-#------------------------------------------
-
 
 echo -e "\n"
 echo The End.
