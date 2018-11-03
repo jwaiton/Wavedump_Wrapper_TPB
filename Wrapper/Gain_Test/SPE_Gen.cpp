@@ -72,10 +72,10 @@ int main(int argc, char **argv)
   // randomSeedTime();
 
   // switch on/off debugging messages
-  bool doComment = true;
+  bool doComment = false;
 
   // Number of channels of recorded data to read in
-  // Keep hard code number of channels as temp measure 
+  // Keep hard coded as temporary measure 
   static const int nChs = 1;
   
   int PMTs[nChs];
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
    //========================================================================================================
 
    char answer = 'N';
-   int  iStep;
+   int  iHVStep;
    char histname[200]= "";
    
    // Determine PMT number and the Voltage =====================================================
@@ -142,19 +142,19 @@ int main(int argc, char **argv)
      }
      
     cout << "Please Specify which HV Step (1, 2, 3, 4, or 5)" << endl;
-    cin  >> iStep;
+    cin  >> iHVStep;
     
-    iStep--;
+    iHVStep--;
     
     for (int iPMT = 0; iPMT < 125 ; iPMT++){
       for(int iCh = 0; iCh < nChs; iCh++){
 	
 	if (PMTs[iCh] == PMT_file[iPMT]){
 	  
-	  HVs_Step[iCh] = HV_steps_file[iPMT][iStep];
+	  HVs_Step[iCh] = HV_steps_file[iPMT][iHVStep];
 	  
 	  if(doComment)
-	    printf("HVs_Step %d \n", HV_steps_file[iPMT][iStep]);
+	    printf("HVs_Step %d \n", HV_steps_file[iPMT][iHVStep]);
 	  
 	}
       }
@@ -185,10 +185,30 @@ int main(int argc, char **argv)
   }// end: while(answer!='Y'
   //======================================================================================================
   
-  // Store waveform for processing
-  //TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",1024,0,204.8);
-  
-  TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",102,0,204);
+
+   
+   char   digitiser = 'V';
+   int    nBins = 102;
+   
+   double xMin  = 0.;
+   double xMax  = 204.;
+   
+   if     ( digitiser == 'V' ){
+     nBins = 102;
+     xMax  = 204.;
+   }
+   else if( digitiser == 'D' ){
+     nBins = 1024;
+     xMax  = 204.8;
+   }
+   else{
+     
+     cerr << "Error: Invalid digitiser " << endl;
+     return -1;
+   }
+
+   // Store waveform for processing
+  TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",nBins,xMin,xMax);
 
   // Single Photoelectron Spectra with averaged accumulators
   TH1D **SPE = new TH1D*[nChs];	
@@ -205,15 +225,25 @@ int main(int argc, char **argv)
   //================= Reads in the headers and assigns values for things=============
   
   
-  //================= Reads in waveforms of length 1024 ==================
+  //!!!================= Reads in waveforms of length 1024 ==================
+  //================= Reads in waveforms of length 102 ==================
+
+  iHVStep++;
   
   // Include a counter to know the code is still running
   int counter = 0;
   for (int iCh = 0 ; iCh < nChs ; iCh++){
     
     char filename[200]= "";
-    sprintf(filename,"../../../Data/wave_%d_hv1.dat",iCh);
+
+    sprintf(filename,
+	    "../../../BinaryData/PMT0063/GainTest/wave_%d_hv%d.dat",
+	    iCh,iHVStep); 
     
+    cout << endl;
+    cout << " filename = " << filename << endl;    
+   
+	   
     ifstream fin(filename);
     
     for (int i = 0 ; i < 6; i++ ){
@@ -229,19 +259,31 @@ int main(int argc, char **argv)
 	   ){
       counter++;
       //Are we there yet??
-      if (counter%10000==0)
+      if (counter%100000==0)
 	printf("Waveform Progress: %d \n", counter);
       
        //Records and ind. waveform into
-       for (int i=0; i<1030; i++){
+      //!!! for (int i=0; i<1030; i++){
+      for (int i=0; i<122; i++){
 	 //Read in result.
-	 float result=0.;
-	 fin.read((char*)&result,sizeof(float));
 
-	 if (i<1024){
+	//!!!
+	// float result=0.;
+	// fin.read((char*)&result,sizeof(float));
+	
+	unsigned short result=0.;  //changed from float
+	fin.read((char*)&result,2);  //sizeof(float) 
+	 
+	 //!!!if (i<1024){
+	 if (i<110){
 	   //inact an arbitrary offset in the data to make the peak
-	   double aoff = 2700;
-	   double flip_signal = (result-aoff)*-1.0;
+	   
+	   //!!double aoff = 2700;
+	   double aoff = 8700;
+	   
+	   //!!double flip_signal = (result-aoff)*-1.0;
+	   double flip_signal = (float(result)-aoff)*-1.0;
+	   
 	   Wave->SetBinContent(i+1,flip_signal);
 
 	 }
@@ -255,14 +297,18 @@ int main(int argc, char **argv)
        if(doComment)
 	 printf("maxtime: %f\n",maxtime);
 
-       int gates[8] ={binmax-300,binmax-200,binmax-100,binmax,binmax+100,binmax+200,binmax+300,binmax+400};
-
+       //!! int gates[8] ={binmax-300,binmax-200,binmax-100,binmax,binmax+100,binmax+200,binmax+300,binmax+400};
+       int gates[8] ={binmax-30,binmax-20,binmax-10,binmax,binmax+10,binmax+20,binmax+30,binmax+40};
 
        //Peak must appear in reasonable location relative to the trigger
-       if (maxtime>60.0 && maxtime<124.8){
+       //!!if (maxtime>60.0 && maxtime<124.8){
+       
+       if (maxtime>60.0 && maxtime<124.0){
 	 //Define the accumulators
 	 double A0=0;double A1=0;double A2=0;double A3=0;double A4=0;double A5=0;double A6=0;
-	 for (int i=1; i<=1024; i++){
+	 
+	 //!!for (int i=1; i<=1024; i++){
+	 for (int i=1; i<=102; i++){
 
 	   int time = i;
 	   if (time>=gates[0] && time<=gates[1]){
@@ -297,9 +343,10 @@ int main(int argc, char **argv)
 
 	 // Filling all the SPE
 	 double ADC_Counts = A2+A3+A4-(A0+A1+A5+A6)*3.0/4.0;
-
-	 double WaveCharge =  ADC_Counts*.2/4096.0*1.0e3;
-
+	 
+	 //!!double WaveCharge =  ADC_Counts*.2/4096.0*1.0e3;
+	 double WaveCharge =  ADC_Counts*2.0/16384.0*2.0e3;
+	 
 	 if( doComment )
 	   printf("WaveCharge %f \n",WaveCharge);
 	 
@@ -310,6 +357,10 @@ int main(int argc, char **argv)
 
     totalwaves[iCh]=counter;
 
+    //!!
+    
+    SPE[iCh]->Scale(1./(counter));
+    
     // close wavedump file
     fin.close();	
   

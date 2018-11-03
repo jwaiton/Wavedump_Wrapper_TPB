@@ -206,7 +206,7 @@ int main(int argc, char **argv)
 				//Define the accumulators
 				double A0=0;double A1=0;double A2=0;double A3=0;double A4=0;double A5=0;double A6=0;
 				for (int i=1; i<=1024; i++){
-				
+				  
 					int time = i;
 					if (time>=gates[0] && time<=gates[1]){
 					
