@@ -1,6 +1,4 @@
-./Wrapper/Gain_Test/HV_SPE/
 *.d
 *.o
 *~
 DataAcquisition/Instructions.txt
-./Wrapper/Gain_Test/SPE_Gen
