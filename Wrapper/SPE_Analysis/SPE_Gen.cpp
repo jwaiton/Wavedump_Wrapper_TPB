@@ -159,7 +159,7 @@ int main(int argc, char **argv)
 
 		char filename[200]= "";
 		//sprintf(filename,"../../Data/wave_%d.dat",w);
-		sprintf(filename,"/home/lhcbuser/watchman/Wrapper/Wavedump_Wrapper/DataAcquisition/BinaryData/PMT0001/SPEtest/wave_0.dat",w);
+		sprintf(filename,"/home/lhcbuser/Watchman/Wavedump_Wrapper/DataAcquisition/BinaryData/PMT0001/SPEtest/wave_0.dat",w);
 		ifstream fin(filename);
 		
 		for (int i=0; i<6; i++){
