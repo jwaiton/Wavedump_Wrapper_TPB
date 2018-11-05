@@ -143,6 +143,7 @@ int main(int argc, char **argv)
 		char filename[200]= "";
 		//sprintf(filename,"../../Data/wave_%d.dat",w);
 		sprintf(filename,"../../Data/wave_%d.dat",w);
+
 		ifstream fin(filename);
 		
 		for (int i=0; i<6; i++){
