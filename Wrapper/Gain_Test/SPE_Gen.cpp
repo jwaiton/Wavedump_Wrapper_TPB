@@ -1,59 +1,63 @@
-/** Program to read wavedump output data
-
-Author 
- Tomi Akindele
- https://github.com/akindele
- 04 10 2018
-
-Purpose
-  DAQ reads out to binary file.
-  This program de-codes the file
-  and reads the relevant data in 
-  to a root histogram/s.
-
-How to build
- $ make SPE_Gen
-
-How to run
- $ ./SPE_Gen  
-
-Dependencies
-  root.cern
-  Makefile
-
-Modified
-  gary.smith@ed.ac.uk
-  03 11 2018
-
-Modifications:
-  (Completed)
-  Added comments
-  Removed dependency on non-standard libraries
-  namely ns.h.
-  Commented out randomSeedTime() as this is not
-  used.
-  Added the header for TH1D
-  Added nChs variable to accommodate generalising 
-  the code to any number of channels/PMTs
-  Array lengths are initialised to nChs where appropriate
-  Renamed variables: 
-     variables read in from HVscan now end in  _file
-     Gain array was changed to HVs_step
-  In loops the iterators are now more descriptive 
-     i or w were replaced with iCh or iPMT or iRow for example
-   New paths for binary input files and root output files
-   to allow SPE_Gen to run independently of Data Aquistion process.
-   doComment bool added - to switch on/off commenting to aid debugging
-   
-   (In Progress)
-   Generalise to VME or desktop digitiser
-   
-   (To Do)
-   Charge calculation used numbers that are 
-   not described well.  Change to the use of 
-   variables with names that give explainations..  
-
- **/ 
+/****************************************************
+* Program to read wavedump output data
+*
+* Author 
+*  Tomi Akindele
+*  https://github.com/akindele
+*  04 10 2018
+*
+* Purpose
+*  DAQ reads out to binary file.
+*  This program de-codes the file
+*  and reads the relevant data in 
+*  to a root histogram/s.
+*
+* How to build
+*  $ make SPE_Gen
+*
+* How to run
+*  $ ./SPE_Gen  
+*
+* Dependencies
+*  root.cern
+*  Makefile
+*
+* Modified
+*   gary.smith@ed.ac.uk
+*   03 11 2018
+*
+* Modifications:
+*   (Completed)
+*   Added comments
+*   Removed dependency on non-standard libraries
+*   namely ns.h.
+*   Commented out randomSeedTime() as this is not
+*   used.
+*   Added the header for TH1D
+*   Added nChs variable to accommodate generalising 
+*   the code to any number of channels/PMTs
+*   Array lengths are initialised to nChs where appropriate
+*   Renamed variables: 
+*      variables read in from HVscan now end in  _file
+*      Gain array was changed to HVs_step
+*   In loops the iterators are now more descriptive 
+*      i or w were replaced with iCh or iPMT or iRow for example
+*   New paths for binary input files and root output files
+*   to allow SPE_Gen to run independently of Data Aquistion process.
+*   doComment bool added - to switch on/off commenting to aid debugging
+*   
+*   (In Progress)
+*    Generalise to VME or desktop digitiser
+*   
+*   (To Do)
+*    Charge calculation used numbers that are 
+*    not described well.  Change to the use of 
+*    variables with names that give 
+*    explainations...  
+*    Separate code into functions so that it can 
+*    be generalised for use for any test...
+*    
+*/ 
 
 // Presumably "non-standard.h"
 //#include "ns.h"
@@ -86,9 +90,9 @@ int main(int argc, char **argv)
 
   // switch on/off debugging messages
   bool doComment = false;
-
-  // Number of channels of recorded data to read in
-  // Keep hard coded as temporary measure 
+  
+  // Number of channels of recorded data to read.
+  // Keep hard coded as temporary measure.
   static const int nChs = 1;
   
   int PMTs[nChs];
@@ -98,7 +102,7 @@ int main(int argc, char **argv)
   int   HVs_Step[nChs];
   for (int iCh = 0 ; iCh < nChs ; iCh++)
     HVs_Step[iCh] = 0;
-    
+  
   //======= Read in HV data  ======= 
   string   hvfile = "../HVScan.txt";
   ifstream file(hvfile.c_str());
@@ -113,11 +117,11 @@ int main(int argc, char **argv)
    // Read in 5 values for all PMT 
    for (int i = 0; i < 125; i++)
      HV_steps_file.push_back(step);
-
+   
    int pmt_info;
-     
+   
    for (int iRow = 0; iRow < 125; iRow++){
-     for (int iCol = 0; iCol < 7; iCol++){
+     for (int iCol = 0; iCol < 7  ; iCol++){
        
        file >> hvdat;
        pmt_info = atof(hvdat.c_str());
@@ -228,34 +232,41 @@ int main(int argc, char **argv)
     SPE[iCh] = new TH1D(histname,"Single Photo-Electron; Charge (mV-ns); Counts",1500.0,-500.0,2000.0);
   }
   
+  
+  //TH1D * hBinMax = TH1D("hBinMax","hBinMax",);
+  
   int totalwaves[nChs];
   for( int iCh = 0 ; iCh < nChs ; iCh++ )
     totalwaves[iCh] = 0;
   
   
-  //================= Reads in the headers and assigns values for things=============
+  //================= Read in the headers and assigns values for things=============
   
   
-  //!!!================= Reads in waveforms of length 1024 ==================
-  //================= Reads in waveforms of length 102 ==================
+  //================= Read in waveforms of length 102 or 1024==================
 
   iHVStep++;
   
-  // Include a counter to know the code is still running
+  // counter: for outputing progress
   int counter = 0;
+  TString inputFileName = "../../../BinaryData/PMT";
+
   for (int iCh = 0 ; iCh < nChs ; iCh++){
     
-    char filename[200]= "";
+    char inputFileName[200]= "";
+    
+    sprintf(inputFileName,
+	    "../../../BinaryData/PMT0090/SPEtest/wave_%d.dat",
+	    iCh); 
 
-    sprintf(filename,
-	    "../../../BinaryData/PMT0063/GainTest/wave_%d_hv%d.dat",
-	    iCh,iHVStep); 
+//     sprintf(inputFileName,
+// 	    "../../../BinaryData/PMT0063/GainTest/wave_%d_hv%d.dat",
+// 	    iCh,iHVStep); 
     
     cout << endl;
-    cout << " filename = " << filename << endl;    
-   
+    cout << " inputFileName = " << inputFileName << endl;    
 	   
-    ifstream fin(filename);
+    ifstream fin(inputFileName);
     
     for (int i = 0 ; i < 6; i++ ){
       //Read in the header for the script
@@ -299,11 +310,22 @@ int main(int argc, char **argv)
 
 	 }
        }
-
-
+      
+      
        // Determine the location of the peak
        int binmax = Wave->GetMaximumBin(); 
        double maxtime = Wave->GetXaxis()->GetBinCenter(binmax);
+
+//        cout << " binmax = " << binmax << endl;
+//        cout << " maxtime = " << maxtime << endl;
+       
+//        maxtime = 90.;
+//        binmax  = 45;
+
+//        if( maxtime > 80. && maxtime < 100. ){
+// 	 cout << " maxtime = " << maxtime << endl;
+// 	 cout << " binmax  = " << binmax  << endl;
+//        }
        
        if(doComment)
 	 printf("maxtime: %f\n",maxtime);
@@ -314,8 +336,9 @@ int main(int argc, char **argv)
        //Peak must appear in reasonable location relative to the trigger
        //!!if (maxtime>60.0 && maxtime<124.8){
        
+       
        if (maxtime>60.0 && maxtime<124.0){
-	 //Define the accumulators
+       //Define the accumulators
 	 double A0=0;double A1=0;
 	 double A2=0;double A3=0;
 	 double A4=0;double A5=0;
@@ -326,7 +349,7 @@ int main(int argc, char **argv)
 
 	   int time = i;
 	   if (time>=gates[0] && time<=gates[1]){
-
+	     
 	     A0+=Wave->GetBinContent(i);
 	   }	
 	   if (time>=gates[1] && time<=gates[2]){
@@ -358,6 +381,8 @@ int main(int argc, char **argv)
 	 // Filling all the SPE
 	 double ADC_Counts = A2+A3+A4-(A0+A1+A5+A6)*3.0/4.0;
 	 
+	 //cout << " ADC_Counts " << ADC_Counts << endl; 
+	 
 	 //!!double WaveCharge =  ADC_Counts*.2/4096.0*1.0e3;
 	 double WaveCharge =  ADC_Counts*2.0/16384.0*2.0e3;
 	 
@@ -385,33 +410,33 @@ int main(int argc, char **argv)
     printf("Total Triggers from Wave %d: %d \n", iCh, totalwaves[iCh]);
   
   //Create canvas allowing for window close
-  TApplication *ta= new TApplication("ta",&argc,argv);
-  TCanvas *tc1= new TCanvas("Canvas1","ROOT Canvas",1);
-  tc1->Connect("TCanvas1","Closed()","TApplication",gApplication, "Terminate()");
-  tc1->SetGrid();
+  //TApplication *ta= new TApplication("ta",&argc,argv);
+  //TCanvas *tc1= new TCanvas("Canvas1","ROOT Canvas",1);
+  //tc1->Connect("TCanvas1","Closed()","TApplication",gApplication, "Terminate()");
+  //tc1->SetGrid();
   
   for (int iCh = 0 ; iCh < nChs ; iCh++)
-    SPE[iCh]->Draw("Same");
+    SPE[iCh]->Draw("HIST");
   
-  TString fileName = "";
+  TString outFileName = "";
 
-  fileName = "../../../RootData/PMT_NB0";
+  outFileName = "../../../RootData/PMT_NB0";
   
   for (int iCh = 0 ; iCh < nChs ; iCh++){
     
     if (PMTs[iCh] < 100){
-      fileName += "0";
+      outFileName += "0";
       
       if (PMTs[iCh] < 10)
-	fileName += "0";
+	outFileName += "0";
     }
     
-    fileName.Form(fileName + "%d_HV%d.root", PMTs[iCh], HVs_Step[iCh]);
+    outFileName.Form(outFileName + "%d_HV%d.root", PMTs[iCh], HVs_Step[iCh]);
     
-    SPE[iCh]->SaveAs(fileName);
+    SPE[iCh]->SaveAs(outFileName);
   }
   
-  ta->Run();
+  //ta->Run();
   
   
   return 0;
