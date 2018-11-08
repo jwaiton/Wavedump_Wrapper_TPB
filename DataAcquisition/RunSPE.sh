@@ -5,7 +5,7 @@
  
 # Author:
 # gary.smith@ed.ac.uk
-# 31 10 18
+# 08 11 18
 
 # Requirements:
 
@@ -20,7 +20,7 @@
 
 # How to run:
 # At terminal prompt do:
-# $ ./RunDaq.sh
+# $ ./RunSPE.sh
 
 # Warning: This script presumes that raw data
 # does not exist for the PMTs being tested.
@@ -39,7 +39,7 @@ export location="Test"
 
 echo -e "\n"
 echo -e "\n"
-echo You have executed RunDaq.sh 
+echo You have executed RunSPE.sh 
 echo -e "\n"
 echo This script will help to run the
 echo DAQ and manage the output data.
@@ -50,7 +50,7 @@ echo DAQ and manage the output data.
 # echo How many PMTs are you testing? e.g. 4
 # read nPMTs
 
-nPMTs=2
+nPMTs=4
 
 for ((iPMT=0;iPMT<$nPMTs;iPMT++)); do
 
@@ -125,20 +125,6 @@ echo output data exists or has been created.
 
 # SPE / Nominal voltage test
 ./SPE_DAQ.sh
-
-hvList=(1000 1100 1200 1300 1400)
-
-# Gain test
-iSetting=1
-for hv in "${hvList[@]}" 
-do
-./GAIN_DAQ.sh $iSetting $hv 
-((iSetting++))
-done
-
-# Afterpulsing test
- 
-# Dark Counts
 
 # End of Data Acquisition
 #------------------------------------------

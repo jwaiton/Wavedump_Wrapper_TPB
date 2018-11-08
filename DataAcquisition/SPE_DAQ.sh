@@ -9,6 +9,7 @@ while [ "$isReady" != "y" ]
 do
     echo -e "\n"
     echo Ready for the nominal voltage SPE run ?
+    echo HVs set, LED on
     echo Enter: y or n
     read isReady
 
@@ -31,16 +32,16 @@ echo "(Ctrl-C to quit )"
 if    [ "$location" = "Boulby" ]
 then
     sleep 10
-    wavedump_G_SPE_DR < input_wavedump_5mins.txt
+    { cat startDAQ.txt ; sleep 600 ; cat endDAQ.txt ; } | wavedump_G_SPE_DR
 elif  [ "$location" = "Edinburgh" ]
 then
     sleep 10
-    wavedump < input_wavedump_5mins.txt
+    { cat startDAQ.txt ; sleep 600 ; cat endDAQ.txt ; } | wavedump
 elif  [ "$location" = "Test" ]
 then
     echo -e "\n"
     echo Test mode
-    cat input_wavedump_5mins.txt
+    cat startDAQ.txt; sleep 5; cat endDAQ.txt;
 else
     echo -e "\n"
     echo Unknown location
