@@ -39,7 +39,7 @@
 *   Array lengths are initialised to nChs where appropriate
 *   Renamed variables: 
 *      variables read in from HVscan now end in  _file
-*      Gain array was changed to HVs_step
+*      Gain array was changed to HVs
 *   In loops the iterators are now more descriptive 
 *      i or w were replaced with iCh or iPMT or iRow for example
 *   New paths for binary input files and root output files
@@ -86,7 +86,7 @@ int main(int argc, char **argv)
     
   // 'D' - Desktop
   // 'V' - VME
-  char   digitiser = 'V';
+  char   digitiser = 'D';
   
   // Number of channels of recorded data to read.
   static const int nChs = 1;;
@@ -97,11 +97,11 @@ int main(int argc, char **argv)
   bool doComment = false;
     
   int PMTs[nChs];
-  int HVs_Step[nChs];
+  int HVs[nChs];
   
   for (int iCh = 0 ; iCh < nChs ; iCh++){
     PMTs[iCh] = 0;
-    HVs_Step[iCh] = 0;
+    HVs[iCh]  = 0;
   }
   
   //======= Read in HV data  ======= 
@@ -181,10 +181,10 @@ int main(int argc, char **argv)
 	 
 	 if (PMTs[iCh] == PMT_file[iPMT]){
 	   
-	   HVs_Step[iCh] = HV_steps_file[iPMT][iHVStep];
+	   HVs[iCh] = HV_steps_file[iPMT][iHVStep];
 	   
 	   if(doComment)
-	     printf("HVs_Step %d \n", 
+	     printf("HVs %d \n", 
 		    HV_steps_file[iPMT][iHVStep]);
 	   
 	 }
@@ -205,7 +205,7 @@ int main(int argc, char **argv)
       
       aQuestion.Form(aQuestion + 
 		     "%d is in Channel %d Biased at %d Volts \n",
-		     PMTs[iCh], iCh, HVs_Step[iCh]);
+		     PMTs[iCh], iCh, HVs[iCh]);
       
       cout << aQuestion;
      
@@ -252,7 +252,7 @@ int main(int argc, char **argv)
      intsPerTrigger = 1030;
      intsPerEvent   = 1024;
 
-     aoff        = 2700;
+     aoff           = 2700;
      
    
    }
@@ -504,7 +504,7 @@ int main(int argc, char **argv)
 	outFileName += "0";
     }
     
-    outFileName.Form(outFileName + "%d_HV%d.root", PMTs[iCh], HVs_Step[iCh]);
+    outFileName.Form(outFileName + "%d_HV%d.root", PMTs[iCh], HVs[iCh]);
     
     SPE[iCh]->SaveAs(outFileName);
   }
