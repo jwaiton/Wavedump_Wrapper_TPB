@@ -87,33 +87,33 @@ int main(int argc, char **argv)
 {
   // This appears to have no use here
   // randomSeedTime();
-
+  
   // switch on/off debugging messages
-  bool doComment = false;
+  bool doComment = true;
   
   // Number of channels of recorded data to read.
   // Keep hard coded as temporary measure.
   static const int nChs = 1;
   
   int PMTs[nChs];
-  for (int iCh = 0 ; iCh < nChs ; iCh++)
-    PMTs[iCh] = 0;
-  
   int   HVs_Step[nChs];
-  for (int iCh = 0 ; iCh < nChs ; iCh++)
+  
+  for (int iCh = 0 ; iCh < nChs ; iCh++){
+    PMTs[iCh] = 0;
     HVs_Step[iCh] = 0;
+  }
   
   //======= Read in HV data  ======= 
   string   hvfile = "../HVScan.txt";
   ifstream file(hvfile.c_str());
   string   hvdat;
   
-   vector<int> PMT_file(125,0), HV_Nom_file(125,0);
-   vector<vector<int>> HV_steps_file;
-
-   // HV steps
-   vector<int> step(5,0);
-
+  vector<int> PMT_file(125,0), HV_Nom_file(125,0);
+  vector<vector<int>> HV_steps_file;
+  
+  // HV steps
+  vector<int> step(5,0);
+  
    // Read in 5 values for all PMT 
    for (int i = 0; i < 125; i++)
      HV_steps_file.push_back(step);
@@ -147,6 +147,8 @@ int main(int argc, char **argv)
    int  iHVStep;
    char histname[200]= "";
    
+   TString aQuestion = "";
+   
    // Determine PMT number and the Voltage =====================================================
 
    while(answer!='y'){
@@ -160,7 +162,7 @@ int main(int argc, char **argv)
      
     cout << "Please Specify which HV Step (1, 2, 3, 4, or 5)" << endl;
     cin  >> iHVStep;
-    
+
     iHVStep--;
     
     for (int iPMT = 0; iPMT < 125 ; iPMT++){
@@ -178,18 +180,32 @@ int main(int argc, char **argv)
     }
     
     cout << " Please verify the following: "<<endl;
-     
-     for (int iCh = 0; iCh < nChs ; iCh++){
-       
-       if (PMTs[iCh] < 10)
-	 sprintf(histname,"NB000%d is in Channel %d Biased at %d Volts \n",PMTs[iCh], iCh, HVs_Step[iCh]);
-       else if (PMTs[iCh] >= 10 && PMTs[iCh] < 100)
-	 sprintf(histname,"NB00%d is in Channel %d Biased at %d Volts \n",PMTs[iCh],  iCh, HVs_Step[iCh]);
-       else 
-	 sprintf(histname,"NB0%d is in Channel %d  Biased at %d Volts \n",PMTs[iCh],  iCh, HVs_Step[iCh]);
-       
-       cout << "  " << histname ;
-     }
+
+    aQuestion = "NB0";
+    
+    for (int iCh = 0 ; iCh < nChs ; iCh++){
+
+      if (PMTs[iCh] < 100){
+	aQuestion += "0";
+	if (PMTs[iCh] < 10)
+	  aQuestion += "0";
+      }
+      
+      aQuestion.Form(aQuestion + "%d is in Channel %d Biased at %d Volts \n",PMTs[iCh], iCh, HVs_Step[iCh]);
+
+    }
+    
+    // for (int iCh = 0; iCh < nChs ; iCh++){
+      
+    //   if (PMTs[iCh] < 10)
+    // 	sprintf(histname,"NB000%d is in Channel %d Biased at %d Volts \n",
+    //   else if (PMTs[iCh] >= 10 && PMTs[iCh] < 100)
+    // 	sprintf(histname,"NB00%d is in Channel %d Biased at %d Volts \n",PMTs[iCh],  iCh, HVs_Step[iCh]);
+    //   else 
+    // 	sprintf(histname,"NB0%d is in Channel %d  Biased at %d Volts \n",PMTs[iCh],  iCh, HVs_Step[iCh]);
+      
+    //   cout << "  " << histname ;
+    // }
 
     cout << " Is this correct? (y/n)  "<<endl;
     cin >> answer;
@@ -249,19 +265,20 @@ int main(int argc, char **argv)
   
   // counter: for outputing progress
   int counter = 0;
-  TString inputFileName = "../../../BinaryData/PMT";
+  //TString inputFileName = "../../../BinaryData/PMT";
 
   for (int iCh = 0 ; iCh < nChs ; iCh++){
     
     char inputFileName[200]= "";
     
     sprintf(inputFileName,
-	    "../../../BinaryData/PMT0090/SPEtest/wave_%d.dat",
+	    "./wave_%d.dat", // "../../Data/wave_%d.dat",
 	    iCh); 
 
-//     sprintf(inputFileName,
-// 	    "../../../BinaryData/PMT0063/GainTest/wave_%d_hv%d.dat",
-// 	    iCh,iHVStep); 
+    // GDS check name format
+    // sprintf(inputFileName,
+    // 	    "../../Data/wave%d_hv%d.dat",
+    // 	    iCh,iHVStep); 
     
     cout << endl;
     cout << " inputFileName = " << inputFileName << endl;    
@@ -285,26 +302,26 @@ int main(int argc, char **argv)
 	printf("Waveform Progress: %d \n", counter);
       
        //Records and ind. waveform into
-      //!!! for (int i=0; i<1030; i++){
-      for (int i=0; i<122; i++){
+      for (int i=0; i<1030; i++){
+      //!!!for (int i=0; i<122; i++){
 	 //Read in result.
 
-	//!!!
-	// float result=0.;
-	// fin.read((char*)&result,sizeof(float));
 	
-	unsigned short result=0.;  //changed from float
-	fin.read((char*)&result,2);  //sizeof(float) 
+	float result=0.;
+	fin.read((char*)&result,sizeof(float));
+	
+	// unsigned short result=0.;  //changed from float
+	// fin.read((char*)&result,2);  //sizeof(float) 
 	 
-	 //!!!if (i<1024){
-	 if (i<110){
+	if (i<1024){
+	//!!!if (i<110){
 	   //inact an arbitrary offset in the data to make the peak
 	   
-	   //!!double aoff = 2700;
-	   double aoff = 8700;
+	   double aoff = 2700;
+	   //!!double aoff = 8700;
 	   
-	   //!!double flip_signal = (result-aoff)*-1.0;
-	   double flip_signal = (float(result)-aoff)*-1.0;
+	   double flip_signal = (result-aoff)*-1.0;
+	   //double flip_signal = (float(result)-aoff)*-1.0;
 	   
 	   Wave->SetBinContent(i+1,flip_signal);
 
@@ -330,22 +347,21 @@ int main(int argc, char **argv)
        if(doComment)
 	 printf("maxtime: %f\n",maxtime);
 
-       //!! int gates[8] ={binmax-300,binmax-200,binmax-100,binmax,binmax+100,binmax+200,binmax+300,binmax+400};
-       int gates[8] ={binmax-30,binmax-20,binmax-10,binmax,binmax+10,binmax+20,binmax+30,binmax+40};
+        int gates[8] ={binmax-300,binmax-200,binmax-100,binmax,binmax+100,binmax+200,binmax+300,binmax+400};
+	//!!!!int gates[8] ={binmax-30,binmax-20,binmax-10,binmax,binmax+10,binmax+20,binmax+30,binmax+40};
 
        //Peak must appear in reasonable location relative to the trigger
-       //!!if (maxtime>60.0 && maxtime<124.8){
-       
-       
-       if (maxtime>60.0 && maxtime<124.0){
+       if (maxtime>60.0 && maxtime<124.8){
+              
+	 //!!!if (maxtime>60.0 && maxtime<124.0){
        //Define the accumulators
 	 double A0=0;double A1=0;
 	 double A2=0;double A3=0;
 	 double A4=0;double A5=0;
 	 double A6=0;
 	 
-	 //!!for (int i=1; i<=1024; i++){
-	 for (int i=1; i<=102; i++){
+	 for (int i=1; i<=1024; i++){
+	   //!!!for (int i=1; i<=102; i++){
 
 	   int time = i;
 	   if (time>=gates[0] && time<=gates[1]){
@@ -383,8 +399,8 @@ int main(int argc, char **argv)
 	 
 	 //cout << " ADC_Counts " << ADC_Counts << endl; 
 	 
-	 //!!double WaveCharge =  ADC_Counts*.2/4096.0*1.0e3;
-	 double WaveCharge =  ADC_Counts*2.0/16384.0*2.0e3;
+	 double WaveCharge =  ADC_Counts*.2/4096.0*1.0e3;
+	 //!!!!double WaveCharge =  ADC_Counts*2.0/16384.0*2.0e3;
 	 
 	 if( doComment )
 	   printf("WaveCharge %f \n",WaveCharge);
@@ -397,8 +413,7 @@ int main(int argc, char **argv)
     totalwaves[iCh]=counter;
 
     //!!
-    
-    SPE[iCh]->Scale(1./(counter));
+    //SPE[iCh]->Scale(1./(counter));
     
     // close wavedump file
     fin.close();	
@@ -410,17 +425,20 @@ int main(int argc, char **argv)
     printf("Total Triggers from Wave %d: %d \n", iCh, totalwaves[iCh]);
   
   //Create canvas allowing for window close
-  //TApplication *ta= new TApplication("ta",&argc,argv);
-  //TCanvas *tc1= new TCanvas("Canvas1","ROOT Canvas",1);
-  //tc1->Connect("TCanvas1","Closed()","TApplication",gApplication, "Terminate()");
-  //tc1->SetGrid();
+  TApplication *ta= new TApplication("ta",&argc,argv);
+  TCanvas *tc1= new TCanvas("Canvas1","ROOT Canvas",1);
+  tc1->Connect("TCanvas1","Closed()","TApplication",gApplication, "Terminate()");
+  tc1->SetGrid();
   
   for (int iCh = 0 ; iCh < nChs ; iCh++)
     SPE[iCh]->Draw("HIST");
   
   TString outFileName = "";
 
-  outFileName = "../../../RootData/PMT_NB0";
+  // GDS 
+  //outFileName = "../../../RootData/PMT_NB0";
+  
+  outFileName = "./HV_SPE/PMT_NB0";
   
   for (int iCh = 0 ; iCh < nChs ; iCh++){
     
@@ -436,9 +454,8 @@ int main(int argc, char **argv)
     SPE[iCh]->SaveAs(outFileName);
   }
   
-  //ta->Run();
-  
-  
+  ta->Run();
+    
   return 0;
 }
 

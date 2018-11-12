@@ -1,10 +1,3 @@
-#include "./src/atmap.h"
-#include "./src/command_parse.h"
-#include "./src/dist.h"
-#include "./src/file.h"
-#include "./src/ns.h"
-#include "./src/stats.h"
-#include "./src/utility.h"
 
 //Standard library include files.
 #include <cstdlib>
@@ -15,6 +8,7 @@
 #include "TApplication.h"
 #include "TCanvas.h"
 #include "TF1.h"
+#include "TH1D.h"
 #include "TFitResult.h"
 #include "TObject.h"
 #include "TFile.h"
