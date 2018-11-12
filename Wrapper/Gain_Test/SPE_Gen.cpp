@@ -45,9 +45,7 @@
 *   New paths for binary input files and root output files
 *   to allow SPE_Gen to run independently of Data Aquistion process.
 *   doComment bool added - to switch on/off commenting to aid debugging
-*   
-*   (In Progress)
-*    Generalise to VME or desktop digitiser
+*   Generalised to VME or desktop digitiser
 *   
 *   (To Do)
 *    Charge calculation used numbers that are 
@@ -85,18 +83,21 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-  // This appears to have no use here
-  // randomSeedTime();
+    
+  // 'D' - Desktop
+  // 'V' - VME
+  char   digitiser = 'V';
+  
+  // Number of channels of recorded data to read.
+  static const int nChs = 1;;
+  
+  // static const int nChs = atoi(argv[1]);
   
   // switch on/off debugging messages
   bool doComment = false;
-  
-  // Number of channels of recorded data to read.
-  // Keep hard coded as temporary measure.
-  static const int nChs = 1;
-  
+    
   int PMTs[nChs];
-  int   HVs_Step[nChs];
+  int HVs_Step[nChs];
   
   for (int iCh = 0 ; iCh < nChs ; iCh++){
     PMTs[iCh] = 0;
@@ -141,16 +142,13 @@ int main(int argc, char **argv)
      }
    }
 
-   //========================================================================================================
+   //==================================================================
 
-   char answer = 'N';
-   int  iHVStep;
-   char histname[200]= "";
-   
+   char    answer = 'N';
+   int     iHVStep;
+   char    histname[200]= "";
    TString aQuestion = "";
    
-   // Determine PMT number and the Voltage =====================================================
-
    while(answer!='y'){
      
      for ( int iCh = 0 ; iCh < nChs ; iCh++ ){
@@ -158,54 +156,60 @@ int main(int argc, char **argv)
        cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
        cin  >> PMTs[iCh]; 
        cout << endl;
+       
+       if ( PMTs[iCh] < 0 || 
+	    PMTs[iCh] > 200 ){
+	 cerr << "Error: PMT number step  " << endl;
+	 return -1;
+       }
+       
      }
      
-    cout << "Please Specify which HV Step (1, 2, 3, 4, or 5)" << endl;
-    cin  >> iHVStep;
-
-    iHVStep--;
-    
-    for (int iPMT = 0; iPMT < 125 ; iPMT++){
-      for(int iCh = 0; iCh < nChs; iCh++){
-	
-	if (PMTs[iCh] == PMT_file[iPMT]){
-	  
-	  HVs_Step[iCh] = HV_steps_file[iPMT][iHVStep];
-	  
-	  if(doComment)
-	    printf("HVs_Step %d \n", HV_steps_file[iPMT][iHVStep]);
-	  
-	}
-      }
-    }
-    
-    cout << " Please verify the following: "<<endl;
-
-    aQuestion = "NB0";
+     cout << "Please Specify which HV Step (1, 2, 3, 4, or 5)" << endl;
+     cin  >> iHVStep;
+     
+     if ( iHVStep < 1 || 
+	  iHVStep > 5 ){
+       cerr << "Error: invalid HV step  " << endl;
+       return -1;
+     }
+          
+     iHVStep--;
+     
+     for (int iPMT = 0; iPMT < 125 ; iPMT++){
+       for(int iCh = 0; iCh < nChs; iCh++){
+	 
+	 if (PMTs[iCh] == PMT_file[iPMT]){
+	   
+	   HVs_Step[iCh] = HV_steps_file[iPMT][iHVStep];
+	   
+	   if(doComment)
+	     printf("HVs_Step %d \n", 
+		    HV_steps_file[iPMT][iHVStep]);
+	   
+	 }
+       }
+     }
+     
+    cout << " Please verify the following: " << endl;
     
     for (int iCh = 0 ; iCh < nChs ; iCh++){
-
+      
+      aQuestion = "NB0";
+      
       if (PMTs[iCh] < 100){
 	aQuestion += "0";
 	if (PMTs[iCh] < 10)
 	  aQuestion += "0";
       }
       
-      aQuestion.Form(aQuestion + "%d is in Channel %d Biased at %d Volts \n",PMTs[iCh], iCh, HVs_Step[iCh]);
-
+      aQuestion.Form(aQuestion + 
+		     "%d is in Channel %d Biased at %d Volts \n",
+		     PMTs[iCh], iCh, HVs_Step[iCh]);
+      
+      cout << aQuestion;
+     
     }
-    
-    // for (int iCh = 0; iCh < nChs ; iCh++){
-      
-    //   if (PMTs[iCh] < 10)
-    // 	sprintf(histname,"NB000%d is in Channel %d Biased at %d Volts \n",
-    //   else if (PMTs[iCh] >= 10 && PMTs[iCh] < 100)
-    // 	sprintf(histname,"NB00%d is in Channel %d Biased at %d Volts \n",PMTs[iCh],  iCh, HVs_Step[iCh]);
-    //   else 
-    // 	sprintf(histname,"NB0%d is in Channel %d  Biased at %d Volts \n",PMTs[iCh],  iCh, HVs_Step[iCh]);
-      
-    //   cout << "  " << histname ;
-    // }
 
     cout << " Is this correct? (y/n)  "<<endl;
     cin >> answer;
@@ -215,22 +219,42 @@ int main(int argc, char **argv)
     
     cout << answer << endl;
     
-  }// end: while(answer!='Y'
-  //======================================================================================================
+   }// end: while(answer!='Y'
+   //==============================
    
-   char   digitiser = 'V';
+   //==============================
+   //  Digitiser specific settings
+   
    int    nBins = 102;
-   
    double xMin  = 0.;
    double xMax  = 204.;
+  
+   int    intsPerHeader  = 6;
+   int    intsPerTrigger = 1030;
+   int    intsPerEvent   = 1024;
+   
+   double aoff        = 2700;
    
    if     ( digitiser == 'V' ){
      nBins = 102;
      xMax  = 204.;
+     
+     intsPerTrigger = 122;
+     intsPerEvent   = 110;
+     
+     aoff           = 8700;
+     
    }
    else if( digitiser == 'D' ){
      nBins = 1024;
      xMax  = 204.8;
+     
+     intsPerTrigger = 1030;
+     intsPerEvent   = 1024;
+
+     aoff        = 2700;
+     
+   
    }
    else{
      
@@ -270,10 +294,15 @@ int main(int argc, char **argv)
   for (int iCh = 0 ; iCh < nChs ; iCh++){
     
     char inputFileName[200]= "";
-    
+
     sprintf(inputFileName,
 	    "./wave_%d.dat", // "../../Data/wave_%d.dat",
 	    iCh); 
+    
+    if( digitiser == 'V' )
+      sprintf(inputFileName,
+	      "./wave_%d_VME.dat", // "../../Data/wave_%d.dat",
+	      iCh); 
 
     // GDS check name format
     // sprintf(inputFileName,
@@ -285,7 +314,8 @@ int main(int argc, char **argv)
 	   
     ifstream fin(inputFileName);
     
-    for (int i = 0 ; i < 6; i++ ){
+
+    for (int i = 0 ; i < intsPerHeader; i++ ){
       //Read in the header for the script
       int header = 0.;
       fin.read((char*)&header,sizeof(int));
@@ -295,44 +325,51 @@ int main(int argc, char **argv)
     while ( fin.is_open() && 
 	    fin.good()    && 
 	    !fin.eof()
-	   ){
+	    ){
       counter++;
-      //Are we there yet??
-      if (counter%100000==0)
+
+      if (counter%10000==0)
 	printf("Waveform Progress: %d \n", counter);
       
-       //Records and ind. waveform into
-      for (int i=0; i<1030; i++){
-      //!!!for (int i=0; i<122; i++){
-	 //Read in result.
+      //Records and ind. waveform into
+      
+      for (int i=0; i < intsPerTrigger; i++){
 
+	// Read in result.
 	
-	float result=0.;
-	fin.read((char*)&result,sizeof(float));
+	// ------------------------------------
+	// ----------- VME digitiser ----------
 	
-	// unsigned short result=0.;  //changed from float
-	// fin.read((char*)&result,2);  //sizeof(float) 
-	 
-	if (i<1024){
-	//!!!if (i<110){
-	   //inact an arbitrary offset in the data to make the peak
-	   
-	   double aoff = 2700;
-	   //!!double aoff = 8700;
-	   
-	   double flip_signal = (result-aoff)*-1.0;
-	   //double flip_signal = (float(result)-aoff)*-1.0;
-	   
-	   Wave->SetBinContent(i+1,flip_signal);
-
+	if     ( digitiser == 'V' ){
+	  unsigned short result=0.;  //changed from float
+	  fin.read((char*)&result,2);  //sizeof(float) 
+	  
+	  if (i < intsPerEvent ){
+	    double flip_signal = (float(result)-aoff)*-1.0;
+	    Wave->SetBinContent(i+1,flip_signal);
+	    
 	 }
-       }
+	  
+	}
+	// ---------------------------------------
+	// ----------- Desktop digitiser ----------
+	else if( digitiser == 'D' ){
+	  float result=0.;
+	  fin.read((char*)&result,sizeof(float));
+	
+	  if (i < intsPerEvent ){
+	    double flip_signal = (result-aoff)*-1.0;
+	    Wave->SetBinContent(i+1,flip_signal);
+	  }
+	  
+	}
       
+      }
       
-       // Determine the location of the peak
-       int binmax = Wave->GetMaximumBin(); 
-       double maxtime = Wave->GetXaxis()->GetBinCenter(binmax);
-
+      // Determine the location of the peak
+      int    binmax  = Wave->GetMaximumBin(); 
+      double maxtime = Wave->GetXaxis()->GetBinCenter(binmax);
+      
 //        cout << " binmax = " << binmax << endl;
 //        cout << " maxtime = " << maxtime << endl;
        
@@ -347,26 +384,42 @@ int main(int argc, char **argv)
        if(doComment)
 	 printf("maxtime: %f\n",maxtime);
 
-        int gates[8] ={binmax-300,binmax-200,binmax-100,binmax,binmax+100,binmax+200,binmax+300,binmax+400};
-	//!!!!int gates[8] ={binmax-30,binmax-20,binmax-10,binmax,binmax+10,binmax+20,binmax+30,binmax+40};
+       static const int nGates = 8;
 
-       //Peak must appear in reasonable location relative to the trigger
-       if (maxtime>60.0 && maxtime<124.8){
-              
-	 //!!!if (maxtime>60.0 && maxtime<124.0){
-       //Define the accumulators
-	 double A0=0;double A1=0;
-	 double A2=0;double A3=0;
-	 double A4=0;double A5=0;
-	 double A6=0;
-	 
-	 for (int i=1; i<=1024; i++){
-	   //!!!for (int i=1; i<=102; i++){
+       int gates[nGates];
+       
+       //!! temporary
+       int multiple = 100;
+       
+       float timeLow  = 60.0;
+       float timeHigh = 124.8;
 
+       if( digitiser == 'V' ){
+	  multiple = 10;
+	  timeHigh = 124.0;
+       }
+       
+       for (int iGate = -3 ; iGate < (nGates - 3) ; iGate++ )
+	 gates[iGate+3] = binmax + ( iGate * multiple );
+
+       // Only count events in window
+       if (maxtime > timeLow  && 
+	   maxtime < timeHigh     ){
+
+	 //Define the accumulators
+	 double A0 = 0;double A1=0;
+	 double A2 = 0;double A3=0;
+	 double A4 = 0;double A5=0;
+	 double A6 = 0;
+	 	 
+	 for (int i = 1; i <= nBins; i++){
+	   
 	   int time = i;
-	   if (time>=gates[0] && time<=gates[1]){
+	   if (time >= gates[0] && 
+	       time <= gates[1]){
 	     
-	     A0+=Wave->GetBinContent(i);
+	     A0 += Wave->GetBinContent(i);
+	   
 	   }	
 	   if (time>=gates[1] && time<=gates[2]){
 
@@ -400,7 +453,9 @@ int main(int argc, char **argv)
 	 //cout << " ADC_Counts " << ADC_Counts << endl; 
 	 
 	 double WaveCharge =  ADC_Counts*.2/4096.0*1.0e3;
-	 //!!!!double WaveCharge =  ADC_Counts*2.0/16384.0*2.0e3;
+	 
+	 if( digitiser == 'V' )
+	   WaveCharge =  ADC_Counts*2.0/16384.0*2.0e3;
 	 
 	 if( doComment )
 	   printf("WaveCharge %f \n",WaveCharge);
@@ -431,16 +486,16 @@ int main(int argc, char **argv)
   tc1->SetGrid();
   
   for (int iCh = 0 ; iCh < nChs ; iCh++)
-    SPE[iCh]->Draw("HIST");
+    SPE[iCh]->Draw("HIST SAME");
   
   TString outFileName = "";
 
   // GDS 
   //outFileName = "../../../RootData/PMT_NB0";
   
-  outFileName = "./HV_SPE/PMT_NB0";
-  
   for (int iCh = 0 ; iCh < nChs ; iCh++){
+    
+    outFileName = "./HV_SPE/PMT_NB0";
     
     if (PMTs[iCh] < 100){
       outFileName += "0";
