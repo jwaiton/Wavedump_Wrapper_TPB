@@ -89,7 +89,7 @@ int main(int argc, char **argv)
   // randomSeedTime();
   
   // switch on/off debugging messages
-  bool doComment = true;
+  bool doComment = false;
   
   // Number of channels of recorded data to read.
   // Keep hard coded as temporary measure.
