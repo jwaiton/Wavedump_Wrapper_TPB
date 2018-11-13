@@ -89,7 +89,10 @@ int main(int argc, char **argv)
   char   digitiser = 'V';
   
   // Number of channels of recorded data to read.
-  static const int nChs = 1;;
+  static const int nChs = 2;
+
+  cout << " DATA_DIR = " << getenv("DATA_DIR") << endl;
+  TString inputFileName = getenv("DATA_DIR");
   
   // static const int nChs = atoi(argv[1]);
   
@@ -230,8 +233,8 @@ int main(int argc, char **argv)
    double xMax  = 204.;
   
    int    intsPerHeader  = 6;
-   int    intsPerTrigger = 1030;
-   int    intsPerEvent   = 1024;
+   int    intsPerEvent = 1030;
+   int    intsPerPulse   = 1024;
    
    double aoff        = 2700;
    
@@ -239,20 +242,20 @@ int main(int argc, char **argv)
      nBins = 102;
      xMax  = 204.;
      
-     intsPerTrigger = 122;
-     intsPerEvent   = 110;
+     intsPerEvent = 122;
+     intsPerPulse = 110;
      
-     aoff           = 8700;
+     aoff         = 8700;
      
    }
    else if( digitiser == 'D' ){
      nBins = 1024;
      xMax  = 204.8;
      
-     intsPerTrigger = 1030;
-     intsPerEvent   = 1024;
+     intsPerEvent = 1030;
+     intsPerPulse = 1024;
 
-     aoff        = 2700;
+     aoff         = 2700;
      
    
    }
@@ -291,34 +294,33 @@ int main(int argc, char **argv)
   int counter = 0;
   //TString inputFileName = "../../../BinaryData/PMT";
 
+  // "../../Data/wave_%d.dat",
+  
   for (int iCh = 0 ; iCh < nChs ; iCh++){
-    
-    char inputFileName[200]= "";
 
-    sprintf(inputFileName,
-	    "./wave_%d.dat", // "../../Data/wave_%d.dat",
-	    iCh); 
-    
-    if( digitiser == 'V' )
-      sprintf(inputFileName,
-	      "./wave_%d_VME.dat", // "../../Data/wave_%d.dat",
-	      iCh); 
-
-    // GDS check name format
-    // sprintf(inputFileName,
-    // 	    "../../Data/wave%d_hv%d.dat",
-    // 	    iCh,iHVStep); 
+    if     ( digitiser == 'D'){
+      inputFileName.Form(inputFileName +
+			 "/wave_%d_Desktop.dat", 
+			 iCh); 
+    }
+    else if( digitiser == 'V' ){
+      inputFileName.Form(inputFileName +
+			 "/wave_%d.dat", 
+			 iCh); 
+    }
     
     cout << endl;
     cout << " inputFileName = " << inputFileName << endl;    
 	   
     ifstream fin(inputFileName);
     
-
+    
     for (int i = 0 ; i < intsPerHeader; i++ ){
       //Read in the header for the script
       int header = 0.;
       fin.read((char*)&header,sizeof(int));
+      
+      cout << " header = " << header << endl;  
       
     }
     counter = 0;
@@ -331,9 +333,9 @@ int main(int argc, char **argv)
       if (counter%10000==0)
 	printf("Waveform Progress: %d \n", counter);
       
-      //Records and ind. waveform into
+      // Records and ind. waveform into
       
-      for (int i=0; i < intsPerTrigger; i++){
+      for (int i = 0; i < intsPerEvent; i++){
 
 	// Read in result.
 	
@@ -344,7 +346,7 @@ int main(int argc, char **argv)
 	  unsigned short result=0.;  //changed from float
 	  fin.read((char*)&result,2);  //sizeof(float) 
 	  
-	  if (i < intsPerEvent ){
+	  if (i < intsPerPulse ){
 	    double flip_signal = (float(result)-aoff)*-1.0;
 	    Wave->SetBinContent(i+1,flip_signal);
 	    
@@ -357,7 +359,7 @@ int main(int argc, char **argv)
 	  float result=0.;
 	  fin.read((char*)&result,sizeof(float));
 	
-	  if (i < intsPerEvent ){
+	  if (i < intsPerPulse ){
 	    double flip_signal = (result-aoff)*-1.0;
 	    Wave->SetBinContent(i+1,flip_signal);
 	  }

@@ -1,5 +1,3 @@
-
-//Standard library include files.
 #include <cstdlib>
 #include <fstream>
 #include <string>
@@ -19,12 +17,12 @@
 
 using namespace std;
 
-
 int main(int argc, char **argv)
 {
-  // !!!!!
-  //randomSeedTime();
-	
+
+  // get shell variable for data location
+  cout << " DATA_DIR = " << getenv("DATA_DIR") << endl;
+  
   int channel[4]={0,0,0,0};
   char answer;
   char histname[200]= "";
