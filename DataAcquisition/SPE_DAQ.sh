@@ -36,7 +36,7 @@ then
 elif  [ "$location" = "Edinburgh" ]
 then
     sleep 10
-    { cat startDAQ.txt ; sleep 600 ; cat endDAQ.txt ; } | wavedump
+    { cat startDAQ.txt ; sleep 10 ; cat endDAQ.txt ; } | wavedump
 elif  [ "$location" = "Test" ]
 then
     echo -e "\n"
