@@ -1,71 +1,107 @@
-SPE_Gen.o SPE_Gen.d: SPE_Gen.cpp /usr/local/include/root/TApplication.h \
- /usr/local/include/root/TObject.h /usr/local/include/root/RConfigure.h \
- /usr/local/include/root/Rtypes.h /usr/local/include/root/RtypesCore.h \
- /usr/local/include/root/RConfig.h /usr/local/include/root/RVersion.h \
- /usr/local/include/root/DllImport.h /usr/local/include/root/snprintf.h \
- /usr/local/include/root/strlcpy.h \
- /usr/local/include/root/TGenericClassInfo.h \
- /usr/local/include/root/TSchemaHelper.h \
- /usr/local/include/root/TIsAProxy.h \
- /usr/local/include/root/TVirtualIsAProxy.h \
- /usr/local/include/root/TStorage.h \
- /usr/local/include/root/TVersionCheck.h \
- /usr/local/include/root/TQObject.h /usr/local/include/root/TError.h \
- /usr/local/include/root/TList.h /usr/local/include/root/TSeqCollection.h \
- /usr/local/include/root/TCollection.h \
- /usr/local/include/root/TIterator.h /usr/local/include/root/TString.h \
- /usr/local/include/root/TMathBase.h \
- /usr/local/include/root/RStringView.h \
- /usr/local/include/root/RWrap_libcpp_string_view.h \
- /usr/local/include/root/libcpp_string_view.h \
- /usr/local/include/root/TVirtualQConnection.h \
- /usr/local/include/root/TInterpreter.h \
- /usr/local/include/root/TDictionary.h /usr/local/include/root/TNamed.h \
- /usr/local/include/root/ESTLType.h \
- /usr/local/include/root/TVirtualMutex.h \
- /usr/local/include/root/TApplicationImp.h \
- /usr/local/include/root/TCanvas.h /usr/local/include/root/TPad.h \
- /usr/local/include/root/TVirtualPad.h /usr/local/include/root/TAttPad.h \
- /usr/local/include/root/TVirtualX.h /usr/local/include/root/TAttLine.h \
- /usr/local/include/root/TAttFill.h /usr/local/include/root/TAttText.h \
- /usr/local/include/root/TAttMarker.h /usr/local/include/root/GuiTypes.h \
- /usr/local/include/root/Buttons.h /usr/local/include/root/TAttBBox2D.h \
- /usr/local/include/root/TPoint.h /usr/local/include/root/TAttCanvas.h \
- /usr/local/include/root/TCanvasImp.h /usr/local/include/root/TF1.h \
- /usr/local/include/root/TFormula.h /usr/local/include/root/TBits.h \
- /usr/local/include/root/TObjArray.h \
- /usr/local/include/root/TMethodCall.h \
- /usr/local/include/root/Math/ParamFunctor.h \
- /usr/local/include/root/TH1D.h /usr/local/include/root/TH1.h \
- /usr/local/include/root/TAxis.h /usr/local/include/root/TAttAxis.h \
- /usr/local/include/root/TArrayD.h /usr/local/include/root/TArray.h \
- /usr/local/include/root/TArrayC.h /usr/local/include/root/TArrayS.h \
- /usr/local/include/root/TArrayI.h /usr/local/include/root/TArrayF.h \
- /usr/local/include/root/Foption.h /usr/local/include/root/TVectorFfwd.h \
- /usr/local/include/root/TVectorDfwd.h \
- /usr/local/include/root/TFitResultPtr.h \
- /usr/local/include/root/TFitResult.h \
- /usr/local/include/root/Fit/FitResult.h \
- /usr/local/include/root/Math/IFunctionfwd.h \
- /usr/local/include/root/Math/IParamFunctionfwd.h \
- /usr/local/include/root/TMatrixDSym.h \
- /usr/local/include/root/TMatrixTSym.h \
- /usr/local/include/root/TMatrixTBase.h \
- /usr/local/include/root/TMatrixFBasefwd.h \
- /usr/local/include/root/TMatrixDBasefwd.h \
- /usr/local/include/root/TMatrixTUtils.h \
- /usr/local/include/root/TMatrixDSymfwd.h \
- /usr/local/include/root/TMatrixDUtils.h \
- /usr/local/include/root/TMatrixDUtilsfwd.h \
- /usr/local/include/root/TObject.h /usr/local/include/root/TFile.h \
- /usr/local/include/root/TDirectoryFile.h \
- /usr/local/include/root/TDirectory.h /usr/local/include/root/TBuffer.h \
- /usr/local/include/root/TDatime.h /usr/local/include/root/TUUID.h \
- /usr/local/include/root/TMap.h /usr/local/include/root/THashTable.h \
- /usr/local/include/root/TUrl.h \
- /usr/local/include/root/ROOT/TRWSpinLock.hxx \
- /usr/local/include/root/ROOT/TSpinMutex.hxx \
- /usr/local/include/root/TGraphErrors.h /usr/local/include/root/TGraph.h \
- /usr/local/include/root/TMultiGraph.h /usr/local/include/root/TF1.h \
- /usr/local/include/root/TLegend.h /usr/local/include/root/TPave.h \
- /usr/local/include/root/TBox.h /usr/local/include/root/TGraph.h
+SPE_Gen.o SPE_Gen.d: SPE_Gen.cpp \
+  /Applications/root_v6.13.02-build/include/TApplication.h \
+  /Applications/root_v6.13.02-build/include/TObject.h \
+  /Applications/root_v6.13.02-build/include/RConfigure.h \
+  /Applications/root_v6.13.02-build/include/Rtypes.h \
+  /Applications/root_v6.13.02-build/include/RtypesCore.h \
+  /Applications/root_v6.13.02-build/include/ROOT/RConfig.h \
+  /Applications/root_v6.13.02-build/include/RVersion.h \
+  /Applications/root_v6.13.02-build/include/DllImport.h \
+  /Applications/root_v6.13.02-build/include/snprintf.h \
+  /Applications/root_v6.13.02-build/include/strlcpy.h \
+  /Applications/root_v6.13.02-build/include/TGenericClassInfo.h \
+  /Applications/root_v6.13.02-build/include/TSchemaHelper.h \
+  /Applications/root_v6.13.02-build/include/TIsAProxy.h \
+  /Applications/root_v6.13.02-build/include/TVirtualIsAProxy.h \
+  /Applications/root_v6.13.02-build/include/TStorage.h \
+  /Applications/root_v6.13.02-build/include/TVersionCheck.h \
+  /Applications/root_v6.13.02-build/include/TQObject.h \
+  /Applications/root_v6.13.02-build/include/TError.h \
+  /Applications/root_v6.13.02-build/include/TList.h \
+  /Applications/root_v6.13.02-build/include/TSeqCollection.h \
+  /Applications/root_v6.13.02-build/include/TCollection.h \
+  /Applications/root_v6.13.02-build/include/TIterator.h \
+  /Applications/root_v6.13.02-build/include/TString.h \
+  /Applications/root_v6.13.02-build/include/TMathBase.h \
+  /Applications/root_v6.13.02-build/include/ROOT/RStringView.hxx \
+  /Applications/root_v6.13.02-build/include/ROOT/TypeTraits.hxx \
+  /Applications/root_v6.13.02-build/include/ROOT/RArrayView.hxx \
+  /Applications/root_v6.13.02-build/include/ROOT/rhysd_array_view.hxx \
+  /Applications/root_v6.13.02-build/include/TVirtualRWMutex.h \
+  /Applications/root_v6.13.02-build/include/TVirtualMutex.h \
+  /Applications/root_v6.13.02-build/include/TVirtualQConnection.h \
+  /Applications/root_v6.13.02-build/include/TInterpreter.h \
+  /Applications/root_v6.13.02-build/include/TDictionary.h \
+  /Applications/root_v6.13.02-build/include/TNamed.h \
+  /Applications/root_v6.13.02-build/include/ESTLType.h \
+  /Applications/root_v6.13.02-build/include/TApplicationImp.h \
+  /Applications/root_v6.13.02-build/include/TCanvas.h \
+  /Applications/root_v6.13.02-build/include/TPad.h \
+  /Applications/root_v6.13.02-build/include/TVirtualPad.h \
+  /Applications/root_v6.13.02-build/include/TAttPad.h \
+  /Applications/root_v6.13.02-build/include/TVirtualX.h \
+  /Applications/root_v6.13.02-build/include/TAttLine.h \
+  /Applications/root_v6.13.02-build/include/TAttFill.h \
+  /Applications/root_v6.13.02-build/include/TAttText.h \
+  /Applications/root_v6.13.02-build/include/TAttMarker.h \
+  /Applications/root_v6.13.02-build/include/GuiTypes.h \
+  /Applications/root_v6.13.02-build/include/Buttons.h \
+  /Applications/root_v6.13.02-build/include/TAttBBox2D.h \
+  /Applications/root_v6.13.02-build/include/TPoint.h \
+  /Applications/root_v6.13.02-build/include/TAttCanvas.h \
+  /Applications/root_v6.13.02-build/include/TCanvasImp.h \
+  /Applications/root_v6.13.02-build/include/TF1.h \
+  /Applications/root_v6.13.02-build/include/TFormula.h \
+  /Applications/root_v6.13.02-build/include/TBits.h \
+  /Applications/root_v6.13.02-build/include/TObjArray.h \
+  /Applications/root_v6.13.02-build/include/TMethodCall.h \
+  /Applications/root_v6.13.02-build/include/Math/Types.h \
+  /Applications/root_v6.13.02-build/include/TROOT.h \
+  /Applications/root_v6.13.02-build/include/TDirectory.h \
+  /Applications/root_v6.13.02-build/include/TBuffer.h \
+  /Applications/root_v6.13.02-build/include/TDatime.h \
+  /Applications/root_v6.13.02-build/include/TUUID.h \
+  /Applications/root_v6.13.02-build/include/TF1AbsComposition.h \
+  /Applications/root_v6.13.02-build/include/TMath.h \
+  /Applications/root_v6.13.02-build/include/Math/ParamFunctor.h \
+  /Applications/root_v6.13.02-build/include/TH1D.h \
+  /Applications/root_v6.13.02-build/include/TH1.h \
+  /Applications/root_v6.13.02-build/include/TAxis.h \
+  /Applications/root_v6.13.02-build/include/TAttAxis.h \
+  /Applications/root_v6.13.02-build/include/TArrayD.h \
+  /Applications/root_v6.13.02-build/include/TArray.h \
+  /Applications/root_v6.13.02-build/include/TArrayC.h \
+  /Applications/root_v6.13.02-build/include/TArrayS.h \
+  /Applications/root_v6.13.02-build/include/TArrayI.h \
+  /Applications/root_v6.13.02-build/include/TArrayF.h \
+  /Applications/root_v6.13.02-build/include/Foption.h \
+  /Applications/root_v6.13.02-build/include/Fit/FitExecutionPolicy.h \
+  /Applications/root_v6.13.02-build/include/TVectorFfwd.h \
+  /Applications/root_v6.13.02-build/include/TVectorDfwd.h \
+  /Applications/root_v6.13.02-build/include/TFitResultPtr.h \
+  /Applications/root_v6.13.02-build/include/TFitResult.h \
+  /Applications/root_v6.13.02-build/include/Fit/FitResult.h \
+  /Applications/root_v6.13.02-build/include/Math/IFunctionfwd.h \
+  /Applications/root_v6.13.02-build/include/Math/IParamFunctionfwd.h \
+  /Applications/root_v6.13.02-build/include/TMatrixDSym.h \
+  /Applications/root_v6.13.02-build/include/TMatrixTSym.h \
+  /Applications/root_v6.13.02-build/include/TMatrixTBase.h \
+  /Applications/root_v6.13.02-build/include/TMatrixFBasefwd.h \
+  /Applications/root_v6.13.02-build/include/TMatrixDBasefwd.h \
+  /Applications/root_v6.13.02-build/include/TMatrixTUtils.h \
+  /Applications/root_v6.13.02-build/include/TMatrixDSymfwd.h \
+  /Applications/root_v6.13.02-build/include/TMatrixDUtils.h \
+  /Applications/root_v6.13.02-build/include/TMatrixDUtilsfwd.h \
+  /Applications/root_v6.13.02-build/include/TFile.h \
+  /Applications/root_v6.13.02-build/include/TDirectoryFile.h \
+  /Applications/root_v6.13.02-build/include/TMap.h \
+  /Applications/root_v6.13.02-build/include/THashTable.h \
+  /Applications/root_v6.13.02-build/include/TUrl.h \
+  /Applications/root_v6.13.02-build/include/ROOT/TRWSpinLock.hxx \
+  /Applications/root_v6.13.02-build/include/ROOT/TSpinMutex.hxx \
+  /Applications/root_v6.13.02-build/include/TGraphErrors.h \
+  /Applications/root_v6.13.02-build/include/TGraph.h \
+  /Applications/root_v6.13.02-build/include/TMultiGraph.h \
+  /Applications/root_v6.13.02-build/include/TLegend.h \
+  /Applications/root_v6.13.02-build/include/TPave.h \
+  /Applications/root_v6.13.02-build/include/TBox.h
