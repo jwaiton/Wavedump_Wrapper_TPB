@@ -50,7 +50,7 @@ echo DAQ and manage the output data.
 # echo How many PMTs are you testing? e.g. 4
 # read nPMTs
 
-nPMTs=2
+nPMTs=1
 
 for ((iPMT=0;iPMT<$nPMTs;iPMT++)); do
 

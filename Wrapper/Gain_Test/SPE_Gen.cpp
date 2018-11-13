@@ -89,7 +89,10 @@ int main(int argc, char **argv)
   char   digitiser = 'D';
   
   // Number of channels of recorded data to read.
-  static const int nChs = 1;;
+  static const int nChs = 1;
+
+  cout << " DATA_DIR = " << getenv("DATA_DIR") << endl;
+  TString inputFileName = getenv("DATA_DIR");
   
   // static const int nChs = atoi(argv[1]);
   
@@ -230,8 +233,8 @@ int main(int argc, char **argv)
    double xMax  = 204.;
   
    int    intsPerHeader  = 6;
-   int    intsPerTrigger = 1030;
-   int    intsPerEvent   = 1024;
+   int    intsPerEvent = 1030;
+   int    intsPerPulse   = 1024;
    
    double aoff        = 2700;
    
@@ -239,21 +242,21 @@ int main(int argc, char **argv)
      nBins = 102;
      xMax  = 204.;
      
-     intsPerTrigger = 122;
-     intsPerEvent   = 110;
+     intsPerEvent = 122;
+     intsPerPulse = 110;
      
-     aoff           = 8700;
+     aoff         = 8700;
      
    }
    else if( digitiser == 'D' ){
      nBins = 1024;
      xMax  = 204.8;
      
-     intsPerTrigger = 1030;
-     intsPerEvent   = 1024;
+     intsPerEvent = 1030;
+     intsPerPulse = 1024;
 
-     aoff           = 2700;
-     
+     aoff         = 2700;
+    
    
    }
    else{
@@ -289,36 +292,30 @@ int main(int argc, char **argv)
   
   // counter: for outputing progress
   int counter = 0;
-  //TString inputFileName = "../../../BinaryData/PMT";
-
+  
   for (int iCh = 0 ; iCh < nChs ; iCh++){
-    
-    char inputFileName[200]= "";
 
-    sprintf(inputFileName,
-	    "./wave_%d.dat", // "../../Data/wave_%d.dat",
-	    iCh); 
-    
-    if( digitiser == 'V' )
-      sprintf(inputFileName,
-	      "./wave_%d_VME.dat", // "../../Data/wave_%d.dat",
-	      iCh); 
-
-    // GDS check name format
-    // sprintf(inputFileName,
-    // 	    "../../Data/wave%d_hv%d.dat",
-    // 	    iCh,iHVStep); 
+    if     ( digitiser == 'D'){
+      inputFileName.Form(inputFileName +
+			 "/wave_%d.dat", 
+			 iCh); 
+    }
+    else if( digitiser == 'V' ){
+      inputFileName.Form(inputFileName +
+			 "/wave_%d_VME.dat", 
+			 iCh); 
+    }
     
     cout << endl;
     cout << " inputFileName = " << inputFileName << endl;    
-	   
+    
     ifstream fin(inputFileName);
     
-
+    int header = 0;
     for (int i = 0 ; i < intsPerHeader; i++ ){
-      //Read in the header for the script
-      int header = 0.;
+      header = 0.;
       fin.read((char*)&header,sizeof(int));
+      cout << " header = " << header << endl;  
       
     }
     counter = 0;
@@ -331,9 +328,9 @@ int main(int argc, char **argv)
       if (counter%10000==0)
 	printf("Waveform Progress: %d \n", counter);
       
-      //Records and ind. waveform into
+      // Records and ind. waveform into
       
-      for (int i=0; i < intsPerTrigger; i++){
+      for (int i = 0; i < intsPerEvent; i++){
 
 	// Read in result.
 	
@@ -344,7 +341,7 @@ int main(int argc, char **argv)
 	  unsigned short result=0.;  //changed from float
 	  fin.read((char*)&result,2);  //sizeof(float) 
 	  
-	  if (i < intsPerEvent ){
+	  if (i < intsPerPulse ){
 	    double flip_signal = (float(result)-aoff)*-1.0;
 	    Wave->SetBinContent(i+1,flip_signal);
 	    
@@ -357,7 +354,7 @@ int main(int argc, char **argv)
 	  float result=0.;
 	  fin.read((char*)&result,sizeof(float));
 	
-	  if (i < intsPerEvent ){
+	  if (i < intsPerPulse ){
 	    double flip_signal = (result-aoff)*-1.0;
 	    Wave->SetBinContent(i+1,flip_signal);
 	  }
@@ -369,17 +366,6 @@ int main(int argc, char **argv)
       // Determine the location of the peak
       int    binmax  = Wave->GetMaximumBin(); 
       double maxtime = Wave->GetXaxis()->GetBinCenter(binmax);
-      
-//        cout << " binmax = " << binmax << endl;
-//        cout << " maxtime = " << maxtime << endl;
-       
-//        maxtime = 90.;
-//        binmax  = 45;
-
-//        if( maxtime > 80. && maxtime < 100. ){
-// 	 cout << " maxtime = " << maxtime << endl;
-// 	 cout << " binmax  = " << binmax  << endl;
-//        }
        
        if(doComment)
 	 printf("maxtime: %f\n",maxtime);
@@ -407,19 +393,16 @@ int main(int argc, char **argv)
 	   maxtime < timeHigh     ){
 
 	 //Define the accumulators
-	 double A0 = 0;double A1=0;
-	 double A2 = 0;double A3=0;
-	 double A4 = 0;double A5=0;
+	 double A0 = 0; double A1=0;
+	 double A2 = 0; double A3=0;
+	 double A4 = 0; double A5=0;
 	 double A6 = 0;
 	 	 
 	 for (int i = 1; i <= nBins; i++){
 	   
 	   int time = i;
-	   if (time >= gates[0] && 
-	       time <= gates[1]){
-	     
+	   if (time >= gates[0] && time <= gates[1]){
 	     A0 += Wave->GetBinContent(i);
-	   
 	   }	
 	   if (time>=gates[1] && time<=gates[2]){
 
@@ -438,6 +421,7 @@ int main(int argc, char **argv)
 	     A4+=Wave->GetBinContent(i);
 	   }
 	   if (time>=gates[5] && time<=gates[6]){
+	   
 	     A5+=Wave->GetBinContent(i);
 	   }
 	   if (time>=gates[6] && time<=gates[7]){
@@ -490,9 +474,6 @@ int main(int argc, char **argv)
   
   TString outFileName = "";
 
-  // GDS 
-  //outFileName = "../../../RootData/PMT_NB0";
-  
   for (int iCh = 0 ; iCh < nChs ; iCh++){
     
     outFileName = "./HV_SPE/PMT_NB0";
