@@ -70,6 +70,7 @@
 #include "TApplication.h"
 #include "TCanvas.h"
 #include "TH1D.h"
+#include "TH2D.h"
 #include "TF1.h"
 #include "TFitResult.h"
 #include "TObject.h"
@@ -93,8 +94,6 @@ int main(int argc, char **argv)
 
   cout << " DATA_DIR = " << getenv("DATA_DIR") << endl;
   TString inputFileName = getenv("DATA_DIR");
-  
-  // static const int nChs = atoi(argv[1]);
   
   // switch on/off debugging messages
   bool doComment = false;
@@ -209,7 +208,6 @@ int main(int argc, char **argv)
       aQuestion.Form(aQuestion + 
 		     "%d is in Channel %d Biased at %d Volts \n",
 		     PMTs[iCh], iCh, HVs_Step[iCh]);
-      
       cout << aQuestion;
      
     }
@@ -292,10 +290,11 @@ int main(int argc, char **argv)
   
   // counter: for outputing progress
   int counter = 0;
-  //TString inputFileName = "../../../BinaryData/PMT";
 
-  // "../../Data/wave_%d.dat",
-  
+  TH2F * hQT = new TH2F("hTQ","hTQ",
+			128, 0., 100.,
+			128, 0., 1000);
+    
   for (int iCh = 0 ; iCh < nChs ; iCh++){
 
     if     ( digitiser == 'D'){
@@ -313,7 +312,6 @@ int main(int argc, char **argv)
     cout << " inputFileName = " << inputFileName << endl;    
 	   
     ifstream fin(inputFileName);
-    
     
     for (int i = 0 ; i < intsPerHeader; i++ ){
       //Read in the header for the script
@@ -337,18 +335,17 @@ int main(int argc, char **argv)
       
       for (int i = 0; i < intsPerEvent; i++){
 
-	// Read in result.
-	
-	// ------------------------------------
+
 	// ----------- VME digitiser ----------
 	
+	double flip_signal = 0;
 	if     ( digitiser == 'V' ){
 	  unsigned short result=0.;  //changed from float
 	  fin.read((char*)&result,2);  //sizeof(float) 
 	  
 	  if (i < intsPerPulse ){
-	    double flip_signal = (float(result)-aoff)*-1.0;
-	    Wave->SetBinContent(i+1,flip_signal);
+	    flip_signal = (float(result)-aoff)*-1.0;
+	    
 	    
 	 }
 	  
@@ -360,29 +357,24 @@ int main(int argc, char **argv)
 	  fin.read((char*)&result,sizeof(float));
 	
 	  if (i < intsPerPulse ){
-	    double flip_signal = (result-aoff)*-1.0;
-	    Wave->SetBinContent(i+1,flip_signal);
+	    flip_signal = (result-aoff)*-1.0;
 	  }
 	  
 	}
-      
+	
+	cout << " flip_signal = " << flip_signal << endl;
+	
+	Wave->SetBinContent(i+1,flip_signal);
+	
+	//hTQ->Fill(i+1,flip_signal);
       }
+    
       
+  
       // Determine the location of the peak
       int    binmax  = Wave->GetMaximumBin(); 
       double maxtime = Wave->GetXaxis()->GetBinCenter(binmax);
       
-//        cout << " binmax = " << binmax << endl;
-//        cout << " maxtime = " << maxtime << endl;
-       
-//        maxtime = 90.;
-//        binmax  = 45;
-
-//        if( maxtime > 80. && maxtime < 100. ){
-// 	 cout << " maxtime = " << maxtime << endl;
-// 	 cout << " binmax  = " << binmax  << endl;
-//        }
-       
        if(doComment)
 	 printf("maxtime: %f\n",maxtime);
 
