@@ -31,43 +31,40 @@ int main(int argc, char **argv)
   // !!!!!
   //randomSeedTime();
 	
-
-	
-	int channel[4]={0,0,0,0};
-	char answer;
-	char histname[200]= "";
-	int test;
-	int Gain[4]={0,0,0,0};
-	
-	
-	//Read in the HV data ====================================================================================
-	string hvfile = "../HVScan.txt";
-	ifstream file(hvfile.c_str());
-	string hvdat;
-	
-	vector<int> PMT_number(125,0), HV(125,0);
-	vector<vector<int>> HVstep;
-	vector<int> step(5,0);
-	for (int i=0; i<125; i++)
-		HVstep.push_back(step);
-	
-	for (int i=0; i<125; i++){
-		for (int j=0; j<7; j++){
-			file >> hvdat;
+  int channel[4]={0,0,0,0};
+  char answer;
+  char histname[200]= "";
+  int test;
+  int Gain[4];
+  
+  //Read in the HV data ====================================================================================
+  string hvfile = "../HVScan.txt";
+  ifstream file(hvfile.c_str());
+  string hvdat;
+  
+  vector<int> PMT_number(125,0), HV(125,0);
+  vector<vector<int>> HVstep;
+  vector<int> step(5,0);
+  for (int i=0; i<125; i++)
+    HVstep.push_back(step);
+  
+  for (int i=0; i<125; i++){
+    for (int j=0; j<7; j++){
+      file >> hvdat;
 			int pmt_info =atof(hvdat.c_str());
 			if (j==0){
-				PMT_number[i]=pmt_info;
+			  PMT_number[i]=pmt_info;
 			}
 			if (j!=0 && j!=6){
-				HVstep[i][j-1]=pmt_info;
+			  HVstep[i][j-1]=pmt_info;
 			}
 			if (j==6){
 				HV[i]=pmt_info;
 			}
 			//printf("j %d, val %d \n",j,pmt_info);
-		}
-	}
-	//========================================================================================================
+    }
+  }
+  //========================================================================================================
 	
 	while(answer!='Y'&& answer!='y'){
 		
