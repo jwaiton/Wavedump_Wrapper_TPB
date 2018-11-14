@@ -478,7 +478,7 @@ int main(int argc, char **argv)
   for (int iCh = 0 ; iCh < nChs ; iCh++)
     SPE[iCh]->Draw("HIST SAME");
   
-  hTV->Draw("colz");
+  //hTV->Draw("colz");
   
   TString outFileName = "";
 
