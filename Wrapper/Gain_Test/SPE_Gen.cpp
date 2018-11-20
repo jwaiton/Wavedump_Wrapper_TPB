@@ -87,17 +87,18 @@ int main(int argc, char **argv)
   
   // 'D' - Desktop
   // 'V' - VME
-  char   digitiser = 'V';
+  char   digitiser = '';
   
-  // Number of channels of recorded data to read.
+  // Number of channels of binary data to read.
   static const int nChs = 1;
   
   cout << " DATA_DIR = " << getenv("DATA_DIR") << endl;
   TString inputFileName = getenv("DATA_DIR");
   
-  // switch on/off debugging messages
+  // Switch on/off debugging messages
   bool doComment = false;
   
+  // Return after 500,000 events
   bool testMode = true;
   
   int PMTs[nChs];
@@ -119,7 +120,8 @@ int main(int argc, char **argv)
   // HV steps
    vector<int> HV_settings(6,0);
    
-   // Read in 5 values for all PMT 
+   // Read in HV settings for all PMT 
+   // HV 1,2,3,4,5, Nominal
    for (int i = 0; i < 125; i++)
      HV_Settings_file.push_back(HV_settings);
    
@@ -237,27 +239,43 @@ int main(int argc, char **argv)
     int    intsPerEvent  = 1030;
     int    intsPerPulse  = 1024;
 
-    double aoff        = 2700;
-
+    double aoff          = 2700;
+    
+    float  vRange = 2.0;
+    float  nVBins = 4096.;
+    float  sampleRate = .5; // in GHz
+    
     if     ( digitiser == 'V' ){
+      nVBins = 16384.;
+      sampleRate = 0.5;
+      
       nBins = 102;
       xMax  = 204.;
 
       intsPerEvent = 122;
       intsPerPulse = 110;
-
+      
       aoff         = 8700;
+      aoff         = 0;
 
     }
     else if( digitiser == 'D' ){
+      
+      nVBins = 4096.; 
+      sampleRate = 5.;
+      
+      //!!! verify this
+      //!!! what is the acquisition window
       nBins = 1024;
       xMax  = 204.8;
+      xMax  = 102.;
 
       intsPerEvent = 1030;
       intsPerPulse = 1024;
 
       aoff         = 2700;
-
+      aoff         = 0;
+      
     }
     else{
 
@@ -265,32 +283,43 @@ int main(int argc, char **argv)
       return -1;
     }
 
+    float LSB  = vRange / nVBins;
+    float kilo  = 1.0e3;      
+    
+    float nsPerSample = 1./sampleRate;
+    
     // Store waveform for processing
-   TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",
-			 nBins,xMin,xMax);
-
+    TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",
+			  nBins,xMin,xMax);
+    
    // Single Photoelectron Spectra with averaged accumulators
    TH1D **SPE = new TH1D*[nChs];	
    for (int iCh = 0 ; iCh < nChs ; iCh++){
      sprintf(histname, "SPE%d",iCh);
-     SPE[iCh] = new TH1D(histname,"Single Photo-Electron; Charge (mV-ns); Counts",
+     SPE[iCh] = new TH1D(histname,
+			 "Single Photo-Electron; Charge (mV-ns); Counts",
 			 1500.0,-500.0,2000.0);
    }
 
    TH2F * hTV = new TH2F("hTV","hTV",
 			 128, 0., 120.,
 			 128, 0., 1000);
+   
+   TH1F * hMaxT   = new TH1F("hMaxT",
+			     "hMaxT; Time at pulse maximum (ns)",
+			     intsPerPulse,0., nsPerSample*intsPerPulse);
+   TH1F * hQ      = new TH1F("hQ","hQ; Charge (mV nS)",1024,-500,2000.);
 
-   TH1F * hMaxT     = new TH1F("hMaxT","hMaxT; Time at pulse maximum [aka maxtime] (ns)",intsPerEvent,0., 2*intsPerEvent);
-   TH1F * hQ        = new TH1F("hQ","hQ; Charge (mV nS)",1024,-500,2000.);
-   TH2F * hMaxT_Q = new TH2F("hMaxT_Q","hMaxT_Q; Time at pulse maximum [aka maxtime] (ns) ; charge (mV ns)  ",
-			       intsPerEvent,0., 2*intsPerEvent,
-			       1024,-500.0,2000.);
-
-
+   TH2F * hMaxT_Q = new TH2F("hMaxT_Q",
+			     "hMaxT_Q; Time at pulse maximum (ns) ; charge (mV ns)  ",
+			     intsPerPulse,0., nsPerSample*intsPerPulse,
+			     1024,-500.0,2000.);
+   
+   cout << endl;
+   cout << " time max = " << nsPerSample*intsPerPulse << endl;
 
    TH2F * hSample_VDC = new TH2F("hSample_VDC","hSample_VDC; Sample ; VDC",
-				 intsPerEvent,0.0, intsPerEvent,
+				 intsPerPulse,0.0, intsPerPulse,
 				 1024,-500.0,16384.);
 
    int totalwaves[nChs];
@@ -298,15 +327,11 @@ int main(int argc, char **argv)
      totalwaves[iCh] = 0;  
 
    //================= Read in the headers and assigns values for things=============
-
-
    //================= Read in waveforms of length 102 or 1024==================
-
-
+   
    // counter: for outputing progress
    int counter = 0;
-
-
+   
    for (int iCh = 0 ; iCh < nChs ; iCh++){
 
      if     ( digitiser == 'D'){
@@ -322,18 +347,22 @@ int main(int argc, char **argv)
 
      cout << endl;
      cout << " inputFileName = " << inputFileName << endl;    
-
+     
+     
      ifstream fin(inputFileName);
-
+     
      int header = 0;
      for (int i = 0 ; i < intsPerHeader; i++ ){
        header = 0.;
        fin.read((char*)&header,sizeof(int));
 
-       if( i         == 0   && 
-	   header    == 244 &&
-	   digitiser != 'V'){
-
+       if( i == 0 && 
+	   (( header    == 244 &&
+	      digitiser != 'V' ) || 
+	   ( header    == 4120 &&
+	     digitiser != 'D'))
+	   ){
+	 
 	 cerr << " incorrect digitiser selection" << endl;
 	 return -1;
 
@@ -343,37 +372,55 @@ int main(int argc, char **argv)
      }
      counter = 0;
 
-     int sigMin = 30;
-     int sigMax = 45;
+     float sigTMin = 60;
+     float sigTMax = 90;
+     
+     float pedTMin = 30;
+     float pedTMax = 60;
+     
+     float trigTime = 75.;
+     float window   = 30.;
+       
+//      if( digitiser == 'D')
+//        trigTime = 110.;
 
-     int pedMin = 15;
-     int pedMax = 30;
+//      sigTMin = trigTime - 0.5*window;
+//      sigTMax = trigTime + 0.5*window;
+
+//      pedTMin = trigTime - 1.5*window;
+//      pedTMax = trigTime - 0.5*window;
     
-    float QDC_counts = 0;
-    
-    while ( fin.is_open() && 
-	    fin.good()    && 
-	    !fin.eof()
-	    ){
-      counter++;
 
-      
-
+     int nPed = 0;
+     int nSig = 0;
+     
+     float QDC_counts = 0.;
+     float time       = 0.;
+       
+     while ( fin.is_open() && 
+	     fin.good()    && 
+	     !fin.eof()
+	     ){
+       counter++;
+       
       if (counter%10000==0)
 	printf("Waveform Progress: %d \n", counter);
       
       if( testMode && 
 	  counter > 500000)
 	break;
-
+      
       // Records and ind. waveform into
       
       QDC_counts = 0;
+      time = -99999.9;
+
+      nPed = 0;
+      nSig = 0;
       
       for (int i = 0; i < intsPerEvent; i++){
-
-	// ----------- VME digitiser ----------
 	
+	// ----------- VME digitiser ----------
 	double flip_signal = 0;
 	float VDC = 0.;
 	if     ( digitiser == 'V' ){
@@ -382,11 +429,13 @@ int main(int argc, char **argv)
 	  
 	  VDC = (float)result;
 	  
+// 	  cout << endl;
+// 	  cout << " result = " << result << endl;
+	  
 	  if (i < intsPerPulse ){
 	    flip_signal = (float(result)-aoff)*-1.0;
 	    
-	    
-	 }
+	  }
 	  
 	}
 	// ---------------------------------------
@@ -403,31 +452,37 @@ int main(int argc, char **argv)
 	  
 	}
 	
+	time = (float)(i * nsPerSample);
+	
 	Wave->SetBinContent(i+1,flip_signal);
 	
 	hTV->Fill(i+1,flip_signal);
 	
 	hSample_VDC->Fill(i,VDC);
 	
-	if     ( i >  (pedMin)  &&
-		 i <= (pedMax) ) {
+	if     ( time >= (pedTMin)  &&
+		 time <  (pedTMax) ) {
 	  
 	  QDC_counts -= flip_signal;
-	  
+	  nPed++;
 	}
-	else if( i >   (sigMin+1) &&
-		 i <=  (sigMax+1) ){
+	else if( time >= (sigTMin) &&
+		 time <  (sigTMax) ){
 	  
 	  QDC_counts += flip_signal;
-	  
+	  nSig++;
 	}
 	
-// 	cout << endl;
-// 	cout << " QDC_counts, flip_signal, i = " << QDC_counts <<  ", " <<  flip_signal <<  ", " <<  i  << endl;
+//  	cout << endl;
+//  	cout << " QDC_counts, flip_signal, i, time  = " 
+// 	     <<   QDC_counts  <<  ", " 
+// 	     <<   flip_signal <<  ", " 
+// 	     <<   i           <<  ", " 
+// 	     <<   time        << endl;
 	
        
       }
-
+     
 //       cout << endl;
 //       cout << " QDC_counts " << QDC_counts <<  endl;
       
@@ -435,10 +490,38 @@ int main(int argc, char **argv)
       int    binmax  = Wave->GetMaximumBin(); 
       double maxtime = Wave->GetXaxis()->GetBinCenter(binmax);
 
-      QDC_counts = QDC_counts*2.0/16384.0*2.0e3;
+      //cout << " maxtime = " << maxtime << endl;
+      
+      if     ( digitiser == 'D' ){
+	QDC_counts = QDC_counts*.2/4096.0*1.0e3;
+	//QDC_counts = QDC_counts * LSB /sampleRate * kilo;
+      }
+      else if( digitiser == 'V' ){
+	QDC_counts = QDC_counts*2.0/16384.0*2.0e3;
+	//QDC_counts = QDC_counts * LSB /sampleRate * kilo;
+      }
+      else
+	return -1;
+
+//       cout << endl;
+//       cout << " nPed = " << nPed << endl;
+//       cout << " nSig = " << nSig << endl;
+      
+      
+//       if( QDC_counts > 0.0 ){
+// 	cout << endl;
+// 	cout << " QDC_counts = " << QDC_counts << endl;
+// 	cout << " time       = " << time << endl;
+//       }
 
       hMaxT->Fill(maxtime);
       hQ->Fill(QDC_counts);
+
+      if(maxtime > 110){
+	
+	cout <<  " maxtime = " << maxtime << endl;
+      
+      }
       hMaxT_Q->Fill(maxtime,QDC_counts);
       
       if(doComment)
@@ -517,7 +600,6 @@ int main(int argc, char **argv)
 	if( digitiser == 'V' )
 	  WaveCharge =  ADC_Counts*2.0/16384.0*2.0e3;
 	
-	
 	SPE[iCh]->Fill(WaveCharge);
 	
 	if( doComment )
@@ -536,8 +618,8 @@ int main(int argc, char **argv)
     // close wavedump file
     fin.close();	
   
-  } // end: for (int iCh = 0 ; iCh 
-  
+   } // end: for (int iCh = 0 ; iCh 
+   
   //Print out total number of waves for the relative quantum efficiency
   for (int iCh = 0 ; iCh < nChs ; iCh++)
     printf("Total Triggers from Wave %d: %d \n", iCh, totalwaves[iCh]);
@@ -560,6 +642,9 @@ int main(int argc, char **argv)
   
   SPE[0]->SetLineColor(kRed);
   SPE[0]->Draw("HIST SAME");
+  SPE[0]->Draw();
+
+  //  hMaxT_Q->Draw("colz");
   
   TString outFileName = "";
 
