@@ -87,7 +87,7 @@ int main(int argc, char **argv)
   
   // 'D' - Desktop
   // 'V' - VME
-  char   digitiser = '';
+  char   digitiser = 'D';
   
   // Number of channels of binary data to read.
   static const int nChs = 1;
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
   bool doComment = false;
   
   // Return after 500,000 events
-  bool testMode = true;
+  bool testMode = false;
   
   int PMTs[nChs];
   int HVs[nChs];
@@ -235,9 +235,9 @@ int main(int argc, char **argv)
     double xMin  = 0.;
     double xMax  = 204.;
 
-    int    intsPerHeader = 6;
-    int    intsPerEvent  = 1030;
-    int    intsPerPulse  = 1024;
+    int    intsPerHeader   = 6;
+    int    datumsPerEvent  = 1030;
+    int    samplesPerPulse = 1024;
 
     double aoff          = 2700;
     
@@ -252,11 +252,11 @@ int main(int argc, char **argv)
       nBins = 102;
       xMax  = 204.;
 
-      intsPerEvent = 122;
-      intsPerPulse = 110;
+      datumsPerEvent = 122;
+      samplesPerPulse = 110;
       
       aoff         = 8700;
-      aoff         = 0;
+      //aoff         = 0;
 
     }
     else if( digitiser == 'D' ){
@@ -264,17 +264,14 @@ int main(int argc, char **argv)
       nVBins = 4096.; 
       sampleRate = 5.;
       
-      //!!! verify this
-      //!!! what is the acquisition window
       nBins = 1024;
       xMax  = 204.8;
-      xMax  = 102.;
 
-      intsPerEvent = 1030;
-      intsPerPulse = 1024;
+      datumsPerEvent = 1030;
+      samplesPerPulse = 1024;
 
       aoff         = 2700;
-      aoff         = 0;
+      //      aoff         = 0;
       
     }
     else{
@@ -307,19 +304,19 @@ int main(int argc, char **argv)
    
    TH1F * hMaxT   = new TH1F("hMaxT",
 			     "hMaxT; Time at pulse maximum (ns)",
-			     intsPerPulse,0., nsPerSample*intsPerPulse);
+			     samplesPerPulse,0., nsPerSample*samplesPerPulse);
    TH1F * hQ      = new TH1F("hQ","hQ; Charge (mV nS)",1024,-500,2000.);
 
    TH2F * hMaxT_Q = new TH2F("hMaxT_Q",
 			     "hMaxT_Q; Time at pulse maximum (ns) ; charge (mV ns)  ",
-			     intsPerPulse,0., nsPerSample*intsPerPulse,
+			     samplesPerPulse,0., nsPerSample*samplesPerPulse,
 			     1024,-500.0,2000.);
    
    cout << endl;
-   cout << " time max = " << nsPerSample*intsPerPulse << endl;
+   cout << " time max = " << nsPerSample*samplesPerPulse << endl;
 
    TH2F * hSample_VDC = new TH2F("hSample_VDC","hSample_VDC; Sample ; VDC",
-				 intsPerPulse,0.0, intsPerPulse,
+				 samplesPerPulse,0.0, samplesPerPulse,
 				 1024,-500.0,16384.);
 
    int totalwaves[nChs];
@@ -353,7 +350,7 @@ int main(int argc, char **argv)
      
      int header = 0;
      for (int i = 0 ; i < intsPerHeader; i++ ){
-       header = 0.;
+       header = 0;
        fin.read((char*)&header,sizeof(int));
 
        if( i == 0 && 
@@ -372,11 +369,11 @@ int main(int argc, char **argv)
      }
      counter = 0;
 
-     float sigTMin = 60;
-     float sigTMax = 90;
+     float sigTMin = 100;
+     float sigTMax = 120.;
      
-     float pedTMin = 30;
-     float pedTMax = 60;
+     float pedTMin = 80.;
+     float pedTMax = 100;
      
      float trigTime = 75.;
      float window   = 30.;
@@ -418,7 +415,7 @@ int main(int argc, char **argv)
       nPed = 0;
       nSig = 0;
       
-      for (int i = 0; i < intsPerEvent; i++){
+      for (int i = 0; i < datumsPerEvent; i++){
 	
 	// ----------- VME digitiser ----------
 	double flip_signal = 0;
@@ -432,7 +429,7 @@ int main(int argc, char **argv)
 // 	  cout << endl;
 // 	  cout << " result = " << result << endl;
 	  
-	  if (i < intsPerPulse ){
+	  if (i < samplesPerPulse ){
 	    flip_signal = (float(result)-aoff)*-1.0;
 	    
 	  }
@@ -446,10 +443,15 @@ int main(int argc, char **argv)
 	
 	  VDC = result;
 	  
-	  if (i < intsPerPulse ){
+	  if (i < samplesPerPulse ){
 	    flip_signal = (result-aoff)*-1.0;
 	  }
 	  
+	}
+	
+	if( flip_signal < 0.){
+	  cerr << " Error: flip signal went negative " << endl;
+	  return -1; 
 	}
 	
 	time = (float)(i * nsPerSample);
@@ -517,11 +519,6 @@ int main(int argc, char **argv)
       hMaxT->Fill(maxtime);
       hQ->Fill(QDC_counts);
 
-      if(maxtime > 110){
-	
-	cout <<  " maxtime = " << maxtime << endl;
-      
-      }
       hMaxT_Q->Fill(maxtime,QDC_counts);
       
       if(doComment)
@@ -640,11 +637,11 @@ int main(int argc, char **argv)
   hMaxT->Draw();
   hQ->Draw();
   
-  SPE[0]->SetLineColor(kRed);
-  SPE[0]->Draw("HIST SAME");
-  SPE[0]->Draw();
+  //SPE[0]->SetLineColor(kRed);
+  //SPE[0]->Draw("HIST SAME");
+  //  SPE[0]->Draw();
 
-  //  hMaxT_Q->Draw("colz");
+  //hMaxT_Q->Draw("colz");
   
   TString outFileName = "";
 
