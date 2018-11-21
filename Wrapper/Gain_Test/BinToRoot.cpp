@@ -67,9 +67,19 @@ int ProcessBinaryFile(string fileName,
 		      char digitiser = 'D',
 		      int  verbosity = 0
 		      ){
-  
+
+  // Read from here
   ifstream fileStream(fileName);
-  
+
+  // Write to here
+//   TFile * outFile    = new TFile("outputFile.root");
+//   TTree * eventTree  = new TTree("eventTree");
+//   TTree * sampleTree = new TTree("sampleTree");
+
+//   eventTree->Branch("eventNumber",
+// 		    &eventNumber,
+// 		    "eventNumber/L");
+
   int   nEvents = 0,  fileHeader  = 0, sample = 0;
   float VDC     = 0., eventHeader = 0.;    
 
@@ -198,10 +208,10 @@ int main(int argc, char **argv)
   string fileName = "../../Data/wave_0_VME.dat";
   
   // 0 - silence, 1 - event-by-event, 2 - sample-by-sample
-  int  verbosity   = 0;
+  int  verbosity   = 2;
   
-  if( digitiser == 'D' )
-    fileName = "../../Data/wave_0.dat";
+  // if( digitiser == 'V' )
+//     fileName = "../../Data/wave_0.dat";
   
   cout << " The binary file is called  " << fileName << endl;
   
