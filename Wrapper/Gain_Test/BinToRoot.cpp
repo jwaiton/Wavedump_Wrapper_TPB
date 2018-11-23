@@ -72,18 +72,39 @@ int ProcessBinaryFile(string fileName,
   ifstream fileStream(fileName);
 
   // Write to here
-//   TFile * outFile    = new TFile("outputFile.root");
-//   TTree * eventTree  = new TTree("eventTree");
-//   TTree * sampleTree = new TTree("sampleTree");
-
-//   eventTree->Branch("eventNumber",
-// 		    &eventNumber,
-// 		    "eventNumber/L");
-
-  int   nEvents = 0,  fileHeader  = 0, sample = 0;
-  float VDC     = 0., eventHeader = 0.;    
-
+  TFile * outFile    = new TFile("outputFile.root",
+				 "RECREATE",
+				 "Wavedump Data");
+  //---------------------
+  // Event Level Data
+  TTree * eventTree  = new TTree("eventTree",
+				 "event-level variables");
+  
+  
+  int   event = -1;
   float minVDC = 0., maxVDC = 0.;  
+  
+  short sampleArr[10000000];
+  
+  eventTree->Branch("event",&event,"event/I");
+  eventTree->Branch("minVDC",&minVDC,"minVDC/F");
+  eventTree->Branch("maxVDC",&maxVDC,"maxVDC/F");
+
+  //---------------------
+  // Sample Level Data
+
+  short VDC = 0, sample = 0;
+  
+  int   fileHeader  = 0;
+  int   eventHeader = 0.;    
+  float floatVDC = 0.;
+  
+  TTree * sampleTree = new TTree("sampleTree",
+				 "sample-level variables");  
+  
+  sampleTree->Branch("event",&event,"event/I");
+  sampleTree->Branch("sample",&sample,"sample/S");
+  sampleTree->Branch("VDC",&VDC,"VDC/S");
   
   // read in data from streamer object
   // until the end of the file
@@ -91,14 +112,11 @@ int ProcessBinaryFile(string fileName,
 	  fileStream.good()    && 
 	  !fileStream.eof()       ){
     
-    nEvents++;
-    
-    //  if ( nEvents%10000 == 0)
-     //    printf("Waveform Progress: %d \n", nEvents);
+    event++;
     
     // data to be recorded for each pulse
     sample = 0;
-    VDC    = 0.;    
+    VDC    = 0;    
     
     eventHeader = 0.;    
     
@@ -120,7 +138,8 @@ int ProcessBinaryFile(string fileName,
       // check first header value matches expectations
       // NB other values may be acceptable so modify
       // isCorrectDigitiser() as appropriate
-      if ( iHeader == 0 && nEvents == 1 &&
+      if ( iHeader == 0 && 
+	   event   == 0 &&
 	   !isCorrectDigitiser(fileHeader,
 			       digitiser)  ) {
 	
@@ -128,25 +147,20 @@ int ProcessBinaryFile(string fileName,
       }
     } // end: for (int i = 0 ; i < intsPerHeader
     
-    unsigned short shortResult = 0.;
-    
     // read in pulse which comes 
     // in 2 (VME) or 4 (Desktop) bit chunks
-    for (int sample = 0; sample < getNSamples(digitiser); sample++){
+    for (short iSample = 0; iSample < getNSamples(digitiser); iSample++){
       
       VDC = 0;
       
       if     ( digitiser == 'V' ){
-	shortResult = 0;    
-	
-	fileStream.read((char*)&shortResult,2); //read 2 bits
-	VDC = (float)shortResult;
+	fileStream.read((char*)&VDC,2); //read 2 bits
       }
       
       else if( digitiser == 'D' ){
 	
-	fileStream.read((char*)&VDC,sizeof(float));// read 4 bits
-	
+	fileStream.read((char*)&floatVDC,sizeof(float));// read 4 bits
+	VDC = (short)floatVDC;
       }
       else {
 	
@@ -165,8 +179,12 @@ int ProcessBinaryFile(string fileName,
       //--------------------------------
       // Write sample by sample data here
       
+      sample = iSample;
+
+      sampleTree->Fill();
+      
       if(verbosity > 1)
-	cout << " VDC(" << sample << ") = " << VDC << endl;
+	cout << " VDC(" << iSample << ") = " << VDC << endl;
       
     }
     
@@ -177,10 +195,12 @@ int ProcessBinaryFile(string fileName,
     //--------------------------------
     // Write event by event data here
     
+    eventTree->Fill();
+    
     if(verbosity > 0){
       cout << endl;
-      cout << " minVDC(" << nEvents << ") = " << minVDC << endl;
-      cout << " maxVDC(" << nEvents << ") = " << maxVDC << endl;
+      cout << " minVDC(" << event << ") = " << minVDC << endl;
+      cout << " maxVDC(" << event << ") = " << maxVDC << endl;
       
       if(verbosity > 2)
 	cout << endl;
@@ -193,9 +213,18 @@ int ProcessBinaryFile(string fileName,
 
   //--------------------------------
   // Write file info here
+
+  sampleTree->Write();
+  sampleTree->Delete();
+
+  eventTree->Write();
+  eventTree->Delete();
+
+  outFile->Write();
+  outFile->Close();
   
   
-  return nEvents;
+  return (event+1);
 }
 
 
@@ -208,10 +237,10 @@ int main(int argc, char **argv)
   string fileName = "../../Data/wave_0_VME.dat";
   
   // 0 - silence, 1 - event-by-event, 2 - sample-by-sample
-  int  verbosity   = 2;
+  int  verbosity   = 0;
   
-  // if( digitiser == 'V' )
-//     fileName = "../../Data/wave_0.dat";
+  if( digitiser == 'D' )
+    fileName = "../../Data/wave_0.dat";
   
   cout << " The binary file is called  " << fileName << endl;
   
