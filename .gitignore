@@ -48,3 +48,4 @@ Wavedump_Wrapper/
 .subversion/
 .vim/
 .viminfo
+.gitconfig
