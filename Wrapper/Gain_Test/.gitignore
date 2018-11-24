@@ -1,2 +1,7 @@
-Old_HV_SPE 
-HV_SPE 
+Old_HV_SPE/
+HV_SPE
+SPE_Fit.d
+SPE_Fit.o
+SPE_Fit_altered.cpp
+SPE_Gen.d
+SPE_Gen.o
