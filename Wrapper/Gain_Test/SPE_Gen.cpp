@@ -27,7 +27,9 @@ int main(int argc, char **argv)
 	int channel[4]={0,0,0,0};
 	char answer;
 	char histname[200]= "";
+//	char pmt[4];
 	int test;
+//	char hvtest[3];
 	int Gain[4]={0,0,0,0};
 	
 	
@@ -65,7 +67,7 @@ int main(int argc, char **argv)
 		cout << "Input the PMT number in Channel 0 \n" ;
 		cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
 		cin  >> channel[0]; 
-		cout <<endl;
+				cout <<endl;
 		
 		cout << "Input the PMT number in Channel 1 \n" ;
 		cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
@@ -85,6 +87,8 @@ int main(int argc, char **argv)
 		cout << "Please Specify which HV Test (1, 2, 3, 4, or 5)"<< endl;
 		cin>>test;
 		
+//		sprintf(hvtest,"hv%d",test);
+		
 		for (int i=0;i<125; i++){
 			for(int j=0; j<4; j++){
 				
@@ -100,11 +104,16 @@ int main(int argc, char **argv)
 		cout <<"Please verifiy the following: "<<endl;
 		for (int i=0; i<4; i++){
 			if (channel[i]<10)
+				//sprintf(pmt, "000%d",channel[i]);
 				sprintf(histname,"NB000%d is in Channel %d Biased at %d Volts \n",channel[i], i, Gain[i]);
 			if (channel[i]>=10 && channel[i] <100)
+				//springf(pmt, "00%d",channel[i]);
 				sprintf(histname,"NB00%d is in Channel %d Biased at %d Volts \n",channel[i],  i, Gain[i]);
 			if (channel[i]>=100)
+				//sprintf(pmt, "0%d",channel[i];
 				sprintf(histname,"NB0%d is in Channel %d  Biased at %d Volts \n",channel[i],  i, Gain[i]);
+			if (channel[i]>=1000)
+				//sprintf(pmt, "%d",channel[i]);
 			cout << histname ;
 		}
 		
@@ -118,7 +127,7 @@ int main(int argc, char **argv)
 	
 	
 	//Stores one waveform for processing
-	TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",1024,0,204.8);
+	TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",102,0,204);
 	
 	
 	//Single Photoelectron Spectra with averaged accumulators
@@ -134,15 +143,15 @@ int main(int argc, char **argv)
 	//================= Reads in the headers and assigns values for things=============
 	
 
-	//================= Reads in waveforms of length 1024 ==================
+	//================= Reads in waveforms of length 102 ==================
 
 	//Include a counter to know the code is still running
 	int counter = 0;
 	for (int w=0; w<4; w++){
-
+		
 		char filename[200]= "";
 		//sprintf(filename,"../../Data/wave_%d.dat",w);
-		sprintf(filename,"../../Data/wave_%d.dat",w);
+		sprintf(filename,"../../Data/wave_%d.dat",w); //sprintf(filename, "../../TestResults/PMT%d/GainTest/wave_%d_%d.dat",pmt,w,hvtest);
 		ifstream fin(filename);
 		
 		for (int i=0; i<6; i++){
@@ -159,15 +168,15 @@ int main(int argc, char **argv)
 				printf("Waveform Progress: %d \n", counter);
 	 
 			//Records and ind. waveform into
-			for (int i=0; i<1030; i++){
+			for (int i=0; i<122; i++){
 				//Read in result.
-				float result=0.;
-				fin.read((char*)&result,sizeof(float));
+			  unsigned short result=0.;  //changed from float
+			  fin.read((char*)&result,2);  //sizeof(float)
 			
-				if (i<1024){
+				if (i<110){
 					//inact an arbitrary offset in the data to make the peak
-					double aoff = 2700;
-					double flip_signal = (result-aoff)*-1.0;
+					double aoff = 8700;
+					double flip_signal = (float(result)-aoff)*-1.0;
 					Wave->SetBinContent(i+1,flip_signal);
 				
 				}
@@ -179,15 +188,15 @@ int main(int argc, char **argv)
 		        double maxtime = Wave->GetXaxis()->GetBinCenter(binmax);
 			//printf("maxtime: %f\n",maxtime);
 		
-			int gates[8] ={binmax-300,binmax-200,binmax-100,binmax,binmax+100,binmax+200,binmax+300,binmax+400};
+			int gates[8] ={binmax-30,binmax-20,binmax-10,binmax,binmax+10,binmax+20,binmax+30,binmax+40};
 			
 
 
 			//Peak must appear in reasonable location relative to the trigger
-			if (maxtime>60.0 && maxtime<124.8){
+			if (maxtime>60.0 && maxtime<124.0){
 				//Define the accumulators
 				double A0=0;double A1=0;double A2=0;double A3=0;double A4=0;double A5=0;double A6=0;
-				for (int i=1; i<=1024; i++){
+				for (int i=1; i<=102; i++){
 				
 					int time = i;
 					if (time>=gates[0] && time<=gates[1]){
@@ -224,7 +233,7 @@ int main(int argc, char **argv)
 
 				//Filling all the SPE
 				double ADC_Counts = A2+A3+A4-(A0+A1+A5+A6)*3.0/4.0;
-				double WaveCharge =  ADC_Counts*.2/4096.0*1.0e3;
+				double WaveCharge =  ADC_Counts*2.0/16384.0*2.0e3;
 				//printf("WaveCharge %f \n",WaveCharge);
 				SPE[w]->Fill(WaveCharge);
 			}
@@ -234,6 +243,7 @@ int main(int argc, char **argv)
 		}
 		
 		totalwaves[w]=counter;
+		SPE[w]->Scale(1./(counter));
 		//closes the wave-dump file
 		fin.close();	
 	}

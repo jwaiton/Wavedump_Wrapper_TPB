@@ -126,29 +126,29 @@ int main(int argc, char **argv)
 	TApplication *ta= new TApplication("ta",&argc,argv);
 	
 	//Stores one waveform for processing
-	TH1D* Wave = new TH1D("Wave","Waveform; Time (us); ADC Counts",20480,0,61.76);
+	TH1D* Wave = new TH1D("Wave","Waveform; Time (us); ADC Counts",5100,0,10.2); //2ns bins, 5100,0.,10.2 for 10.2us
 	
 	//Timing of the after-pulses
 	TH1D **TIME=new TH1D*[4];	
 	for (int w=0;w<4;w++){
 		sprintf(histname, "TIME%d",w);
-		TIME[w] = new TH1D(histname,"After-Pulsing; Time (usec) ; Counts",5000,-10.,30.);
+		TIME[w] = new TH1D(histname,"After-Pulsing; Time (usec) ; Counts",5100,0.,10.2); //2ns bins, 5100, 0., 10.2us
 	}
 	
-	TH1D* Search = new TH1D("Search", "Search Window; Time (ns); Charge (mV-ns)", 200, 0., 200.);
+	TH1D* Search = new TH1D("Search", "Search Window; Time (ns); Charge (mV-ns)", 100, 0., 200.); //2ns bins
 	
 	
 	for (int w=0; w<4; w++){
 		
 		char filename[200]= "";
-		sprintf(filename,"../../Data/wave%d.dat",w);
+		sprintf(filename,"../../BinaryData/PMT%d/APTest/wave_%d.dat",w); //TODO 
 		ifstream fin(filename);
 		
 		//================= Reads in the headers and assigns values for things=============
-		for (int i=0; i<6; i++){
+		for (int i=0; i<12; i++){ //11 lines of header data
 			//Read in the header for the script
 			int header=0.;
-			fin.read((char*)&header,sizeof(int));
+			fin.read((char*)&header,2);
 			//printf("P: %d\n",header);
 		}
 
@@ -164,16 +164,16 @@ int main(int argc, char **argv)
 			//if (counter>3200)
 		//		printf("Waveform Progress: %d \n",counter);
 			//Records and ind. waveform into
-			for (int i=0; i<20492; i++){
+			for (int i=0; i<5112; i++){  // <5112 for 10.2us of data 
 				//Read in result.
-				int result;
-				fin.read((char*)&result,sizeof(int));
+				unsigned short result;
+				fin.read((char*)&result,2);
 				// if(i<10)
 				// printf("P: %d\n",result);
-				if (i<20480){
-					//inact an arbitrary offset in the data to make the peak
-					int aoff = 540e6;
-					int flip_signal = (result)*-1+aoff;
+				if (i<5101){ // 5101 for 10.2us
+					//enact an arbitrary offset in the data to make the peak
+					int aoff = 8700; // 540e6;
+					int flip_signal = (float(result)-aoff)*-1;
 					Wave->SetBinContent(i+1,flip_signal);
 				}
 			}
@@ -182,7 +182,7 @@ int main(int argc, char **argv)
 			//Set up rolling windows of 60 usec =======================================================
 			int pastmax = 0;
 			// create loops for this background
-			for (int i=101; i<20000;i++){
+			for (int i=51; i<5101;i++){ //look for a pulse between 0.1us and 10.2 us (i<5101) 
 			
 				double background = 0;
 				double pulse = 0;
@@ -190,10 +190,11 @@ int main(int argc, char **argv)
 				double maxBack= 0;
 				int maxBin=0;
 			
-				for(int j=0; j<30; j++){
-				
-					background += Wave->GetBinContent(i+j-30);	
+				for(int j=0; j<30; j++){ 
+					// calculate the total pulse in a 60ns window
 					pulse += Wave->GetBinContent(i+j);
+					// calculate the total background either side of the 60ns pulse window
+					background += Wave->GetBinContent(i+j-30);	
 					background += Wave->GetBinContent(i+j+30);	
 				
 					//Also finding the max value in the window.
@@ -204,18 +205,19 @@ int main(int argc, char **argv)
 					}
 				}
 				//Determing if the charge exceeds 100 mV-ns
-				double ChargeDiff = (pulse-background*.5)/16384.0*1.0e3;
+				//calculate the difference in ADC counts and convert to mVns
+				double ChargeDiff = (pulse-background*0.5)*2/16384.0*2.0e3; 
 				//printf ("Charge Difference: %f \n",ChargeDiff);
 			
-				if (ChargeDiff>200.e4 ){
-				
-					for (int s=-100;s<100; s++){
-						Search->SetBinContent(s+1, Wave->GetBinContent(maxBin+s+1));
+				if (ChargeDiff>100){ // find pulses over 100mVns greater than the background (changed from 200.e4)
+					 //create a histogram 'Search' from 100ns before the pulse peak to 100 ns after 	
+					for (int s=-50.;s<50; s++){
+						Search->SetBinContent(s+1, Wave->GetBinContent(maxBin+s+1)); //2ns bins
 					}	
 				
 					int binmax = Search->GetMaximumBin()+maxBin; 
 					if (binmax != pastmax){
-						TIME[w]->Fill(Wave->GetXaxis()->GetBinCenter(binmax)-30.9);
+						TIME[w]->Fill(Wave->GetXaxis()->GetBinCenter(binmax)); //-30.9); where is this value from?
 						pastmax = binmax;
 					}
 				

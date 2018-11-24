@@ -72,10 +72,10 @@ void addGraph(double (*func)(double,double*),int color,double *p,double xmin,dou
 	tg1->SetLineWidth(2);
 	tg1->Draw("SAME");
 }
+
 //=========================================================================================================================================
 
-int main(int argc,char **argv){
-
+int main(int argc,char **argv){	
 
 	// ******************
 	// * Initialization *
@@ -149,7 +149,7 @@ int main(int argc,char **argv){
 				for(int h=0; h<5; h++){
 					if (channel[j]==PMT_number[i]){
 						pmtHV[j][h] =HVstep[i][h];
-						printf("Gain %d %d %d \n",pmtHV[j][h],j,h);
+						printf("HV %d Channel %d Test %d \n",pmtHV[j][h],j,h);
 					}
 				}
 			}
@@ -184,48 +184,49 @@ int main(int argc,char **argv){
 	// Data histogram.
 	//TH1D* sData=newTH1D("data","Single Photon Energy;Channel;Counts",2000,-1000,9000);
 	int PMT[4] = {channel[0],channel[1],channel[2],channel[3]};
+	double gainValues[4][5];  //creates an empty array for the gain value for each PMT and each step
 	
 	
-	vector<double> centroid(20,0), centroid_error(20,0),area(20,0), area_error(20,0);
+//	vector<double> centroid(20,0), centroid_error(20,0),area(20,0), area_error(20,0);
 	//char filename[30];
 	// Fitting the SPE Spectrum =======================================================================
-	for (int r=0;r<20;r++){
-			
-		
 	
+	for (int r=0;r<20;r++){ 
+
+		TCanvas *tc=new TCanvas("Canvas","ROOT Canvas",1);
+	        tc->Connect("TCanvas","Closed()","TApplication",gApplication,"Terminate()");
+        	tc->SetGrid();
+
 		// Create canvas, allowing for window close.
 	
 	
 		// *************************
 		// * Create output spectra *
 		// *************************
-		TCanvas *tc=new TCanvas("Canvas","ROOT Canvas",1);
-		tc->Connect("TCanvas","Closed()","TApplication",gApplication,"Terminate()");
-		tc->SetGrid();
 
-		int mod =0;
-
-		if (r<5)mod = PMT[0];if (r>=5&&r<10)mod = PMT[1];if (r>=10&&r<15) mod = PMT[2];if (r>=15) mod = PMT[3];	
-		int pmt = r%4;
-		int hv = r%5;
+//		if (r<5)mod = PMT[0];if (r>=5&&r<10)mod = PMT[1];if (r>=10&&r<15) mod = PMT[2];if (r>=15) mod = PMT[3];	[taken out for testing,LK]
+		int pmtChannel = r%4; // pmt channel [taken out for testing, LK]
+		int hv = r%5;  // gain test number [taken out for testing, LK]
+		int mod = PMT[pmtChannel]; // 0; // pmt number
 	
 		
 		if (mod<10)		
-			sprintf(histname, "HV_SPE/PMT_NB000%d_HV%d.root",mod, pmtHV[pmt][hv]);
+			sprintf(histname, "HV_SPE/PMT_NB000%d_HV%d.root",mod, pmtHV[pmtChannel][hv]); 
 		if (mod>=10 && mod <100)
-			sprintf(histname, "HV_SPE/PMT_NB00%d_HV%d.root",mod, pmtHV[pmt][hv]);
+			sprintf(histname, "HV_SPE/PMT_NB00%d_HV%d.root",mod, pmtHV[pmtChannel][hv]);
 		if (mod>=100)
-			sprintf(histname, "HV_SPE/PMT_NB0%d_HV%d.root",mod, pmtHV[pmt][hv]);
+			sprintf(histname, "HV_SPE/PMT_NB0%d_HV%d.root",mod, pmtHV[pmtChannel][hv]); 
 				
 		//printf("Voltage: 
 		TFile s(histname);
 		s.ls();
 		
 		char root_name[30];
-		sprintf(root_name, "SPE%d;1.root",mod);
-		//sprintf(root_name, "SPE%d;1.root",3);
+		sprintf(root_name, "SPE%d;1.root",pmtChannel); //changed from mod to pmt
+	 	//sprintf(root_name, "SPE%d;1.root",3);	
 		TH1D *speData = (TH1D*)s.Get(root_name);
-		
+
+		printf("Getting data from SPE spectrum...\n");
 		speData->GetYaxis()->SetTitle("Counts ");
 		speData->GetYaxis()->SetTitleOffset(1.5);
 		speData->GetXaxis()->SetTitle("Charge (mv*ns)");	
@@ -238,21 +239,21 @@ int main(int argc,char **argv){
 		//ns().SaveData("rawspec.root");
 	
 		// Draw spectrum.
-		speData->Draw();
-	
+		speData->Draw("same");
 		
 		// Fit the data.
+		/*
 		double fitXMin=20.;
 		
 		double fitXMax=400.;
 
 		
-		if (((r+1)%5)==3||((r+1)%5)==2){
+		if (hv==3||hv==2){ //if (((r+1)%5)==3||((r+1)%5)==2){
 			fitXMin = 70;
 			fitXMax = 1500;
 		}
 		
-		if (((r+1)%5)>3||((r+1)%5)==0){
+		if (hv>3||hv==0){ //if (((r+1)%5)>3||((r+1)%5)==0){
 			fitXMin = 50;
 			fitXMax = 2000;
 		}
@@ -261,15 +262,16 @@ int main(int argc,char **argv){
 
 		// Exponential background.
 		tf11->SetParameter(0,4.77335);
+
 		tf11->SetParameter(1,91.6516);		
 		tf11->SetParameter(2, 0.0000656504);
 
 		// Single photon gaussian.
 		tf11->SetParameter(3,195784);
 		tf11->SetParameter(4,158.745);
-		if (((r+1)%5)==3||((r+1)%5)==2)
+		if (hv==3||hv==2) //if (((r+1)%5)==3||((r+1)%5)==2)
 			tf11->SetParameter(4,200.745);
-		if (((r+1)%5)>3||((r+1)%5)==0)
+		if (hv>3||hv==0) //if (((r+1)%5)>3||((r+1)%5)==0)
 			tf11->SetParameter(4,300.745);
 		tf11->SetParameter(5,161.693);
 
@@ -286,78 +288,140 @@ int main(int argc,char **argv){
 		// Print results.
 		tfrp1->Print();
 		
-		area[r] =tf11->GetParameter(3);
-		area_error[r]=sqrt((tf11->GetParError(3))*(tf11->GetParError(3)));
+		area[r] =tf11->GetParameter(3); 
+		area_error[r]=sqrt((tf11->GetParError(3))*(tf11->GetParError(3))); 
 
-		centroid[r] =tf11->GetParameter(4);
-		centroid_error[r]=sqrt((tf11->GetParError(4))*(tf11->GetParError(4))+centroid[r]*centroid[r]/area[r])+centroid[r]*.03;
+		centroid[r] =tf11->GetParameter(4); 
+		centroid_error[r]=sqrt((tf11->GetParError(4))*(tf11->GetParError(4))+centroid[r]*centroid[r]/area[r])+centroid[r]*.03; 
 					
 		
 		
 		//Area of the curve
 		//cout<< "area under curve" << Area [r]<< endl;
 		//cout<< "area error" << AreaError[r] << endl;
-		printf("Centroid: %f \n",centroid[r]);
+		printf("Centroid: %f \n",centroid[r]); 
 	
 		//addGraph(skewedBackground,kGreen+2,tf11->GetParameters(),fitXMin,fitXMax);
 		addGraph(expBackground,kMagenta+2,tf11->GetParameters(),fitXMin,fitXMax);
 		addGraph(photon1Signal,kGreen+2,tf11->GetParameters(),fitXMin,fitXMax);
 		addGraph(photon2Signal,kCyan+2,tf11->GetParameters(),fitXMin,fitXMax);
 		//addGraph(photon3Signal,kOrange+3,tf11->GetParameters(),fitXMin,fitXMax);
-	
+		*/
+
 		// Update canvas.
 		tc->Update();
 		tc->Paint();
-		tc->Draw();
+		tc->Draw("same");
 		tc->Modified();
 		
+		
+		
+		//Find the value at the maximum
+//		double XMin=20.;
+		
+//		double XMax=400.;
+		//TODO change this to loop over the bins above 20mVns
+		double XMin=70.;
+		
+		double XMax=2000.;
+
+		
+		if (hv==3||hv==2||hv==1){ //if (((r+1)%5)==3||((r+1)%5)==2){
+			XMin = 70;
+			XMax = 2000;
+		}
+		
+		if (hv==0||hv==1){ //if (((r+1)%5)>3||((r+1)%5)==0){
+			XMin = 40;
+			XMax = 2000;
+		}
+
+		speData->GetXaxis()->SetRange((XMin*2+250),(XMax*2+250));
+		int binmax = speData->GetMaximumBin();
+		double xMax = speData->GetBinCenter(binmax);
+		printf(" voltage is  %d , charge is %f \n\n\n\n",pmtHV[pmtChannel][hv],xMax); 
+		float amplification = 10.0; //amplification via amplifier
+		float splitter = 2.0; //correction for use of splitter box
+		float impedence = 50.0;
+		double pmtGain = xMax*10e-12*splitter/amplification/impedence/(1.602*10e-19)/1e7; //conversion from charge in mVns to gain
+		gainValues[pmtChannel][hv] = pmtGain; //create a list of the gain values
 		
 		
 		// Enter run loop.
 		ta->Run("false");
 	}
-	// Making the HV fit ========================================================================
-	
-	for (int i=0;i<4;i++){
-		double fitMin = 1300.;
-		double fitMax = 1900.;
-		
-		double hv[5]={0,0,0,0,0};
-		double hv_error[5]={0,0,0,0,0};
 
-		double gain[5]={0,0,0,0,0};
-		double gain_error[5]={0,0,0,0,0};
+        
+	    
+	    
+	
+	// Making the HV fit ========================================================================
+	TGraph *Gain[4];
+
+	for (int i=0;i<4;i++){
+		int pmt = i;
+		
+		double hvVals[5]={0,0,0,0,0};
+
+		double gainVals[5]={0,0,0,0,0};
 
 		for (int j=0; j<5; j++){
-			hv[j] = pmtHV[i][j];
-			gain[j] = centroid[5*i+j];
-			gain_error[j] =centroid_error[5*i+j];	
+			hvVals[j] = pmtHV[i][j];
+			gainVals[j] = gainValues[i][j];
 			
 		}
+		
+	
+		//Plot gain vs voltage for each PMT
+		Gain[i] = new TGraph(5,hvVals,gainVals);
 
-		TGraphErrors *Voltage = new TGraphErrors(5,hv,gain,hv_error,gain_error);
+  		TString gain_name;
+		gain_name.Form("gain%d",pmt);
+		cout<<gain_name;
+
+		Gain[i]->SetMarkerStyle(2);
+		Gain[i]->SetMarkerSize(1);
+		Gain[i]->SetName(gain_name);
+		
+		//fit a curve of form y = 10*(kx)^n to the data
+		double fitMin = hvVals[0];
+		double fitMax = hvVals[4];
 		TF1 *f14 = new TF1("f14",fitPow,fitMin,fitMax,2);
 		f14->SetParameter(0,10);
 		f14->SetParameter(1,10);
+		f14->SetLineColor(pmt+1);
+		TFitResultPtr tfrp14=Gain[i]->Fit("f14","RSE");
 
-		TFitResultPtr tfrp14=Voltage->Fit("f14","RSE");
+		//Draw the plot plus fit
+		Gain[i]->Draw("AP");
+		Gain[i]->GetYaxis()->SetTitle("Gain (10^7)");
+		Gain[i]->GetXaxis()->SetTitle("Applied Voltage (V)");
+		TString Title;
+		Title.Form("Gain for PMT %d",PMT[i]);
+		Gain[i]->SetTitle(Title);
 		
-
 		//Bias for 10^7 GAIN ==========================================================================================================
-		double PMTgain = pow(35.0,1/f14->GetParameter(1))/(f14->GetParameter(0));
-		double PMTgainError = abs(pow(35.0,1/f14->GetParameter(1))/(f14->GetParameter(0))
-		                      -pow(35.0,1/(f14->GetParameter(1)+f14->GetParError(1)))/(f14->GetParameter(0)+f14->GetParError(0)));
-		printf("\n\n\n\n\n 10^7 Gain for PMT PMT0TEST%d: %f +/- %f \n\n\n\n\n", PMT[i],PMTgain,PMTgainError );
+//		double PMTgain = pow(35.0,1/f14->GetParameter(1))/(f14->GetParameter(0));
+//		double PMTgainError = abs(pow(35.0,1/f14->GetParameter(1))/(f14->GetParameter(0))
+//		                      -pow(35.0,1/(f14->GetParameter(1)+f14->GetParError(1)))/(f14->GetParameter(0)+f14->GetParError(0)));
+//		TODO This is a temporary calculation, which evaluates the operating voltage at 10^7 gain
+//		not based on the fit to the curve or on a fit to the peak
+//
+//		//calculate the operating voltage for 10^7 gain
+		double operatingHV = pow(1.0/10.,(1./f14->GetParameter(1)))/(f14->GetParameter(0)); //inverse of fit function with y=1 (ie y= 1e7 gain)
+		double operatingHVError = abs(pow(1.0/10.,(1./f14->GetParameter(1)))/(f14->GetParameter(0)) - pow(1.0/10.,(1./(f14->GetParameter(1)+f14->GetParError(1))))/(f14->GetParameter(0)+f14->GetParError(0)));
+		printf("\n\n\n\n\n Operating voltage for 10^7 Gain for PMT %d: %f  +/- %f \n\n\n\n\n", PMT[i],operatingHV, operatingHVError );
 		//=============================================================================================================================
-		TMultiGraph *mg = new TMultiGraph();
-		mg->Add(Voltage);
-		mg->Draw("AP");
-		mg->GetYaxis()->SetTitle("Gain (mv-ns)");
-		mg->GetXaxis()->SetTitle("Applied Voltage (V)");
+		
 		ta->Run("false");
 	
 		
 	}
+//	mg->Draw("AP");
+//	mg->GetYaxis()->SetTitle("Gain (10^7)");
+//	mg->GetXaxis()->SetTitle("Applied Voltage (V)");
+
+	ta->Run("false");
 	
 	return 0;
 }

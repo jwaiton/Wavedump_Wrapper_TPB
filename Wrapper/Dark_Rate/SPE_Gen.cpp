@@ -26,11 +26,11 @@ int main(int argc, char **argv)
 {
 	randomSeedTime();
 	
-	int channel[4]={0,0,0,0};
+	int channel[4]={0,0,0,0}; //pmt number
 	char answer;
 	char histname[200]= "";
-	int test;
-	int Gain[4]={0,0,0,0};
+//	int test;
+	int Gain[4]={0,0,0,0}; //HV applied (should be optimal operating voltage for 10^7 gain)
 	
 	
 	//Read in the HV data ====================================================================================
@@ -130,9 +130,9 @@ int main(int argc, char **argv)
 	TApplication *ta= new TApplication("ta",&argc,argv);
 	
 	//Stores one waveform for processing
-	TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",1024,0,1024);
+	TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",204,0,204);// 1024 for desktop digitiser NB should be a 2ns window
 	
-	//Single Photoelectron Spectra with averaged accumulators
+	//Single Photoelectron Spectra with averaged accumulators 2mVns bins
 	TH1D **SPE=new TH1D*[4];	
 	for (int w=0;w<4;w++){
 		sprintf(histname, "SPE%d",w);
@@ -141,7 +141,7 @@ int main(int argc, char **argv)
 
 	int totalwaves[4]={0,0,0,0};
 	double scales[4]={0,0,0,0};
-	//Expanded search window
+	//Expanded search window TODO is this really looking at a 200ns window? Do we want it to?
 	TH1D* Search = new TH1D("Search", "Search Window; Time (ns); ADC Counts", 200, 0., 200.);
 	
 	
@@ -175,16 +175,16 @@ int main(int argc, char **argv)
 				printf("Waveform Progress: %d \n", counter);
 			
 			//Records and ind. waveform into
-			for (int i=0; i<1030; i++){
+			for (int i=0; i<122; i++){
 				//Read in result.
-				float result=0.;
+				unsigned short result=0.;
 				fin.read((char*)&result,sizeof(float));
 				if(!fin.eof())
 					//printf("P: %f\n",result);
-				if (i<1024){
+				if (i<110){
 					//inact an arbitrary offset in the data to make the peak
-					double aoff = 2700;
-					double flip_signal = (result-aoff)*-1.0;
+					double aoff = 8700;
+					double flip_signal = (float(result)-aoff)*-1.0;
 					Wave->SetBinContent(i+1,flip_signal);
 				}
 			}
@@ -193,7 +193,7 @@ int main(int argc, char **argv)
 			//Set up rolling windows of 60 usec =======================================================
 		
 			// create loops for this background
-			for (int i=60; i<=1024; i++){
+			for (int i=60; i<=204; i++){ //scan waveform from bin 6 onward - 6ns onwards
 			
 				double background = 0;
 				double pulse = 0;
@@ -208,14 +208,14 @@ int main(int argc, char **argv)
 					//Also finding the max value in the window.
 					if (maxBack < Wave->GetBinContent(i+j-60)){
 				
-						maxBack = Wave->GetBinContent(i+j-60);
-						maxBin = i+j-60;
+						maxBack = Wave->GetBinContent(i+j-60); //maximum background adc counts
+						maxBin = i+j-60; 
 					}
 				}
 			
 			
 				//Determing if the charge exceeds 100 mV-ns
-				double ChargeDiff = (pulse-background)/4096.0*1.0e3;
+				double ChargeDiff = (pulse-background)*2/16384.0*2*2.0e3; //changed
 				//printf ("Charge Difference: %f \n",ChargeDiff);
 			
 				if (ChargeDiff>50.00){
@@ -224,20 +224,20 @@ int main(int argc, char **argv)
 						Search->SetBinContent(s+1, Wave->GetBinContent(maxBin+s+1));
 					}	
 				
-					int binmax = Search->GetMaximumBin()+maxBin; 
+					int binmax = Search->GetMaximumBin()+maxBin; // 
 				
 				
 					int gates[8] ={binmax-60,binmax-40,binmax-20,binmax,binmax+20,binmax+40,binmax+60,binmax+80};
 				
-					if(binmax+80<1024){
+					if(binmax+80<204){ //changed from binmax+80<1024
 						//Define the accumulators
 						double A0=0;double A1=0;double A2=0;double A3=0;double A4=0;double A5=0;double A6=0;
 		
 						//Shift the search window past the gates
-						i = binmax+80;
+						i = binmax+8; //80;
 				
 			
-						for (int b=1; b<1025; b++){
+						for (int b=1; b<205; b++){ //1025; b++){
 			
 							int time = b;
 							if (time>=gates[0] && time<gates[1]){
@@ -275,7 +275,7 @@ int main(int argc, char **argv)
 				
 		
 			
-						SPE[w]->Fill((A2+A3+A4-(A0+A1+A5+A6)*3.0/4.0)/4096.0*1.0e3);
+						SPE[w]->Fill((A2+A3+A4-(A0+A1+A5+A6)*3.0/4.0)*2/16834.0*2.0e3);
 		
 					}
 				}
@@ -285,8 +285,8 @@ int main(int argc, char **argv)
 			
 		}
 		
-		totalwaves[w]=counter;
-		scales[w]=1./(counter*1.e-9*(1024.-140.));
+		totalwaves[w]=counter; //number of dark pulses
+		scales[w]=1./(counter*1.e-9*(204-14.));//calculate scale factor - 1/ number of pulses per second??? 
 		SPE[w]->Scale(scales[w]);
 		fin.close();
 	}

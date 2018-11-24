@@ -69,20 +69,20 @@ int main(int argc, char **argv)
 		cin  >> channel[0]; 
 		cout <<endl;
 		
-		cout << "Input the PMT VOLTAGE in Channel 0 \n" ;
-		cout << "ENTER THE VOLTAGE IN VOLTS \n" <<endl;
-		cin  >> Gain[0]; 
-		cout <<endl;
+		//cout << "Input the PMT VOLTAGE in Channel 0 \n" ;
+		//cout << "ENTER THE VOLTAGE IN VOLTS \n" <<endl;
+		//cin  >> Gain[0]; 
+		//cout <<endl;
 		
 		cout << "Input the PMT number in Channel 1 \n" ;
 		cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
 		cin  >> channel[1]; 
 		cout <<endl;
 		
-		cout << "Input the PMT VOLTAGE in Channel 1 \n" ;
-		cout << "ENTER THE VOLTAGE IN VOLTS \n" <<endl;
-		cin  >> Gain[1]; 
-		cout <<endl;
+		//cout << "Input the PMT VOLTAGE in Channel 1 \n" ;
+		//cout << "ENTER THE VOLTAGE IN VOLTS \n" <<endl;
+		//cin  >> Gain[1]; 
+		//cout <<endl;
 		
 		
 		cout << "Input the PMT number in Channel 2 \n" ;
@@ -90,22 +90,30 @@ int main(int argc, char **argv)
 		cin  >> channel[2]; 
 		cout <<endl;
 		
-		cout << "Input the PMT VOLTAGE in Channel 2 \n" ;
-		cout << "ENTER THE VOLTAGE IN VOLTS \n" <<endl;
-		cin  >> Gain[2]; 
-		cout <<endl;
+		//cout << "Input the PMT VOLTAGE in Channel 2 \n" ;
+		//cout << "ENTER THE VOLTAGE IN VOLTS \n" <<endl;
+		//cin  >> Gain[2]; 
+		//cout <<endl;
 	
 		cout << "Input the PMT number in Channel 3 \n";
 		cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
 		cin  >> channel[3]; 
 		cout <<endl;
 		
-		cout << "Input the PMT VOLTAGE in Channel 3 \n" ;
-		cout << "ENTER THE VOLTAGE IN VOLTS \n" <<endl;
-		cin  >> Gain[3]; 
-		cout <<endl;
+		//cout << "Input the PMT VOLTAGE in Channel 3 \n" ;
+		//cout << "ENTER THE VOLTAGE IN VOLTS \n" <<endl;
+		//cin  >> Gain[3]; 
+		//cout <<endl;
 		
-		
+	     	for (int i=0;i<125; i++){
+		         for(int j=0; j<4; j++){
+				
+		        	 if (channel[j]==PMT_number[i]){
+					Gain[j]=HVstep[i][5];
+				 }
+			 }
+		}     //Automatic selection of Nominal voltage value.
+
 		cout <<"Please verifiy the following: "<<endl;
 		for (int i=0; i<4; i++){
 			if (channel[i]<10)
@@ -124,14 +132,14 @@ int main(int argc, char **argv)
 	}
 	
 	//Stores one waveform for processing
-	TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",1024,0,204.8);
+	TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",102,0,204); //changed from 1024,0,204.8 (LK)
 	
 	
 	//Single Photoelectron Spectra with averaged accumulators
 	TH1D **SPE=new TH1D*[4];	
 	for (int w=0;w<4;w++){
 		sprintf(histname, "SPE%d",w);
-		SPE[w] = new TH1D(histname,"Single Photo-Electron; Charge (mV-ns); Counts",1500.0,-500.0,2000.0);
+		SPE[w] = new TH1D(histname,"Single Photo-Electron; Charge (mV-ns); Counts",1500,-500.0,2000.0); //changed from 1500,-500.,1000.
 	}
 
 	int totalwaves[4]={0,0,0,0};
@@ -140,7 +148,7 @@ int main(int argc, char **argv)
 	//================= Reads in the headers and assigns values for things=============
 	
 
-	//================= Reads in waveforms of length 1024 ==================
+	//================= Reads in waveforms of length 102 ================== //changed to 102 (LK)
 
 	//Include a counter to know the code is still running
 	//cout << "got here " << endl;
@@ -165,35 +173,36 @@ int main(int argc, char **argv)
 				printf("Waveform Progress: %d \n", counter);
 	 
 			//Records and ind. waveform into
-			for (int i=0; i<1030; i++){
+			for (int i=0; i<122; i++){ //changed from 1030 (LK)
 				//Read in result.
-				float result=0.;
-				fin.read((char*)&result,sizeof(float));
+				unsigned short result=0.;
+				fin.read((char*)&result,2);//changed from sizeof float
 			
-				if (i<1024){
+				if (i<110){ //changed from 1024 (LK)
 					//inact an arbitrary offset in the data to make the peak
-					double aoff = 2700;
-					double flip_signal = (result-aoff)*-1.0;
+					double aoff = 8700; //changed from 2700 (LK)
+					double flip_signal = (float(result)-aoff)*-1.0;
 					Wave->SetBinContent(i+1,flip_signal);
-				
 				}
+			//	if (i==102 && counter%10000==0)
 			}
-	
+			
 		
 			//Determine the location of the peak
 			int binmax = Wave->GetMaximumBin(); 
-		     double maxtime = Wave->GetXaxis()->GetBinCenter(binmax);
-			//printf("maxtime: %f\n",maxtime);
+		        double maxtime = Wave->GetXaxis()->GetBinCenter(binmax);
+//			printf("maxtime: %f\n",maxtime);
 		
-			int gates[8] ={binmax-300,binmax-200,binmax-100,binmax,binmax+100,binmax+200,binmax+300,binmax+400};
+			int gates[8] ={binmax-30,binmax-20,binmax-10,binmax,binmax+10,binmax+20,binmax+30,binmax+40}; //divided bin nos by 10 (LK)
 			
 
 
 			//Peak must appear in reasonable location relative to the trigger
-			if (maxtime>60.0 && maxtime<124.8){
+			if (maxtime>60.0 && maxtime<124.0){ //changed from maxtime>60 && maxtime < 124.8
+				
 				//Define the accumulators
 				double A0=0;double A1=0;double A2=0;double A3=0;double A4=0;double A5=0;double A6=0;
-				for (int i=1; i<=1024; i++){
+				for (int i=1; i<=102; i++){ //changed from i<=1024
 				
 					int time = i;
 					if (time>=gates[0] && time<=gates[1]){
@@ -230,7 +239,7 @@ int main(int argc, char **argv)
 
 				//Filling all the SPE
 				double ADC_Counts = A2+A3+A4-(A0+A1+A5+A6)*3.0/4.0;
-				double WaveCharge =  ADC_Counts*.2/4096.0*1.0e3;
+				double WaveCharge =  ADC_Counts*2.0/16384.0*2.0e3; // changed from ADC_Counts*.2/4096.0*1.0e3 for 2ns 16384 = 2**14 (LK)
 				//printf("WaveCharge %f \n",WaveCharge);
 				SPE[w]->Fill(WaveCharge);
 			}
@@ -281,7 +290,7 @@ int main(int argc, char **argv)
 		SPE[i]->SaveAs(histname);
 	}
 		
-	
+		
 		
 	ta->Run();
 	
