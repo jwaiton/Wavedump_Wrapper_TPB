@@ -559,32 +559,50 @@ int main(int argc, char **argv)
 	
 	for (int i = 1; i <= nBins; i++){
 	  
+	  cout << endl;
+	  cout << " time = " << i << endl;
+
 	  int time = i;
-	  if (time >= gates[0] && time < gates[1]){
+	  if (time >= gates[0] && time <= gates[1]){
+	    
+	    cout << " AO = " << Wave->GetBinContent(i) << endl;
+	    
 	    A0 += Wave->GetBinContent(i);
 	  }	
-	  if (time >= gates[1] && time < gates[2]){
+	  if (time >= gates[1] && time <= gates[2]){
+	    
+	    cout << " A1 = " << Wave->GetBinContent(i) << endl;
 	    
 	    A1+=Wave->GetBinContent(i);
 	  }
-	  if (time >= gates[2] && time < gates[3]){
+	  if (time >= gates[2] && time <= gates[3]){
+	    
+	    cout << " A2 = " << Wave->GetBinContent(i) << endl;
 	    
 	    A2+=Wave->GetBinContent(i);
 	  }
-	  if (time >= gates[3] && time < gates[4]){
+	  if (time >= gates[3] && time <= gates[4]){
+	    
+	    cout << " A3 = " << Wave->GetBinContent(i) << endl;
 	    
 	    A3+=Wave->GetBinContent(i);
 	  }
-	  if (time >= gates[4] && time < gates[5]){
+	  if (time >= gates[4] && time <= gates[5]){
+	    
+	    cout << " A4 = " << Wave->GetBinContent(i) << endl;
 	    
 	    A4+=Wave->GetBinContent(i);
 	  }
-	  if (time >= gates[5] && time < gates[6]){
+	  if (time >= gates[5] && time <= gates[6]){
+	    
+	    cout << " A5 = " << Wave->GetBinContent(i) << endl;
 	    
 	    A5+=Wave->GetBinContent(i);
 	  }
-	  if (time >= gates[6] && time < gates[7]){
+	  if (time >= gates[6] && time <= gates[7]){
 	   
+	    cout << " A6 = " << Wave->GetBinContent(i) << endl;
+	    
 	    A6+=Wave->GetBinContent(i); 
 	  }
 	  
