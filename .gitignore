@@ -2,3 +2,5 @@
 *.o
 *~
 DataAcquisition/Instructions.txt
+.DS_Store
+Data/
