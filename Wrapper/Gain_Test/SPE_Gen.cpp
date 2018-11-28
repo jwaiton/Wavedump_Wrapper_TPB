@@ -87,7 +87,7 @@ int main(int argc, char **argv)
   
   // 'D' - Desktop
   // 'V' - VME
-  char   digitiser = 'D';
+  char   digitiser = 'V';
   
   // Number of channels of binary data to read.
   static const int nChs = 1;
@@ -451,7 +451,7 @@ int main(int argc, char **argv)
 	
 	if( flip_signal < 0.){
 	  cerr << " Error: flip signal went negative " << endl;
-	  return -1; 
+	  //return -1; 
 	}
 	
 	time = (float)(i * nsPerSample);
@@ -493,6 +493,7 @@ int main(int argc, char **argv)
       double maxtime = Wave->GetXaxis()->GetBinCenter(binmax);
 
       //cout << " maxtime = " << maxtime << endl;
+
       
       if     ( digitiser == 'D' ){
 	QDC_counts = QDC_counts*.2/4096.0*1.0e3;
@@ -533,8 +534,7 @@ int main(int argc, char **argv)
       
       float timeLow  = 60.0;
       float timeHigh = 124.8;
-      
-      
+            
       if( digitiser == 'V' ){
 	multiple = 10;
 	timeHigh = 124.0;
@@ -548,6 +548,8 @@ int main(int argc, char **argv)
       // Only count events in window
       if (maxtime > timeLow  && 
 	  maxtime < timeHigh     ){
+
+	//	cout << " binmax = " << binmax << endl;
 	
 	//Define the accumulators
 	double A0 = 0; double A1=0;
@@ -558,31 +560,31 @@ int main(int argc, char **argv)
 	for (int i = 1; i <= nBins; i++){
 	  
 	  int time = i;
-	  if (time >= gates[0] && time <= gates[1]){
+	  if (time >= gates[0] && time < gates[1]){
 	    A0 += Wave->GetBinContent(i);
 	  }	
-	  if (time>=gates[1] && time<=gates[2]){
+	  if (time >= gates[1] && time < gates[2]){
 	    
 	    A1+=Wave->GetBinContent(i);
 	  }
-	  if (time>=gates[2] && time<=gates[3]){
+	  if (time >= gates[2] && time < gates[3]){
 	    
 	    A2+=Wave->GetBinContent(i);
 	  }
-	  if (time>=gates[3] && time<=gates[4]){
+	  if (time >= gates[3] && time < gates[4]){
 	    
 	    A3+=Wave->GetBinContent(i);
 	  }
-	  if (time>=gates[4] && time<=gates[5]){
+	  if (time >= gates[4] && time < gates[5]){
 	    
 	    A4+=Wave->GetBinContent(i);
 	  }
-	  if (time>=gates[5] && time<=gates[6]){
+	  if (time >= gates[5] && time < gates[6]){
 	    
 	    A5+=Wave->GetBinContent(i);
 	  }
-	  if (time>=gates[6] && time<=gates[7]){
-	    
+	  if (time >= gates[6] && time < gates[7]){
+	   
 	    A6+=Wave->GetBinContent(i); 
 	  }
 	  
@@ -591,7 +593,7 @@ int main(int argc, char **argv)
 	// Filling all the SPE
 	double ADC_Counts = A2+A3+A4-(A0+A1+A5+A6)*3.0/4.0;	
 	//cout << " ADC_Counts " << ADC_Counts << endl; 
-
+	
 	WaveCharge =  ADC_Counts*.2/4096.0*1.0e3;
 	
 	if( digitiser == 'V' )
@@ -639,7 +641,7 @@ int main(int argc, char **argv)
   
   //SPE[0]->SetLineColor(kRed);
   //SPE[0]->Draw("HIST SAME");
-  //  SPE[0]->Draw();
+  //SPE[0]->Draw();
 
   //hMaxT_Q->Draw("colz");
   
