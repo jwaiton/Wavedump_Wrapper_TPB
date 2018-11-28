@@ -4,7 +4,7 @@
  * Author 
  *  Gary Smith
  *  https://github.com/gsmith23
- *  20 11 18
+ *  28 11 18
  *
  * Adapted from
  * SPE_Gen.cpp 
@@ -13,10 +13,9 @@
  *  04 10 2018
  *
  * Purpose
- *  DAQ reads out to binary file.
- *  This program de-codes the file
- *  and reads the pulse data in 
- *  to a root TTree.
+ *  This program read the binary 
+ *  file and writes a TTree
+ *  and histograms to a root file. 
  *
  * How to build
  *  $ make BinToRoot
@@ -36,6 +35,8 @@
 
 #include "TFile.h"
 #include "TTree.h"
+
+#include "TH1.h"
 
 using namespace std;
 
@@ -63,10 +64,95 @@ bool isCorrectDigitiser(int header, char digitiser){
   }
 }
 
+float getCharge(short VDC, char digitiser = 'V'){
+
+  // To do: substitute with parameters
+  // VME   (Desktop)
+  // 2.0   (0.2)       ns per time bin
+  // 16384 (4096)      14 or 12 bit
+  // 2.0   (1.0)*1.0e3 mV range 
+  
+  if     ( digitiser == 'V')
+    return (-1.*(float)VDC*2.0/16384.0*2.0e3);
+  else if( digitiser == 'D')
+    return (-1.*(float)VDC*.2/4096.0*1.0e3);
+  else 
+    return 99999;
+}
+
+
+float Accumulate_V1(short VDC, short sample){
+  
+  if      ( sample >= 6 && 
+	    sample < 26 )
+    return((int)-VDC);
+  else if ( sample >= 27 &&
+	    sample <  47 )
+    return((int)VDC);
+  else
+    return 0.;
+   
+}
+
+float Accumulate_V2(short VDC, short sample){
+  
+  if      ( sample >= 6 && 
+	    sample < 16 )
+    return((int)-VDC);
+  else if ( sample >= 17 &&
+	    sample <  57 )
+    return((int)VDC);
+  else if ( sample >= 57 &&
+	    sample <  87 )
+    return((int)-VDC);
+  else
+    return 0.;
+   
+}
+
+float Accumulate_V3(short VDC, short sample, short minT){
+  
+  if      ( sample >= (minT-30) && 
+	    sample <  (minT-10) )
+    return((int)-VDC)*3/4.;
+  else if ( sample >= (minT-10) &&
+	    sample <  (minT+20) )
+    return((int)VDC);
+  else if ( sample >= (minT+20) &&
+	    sample <  (minT+40) )
+    return((int)-VDC)*3/4.;
+  else
+    return 0.;
+
+}
+
+
+float Accumulate_V4(short VDC, short sample, short minT){
+  
+  sample = sample + 1;
+  
+  if      ( sample >= (minT-30) && 
+	    sample <= (minT-10) )
+    return((int)-VDC)*3/4.;
+  else if ( sample >= (minT-10) &&
+	    sample <= (minT+20) )
+    return((int)VDC);
+  else if ( sample >= (minT+20) &&
+	    sample <= (minT+40) )
+    return((int)-VDC)*3/4.;
+  else
+    return 0.;
+
+}
+
 int ProcessBinaryFile(string fileName,
 		      char digitiser = 'D',
 		      int  verbosity = 0
 		      ){
+
+  bool  testMode  = true;
+  bool  keepGoing = true;
+  int   maxEvents = 50000;
 
   // Read from here
   ifstream fileStream(fileName);
@@ -81,59 +167,89 @@ int ProcessBinaryFile(string fileName,
 				 "event-level variables");
   
   
-  int   event = -1;
-  float minVDC = 0., maxVDC = 0.;  
+  TH1S * hMinVDC = new TH1S("hMinVDC","hMinVDC;VDC;Counts",
+			    128,6500,8500);
   
-  short sampleArr[10000000];
+  TH1F * hCharge1 = new TH1F("hCharge1","hCharge1;Charge (mV nS);Counts",
+			     128,-560.,2000.);
+  
+  TH1F * hCharge2 = new TH1F("hCharge2","hCharge2;Charge (mV nS);Counts",
+			     128,-560.,2000.);
+  
+  TH1F * hCharge3 = new TH1F("hCharge3","hCharge3;Charge (mV nS);Counts",
+			     128,-560.,2000.);
+
+  TH1F * hCharge4 = new TH1F("hCharge4","hCharge4;Charge (mV nS);Counts",
+			     128,-560.,2000.);
+  
+    
+  int   event  = -1;
+  
+  short minVDC = 32767, maxVDC = -32768;  
+  short minT   = 32767, maxT   = -32768;  
+  int   intVDC1 = 0,  intVDC2 = 0,  intVDC3 = 0,  intVDC4 = 0;
+  float charge1 = 0., charge2 = 0., charge3 = 0., charge4 = 0.;  
+
+  // read in samples per event
+  short pulse[110];
   
   eventTree->Branch("event",&event,"event/I");
-  eventTree->Branch("minVDC",&minVDC,"minVDC/F");
-  eventTree->Branch("maxVDC",&maxVDC,"maxVDC/F");
+  eventTree->Branch("minVDC",&minVDC,"minVDC/S");
+  eventTree->Branch("maxVDC",&maxVDC,"maxVDC/S");
+  eventTree->Branch("minT",&minT,"minT/S");
+  eventTree->Branch("maxT",&maxT,"maxT/S");
+  eventTree->Branch("pulse",pulse,"pulse[110]/S");
+
 
   //---------------------
   // Sample Level Data
 
   short VDC = 0, sample = 0;
   
-  int   fileHeader  = 0;
-  int   eventHeader = 0.;    
+  int fileHeader  = 0;
   float floatVDC = 0.;
   
-  TTree * sampleTree = new TTree("sampleTree",
-				 "sample-level variables");  
-  
-  sampleTree->Branch("event",&event,"event/I");
-  sampleTree->Branch("sample",&sample,"sample/S");
-  sampleTree->Branch("VDC",&VDC,"VDC/S");
-  
+
   // read in data from streamer object
   // until the end of the file
   while ( fileStream.is_open() && 
 	  fileStream.good()    && 
-	  !fileStream.eof()       ){
+	  !fileStream.eof()    &&
+	  keepGoing	  
+	  ){
     
+    //-------------------
+    // file-level data
     event++;
     
-    // data to be recorded for each pulse
+    //-------------------
+    // event-level data
+    intVDC1 = 0, intVDC2 = 0, intVDC3 = 0, intVDC4 = 0;
+    charge1 = 0.,charge2 = 0.,charge3 = 0.,charge4 = 0.;
+    
+    // VDC range (check zero crossing)
+    minVDC =  32767;
+    maxVDC = -32768;  
+
+    // time walk?
+    minT   =  32767;
+    // random?
+    maxT   = -32768;
+
+    //-------------------
+    // pulse-level data
     sample = 0;
     VDC    = 0;    
     
-    eventHeader = 0.;    
-    
-    // range will be used to check for 
-    // zero crossing
-    minVDC = 100000.;
-    maxVDC = -100000.;  
-    
     // read in header info which comes 
-    // as six char sized chunks
+    // as six four bit sized chunks
     for (int iHeader = 0 ; iHeader < 6 ; iHeader++ ){
       
       fileHeader = 0;
       
-      // read in 4 bit (char) segment
+      // read in 4 bit segment
       fileStream.read( (char*)&fileHeader,
-		       sizeof(int)); 
+		       sizeof(int)); // read 4 bits
       
       // check first header value matches expectations
       // NB other values may be acceptable so modify
@@ -158,7 +274,6 @@ int ProcessBinaryFile(string fileName,
       }
       
       else if( digitiser == 'D' ){
-	
 	fileStream.read((char*)&floatVDC,sizeof(float));// read 4 bits
 	VDC = (short)floatVDC;
       }
@@ -169,43 +284,79 @@ int ProcessBinaryFile(string fileName,
 	
       }
       
+      sample = iSample;
+      pulse[sample] = VDC;
+      
       if     ( VDC < minVDC ){
 	minVDC = VDC;
+	minT   = sample;
       }
       else if( VDC > maxVDC ) {
 	maxVDC = VDC;
+	maxT   = sample;
       }
       
-      //--------------------------------
-      // Write sample by sample data here
+      // add or subtract
+      intVDC1 += Accumulate_V1(VDC,iSample);
+      intVDC2 += Accumulate_V2(VDC,iSample);
       
-      sample = iSample;
-
-      sampleTree->Fill();
+      //--------------------------------
+      // Sample by sample data here
       
       if(verbosity > 1)
 	cout << " VDC(" << iSample << ") = " << VDC << endl;
       
+    } // end: for (short iSample = 0; iSa
+
+    // Loop over pulse again
+    for (short iSample = 0; iSample < getNSamples(digitiser); iSample++){
+      
+      if(minT > 30 && minT < 62.4 ){
+	intVDC3 += Accumulate_V3(pulse[iSample],iSample,minT);
+	intVDC4 += Accumulate_V4(pulse[iSample],iSample,minT);
+      }
     }
+
     
     if( minVDC < 0 && maxVDC > 0 )
       cout << " Warning: pulse is zero crossing " << endl;
     
-
+    hMinVDC->Fill(minVDC);
+    
+    charge1 = getCharge(intVDC1,digitiser);
+    charge2 = getCharge(intVDC2,digitiser);
+    charge3 = getCharge(intVDC3,digitiser);
+    charge4 = getCharge(intVDC4,digitiser);
+    
+    hCharge1->Fill(charge1);
+    hCharge2->Fill(charge2);
+    
+    if(minT > 30 && minT < 62.4 ){
+      hCharge3->Fill(charge3);
+      hCharge4->Fill(charge4);      
+    }
+    
     //--------------------------------
     // Write event by event data here
     
     eventTree->Fill();
     
     if(verbosity > 0){
+      
       cout << endl;
-      cout << " minVDC(" << event << ") = " << minVDC << endl;
-      cout << " maxVDC(" << event << ") = " << maxVDC << endl;
+      cout << " Event " << event << endl;
+      cout << " minVDC(" << minT << ") = " << minVDC << endl;
+      cout << " maxVDC(" << maxT << ") = " << maxVDC << endl;
+      cout << endl;
       
       if(verbosity > 2)
 	cout << endl;
     }
-  
+    
+    if( testMode &&
+	(event+1) == maxEvents )
+      keepGoing = false;
+    
   } // end: while loop
 
   // close wavedump file
@@ -213,9 +364,6 @@ int ProcessBinaryFile(string fileName,
 
   //--------------------------------
   // Write file info here
-
-  sampleTree->Write();
-  sampleTree->Delete();
 
   eventTree->Write();
   eventTree->Delete();
