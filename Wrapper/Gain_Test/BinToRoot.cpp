@@ -80,7 +80,8 @@ float getCharge(short VDC, char digitiser = 'V'){
     return 99999;
 }
 
-
+// integration windows fixed wrt trigger
+// pedestal window before signal window only
 float Accumulate_V1(short VDC, short sample){
   
   if      ( sample >= 6 && 
@@ -91,9 +92,11 @@ float Accumulate_V1(short VDC, short sample){
     return((int)VDC);
   else
     return 0.;
-   
+  
 }
 
+// integration window fixed wrt trigger
+// pedestal windows before and after signal window
 float Accumulate_V2(short VDC, short sample){
   
   if      ( sample >= 6 && 
@@ -110,6 +113,8 @@ float Accumulate_V2(short VDC, short sample){
    
 }
 
+// integration windows wrt pulse peak
+// pedestal windows before and after signal window
 float Accumulate_V3(short VDC, short sample, short minT){
   
   if      ( sample >= (minT-30) && 
@@ -126,22 +131,42 @@ float Accumulate_V3(short VDC, short sample, short minT){
 
 }
 
-
+// integration window wrt pulse peak
+// pedestal windows before and after signal window
+// ( double counting bug as in SPE_Gen )
 float Accumulate_V4(short VDC, short sample, short minT){
+
+  float result = 0;
   
-  sample = sample + 1;
+  if ( sample >= (minT-30) && 
+       sample <= (minT-20) )
+    result += ((int)-1*VDC)*3/4.;
   
-  if      ( sample >= (minT-30) && 
-	    sample <= (minT-10) )
-    return((int)-VDC)*3/4.;
-  else if ( sample >= (minT-10) &&
-	    sample <= (minT+20) )
-    return((int)VDC);
-  else if ( sample >= (minT+20) &&
-	    sample <= (minT+40) )
-    return((int)-VDC)*3/4.;
-  else
-    return 0.;
+  if ( sample >= (minT-20) && 
+       sample <= (minT-10) )
+    result += ((int)-1*VDC)*3/4.;
+  
+  if ( sample >= (minT-10) &&
+       sample <= (minT) )
+    result += (int)VDC;
+
+  if ( sample >= (minT) &&
+       sample <= (minT+10) )
+    result += (int)VDC;
+      
+  if ( sample >= (minT+10) &&
+       sample <= (minT+20) )
+    result += (int)VDC;
+  
+  if ( sample >= (minT+20) &&
+       sample <= (minT+30) )
+    result += ((int)-1*VDC)*3/4.;
+
+  if ( sample >= (minT+30) &&
+       sample <= (minT+40) )
+    result += ((int)-1*VDC)*3/4.;
+  
+  return result;
 
 }
 
@@ -150,12 +175,18 @@ int ProcessBinaryFile(string fileName,
 		      int  verbosity = 0
 		      ){
 
-  bool  testMode  = true;
+  bool  testMode  = false;
   bool  keepGoing = true;
   int   maxEvents = 50000;
 
   // Read from here
   ifstream fileStream(fileName);
+
+  if(!fileStream.good()){
+    cerr << endl;
+    cerr << " check filename " << endl;
+    return -1;
+  }
 
   // Write to here
   TFile * outFile    = new TFile("outputFile.root",
@@ -166,10 +197,7 @@ int ProcessBinaryFile(string fileName,
   TTree * eventTree  = new TTree("eventTree",
 				 "event-level variables");
   
-  
-  TH1S * hMinVDC = new TH1S("hMinVDC","hMinVDC;VDC;Counts",
-			    128,6500,8500);
-  
+  // accumulated and coverted data
   TH1F * hCharge1 = new TH1F("hCharge1","hCharge1;Charge (mV nS);Counts",
 			     128,-560.,2000.);
   
@@ -206,8 +234,8 @@ int ProcessBinaryFile(string fileName,
 
   short VDC = 0, sample = 0;
   
-  int fileHeader  = 0;
-  float floatVDC = 0.;
+  int   fileHeader = 0;
+  float floatVDC   = 0.;
   
 
   // read in data from streamer object
@@ -284,6 +312,7 @@ int ProcessBinaryFile(string fileName,
 	
       }
       
+      // for writing
       sample = iSample;
       pulse[sample] = VDC;
       
@@ -296,6 +325,7 @@ int ProcessBinaryFile(string fileName,
 	maxT   = sample;
       }
       
+      // fixed window accumulations
       // add or subtract
       intVDC1 += Accumulate_V1(VDC,iSample);
       intVDC2 += Accumulate_V2(VDC,iSample);
@@ -312,6 +342,7 @@ int ProcessBinaryFile(string fileName,
     for (short iSample = 0; iSample < getNSamples(digitiser); iSample++){
       
       if(minT > 30 && minT < 62.4 ){
+	// accumulations wrt pulse peak (minimum)
 	intVDC3 += Accumulate_V3(pulse[iSample],iSample,minT);
 	intVDC4 += Accumulate_V4(pulse[iSample],iSample,minT);
       }
@@ -321,8 +352,7 @@ int ProcessBinaryFile(string fileName,
     if( minVDC < 0 && maxVDC > 0 )
       cout << " Warning: pulse is zero crossing " << endl;
     
-    hMinVDC->Fill(minVDC);
-    
+    // convert accumulated VDC to charge
     charge1 = getCharge(intVDC1,digitiser);
     charge2 = getCharge(intVDC2,digitiser);
     charge3 = getCharge(intVDC3,digitiser);
@@ -376,25 +406,34 @@ int ProcessBinaryFile(string fileName,
 }
 
 
+string getFilename(char digitiser){
+  
+  if     ( digitiser == 'V')
+    return  "../../Data/wave_0.dat";
+  else if( digitiser == 'V')
+    return  "../../Data/wave_0_Desk.dat";
+  else 
+    return "../../";
+  
+}
+
 int main(int argc, char **argv)
 {
   
   // 'D' - Desktop
   // 'V' - VME
   char   digitiser = 'V';
-  string fileName = "../../Data/wave_0_VME.dat";
+  
+  string fileName = getFilename(digitiser);
   
   // 0 - silence, 1 - event-by-event, 2 - sample-by-sample
   int  verbosity   = 0;
   
-  if( digitiser == 'D' )
-    fileName = "../../Data/wave_0.dat";
-  
   cout << " The binary file is called  " << fileName << endl;
   
-  int nEvents = ProcessBinaryFile(fileName,
-				  digitiser,
-				  verbosity);
+  int nEvents;
+  
+  nEvents = ProcessBinaryFile(fileName,digitiser,verbosity);
   
   cout << " This file contains " << nEvents << " events " << endl; 
 }
