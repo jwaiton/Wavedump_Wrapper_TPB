@@ -21,17 +21,17 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-	
-	int channel[4]={0,0,0,0};
-	char answer;
-	char histname[200]= "";
-//	char pmt[4];
-	int test;
-//	char hvtest[3];
-	int Gain[4]={0,0,0,0};
-	
-	
-	//Read in the HV data ====================================================================================
+  
+  int channel[4]={0,0,0,0};
+  char answer;
+  char histname[200]= "";
+  //	char pmt[4];
+  int test;
+  //	char hvtest[3];
+  int Gain[4]={0,0,0,0};
+  
+  
+  //Read in the HV data ====================================================================================
 	string hvfile = "../HVScan.txt";
 	ifstream file(hvfile.c_str());
 	string hvdat;
