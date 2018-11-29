@@ -11,6 +11,7 @@
 #include "TMultiGraph.h"
 #include "TLegend.h"
 #include "TGraph.h"
+#include "TString.h"
 
 #include "TH1D.h"
 #include "TFile.h"
@@ -228,11 +229,11 @@ int main(int argc,char **argv){
     //sprintf(root_name, "SPE%d;1.root",3);	
     TH1D *speData = (TH1D*)s.Get(root_name);
 
-		printf("Getting data from SPE spectrum...\n");
-		speData->GetYaxis()->SetTitle("Counts ");
-		speData->GetYaxis()->SetTitleOffset(1.5);
-		speData->GetXaxis()->SetTitle("Charge (mv*ns)");	
-		
+    printf("Getting data from SPE spectrum...\n");
+    speData->GetYaxis()->SetTitle("Counts ");
+    speData->GetYaxis()->SetTitleOffset(1.5);
+    speData->GetXaxis()->SetTitle("Charge (mv*ns)");	
+    
 		// ****************
 		// * Analyze data *
 		// ****************
@@ -350,12 +351,21 @@ int main(int argc,char **argv){
 		
 		
 		// Enter run loop.
+		
+		TString plotName  = "./Plots/PMT_%d_%d.png";
+		plotName.Form("./Plots/PMT_%d_%d.png",mod,pmtHV[pmtChannel][hv]);
+		
+		cout << " mod     = " << mod << endl;
+		cout << " pmtHV[" << pmtChannel << "][" << hv << "] = " << pmtHV[pmtChannel][hv] << endl;
+		cout << " plotName = " << plotName << endl;
+		//plotName += ".png";
+
+		tc->SaveAs(plotName);
 		//ta->Run("false");
   }
   
   
-  
-  
+  TCanvas *tc=new TCanvas("Canvas","ROOT Canvas",1);
   
   // Making the HV fit ========================================================================
   TGraph *Gain[4];
@@ -416,7 +426,10 @@ int main(int argc,char **argv){
 		//=============================================================================================================================
 		
 		//ta->Run("false");
-	
+		TString plotName  = "./Plots/Gain_PMT_%d.png";
+		plotName.Form("./Plots/Gain_PMT_%d.png",PMT[i]);
+		cout << " plotName = " << plotName << endl;
+		tc->SaveAs(plotName);
 		
 	}
 //	mg->Draw("AP");
@@ -424,8 +437,8 @@ int main(int argc,char **argv){
 //	mg->GetXaxis()->SetTitle("Applied Voltage (V)");
 
   //ta->Run("false");
-	
-	return 0;
+  
+  return 0;
 }
 
 
