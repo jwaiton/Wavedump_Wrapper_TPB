@@ -1,5 +1,4 @@
-double BytesPerSecond(char   test = 'A',
-		      double acquisitionTime = 15.
+double BytesPerSecond(char test = 'A'
 		      ){
   
   // Trigger Rate
