@@ -219,14 +219,18 @@ int ProcessBinaryFile(string fileName,
   float charge1 = 0., charge2 = 0., charge3 = 0., charge4 = 0.;  
 
   // read in samples per event
-  short pulse[110];
+  short pulse[getNSamples(digitiser)];
   
   eventTree->Branch("event",&event,"event/I");
   eventTree->Branch("minVDC",&minVDC,"minVDC/S");
   eventTree->Branch("maxVDC",&maxVDC,"maxVDC/S");
   eventTree->Branch("minT",&minT,"minT/S");
   eventTree->Branch("maxT",&maxT,"maxT/S");
-  eventTree->Branch("pulse",pulse,"pulse[110]/S");
+  
+  TString arrayString = "";
+  arrayString.Form("pulse[%d]/S",getNSamples(digitiser));
+  
+  eventTree->Branch("pulse",pulse,arrayString);
 
 
   //---------------------
@@ -347,7 +351,6 @@ int ProcessBinaryFile(string fileName,
 	intVDC4 += Accumulate_V4(pulse[iSample],iSample,minT);
       }
     }
-
     
     if( minVDC < 0 && maxVDC > 0 )
       cout << " Warning: pulse is zero crossing " << endl;
@@ -379,8 +382,11 @@ int ProcessBinaryFile(string fileName,
       cout << " maxVDC(" << maxT << ") = " << maxVDC << endl;
       cout << endl;
       
-      if(verbosity > 2)
+      if(verbosity > 1){
+	
 	cout << endl;
+      }
+    
     }
     
     if( testMode &&
