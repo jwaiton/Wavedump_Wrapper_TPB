@@ -50,3 +50,5 @@ Wavedump_Wrapper/
 .viminfo
 .gitconfig
 Instructions on how to use the WaveDump Wrapper.pdf
+.DS_Store
+.gitignore~
