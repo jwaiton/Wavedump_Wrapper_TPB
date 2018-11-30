@@ -506,8 +506,6 @@ string getFilePath(){
 
 string getEdFileNPath(char digitiser){
   
-  TString filePath =
-
   if     ( digitiser == 'V')
     return  "/Disk/ds-sopa-group/PPE/Watchman/BinaryData/RUN000001/PMT0001/SPEtest/wave_0.dat";
   else if( digitiser == 'D')
