@@ -36,7 +36,7 @@
 #include "TFile.h"
 #include "TTree.h"
 
-#include "TH1.h"
+#include "TH2.h"
 
 using namespace std;
 
@@ -46,6 +46,19 @@ int  getNSamples(char digitiser){
     return 110;
   else if( digitiser == 'D' )
     return 1024;
+  else{
+    cerr << "Error: Unknown digitiser " << endl;
+    return 0;
+  }
+  
+}
+
+int  nVDCBins(char digitiser){
+
+  if     ( digitiser == 'V' )
+    return 16384;
+  else if( digitiser == 'D' )
+    return 4096;
   else{
     cerr << "Error: Unknown digitiser " << endl;
     return 0;
@@ -71,11 +84,13 @@ float getCharge(short VDC, char digitiser = 'V'){
   // 2.0   (0.2)       ns per time bin
   // 16384 (4096)      14 or 12 bit
   // 2.0   (1.0)*1.0e3 mV range 
+
+  float nYBins = (float)nVDCBins(digitiser);
   
   if     ( digitiser == 'V')
-    return (-1.*(float)VDC*2.0/16384.0*2.0e3);
+    return (-1.*(float)VDC*2.0/nYBins*2.0e3);
   else if( digitiser == 'D')
-    return (-1.*(float)VDC*.2/4096.0*1.0e3);
+    return (-1.*(float)VDC*.2/nYBins*1.0e3);
   else 
     return 99999;
 }
@@ -170,17 +185,19 @@ float Accumulate_V4(short VDC, short sample, short minT){
 
 }
 
-int ProcessBinaryFile(string fileName,
-		      char digitiser = 'D',
+int ProcessBinaryFile(string filePath,
+		      char digitiser = 'V',
 		      int  verbosity = 0
 		      ){
+
+  cout << " Processing  " << filePath << endl;
 
   bool  testMode  = false;
   bool  keepGoing = true;
   int   maxEvents = 50000;
 
   // Read from here
-  ifstream fileStream(fileName);
+  ifstream fileStream(filePath);
 
   if(!fileStream.good()){
     cerr << endl;
@@ -209,8 +226,14 @@ int ProcessBinaryFile(string fileName,
 
   TH1F * hCharge4 = new TH1F("hCharge4","hCharge4;Charge (mV nS);Counts",
 			     128,-560.,2000.);
+
   
-    
+  
+  TH2F * hPulses = new TH2F("hPulses",
+			    "hPulses;Sample;VDC",
+			    getNSamples(digitiser),0,(getNSamples(digitiser)-1),
+			    nVDCBins(digitiser),0.,(nVDCBins(digitiser)-1));
+      
   int   event  = -1;
   
   short minVDC = 32767, maxVDC = -32768;  
@@ -406,11 +429,17 @@ int ProcessBinaryFile(string fileName,
 }
 
 
-string getFilename(char digitiser){
+string getFilePath(){
+  
+  return  "../../../Data/wave_0.dat";
+}
+
+string getEdinburghFilePath(char digitiser){
+
   
   if     ( digitiser == 'V')
-    return  "../../Data/wave_0.dat";
-  else if( digitiser == 'V')
+    return  "/Disk/ds-sopa-group/PPE/Watchman/BinaryData/RUN000001/PMT0001/SPEtest/wave_0.dat";
+  else if( digitiser == 'D')
     return  "../../Data/wave_0_Desk.dat";
   else 
     return "../../";
@@ -420,20 +449,21 @@ string getFilename(char digitiser){
 int main(int argc, char **argv)
 {
   
+  // ------------------
+  // Optional variables
+  // - see ProcessBinaryFile()
+  // 'V' - VME (default)
   // 'D' - Desktop
-  // 'V' - VME
   char   digitiser = 'V';
   
-  string fileName = getFilename(digitiser);
-  
-  // 0 - silence, 1 - event-by-event, 2 - sample-by-sample
+  // printing
+  // 0 - silence (default) 
+  // 1 - event-by-event
+  // 2 - sample-by-sample
   int  verbosity   = 0;
-  
-  cout << " The binary file is called  " << fileName << endl;
-  
-  int nEvents;
-  
-  nEvents = ProcessBinaryFile(fileName,digitiser,verbosity);
+  //-------------------
+ 
+  int nEvents = ProcessBinaryFile(getFilePath());
   
   cout << " This file contains " << nEvents << " events " << endl; 
 }
