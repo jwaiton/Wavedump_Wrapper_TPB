@@ -422,7 +422,7 @@ int ProcessBinaryFile(string filePath,
 	fVDC3 += Accumulate_V3(pulse[iSample],iSample,minT);
 	fVDC4 += Accumulate_V4(pulse[iSample],iSample,minT);
 	
-	if( !( event%1) )
+	if( !( event%1000) )
 	  hPulses->Fill(iSample,pulse[iSample]);
 	
       }
