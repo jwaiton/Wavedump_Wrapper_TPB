@@ -93,16 +93,22 @@ int getSampleRateInMHz(char digitiser){
 
 }
 
+
+float getnsPerSample(char digitiser){
+  
+  return (1.0e3 / (float)getSampleRateInMHz(digitiser));
+
+}
+
+  
+
 float getCharge(int intVDC, char digitiser = 'V'){
   
   float nYBins      = (float)getNVDCBins(digitiser);
   float mVRange     = 1.0e3 * getVoltageRange(digitiser);
-  float nsPerSample = 1.0e3 / (float)getSampleRateInMHz(digitiser);
+  float nsPerSample = getnsPerSample(digitiser);
 
   float charge = -1. * (float)intVDC * nsPerSample * mVRange / nYBins;    
-  
-  //!!!!
-  charge = -1.*(float)intVDC*2.0/nYBins*2.0e3;
   
   if( digitiser == 'V' || digitiser == 'D' )
     return charge; 
@@ -127,7 +133,7 @@ bool isCorrectDigitiser(int header, char digitiser){
 // pedestal window before signal window only
 float Accumulate_V1(short VDC, short sample){
   
-  if      ( sample >= 6 && 
+    if      ( sample >= 6 && 
 	    sample < 26 )
     return((int)-VDC);
   else if ( sample >= 27 &&
@@ -135,6 +141,15 @@ float Accumulate_V1(short VDC, short sample){
     return((int)VDC);
   else
     return 0.;
+  
+//   if      ( sample >= 60 && 
+// 	    sample < 260 )
+//     return((int)-VDC);
+//   else if ( sample >= 270 &&
+// 	    sample <  470 )
+//     return((int)VDC);
+//   else
+//     return 0.;
   
 }
 
@@ -159,6 +174,9 @@ float Accumulate_V2(short VDC, short sample){
 // integration windows wrt pulse peak
 // pedestal windows before and after signal window
 float Accumulate_V3(short VDC, short sample, short minT){
+
+//   cout << " minT   = " << minT   << endl;
+//   cout << " sample = " << sample << endl;
   
   if      ( sample >= (minT-30) && 
 	    sample <  (minT-10) )
@@ -177,36 +195,67 @@ float Accumulate_V3(short VDC, short sample, short minT){
 // integration window wrt pulse peak
 // pedestal windows before and after signal window
 // ( double counting bug as in SPE_Gen )
-float Accumulate_V4(short VDC, short sample, short minT){
-
+//float Accumulate_V4(short VDC, float sample, float fMinTns){
+float Accumulate_V4(short VDC, int sample, int minT){
+  
   float result = 0;
+
+//   if ( sample >= (minT - 30) && 
+//        sample <= (minT - 20) )
+//     result += ((float)-1*VDC)*3/4.;
   
-  if ( sample >= (minT-30) && 
-       sample <= (minT-20) )
+//   if ( sample >= (minT - 20) && 
+//        sample <= (minT - 10) )
+//     result += ((float)-1*VDC)*3/4.;
+  
+//   if ( sample >= (minT - 10) &&
+//        sample <= (minT) )
+//     result += (float)VDC;
+
+//   if ( sample >= (minT) &&
+//        sample <= (minT + 10) )
+//     result += (float)VDC;
+      
+//   if ( sample >= (minT + 10) &&
+//        sample <= (minT + 20) )
+//     result += (float)VDC;
+  
+//   if ( sample >= (minT + 20) &&
+//        sample <= (minT + 30) )
+//     result += ((float)-1*VDC)*3/4.;
+
+//   if ( sample >= (minT + 30) &&
+//        sample <= (minT + 40) )
+//     result += ((float)-1*VDC)*3/4.;
+  
+//   return result;
+
+  if ( sample >= (minT - 300) && 
+       sample <= (minT - 200) )
     result += ((float)-1*VDC)*3/4.;
   
-  if ( sample >= (minT-20) && 
-       sample <= (minT-10) )
+  if ( sample >= (minT - 200) && 
+       sample <= (minT - 100) )
     result += ((float)-1*VDC)*3/4.;
   
-  if ( sample >= (minT-10) &&
+  if ( sample >= (minT - 100) &&
        sample <= (minT) )
     result += (float)VDC;
 
   if ( sample >= (minT) &&
-       sample <= (minT+10) )
+       sample <= (minT + 100) )
     result += (float)VDC;
       
-  if ( sample >= (minT+10) &&
-       sample <= (minT+20) )
+  if ( sample >= (minT + 100) &&
+       sample <= (minT + 200) )
     result += (float)VDC;
   
-  if ( sample >= (minT+20) &&
-       sample <= (minT+30) )
+  if ( sample >= (minT + 200) &&
+       sample <= (minT + 300) )
     result += ((float)-1*VDC)*3/4.;
 
-  if ( sample >= (minT+30) &&
-       sample <= (minT+40) )
+  if ( sample >= (minT + 300) &&
+       sample <= (minT + 400) )
     result += ((float)-1*VDC)*3/4.;
   
   return result;
@@ -220,7 +269,7 @@ int ProcessBinaryFile(string filePath,
 
   cout << " Processing  " << filePath << endl;
 
-  bool  testMode  = false;
+  bool  testMode  = true;
   bool  keepGoing = true;
   int   maxEvents = 50000;
  
@@ -414,18 +463,39 @@ int ProcessBinaryFile(string filePath,
       
     } // end: for (short iSample = 0; iSa
 
+
+    float fMinTns = 0;
+    
     // Loop over pulse again
     for (short iSample = 0; iSample < getNSamples(digitiser); iSample++){
+
+      fMinTns     = (float)minT*getnsPerSample(digitiser);      
       
-      if(minT > 30 && minT < 62.4 ){
+      //if(fMinTns > 60. && fMinTns < 124.8 ){
+      
+      if( minT > 300 && minT < 624  ){
+
 	// accumulations wrt pulse peak (minimum)
 	fVDC3 += Accumulate_V3(pulse[iSample],iSample,minT);
-	fVDC4 += Accumulate_V4(pulse[iSample],iSample,minT);
 	
-	if( !( event%1000) )
-	  hPulses->Fill(iSample,pulse[iSample]);
+// 	fVDC4 += Accumulate_V4(pulse[iSample],
+// 			       (float)iSample,
+// 			       fMinTns);
+
+	fVDC4 += Accumulate_V4(pulse[iSample],
+			       iSample,
+			       minT);
+	
+	
+// 	cout << endl;
+// 	cout << " fMinTns = " << fMinTns << endl;
+// 	cout << " fVDC4   = " << fVDC4   << endl;
 	
       }
+      
+      if( !( event%10) )
+	hPulses->Fill(iSample,pulse[iSample]);
+      
     } // end: for (short iSample = 0; iS...
     
     if( minVDC < 0 && maxVDC > 0 )
@@ -444,7 +514,11 @@ int ProcessBinaryFile(string filePath,
     hCharge1->Fill(charge1);
     hCharge2->Fill(charge2);
     
-    if(minT > 30 && minT < 62 ){
+    fMinTns     = (float)minT*getnsPerSample(digitiser);      
+    
+    //if(fMinTns > 60. && fMinTns < 124.8 ){
+    if( minT > 300 && minT < 624  ){
+      
       charge3 = getCharge(fVDC3,digitiser);
       charge4 = getCharge(fVDC4,digitiser);
       
@@ -501,13 +575,12 @@ int ProcessBinaryFile(string filePath,
 
 
 string getFilePath(){
-  return  "../../../Data/wave_0.dat";
+  return  "../../Data/wave_0.dat";
 }
 
 string getFilePathBine(){
 
-  return "/home/lhcbuser/Watchman/Wavedump_Wrapper/Data/run0006/wave_0.dat";
-
+  return "../../Data/wave_0_Bine.dat";
 }
 
 string getEdFileNPath(char digitiser){
@@ -537,11 +610,13 @@ int main(int argc, char **argv)
   // 'V' - VME (default)
   // 'D' - Desktop
   char   digitiser = 'V';
+  digitiser = 'D';
   
   //-------------------
   
-  string filePath = getFilePath();
-
+  //string filePath = getFilePath();
+  string filePath = getFilePathBine();
+  
   int nEvents = ProcessBinaryFile(filePath,
 				  verbosity,
 				  digitiser);
