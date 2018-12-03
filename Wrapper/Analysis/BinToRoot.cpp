@@ -200,63 +200,63 @@ float Accumulate_V4(short VDC, int sample, int minT){
   
   float result = 0;
 
-//   if ( sample >= (minT - 30) && 
-//        sample <= (minT - 20) )
-//     result += ((float)-1*VDC)*3/4.;
-  
-//   if ( sample >= (minT - 20) && 
-//        sample <= (minT - 10) )
-//     result += ((float)-1*VDC)*3/4.;
-  
-//   if ( sample >= (minT - 10) &&
-//        sample <= (minT) )
-//     result += (float)VDC;
-
-//   if ( sample >= (minT) &&
-//        sample <= (minT + 10) )
-//     result += (float)VDC;
-      
-//   if ( sample >= (minT + 10) &&
-//        sample <= (minT + 20) )
-//     result += (float)VDC;
-  
-//   if ( sample >= (minT + 20) &&
-//        sample <= (minT + 30) )
-//     result += ((float)-1*VDC)*3/4.;
-
-//   if ( sample >= (minT + 30) &&
-//        sample <= (minT + 40) )
-//     result += ((float)-1*VDC)*3/4.;
-  
-//   return result;
-
-  if ( sample >= (minT - 300) && 
-       sample <= (minT - 200) )
+  if ( sample >= (minT - 30) && 
+       sample <= (minT - 20) )
     result += ((float)-1*VDC)*3/4.;
   
-  if ( sample >= (minT - 200) && 
-       sample <= (minT - 100) )
+  if ( sample >= (minT - 20) && 
+       sample <= (minT - 10) )
     result += ((float)-1*VDC)*3/4.;
   
-  if ( sample >= (minT - 100) &&
+  if ( sample >= (minT - 10) &&
        sample <= (minT) )
     result += (float)VDC;
 
   if ( sample >= (minT) &&
-       sample <= (minT + 100) )
+       sample <= (minT + 10) )
     result += (float)VDC;
       
-  if ( sample >= (minT + 100) &&
-       sample <= (minT + 200) )
+  if ( sample >= (minT + 10) &&
+       sample <= (minT + 20) )
     result += (float)VDC;
   
-  if ( sample >= (minT + 200) &&
-       sample <= (minT + 300) )
+  if ( sample >= (minT + 20) &&
+       sample <= (minT + 30) )
     result += ((float)-1*VDC)*3/4.;
 
-  if ( sample >= (minT + 300) &&
-       sample <= (minT + 400) )
+  if ( sample >= (minT + 30) &&
+       sample <= (minT + 40) )
     result += ((float)-1*VDC)*3/4.;
+  
+  return result;
+
+//   if ( sample >= (minT - 300) && 
+//        sample <= (minT - 200) )
+//     result += ((float)-1*VDC)*3/4.;
+  
+//   if ( sample >= (minT - 200) && 
+//        sample <= (minT - 100) )
+//     result += ((float)-1*VDC)*3/4.;
+  
+//   if ( sample >= (minT - 100) &&
+//        sample <= (minT) )
+//     result += (float)VDC;
+
+//   if ( sample >= (minT) &&
+//        sample <= (minT + 100) )
+//     result += (float)VDC;
+      
+//   if ( sample >= (minT + 100) &&
+//        sample <= (minT + 200) )
+//     result += (float)VDC;
+  
+//   if ( sample >= (minT + 200) &&
+//        sample <= (minT + 300) )
+//     result += ((float)-1*VDC)*3/4.;
+
+//   if ( sample >= (minT + 300) &&
+//        sample <= (minT + 400) )
+//     result += ((float)-1*VDC)*3/4.;
   
   return result;
 
@@ -610,12 +610,12 @@ int main(int argc, char **argv)
   // 'V' - VME (default)
   // 'D' - Desktop
   char   digitiser = 'V';
-  digitiser = 'D';
+  //digitiser = 'D';
   
   //-------------------
   
-  //string filePath = getFilePath();
-  string filePath = getFilePathBine();
+  string filePath = getFilePath();
+  //string filePath = getFilePathBine();
   
   int nEvents = ProcessBinaryFile(filePath,
 				  verbosity,
