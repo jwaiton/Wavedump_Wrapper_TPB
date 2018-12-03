@@ -14,15 +14,20 @@
 #include "TGraph.h"
 #include "TMath.h"
 
+#include "TFile.h"
+#include "TH1D.h"
+
+using namespace TMath;
+
 double fitFunc(double *x,double *p);
-double kMathPi = 3.1415926; //3.1415926
+
 //void addGraph(double (*func)(double,double*),int color,double *p,double xmin,double xmax);
 
 
 inline double gauss(double x,double sigma)
 {
   // Normalized gaussian.
-  return exp(-x*x/(2*sigma*sigma))/(sqrt(2.*kMathPi)*sigma);
+  return exp(-x*x/(2*sigma*sigma))/(sqrt(2.*Pi())*sigma);
 }
 
 inline double expBackground(double x,double *p)
@@ -63,30 +68,24 @@ void addGraph(double (*func)(double,double*),int color,double *p,double xmin,dou
 }
 
 
-void QFit_V1(){
-  string path_to_read = "./";
-  //string file_to_read = "PMT_NB0167_HV1530_Analysis.root";
-  //string file_to_read = "PMT_NB0169_HV1450_Analysis.root";
-  //string file_to_read = "PMT_NB0170_HV1550_Analysis.root";
-  //string file_to_read = "PMT_NB0171_HV1610_Analysis.root";
-  string file_to_read = "PMT_NB0166_HV1370_Analysis.root"; 
+void Fit_Q_Basic(string filePath = "../outputFile.root"; ){
+
+  TFile *inFile  = new TFile(filePath.c_str(),"read");
   
-  file_to_read = path_to_read + file_to_read;
-  TFile *FileLoad  = new TFile(file_to_read.c_str(),"read");
+  TH1D * hCharge1 = (TH1D*)inFile->Get("hCharge1");
   
-  TH1D*TestHist=0;
-  FileLoad->GetObject("SPE2",TestHist); 
-  if (TestHist == 0) cout << "TEST HIST IS ZERO" << endl;
+  if (hCharge1 == 0) 
+    cout << "Histo is zero" << endl;
   
-  TestHist -> GetYaxis()->SetTitle("Counts ");
-  TestHist -> GetYaxis()->SetTitleOffset(1.5);
-  TestHist -> GetXaxis()->SetTitle("Charge (mv*ns)");
+  hCharge1->GetYaxis()->SetTitle("Counts ");
+  hCharge1->GetYaxis()->SetTitleOffset(1.5);
+  hCharge1->GetXaxis()->SetTitle("Charge (mv*ns)");
   
   // Draw spectrum.
-  TestHist -> Draw();
+  hCharge1->Draw();
   
   // Fit the data.
-  double fitXMin = 40.;
+  double fitXMin = 0.;
 		
   double fitXMax = 2000.;
 
@@ -110,7 +109,7 @@ void QFit_V1(){
   tf11->SetParameter(6, 0.223033);
 
   // Perform fit.
-  TFitResultPtr tfrp1 = TestHist -> Fit("data1Fit","RSE");
+  TFitResultPtr tfrp1 = hCharge1-> Fit("data1Fit","RSE");
 
   addGraph(expBackground,kMagenta+2,tf11->GetParameters(),fitXMin,fitXMax);
   addGraph(photon1Signal,kGreen+2,tf11->GetParameters(),fitXMin,fitXMax);
