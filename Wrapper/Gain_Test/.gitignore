@@ -1,7 +1,8 @@
 HV_SPE/
 SPE_Gen
 BinToRoot
-outputFile.root
+*.root
+*.dat
 SPE_Fit
 Plots/*
 SPE_Fit

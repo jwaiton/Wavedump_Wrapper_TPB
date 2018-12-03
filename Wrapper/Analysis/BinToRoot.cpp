@@ -422,7 +422,7 @@ int ProcessBinaryFile(string filePath,
 	fVDC3 += Accumulate_V3(pulse[iSample],iSample,minT);
 	fVDC4 += Accumulate_V4(pulse[iSample],iSample,minT);
 	
-	if( !( event%1000) )
+	if( !( event%1) )
 	  hPulses->Fill(iSample,pulse[iSample]);
 	
       }
@@ -501,7 +501,13 @@ int ProcessBinaryFile(string filePath,
 
 
 string getFilePath(){
-  return  "../../../Data/wave_0.dat";
+  return  "../../Data/wave_0.dat";
+}
+
+string getFilePathBine(){
+
+  return "/home/lhcbuser/Watchman/Wavedump_Wrapper/Data/run0006/wave_0.dat";
+
 }
 
 string getEdFileNPath(char digitiser){
@@ -530,11 +536,15 @@ int main(int argc, char **argv)
   // Printing
   // 'V' - VME (default)
   // 'D' - Desktop
-  //char   digitiser = 'V';
+  char   digitiser = 'V';
   
   //-------------------
- 
-  int nEvents = ProcessBinaryFile(getFilePath(),verbosity);
+  
+  string filePath = getFilePath();
+
+  int nEvents = ProcessBinaryFile(filePath,
+				  verbosity,
+				  digitiser);
   
   cout << " Output file contains " << nEvents << " events " << endl; 
 }
