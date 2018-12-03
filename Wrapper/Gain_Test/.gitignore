@@ -6,3 +6,7 @@ BinToRoot
 SPE_Fit
 Plots/*
 SPE_Fit
+SPE_Gen_Desk
+peakToValley5.C
+peakToValley5_C.so
+peakToValley5_C_ACLiC_dict_rdict.pcm
