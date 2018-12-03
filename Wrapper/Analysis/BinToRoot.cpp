@@ -501,7 +501,7 @@ int ProcessBinaryFile(string filePath,
 
 
 string getFilePath(){
-  return  "../../Data/wave_0.dat";
+  return  "../../../Data/wave_0.dat";
 }
 
 string getFilePathBine(){
