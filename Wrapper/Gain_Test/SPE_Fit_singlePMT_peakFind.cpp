@@ -32,6 +32,23 @@ double fitPow(double *x, double *k)
 }
 
 
+void addGraph(double (*func)(double,double*),int color,double *p,double xmin,double xmax)
+{
+  // Extra graphs.
+  int graphSteps=500;
+ 
+  // Add error bands.
+  TGraph *tg1=new TGraph(graphSteps);
+  for (int i=0;i<graphSteps;i++)	{
+    double x=xmin+(double)i*(xmax-xmin)/((double)graphSteps+1.);
+    double y=func(x,p);
+    tg1->SetPoint(i,x,y);
+  }
+  tg1->SetLineColor(color);
+  tg1->SetLineWidth(2);
+  tg1->Draw("SAME");
+}
+
 //=========================================================================================================================================
 
 int main(int argc,char **argv){	
@@ -142,15 +159,14 @@ int main(int argc,char **argv){
   
   // Data histogram.
   //TH1D* sData=newTH1D("data","Single Photon Energy;Channel;Counts",2000,-1000,9000);
-  int PMT[4] = {channel[0],channel[1],channel[2],channel[3]};
-  double gainValues[4][5];  //creates an empty array for the gain value for each PMT and each step
+  double gainValues[5];  //creates an empty array for the gain value for each PMT and each step
   
   
   //	vector<double> centroid(20,0), centroid_error(20,0),area(20,0), area_error(20,0);
   //char filename[30];
   // Fitting the SPE Spectrum =======================================================================
   
-  for (int r=0;r<20;r++){ 
+  for (int r=0;r<5;r++){ 
     
     TCanvas *tc=new TCanvas("Canvas","ROOT Canvas",1);
     //tc->Connect("TCanvas","Closed()","TApplication",gApplication,"Terminate()");
@@ -164,24 +180,18 @@ int main(int argc,char **argv){
     // *************************
     
     //		if (r<5)mod = PMT[0];if (r>=5&&r<10)mod = PMT[1];if (r>=10&&r<15) mod = PMT[2];if (r>=15) mod = PMT[3];	[taken out for testing,LK]
-    int pmtChannel = r%4; // pmt channel [taken out for testing, LK]
-    int hv = r%5;  // gain test number [taken out for testing, LK]
-    int mod = PMT[pmtChannel]; // 0; // pmt number
+    int pmtChannel = 0; // pmt channel [taken out for testing, LK]
+    int hv = r;  // gain test number [taken out for testing, LK]
+    int mod = channel[0]; // 0; // pmt number
     
-    if (mod<10)		
-      sprintf(histname, "HV_SPE/PMT_NB000%d_HV%d.root",mod, pmtHV[pmtChannel][hv]); 
-    if (mod>=10 && mod <100)
-      sprintf(histname, "HV_SPE/PMT_NB00%d_HV%d.root",mod, pmtHV[pmtChannel][hv]);
-    if (mod>=100)
-      sprintf(histname, "HV_SPE/PMT_NB0%d_HV%d.root",mod, pmtHV[pmtChannel][hv]); 
+    sprintf(histname, "../Analysis/HV%d_PMT0001.root",r+1); 
     
     //printf("Voltage: 
     TFile s(histname);
     s.ls();
     
     char root_name[30];
-    sprintf(root_name, "SPE%d;1.root",pmtChannel); //changed from mod to pmt
-    //sprintf(root_name, "SPE%d;1.root",3);	
+    sprintf(root_name, "hCharge4");
     TH1D *speData = (TH1D*)s.Get(root_name);
 
     printf("Getting data from SPE spectrum...\n");
@@ -189,77 +199,77 @@ int main(int argc,char **argv){
     speData->GetYaxis()->SetTitleOffset(1.5);
     speData->GetXaxis()->SetTitle("Charge (mv*ns)");	
     
-	speData->Draw("same");
-	tc->Update();
-	tc->Paint();
-	tc->Draw("same");
-	tc->Modified();
-		
-	/***Find the value at the maximum***/
-
-    TSpectrum *spec = new TSpectrum(2,3);
-    Int_t nfound = spec->Search(speData,2,"goff",0.0002);
-    std::cout << "found peaks " << nfound << std::endl;
-
-    // returns positions of Pedestal and Signal approx
-    Float_t *peaks;
-    peaks = spec->GetPositionX(); 
-    std::cout << peaks[0] << " " << peaks[1]  << std::endl;
-
-    // returns the charge at the maximum of the SPE peak
-    float signalMax = peaks[1];
 	
-		
-	printf(" voltage is  %d , charge is %f \n\n\n\n",pmtHV[pmtChannel][hv],signalMax); 
-	float amplification = 10.0; //amplification via amplifier
-	float splitter = 2.0; //correction for use of splitter box
-	float impedence = 50.0;
-	double pmtGain = signalMax*10e-12*splitter/amplification/impedence/(1.602*10e-19)/1e7; //conversion from charge in mVns to gain
-	gainValues[pmtChannel][hv] = pmtGain; //create a list of the gain values
-		
-		
-	// Enter run loop.
-		
-	TString plotName  = "./Plots/PMT_%d_%d.png";
-	plotName.Form("./Plots/PMT_%d_%d.png",mod,pmtHV[pmtChannel][hv]);
-		
-	cout << " mod     = " << mod << endl;
-	cout << " pmtHV[" << pmtChannel << "][" << hv << "] = " << pmtHV[pmtChannel][hv] << endl;
-	cout << " plotName = " << plotName << endl;
+		// Draw spectrum.
+		speData->Draw();
 
-	tc->SaveAs(plotName);
+		// Update canvas.
+		tc->Update();
+		tc->Paint();
+		tc->Draw();
+		tc->Modified();
+		
+		
+		
+		/***Find the value at the maximum***/
+
+        TSpectrum *spec = new TSpectrum(2,3);
+        Int_t nfound = spec->Search(speData,2,"goff",0.0002);
+        std::cout << "found peaks " << nfound << std::endl;
+
+        // returns positions of Pedestal and Signal approx
+        Float_t *peaks;
+        peaks = spec->GetPositionX(); 
+        std::cout << peaks[0] << " " << peaks[1]  << std::endl;
+
+        // returns the charge at the maximum of the SPE peak
+        float signalMax = peaks[1];
+
+		printf(" voltage is  %d , charge is %f \n\n\n\n",pmtHV[pmtChannel][hv],signalMax); 
+		float amplification = 10.0; //amplification via amplifier
+		float splitter = 2.0; //correction for use of splitter box
+		float impedence = 50.0;
+		double pmtGain = signalMax*10e-12*splitter/amplification/impedence/(1.602*10e-19)/1e7; //conversion from charge in mVns to gain
+		gainValues[hv] = pmtGain; //create a list of the gain values
+		
+		
+		// Enter run loop.
+		
+		TString plotName  = "./Plots/PMT_%d_%d.png";
+		plotName.Form("./Plots/PMT_%d_%d.png",mod,pmtHV[pmtChannel][hv]);
+		
+		cout << " mod     = " << mod << endl;
+		cout << " pmtHV[" << pmtChannel << "][" << hv << "] = " << pmtHV[pmtChannel][hv] << endl;
+		cout << " plotName = " << plotName << endl;
+		//plotName += ".png";
+
+		tc->SaveAs(plotName);
+		//ta->Run("false");
   }
   
   
   TCanvas *tc=new TCanvas("Canvas","ROOT Canvas",1);
   
   // Making the HV fit ========================================================================
-  TGraph *Gain[4];
+  TGraph *Gain;
   
-  for (int i=0;i<4;i++){
-    int pmt = i;
     
-    double hvVals[5]={0,0,0,0,0};
+  double hvVals[5]={0,0,0,0,0};
 
-		double gainVals[5]={0,0,0,0,0};
+  double gainVals[5]={0,0,0,0,0};
 
-		for (int j=0; j<5; j++){
-			hvVals[j] = pmtHV[i][j];
-			gainVals[j] = gainValues[i][j];
+  for (int j=0; j<5; j++){
+		hvVals[j] = pmtHV[0][j];
+		gainVals[j] = gainValues[j];
 			
 		}
 		
 	
 		//Plot gain vs voltage for each PMT
-		Gain[i] = new TGraph(5,hvVals,gainVals);
+		Gain = new TGraph(5,hvVals,gainVals);
 
-  		TString gain_name;
-		gain_name.Form("gain%d",pmt);
-		cout<<gain_name;
-
-		Gain[i]->SetMarkerStyle(2);
-		Gain[i]->SetMarkerSize(1);
-		Gain[i]->SetName(gain_name);
+		Gain->SetMarkerStyle(2);
+		Gain->SetMarkerSize(1);
 		
 		//fit a curve of form y = 10*(kx)^n to the data
 		double fitMin = hvVals[0];
@@ -267,16 +277,13 @@ int main(int argc,char **argv){
 		TF1 *f14 = new TF1("f14",fitPow,fitMin,fitMax,2);
 		f14->SetParameter(0,10);
 		f14->SetParameter(1,10);
-		f14->SetLineColor(pmt+1);
-		TFitResultPtr tfrp14=Gain[i]->Fit("f14","RSE");
+		TFitResultPtr tfrp14=Gain->Fit("f14","RSE");
 
 		//Draw the plot plus fit
-		Gain[i]->Draw("AP");
-		Gain[i]->GetYaxis()->SetTitle("Gain (10^7)");
-		Gain[i]->GetXaxis()->SetTitle("Applied Voltage (V)");
-		TString Title;
-		Title.Form("Gain for PMT %d",PMT[i]);
-		Gain[i]->SetTitle(Title);
+		Gain->Draw("AP");
+		Gain->GetYaxis()->SetTitle("Gain (10^7)");
+		Gain->GetXaxis()->SetTitle("Applied Voltage (V)");
+		Gain->SetTitle("Gain for PMT0001");
 		
 		//Bias for 10^7 GAIN ==========================================================================================================
 //		double PMTgain = pow(35.0,1/f14->GetParameter(1))/(f14->GetParameter(0));
@@ -288,16 +295,12 @@ int main(int argc,char **argv){
 //		//calculate the operating voltage for 10^7 gain
 		double operatingHV = pow(1.0/10.,(1./f14->GetParameter(1)))/(f14->GetParameter(0)); //inverse of fit function with y=1 (ie y= 1e7 gain)
 		double operatingHVError = abs(pow(1.0/10.,(1./f14->GetParameter(1)))/(f14->GetParameter(0)) - pow(1.0/10.,(1./(f14->GetParameter(1)+f14->GetParError(1))))/(f14->GetParameter(0)+f14->GetParError(0)));
-		printf("\n\n\n\n\n Operating voltage for 10^7 Gain for PMT %d: %f  +/- %f \n\n\n\n\n", PMT[i],operatingHV, operatingHVError );
+		printf("\n\n\n\n\n Operating voltage for 10^7 Gain for PMT0001: %f  +/- %f \n\n\n\n\n", operatingHV, operatingHVError );
 		//=============================================================================================================================
 		
 		//ta->Run("false");
-		TString plotName  = "./Plots/Gain_PMT_%d.png";
-		plotName.Form("./Plots/Gain_PMT_%d.png",PMT[i]);
-		cout << " plotName = " << plotName << endl;
-		tc->SaveAs(plotName);
+		tc->SaveAs("Gain_PMT0001.png");
 		
-	}
 //	mg->Draw("AP");
 //	mg->GetYaxis()->SetTitle("Gain (10^7)");
 //	mg->GetXaxis()->SetTitle("Applied Voltage (V)");
