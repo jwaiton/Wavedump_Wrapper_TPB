@@ -1,1 +1,1 @@
-root -l 'GetPeakToValley.C++("../outputFile.root",1)';
+root -l 'GetPeakToValley.C++("./outputFile.root",1)';

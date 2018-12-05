@@ -45,7 +45,7 @@ typedef struct {
   
 } Result;
 
-void fillValueWithError(ValueWithError* val,TH1F* h){
+void fillValueWithError(ValueWithError* val,TH1D* h){
   val->value = h->GetMean();
   val->error = h->GetRMS();
 }
@@ -61,7 +61,7 @@ typedef std::tuple<double,double,double,double,double> InitParams;
 
 using namespace RooFit;
 
-InitParams initializeFit(TH1F* h){
+InitParams initializeFit(TH1D* h){
 
   TSpectrum *s = new TSpectrum(2,3);
   Int_t nfound = s->Search(h,2,"goff",0.0002);
@@ -94,8 +94,8 @@ InitParams initializeFit(TH1F* h){
   }//end for
 
  
-  double ssignal = (peaks[1] -  h->GetBinCenter(ValleyBin))/2.5;
-  double sped = (h->GetBinCenter(ValleyBin) - peaks[0])/2.5;
+  double ssignal = (peaks[1] -  h->GetBinCenter(ValleyBin))/2.;
+  double sped = (h->GetBinCenter(ValleyBin) - peaks[0])/10.;
   
   // hack
   //  if (sped > 30) sped = 30;
@@ -122,7 +122,7 @@ const char* varname(std::string header, std::string var){
   return (header + var).c_str();
 }
 
-RooAddPdf* makePMTPDF(RooRealVar* counts,double pmval, double psval, double mval, double sval, double f1peval){//, double dmval = 15, double dsval = 20, double fdval = 0.9){
+RooAddPdf* makePMTPDF(RooRealVar* counts,double pmval, double psval, double psval2,  double mval, double sval, double f1peval){//, double dmval = 15, double dsval = 20, double fdval = 0.9){
 
   std::cout << pmval << " " << psval << " "  << mval << " "  << sval  << " "  <<f1peval << std::endl;
 
@@ -133,18 +133,24 @@ RooAddPdf* makePMTPDF(RooRealVar* counts,double pmval, double psval, double mval
   // RooGaussian* dgauss = new  RooGaussian("dgauss","dgauss", *counts, *dm, *ds);
 
   
- RooRealVar* pedm = new RooRealVar("pedmean","pedmean",pmval, pmval - 3*psval, pmval + 3*psval );   // pedestal position
- RooRealVar* peds = new RooRealVar("pedsigma","pedsigma",psval,0,5*psval );  // pedestal sigma --not sure how to set generically
+ RooRealVar* pedm = new RooRealVar("pedmean","pedmean",pmval, pmval - 5*psval, pmval + 5*psval );   // pedestal position
+ RooRealVar* peds = new RooRealVar("pedsigma","pedsigma",psval,0,5*psval );
+ RooRealVar* peds2 = new RooRealVar("pedsigma2","pedsigma2",psval2,psval,10*psval );  
+ // pedestal sigma --not sure how to set generically
 
- RooGaussian* pedgauss = new  RooGaussian("pedgauss","pedgauss", *counts, *pedm, *peds);
+  RooRealVar* fped = new RooRealVar("fped","fped",0.9,0,1 ); 
+  RooGaussian* pedgauss = new  RooGaussian("pedgauss","pedgauss", *counts, *pedm, *peds);
+  RooGaussian* pedgauss2 = new  RooGaussian("pedgauss2","pedgauss2", *counts, *pedm, *peds2);
 
+  RooAddPdf* pedpdf = new RooAddPdf("pedpdf", "pedpdf",RooArgList(*pedgauss,*pedgauss2), *fped);
+  
  // 1 pe
- RooRealVar* m0 = new RooRealVar("mean0","mean0",mval,  mval - 10*sval,  mval  + 10*sval);   // pedestal position
+ RooRealVar* m0 = new RooRealVar("mean0","mean0",mval,  mval - 2*sval,  mval  + 10*sval);   // pedestal position
  RooRealVar* s0 = new RooRealVar("sigma0","sigma0", sval,0, 10*sval);  // pedestal sigma --not sure how to set generically
 
 
 
- RooRealVar* npe = new RooRealVar ("npe","npe", f1peval,0.2,2); // number of photo electrons
+ RooRealVar* npe = new RooRealVar ("npe","npe", f1peval,0.01,1); // number of photo electrons
 
  std::string form1 = "mean0 + pedmean"; 
  RooFormulaVar* m =  new RooFormulaVar("mean","mean",form1.c_str(),RooArgSet(*m0,*pedm));
@@ -189,7 +195,9 @@ RooAddPdf* makePMTPDF(RooRealVar* counts,double pmval, double psval, double mval
  RooRealVar* frac_pe3 = new RooRealVar("frac_pe3","frac_pe3", TMath::Poisson(3,0.66),  0,  1  ); 
  */
  
- RooAddPdf* smodel = new RooAddPdf("smodel","smodel",RooArgList(*pedgauss,*gauss,*gauss2,*gauss3,*gauss4), RooArgList(*frac_ped1,*frac_pe1,*frac_pe2,*frac_pe3));
+ //RooAddPdf* smodel = new RooAddPdf("smodel","smodel",RooArgList(*pedgauss,*gauss,*gauss2,*gauss3,*gauss4), RooArgList(*frac_ped1,*frac_pe1,*frac_pe2,*frac_pe3));
+
+ RooAddPdf* smodel = new RooAddPdf("smodel","smodel",RooArgList(*pedpdf,*gauss,*gauss2,*gauss3), RooArgList(*frac_ped1,*frac_pe1,*frac_pe2));
 
  
  //RooAddPdf* model = new RooAddPdf("model","model",RooArgList(*smodel,*dgauss),*fd);
@@ -203,6 +211,7 @@ RooAddPdf* makePMTPDF(RooRealVar* counts,const RooArgList& fitpars){
 
  RooRealVar* fpedmean = (RooRealVar*)fitpars.find("pedmean");
  RooRealVar* pedsigma = (RooRealVar*)fitpars.find("pedsigma");
+ RooRealVar* pedsigma2 = (RooRealVar*)fitpars.find("pedsigma2");
  //RooRealVar* pedsigma2 = (RooRealVar*)fitpars.find("pedsigma2");
  RooRealVar* fmean = (RooRealVar*)fitpars.find("mean0");
  RooRealVar* fsigma = (RooRealVar*)fitpars.find("sigma0");
@@ -212,11 +221,11 @@ RooAddPdf* makePMTPDF(RooRealVar* counts,const RooArgList& fitpars){
  //RooRealVar* fd = (RooRealVar*)fitpars.find("fd");
 
  
- return makePMTPDF( counts,fpedmean->getVal(),pedsigma->getVal(), fmean->getVal(), fsigma->getVal(), f1pe->getVal());//, dm->getVal(), ds->getVal(),fd->getVal());
+ return makePMTPDF( counts,fpedmean->getVal(),pedsigma->getVal(), pedsigma2->getVal(),  fmean->getVal(), fsigma->getVal(), f1pe->getVal());//, dm->getVal(), ds->getVal(),fd->getVal());
 }
 
 RooAddPdf* makePMTPDF(RooRealVar* counts,InitParams& params){
-  return makePMTPDF(counts,std::get<0>(params),std::get<2>(params),std::get<1>(params),std::get<3>(params),1-std::get<4>(params));
+  return makePMTPDF(counts,std::get<0>(params),std::get<2>(params),2*std::get<2>(params), std::get<1>(params),std::get<3>(params),1-std::get<4>(params));
 }
 
 
@@ -240,10 +249,10 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
 
  
  //now the complicated ones that require sampling the fitted pdf/covariance
- TH1F* histo = new TH1F("valley", "valley", 200, res->ped.value,  res->pemean.value ); histo->Sumw2();
- TH1F* histo2 = new TH1F("peak", "peak", 200,  res->pemean.value - res->pewidth.value ,  res->pemean.value +3* res->pewidth.value ); histo2->Sumw2();
- TH1F* histo3 = new TH1F("peakToValley", "peakToValley", 100,  0,10 ); histo3->Sumw2();
- TH1F* histo4 = new TH1F("f", "f", 100,  0.,1 ); histo4->Sumw2();
+ TH1D* histo = new TH1D("valley", "valley", 200, res->ped.value,  res->pemean.value ); histo->Sumw2();
+ TH1D* histo2 = new TH1D("peak", "peak", 200,  res->pemean.value - res->pewidth.value ,  res->pemean.value +3* res->pewidth.value ); histo2->Sumw2();
+ TH1D* histo3 = new TH1D("peakToValley", "peakToValley", 100,  0,10 ); histo3->Sumw2();
+ TH1D* histo4 = new TH1D("f", "f", 100,  0.,1 ); histo4->Sumw2();
 
  RooArgSet nset(*counts) ;
  
@@ -253,8 +262,8 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
    // std::string name = "pdf_" + std::to_string(i);
    RooAddPdf* pdf = makePMTPDF(counts,sample);
    TF1* fmodel = pdf->asTF( *counts,fitpars,*counts);
-   double vpos = fmodel->GetMinimumX(0.1,1);
-   double ppos = fmodel->GetMaximumX(1,10);
+   double vpos = fmodel->GetMinimumX(res->ped.value,res->pemean.value);
+   double ppos = fmodel->GetMaximumX(res->pemean.value - res->pewidth.value ,res->pemean.value + res->pewidth.value);
    histo->Fill(vpos);
    histo2->Fill(ppos);
    //   std::cout << "****" <<  fmodel->GetMaximum(20,45) <<  " " << fmodel->GetMinimum(10,20) << std::endl;
@@ -262,7 +271,7 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
 
    //RooArgSet* theset = pdf->getComponents();
    // RooAbsPdf* signalmodel =  (RooAbsPdf*)theset->find("gmodel");;
-   counts->setRange("signal",vpos, 10) ;
+   counts->setRange("signal",vpos, 1000) ;
    
    RooAbsReal* igx_s2 =  pdf->createIntegral(*counts,NormSet(*counts),Range("signal")) ;
    histo4->Fill(igx_s2->getVal());
@@ -279,33 +288,56 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
  return res;
 }
 
-Result* fitModel(double minval = -1 , double maxval = 5 ,std::string file = "1500V.root",double max = 1000){
+TH1F* h2h(TH1D* hold ){
+
+  TH1F* h = new TH1F("histo", "histo", hold->GetNbinsX(),hold->GetXaxis()->GetXmin(),  hold->GetXaxis()->GetXmax());
+  h->Sumw2();
+  int entries = hold->GetEntries();
+  for (int i = 1 ; i <= h->GetNbinsX(); ++i ){
+    int bincontent = int(entries*hold->GetBinContent(i));
+    double valx = hold->GetBinCenter(i);
+    for (int i = 0; i < bincontent; ++i){
+      h->Fill(valx);
+    }
+  
+  }
+  return h;
+}
+
+Result* fitModel(double minval = -100 , double maxval = 1000 ,std::string file = "outputFile.root",double max = 10000){
 
   //  Result* res = new Result();
   //gROOT -> ProcessLine( ".x ./mattStyle.C" );
   
-  TH1F *histo =new TH1F("h","h",100, minval., maxval); histo->Sumw2();
+  //  TH1D *histo =new TH1D("h","h",100, minval, maxval); histo->Sumw2();
   
   TFile *input=new TFile(file.c_str());
-  TTree *tree = (TTree*)input->Get("tree");
+  TH1D* histo = (TH1D*)input->Get("hCharge2"); 
+  // TH1F* fhisto = new TH1F(); histo->Copy(*fhisto);
+  // TH1F* fhisto = h2h(histo);
+  // fhisto->Sumw2();
+  
+  /*  TTree *tree = (TTree*)input->Get("tree");
   double val; tree->SetBranchAddress("charge", &val);
   for (int i = 0; i < tree->GetEntries(); ++i){
     tree->GetEntry(i);
     if (val < maxval) histo->Fill(val);
   }
-  
-  
-  histo->Draw("HISTO");
+  */
+
+  //fhisto->Scale(histo->GetEntries());
+  //  fhisto->Draw("HISTO");
   //return 0;
   InitParams params = initializeFit(histo);
 
-  //   return 0;
+  //return 0;
   
-  RooRealVar* counts = new RooRealVar("charge", "charge", -5, maxval); 
+  RooRealVar* counts = new RooRealVar("charge", "charge", 0,minval, maxval); 
   RooDataHist data("data", "dataset", *counts , histo);
    
   RooAddPdf* model = makePMTPDF(counts,params);
-  
+
+  //  return 0;
   RooFitResult* fres = model->fitTo(data,Save());
 
  
@@ -314,12 +346,12 @@ Result* fitModel(double minval = -1 , double maxval = 5 ,std::string file = "150
  //model->plotOn(frame, Components("smodel"),LineColor(kBlue), LineStyle(2));
  // model->plotOn(frame, Components("gauss2"),LineColor(kGreen), LineStyle(2));
  // model->plotOn(frame, Components("dgauss"),LineColor(kBlack), LineStyle(2));
- model->plotOn(frame, Components("gauss1"),LineColor(kBlue), LineStyle(2));
- model->plotOn(frame, Components("gauss2"),LineColor(kGreen), LineStyle(2));
+  model->plotOn(frame, Components("gauss1"),LineColor(kBlue), LineStyle(2));
+  model->plotOn(frame, Components("gauss2"),LineColor(kGreen), LineStyle(2));
  // model->plotOn(frame, Components("dgauss"),LineColor(kBlack), LineStyle(2));
- model->plotOn(frame, LineColor(kRed));
+ // model->plotOn(frame, LineColor(kRed));
 
- model->plotOn(frame, LineColor(kRed));
+  model->plotOn(frame, LineColor(kRed));
 
   std::cout << " plotting " << std::endl;
  TAxis* xachse = frame->GetXaxis();  TAxis* yachse = frame->GetYaxis();
@@ -338,9 +370,9 @@ Result* fitModel(double minval = -1 , double maxval = 5 ,std::string file = "150
  frame->Draw();
  
  
-  Result* res = propagateAndFill(counts,model,fres);
+ Result* res = propagateAndFill(counts,model,fres);
 
- //Result* res;
+ // Result* res;
  return res;
 }
 

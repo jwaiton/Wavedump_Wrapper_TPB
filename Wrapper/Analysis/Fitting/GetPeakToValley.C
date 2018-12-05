@@ -263,7 +263,7 @@ Result* fitModel(string file = "PMT_NB0066_HV1820_Analysis.root",
  return res;
 }
 
-void GetPeakToValley(string rootFileName = "../outputFile.root",
+void GetPeakToValley(string rootFileName = "./outputFile.root",
 		     int histoVersion = 1){
   
   
