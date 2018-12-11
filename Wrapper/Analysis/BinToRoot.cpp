@@ -2,8 +2,7 @@
  * A program to process wavedump output files
  *
  * Author 
- *  Gary Smith
- *  https://github.com/gsmith23
+ *  gary.smith@ed.ac.uk
  *  28 11 18
  *
  * Adapted from
@@ -13,7 +12,7 @@
  *  04 10 2018
  *
  * Purpose
- *  This program read the binary 
+ *  This program reads a wavedump binary 
  *  file and writes a TTree
  *  and histograms to a root file. 
  *
@@ -26,6 +25,12 @@
  * Dependencies
  *  root.cern
  *  Makefile
+ *
+ * Modified 
+ *  gary.smith@ed.ac.uk
+ *  11 12 18
+ *
+ *
  *
  */ 
 
@@ -93,6 +98,30 @@ int getSampleRateInMHz(char digitiser){
 
 }
 
+void printDAQConfig(char digitiser){
+  
+
+  TString strDigitiser = "VME";
+  
+  if (digitiser=='d')
+    strDigitiser = "Desktop";
+
+  cout << endl;
+  cout << "   " 
+       << strDigitiser
+       << " Digitiser "    << endl;
+  cout << "   " 
+       << getNVDCBins(digitiser)        
+       << " VDC Bins "    << endl;
+  cout << "   " 
+       << getVoltageRange(digitiser)    
+       << " Volts Range "  << endl;
+  cout << "   " 
+	 << getSampleRateInMHz(digitiser) 
+       << " MHz sample rate " << endl;
+  cout << endl;
+}
+
 
 float getnsPerSample(char digitiser){
   
@@ -119,13 +148,12 @@ float getCharge(int intVDC, char digitiser = 'V'){
   
   float nsPerSample = getnsPerSample(digitiser);
   
-  float mVPerBin = getmVPerBin(digitiser);
-   
-  float mVolts = (float)intVDC * mVPerBin;
+  float mVolts = (float)intVDC * getmVPerBin(digitiser);
   
   float charge = -1. * nsPerSample * mVolts;
   
-  if( digitiser == 'V' || digitiser == 'D' )
+  if( digitiser == 'V' || 
+      digitiser == 'D' )
     return charge; 
   else
     return 0.;
@@ -146,7 +174,7 @@ bool isCorrectDigitiser(int header, char digitiser){
 
 // integration windows fixed wrt trigger
 // pedestal window before signal window only
-float Accumulate_V1(short VDC, float time){
+float Accumulate_Fixed(short VDC, float time){
 
   // Integrate pedestal using 
   // 40 ns window before signal
@@ -163,40 +191,17 @@ float Accumulate_V1(short VDC, float time){
   
 }
 
-// integration window fixed wrt trigger
-// pedestal windows before and after signal window
-float Accumulate_V2(short VDC, float time){
-
-  // Integrate pedestal using 
-  // 20 ns window before signal
-  // and 20 ns window after
-  // And signal in 40 ns window
-  if      ( time >= -20 && 
-	    time <    0 )
-    return((float)-VDC);
-  else if ( time >= 0 &&
-	    time < 40  )
-    return((float)VDC);
-  else if ( time >= 40 &&
-	    time <  60 )
-    return((float)-VDC);
-  else
-    return 0.;
-   
-}
-
 // integration windows wrt pulse peak
+// -10 ns before to 20 ns after
+// (timeRel is time relative to minT)
 // pedestal window before
-float Accumulate_V3(short VDC, float time){
-
-//   cout << " minT   = " << minT   << endl;
-//   cout << " sample = " << sample << endl;
-
-  if      ( time >= -50 && 
-	    time <  -10 )
+float Accumulate_Peak(short VDC, float timeRel){
+  
+  if      ( timeRel >= -50 && 
+	    timeRel <  -10 )
     return((float)-VDC);
-  else if ( time >= -10 &&
-	    time <   30 ){
+  else if ( timeRel >= -10 &&
+	    timeRel <   30 ){
     return((float)VDC);
   }
   else
@@ -204,96 +209,38 @@ float Accumulate_V3(short VDC, float time){
 
 }
 
-// integration window wrt pulse peak
-// pedestal windows before and after signal window
-// ( double counting bug as in SPE_Gen )
-float Accumulate_V4(short VDC, 
-		    short sample,
-		    short minT,
-		    char  digitiser){
-  int w = 0;
-  
-  if     ( digitiser == 'V' )
-    w = 10;
-  else if( digitiser == 'D')
-    w = 100;
-    
-  float result = 0;
-  
-  if ( sample >= (minT - 3*w) && 
-       sample <= (minT - 2*w) )
-    result += ((float)-1*VDC)*3./4.;
-  
-  if ( sample >= (minT - 2*w) && 
-       sample <= (minT - 1*w) )
-    result += ((float)-1*VDC)*3./4.;
-  
-  if ( sample >= (minT - 1*w) &&
-       sample <= (minT      ) )
-    result += (float)VDC;
-  
-  if ( sample >= (minT      ) &&
-       sample <= (minT + 1*w) )
-    result += (float)VDC;
-  
-  if ( sample >= (minT + 1*w) &&
-       sample <= (minT + 2*w) )
-    result += (float)VDC;
-  
-  if ( sample >= (minT + 2*w) &&
-       sample <= (minT + 3*w) )
-    result += ((float)-1*VDC)*3./4.;
-  
-  if ( sample >= (minT + 3*w) && 
-       sample <= (minT + 4*w) )
-    result += ((float)-1*VDC)*3./4.;
-  
-  return result;
-  
-}
-
-int ProcessBinaryFile(string filePath,
+// Read in binary file and 
+// write to root file
+int ProcessBinaryFile(TString inFilePath,
+		      TString outFilePath,
 		      int    verbosity = 0,
 		      char   digitiser = 'V'
 		      ){
-
-  cout << " Processing  " << filePath << endl;
+  cout << endl;
+  cout << " Processing  " << inFilePath << endl;
 
   bool  testMode  = false;
   bool  keepGoing = true;
   int   maxEvents = 50000;
- 
+  
   if     ( verbosity == 1 )
     maxEvents = 10;
   else if( verbosity == 2 )
     maxEvents = 1;
 
   // Read from here
-  ifstream fileStream(filePath);
+  ifstream fileStream(inFilePath);
 
   if(!fileStream.good()){
     cerr << endl;
     cerr << " check filename " << endl;
     return -1;
   }
-
-
-  if( verbosity > 0 ){
-    cout << endl;
-    cout << "   " 
-	 << getNVDCBins(digitiser)        
-	 << " VDC Bins "    << endl;
-    cout << "   " 
-	 << getVoltageRange(digitiser)    
-	 << " Volts Range "  << endl;
-    cout << "   " 
-	 << getSampleRateInMHz(digitiser) 
-	 << " MHz sample rate " << endl;
-    cout << endl;
-  }
-
+  
+  printDAQConfig(digitiser);
+    
   // Write to here
-  TFile * outFile    = new TFile("outputFile.root",
+  TFile * outFile    = new TFile(outFilePath,
 				 "RECREATE",
 				 "Wavedump Data");
   //---------------------
@@ -301,20 +248,13 @@ int ProcessBinaryFile(string filePath,
   TTree * eventTree  = new TTree("eventTree",
 				 "event-level variables");
   
+  //TCanvas
   // accumulated and coverted data
-  TH1F * hCharge1 = new TH1F("hCharge1","hCharge1;Charge (mV nS);Counts",
+  TH1F * hQ_Fixed = new TH1F("hQ_Fixed","Fixed windows;Charge (mV nS);Counts",
 			     128,-560.,2000.);
   
-  TH1F * hCharge2 = new TH1F("hCharge2","hCharge2;Charge (mV nS);Counts",
-			     128,-560.,2000.);
-  
-  TH1F * hCharge3 = new TH1F("hCharge3","hCharge3;Charge (mV nS);Counts",
-			     128,-560.,2000.);
-
-  TH1F * hCharge4 = new TH1F("hCharge4","hCharge4;Charge (mV nS);Counts",
-			     128,-560.,2000.);
-
-  
+  TH1F * hQ_Peak = new TH1F("hQ_Peak","Windows around peak;Charge (mV nS);Counts",
+			    128,-560.,2000.);
   
   TH2F * hPulses = new TH2F("hPulses",
 			    "hPulses;Sample;VDC",
@@ -330,13 +270,16 @@ int ProcessBinaryFile(string filePath,
 
   int   event  = -1;
   
+  // Note that pulses are negative polarity and
+  // the sign is preserved here, therefore 
+  // minima will be where the signal was largest
   short minVDC = 32767, maxVDC = -32768;  
   short minT   = 32767, maxT   = -32768;  
-  int   intVDC1   = 0,  intVDC2   = 0,  intVDC3   = 0,  intVDC4   = 0;
-  float charge1 = 0., charge2 = 0., charge3 = 0., charge4 = 0.;  
+  int   intVDCfixed = 0, intVDCpeak = 0;
+  float qFixed = 0., qPeak = 0.;
 
   // read in samples per event
-  // vector maybe better
+  // vector may be better
   short pulse[getNSamples(digitiser)];
   
   eventTree->Branch("event",&event,"event/I");
@@ -349,8 +292,7 @@ int ProcessBinaryFile(string filePath,
   arrayString.Form("pulse[%d]/S",getNSamples(digitiser));
   
   eventTree->Branch("pulse",pulse,arrayString);
-
-
+  
   //---------------------
   // Sample Level Data
 
@@ -358,6 +300,8 @@ int ProcessBinaryFile(string filePath,
   
   int   fileHeader = 0;
   float floatVDC   = 0.;
+  
+  // Time (delay subtracted)
   float time = 0.;
   
   // read in data from streamer object
@@ -365,7 +309,7 @@ int ProcessBinaryFile(string filePath,
   while ( fileStream.is_open() && 
 	  fileStream.good()    && 
 	  !fileStream.eof()    &&
-	  keepGoing	  
+	  keepGoing 
 	  ){
     
     //-------------------
@@ -374,10 +318,10 @@ int ProcessBinaryFile(string filePath,
     
     //-------------------
     // event-level data
-    intVDC1 = 0, intVDC2 = 0, intVDC3 = 0, intVDC4 = 0;
-    charge1 = 0.,charge2 = 0.,charge3 = 0.,charge4 = 0.;
+    intVDCfixed = 0, intVDCpeak = 0;
+    qFixed = 0.,qPeak = 0.;
     
-    // VDC range (check zero crossing)
+    // VDC range
     minVDC =  32767;
     maxVDC = -32768;  
 
@@ -419,12 +363,13 @@ int ProcessBinaryFile(string filePath,
       
       VDC = 0;
       
+      // read 2 bits
       if     ( digitiser == 'V' ){
-	fileStream.read((char*)&VDC,2); //read 2 bits
+	fileStream.read((char*)&VDC,2); 
       }
-      
+      // read 4 bits
       else if( digitiser == 'D' ){
-	fileStream.read((char*)&floatVDC,sizeof(float));// read 4 bits
+	fileStream.read((char*)&floatVDC,sizeof(float));
 	VDC = (short)floatVDC;
       }
       else {
@@ -447,33 +392,30 @@ int ProcessBinaryFile(string filePath,
 	maxT   = sample;
       }
       
-      // If time was a drug then Big Ben would be a giant needle 
-      // injecting it into the sky.
-      time = sample*getnsPerSample(digitiser) - getDelay(digitiser);
+      // use time with delay subtracted so that 
+      // any run can use same windows
+      time = sample * getnsPerSample(digitiser) - getDelay(digitiser);
       
       // fixed window accumulations
-      // add or subtract
-      intVDC1 += Accumulate_V1(VDC,time);
+      // add / subtract / skip sample VDC value
+      intVDCfixed += Accumulate_Fixed(VDC,time);
 
-      intVDC2 += Accumulate_V2(VDC,time);
-      
-      //--------------------------------
-      // Sample by sample data here
-      
       if(verbosity > 1)
 	cout << " VDC(" << iSample << ") = " << VDC << endl;
       
     } // end: for (short iSample = 0; iSa
     
     float minTime = (float)minT*getnsPerSample(digitiser);
-    float timeMinusMinTime = 0;
+    float timeRelPeak = 0;
     
     // Loop over pulse again
+    // necessary for when event-level variables are used
+    // such as pulse minimum
     for (short iSample = 0; iSample < getNSamples(digitiser); iSample++){
       
       time = (float)iSample*getnsPerSample(digitiser) - getDelay(digitiser);
 
-      timeMinusMinTime = time - minTime + getDelay(digitiser);;
+      timeRelPeak = time - minTime + getDelay(digitiser);;
 	
       if(verbosity > 0){
 	cout << " minTime = " << minTime << endl;
@@ -482,23 +424,15 @@ int ProcessBinaryFile(string filePath,
       
       if( minTime > (getDelay(digitiser) - 20.)  && 
 	  minTime < (getDelay(digitiser) + 20.) ){
-
 	
 	// accumulations wrt pulse peak (minimum)
-	intVDC3 += Accumulate_V3(pulse[iSample],
-				 timeMinusMinTime);
+	intVDCpeak += Accumulate_Peak(pulse[iSample],
+				      timeRelPeak);
       }
       
-      if( minTime > 60. && 
-	  minTime < 120. ){
-
-	intVDC4 += Accumulate_V4(pulse[iSample],
-				 iSample,
-				 minT,
-				 digitiser);
-      }
-      
-      if( !(event%100) && event < 100000 ){
+      // sample vs VDC and time vs voltage plots
+      // for checking signals (delay etc) 
+      if( !(event%1000) && event < 100000 ){
 	hPulses->Fill(iSample,pulse[iSample]);
 	hTV->Fill(time + getDelay(digitiser),
 		  pulse[iSample]*getmVPerBin(digitiser));
@@ -510,39 +444,25 @@ int ProcessBinaryFile(string filePath,
       cout << " Warning: pulse is zero crossing " << endl;
     
     // convert accumulated VDC to charge
-    charge1 = getCharge(intVDC1,digitiser);
-    charge2 = getCharge(intVDC2,digitiser);
+    qFixed = getCharge(intVDCfixed,digitiser);
     
     if( verbosity > 0 ){
       cout << endl;
-      cout << " charge1 = " << charge1 << endl;
-      cout << " charge2 = " << charge2 << endl;
+      cout << " qFixed = " << qFixed << endl;
     }
     
-    hCharge1->Fill(charge1);
-    hCharge2->Fill(charge2);
+    hQ_Fixed->Fill(qFixed);
     
     if( minTime > (getDelay(digitiser) - 20.) && 
 	minTime < (getDelay(digitiser) + 20.) ){
       
-      charge3 = getCharge(intVDC3,digitiser);
-      
-      if( verbosity > 0 )
-	cout << " charge3 = " << charge3 << endl;
-      
-    }
+      qPeak = getCharge(intVDCpeak,digitiser);
     
-    if( minTime > 60. && 
-	minTime < 120. ){
-      
-      charge4 = getCharge(intVDC4,digitiser);
+      hQ_Peak->Fill(qPeak);
       
       if( verbosity > 0 )
-	cout << " charge4 = " << charge4 << endl;
-
+	cout << " qPeak = " << qPeak << endl;
       
-      hCharge3->Fill(charge3);
-      hCharge4->Fill(charge4);      
     }
     
     //--------------------------------
@@ -583,28 +503,113 @@ int ProcessBinaryFile(string filePath,
   outFile->Write();
   outFile->Close();
   
-  
   return (event+1);
 }
 
 
-string getFilePath(){
+string getDefaultFilePath(){
   return  "../../Data/wave_0.dat";
 }
 
-string getFilePathBine(){
+TString getRunFolderName(int run){
 
-  return "../../Data/wave_0_Bine.dat";
+  if     ( run < 10  )
+    return "RUN00000%d/";
+  else if( run < 100 )
+    return "RUN0000%d/";
+  else if( run < 1000 )
+    return "RUN000%d/";
+  else if( run < 10000 )
+    return "RUN00%d/";
+  else if( run < 100000 )
+    return "RUN0%d/";
+  else 
+    return "RUN%d/";
 }
 
-string getEdFileNPath(char digitiser){
+TString getPMTFolderName(int pmt){
+
+  if     ( pmt < 10  )
+    return "PMT000%d/";
+  else if( pmt < 100 )
+    return "PMT00%d/";
+  else if( pmt < 1000 )
+    return "PMT0%d/";
+  else
+    return "PMT%d/";
+}
+
+TString getTestFolderName(char test){
   
-  if     ( digitiser == 'V')
-    return  "/Disk/ds-sopa-group/PPE/Watchman/BinaryData/RUN000001/PMT0001/SPEtest/wave_0.dat";
-  else if( digitiser == 'D')
-    return  "../../Data/wave_0_Desk.dat";
-  else 
-    return "../../";
+  switch(test){
+  case('S'):
+    return "SPEtest/";
+  case('D'):
+    return "DarkRateTest/";
+  case('A'):
+    return "APTest/";
+  case('G'):
+    return "GainTest/";
+  default:
+    cerr << " Error: invalid test type " << endl;
+    return "";
+  }
+}
+
+TString getBinaryFilePath(TString filePath = "../../Data/",
+			  int  run  = 1, 
+			  int  pmt  = 1, 
+			  int  loc  = 0,
+			  char test = 'S',
+			  int  hvstep = 0){
+
+  // append file path
+  filePath += getRunFolderName(run);
+  filePath += getPMTFolderName(pmt);
+  filePath += getTestFolderName(test);
+  
+  // append with filename
+  switch(test){
+  case('G'):
+    filePath += "wave_%d_hv%d.dat";
+    filePath.Form(filePath,run,pmt,loc,hvstep);
+    break;
+  default:
+    filePath += "wave_%d.dat";
+    filePath.Form(filePath,run,pmt,loc);
+  }
+
+  return filePath;
+}
+
+TString getRawRootFilePath(TString filePath = "./",
+			   int  run  = 0, 
+			   int  pmt  = 1, 
+			   int  loc  = 0,
+			   char test = 'S',
+			   int  hvstep = 0){
+  
+  // default option
+  if( run == 0 )
+    return "outputFile.root";
+
+  // append file path
+  filePath += getRunFolderName(run);
+  filePath += getPMTFolderName(pmt);
+  filePath += getTestFolderName(test);
+  
+  // append with filename
+  switch(test){
+  case('G'):
+    filePath += "Run_%d_PMT_%d_Loc_%d_Test_%c_HV_%d.root";
+    filePath.Form(filePath,run,pmt,run,pmt,loc,test,hvstep);
+    break;
+  default:
+    filePath += "Run_%d_PMT_%d_Loc_%d_Test_%c.root";
+    filePath.Form(filePath,run,pmt,run,pmt,loc,test);
+  }
+  
+  return filePath;
   
 }
 
@@ -614,25 +619,55 @@ int main(int argc, char **argv)
   // ------------------
   // Optional variables
   // - see ProcessBinaryFile()
-  
+
+  // Printing  
   // 0 - silence (default) 
   // 1 - event-by-event
   // 2 - sample-by-sample
   int  verbosity   = 0;
   
-  // Printing
   // 'V' - VME (default)
   // 'D' - Desktop
   char   digitiser = 'V';
-  // digitiser = 'D';
+  //digitiser = 'D';
   
   //-------------------
   
-  string filePath = getFilePath();
+  //string filePath = getDefaultFilePath();
   
-  int nEvents = ProcessBinaryFile(filePath,
-				  verbosity,
+  int  run = 20; // 11 (underground), 20
+  int  pmt = 90;
+  int  loc = 0;
+  char test = 'S';
+  int  hvstep = 0;
+  
+  TString garyExternalBinary = "/Volumes/G-DRIVE/BinaryData/";
+  TString garyExternalROOT   = "/Volumes/G-DRIVE/RawRootData/";
+  
+  // TString edinburghBinary = "";
+  // edinburghBinary = "/Disk/ds-sopa-group/PPE/Watchman/BinaryData/";
+  
+  TString inputFilePath  = "";
+  TString outputFilePath = "";
+    
+  //  for (int hvstep = 1 ; hvstep < 6 ; hvstep++){
+
+  inputFilePath = getBinaryFilePath(garyExternalBinary,
+				    run, pmt, loc, test, hvstep);
+  
+  outputFilePath = getRawRootFilePath(garyExternalBinary,
+				      run, pmt, loc, test, hvstep);
+  
+  cout << endl;
+  cout << " Binary File = " << inputFilePath  << endl;
+  cout << " Root File   = " << outputFilePath << endl;
+  //}
+
+  int nEvents = ProcessBinaryFile(inputFilePath,
+				  outputFilePath, 
+				  verbosity, 
 				  digitiser);
   
+  cout << endl;
   cout << " Output file contains " << nEvents << " events " << endl; 
 }
