@@ -301,11 +301,15 @@ TString getBinaryFilePath(TString filePath = "../../Data/",
 			  int  loc  = 0,
 			  char test = 'S',
 			  int  hvStep = 0){
-
+  
+  cout << " filePath = " << filePath << endl;
+  
   // append file path
   filePath += getRunFolderName(run);
   filePath += getPMTFolderName(pmt);
   filePath += getTestFolderName(test);
+  
+  cout << " filePath = " << filePath << endl;
   
   // append with filename
   switch(test){
@@ -315,9 +319,12 @@ TString getBinaryFilePath(TString filePath = "../../Data/",
     break;
   default:
     filePath += "wave_%d.dat";
+    cout << " filePath = " << filePath << endl;
     filePath.Form(filePath,run,pmt,loc);
   }
 
+  cout << " filePath = " << filePath << endl;
+    
   return filePath;
 }
 
@@ -384,6 +391,9 @@ int ProcessBinaryFile(TString inFilePath,
 		      int  verbosity = 0,
 		      char digitiser = 'V'
 		      ){
+
+  cout << endl;
+  cout << " Processing  " << inFilePath << endl;
   
   inFilePath = getBinaryFilePath(inFilePath,
 				 run, pmt, loc, test, hvStep);
@@ -826,12 +836,15 @@ int main(int argc, char **argv)
   
   //int  locList[4] = {0,1,2,3};
   int  locList[4] = {0,0,0,0};
-
   
   TString inputDirectory  = "/Volumes/G-DRIVE/BinaryData/";
   
+  inputDirectory = "/Disk/ds-sopa-group/PPE/Watchman/BinaryData/";
+  
   TString outputDirectory = "/Users/gsmith23/Desktop/Watchman/PMT_Testing/";
   outputDirectory +=  "Wavedump_Wrapper/RawRootData/";
+  
+  outputDirectory = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/";
   
   int nEvents = -2;
 
