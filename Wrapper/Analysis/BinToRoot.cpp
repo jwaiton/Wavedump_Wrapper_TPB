@@ -42,6 +42,8 @@
 #include "TH2.h"
 #include "TLine.h"
 
+#include "TStopwatch.h"
+
 using namespace std;
 
 int  getNSamples(char digitiser,
@@ -443,17 +445,35 @@ int ProcessBinaryFile(TString inFilePath,
   TString eventTreeNameTemp = "", eventTreeName = "";;
   TString canvasNameTemp    = "", canvasName    = "";
   
+  TString hQ_FixedNameTemp = "", hQ_FixedName = "";
+  TString hQ_PeakNameTemp  = "", hQ_PeakName  = "";
+  
   if(hvStep == 0){
     eventTreeNameTemp = "Events_Run_%d_PMT_%d_Loc_%d_Test_%c";
     eventTreeName.Form(eventTreeNameTemp,run,pmt,loc,test);
     canvasNameTemp = "Canvas_Run_%d_PMT_%d_Loc_%d_Test_%c";
     canvasName.Form(canvasNameTemp,run,pmt,loc,test);
+    
+    hQ_FixedNameTemp = "hQ_Fixed_Run_%d_PMT_%d_Loc_%d_Test_%c";
+    hQ_FixedName.Form(hQ_FixedNameTemp,run,pmt,loc,test);
+    
+    hQ_PeakNameTemp = "hQ_Peak_Run_%d_PMT_%d_Loc_%d_Test_%c";
+    hQ_PeakName.Form(hQ_PeakNameTemp,run,pmt,loc,test);
+    
+    
   }
   else{
     eventTreeNameTemp = "Events_Run_%d_PMT_%d_Loc_%d_HV_%d";
     eventTreeName.Form(eventTreeNameTemp,run,pmt,loc,hvStep);
     canvasNameTemp = "Canvas_Run_%d_PMT_%d_Loc_%d_HV_%d";
     canvasName.Form(canvasNameTemp,run,pmt,loc,hvStep);
+
+    hQ_FixedNameTemp = "hQ_Fixed_Run_%d_PMT_%d_Loc_%d_HV_%d";
+    hQ_FixedName.Form(hQ_FixedNameTemp,run,pmt,loc,hvStep);
+    
+    hQ_PeakNameTemp = "hQ_Peak_Run_%d_PMT_%d_Loc_%d_HV_%d";
+    hQ_PeakName.Form(hQ_PeakNameTemp,run,pmt,loc,hvStep);
+
   }
   //---------------------
   // Event Level Data
@@ -463,13 +483,13 @@ int ProcessBinaryFile(TString inFilePath,
   TCanvas * canvas = new TCanvas(canvasName,
 				 canvasName);
   
-  TH1F * hQ_Fixed = new TH1F("hQ_Fixed",
+  TH1F * hQ_Fixed = new TH1F(hQ_FixedName,
 			     "Fixed gate;Charge (mV nS);Counts",
-			     128,-560.,2000.);
+			     128,-500.,2000.);
   
-  TH1F * hQ_Peak = new TH1F("hQ_Peak",
+  TH1F * hQ_Peak = new TH1F(hQ_PeakName,
 			    "Gate around peak;Charge (mV nS);Counts",
-			    128,-560.,2000.);
+			    128,-500.,2000.);
   
   TH2F * hPulses = new TH2F("hPulses",
 			    "Subset of Raw Pulses;Sample;VDC",
@@ -706,11 +726,9 @@ int ProcessBinaryFile(TString inFilePath,
   canvas->cd(1);
   
   hQ_Fixed->SetAxisRange(-500., 2500.,"X");
-  
 
   gPad->SetLogy(1);
   hQ_Fixed->Draw();
-
   
   canvas->cd(2);
   gPad->SetLogy(1);
@@ -824,7 +842,9 @@ int main(int argc, char **argv)
   int  nTests = 1;
   
   // for processing all test types
-  char testList[5] = {'S','N','G','D','A'};
+  //char testList[5] = {'S','N','G','D','A'};
+  
+  char testList[1] = {'G'};
   
   if(test=='E')
     nTests = 5;
@@ -880,11 +900,10 @@ int main(int argc, char **argv)
   outputDirectory = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/";
   
   int nEvents = -2;
-
+  
   cout << endl;
-  cout << " ----------------------- " << date << endl;
-  cout << " Processing Binary Data " << date << endl;
-  cout << "   date is " << date << endl;
+  cout << " ----------------------- "  << endl;
+  cout << " Processing Binary Data " << endl;
   
   for(int iRun = 0 ; iRun < nRuns ; iRun++ ){
 
@@ -932,9 +951,8 @@ int main(int argc, char **argv)
   } // end: for(int iRun = 0 ;...
 
   cout << endl;
-  cout << " Completed Processing    " << date << endl;
-  cout << "   date is " << date << endl;
-  cout << " ----------------------- " << date << endl;
+  cout << " Completed Processing    " << endl;
+  cout << " ----------------------- " << endl;
   
 
   
