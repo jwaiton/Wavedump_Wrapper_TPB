@@ -405,10 +405,10 @@ int ProcessBinaryFile(TString inFilePath,
 
   bool  testMode  = false;
   bool  keepGoing = true;
-  int   maxEvents = 5000;
+  int   maxEvents = 100;
   
   if ( test == 'A' )
-    maxEvents = 500;
+    maxEvents = 2;
   
   if     ( verbosity == 1 )
     maxEvents = 10;
@@ -834,20 +834,20 @@ int main(int argc, char **argv)
   int  pmt = 90;
   int  loc = 0;
   // 'S' SPE, 'G' Gain, 'D' Dark
-  // 'A' After, 'N' Nominal, 'E' Every
-  char test = 'N'; 
+  // 'A' After, 'N' Nominal, 
+  // 'E' Every (but not afterpulsing)
+  char test = 'E'; 
   int  hvStep = 0;
   int  nSteps = 1;
 
-  int  nTests = 1;
+  int  nTests = 4;
   
   // for processing all test types
   //char testList[5] = {'S','N','G','D','A'};
-  
-  char testList[1] = {'G'};
+  char testList[5] = {'S','N','G','D'};
   
   if(test=='E')
-    nTests = 5;
+    nTests = 4;
   
   static const int nRuns = 1;
   int  runList[nRuns] = {1};
@@ -906,9 +906,9 @@ int main(int argc, char **argv)
   cout << " Processing Binary Data " << endl;
   
   for(int iRun = 0 ; iRun < nRuns ; iRun++ ){
-
+    
     run = runList[iRun];
-
+    
     for (int iPMT = 0 ; iPMT < nPMTs ; iPMT++){
       
       if( iPMT < nPMTsA ){
@@ -942,18 +942,15 @@ int main(int argc, char **argv)
 				      verbosity, 
 				      digitiser);
 	
-	
 	cout << endl;
 	cout << " Output file contains " << nEvents << " events " << endl; 
 	
       } // end:  for ( int iTest =...
     } // end: for (int iPMT = 0 ...
   } // end: for(int iRun = 0 ;...
-
+  
   cout << endl;
   cout << " Completed Processing    " << endl;
   cout << " ----------------------- " << endl;
-  
-
   
 }
