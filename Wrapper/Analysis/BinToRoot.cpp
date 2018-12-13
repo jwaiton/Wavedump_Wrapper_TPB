@@ -817,7 +817,7 @@ int main(int argc, char **argv)
   int  loc = 0;
   // 'S' SPE, 'G' Gain, 'D' Dark
   // 'A' After, 'N' Nominal, 'E' Every
-  char test = 'S'; 
+  char test = 'N'; 
   int  hvStep = 0;
   int  nSteps = 1;
 
@@ -881,6 +881,11 @@ int main(int argc, char **argv)
   
   int nEvents = -2;
 
+  cout << endl;
+  cout << " ----------------------- " << date << endl;
+  cout << " Processing Binary Data " << date << endl;
+  cout << "   date is " << date << endl;
+  
   for(int iRun = 0 ; iRun < nRuns ; iRun++ ){
 
     run = runList[iRun];
@@ -925,5 +930,12 @@ int main(int argc, char **argv)
       } // end:  for ( int iTest =...
     } // end: for (int iPMT = 0 ...
   } // end: for(int iRun = 0 ;...
+
+  cout << endl;
+  cout << " Completed Processing    " << date << endl;
+  cout << "   date is " << date << endl;
+  cout << " ----------------------- " << date << endl;
+  
+
   
 }
