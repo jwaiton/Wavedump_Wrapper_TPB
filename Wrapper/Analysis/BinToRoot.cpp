@@ -144,7 +144,7 @@ float getDelay(int run = 0){
   if      ( run == 0 )
     return 105.; 
   else if ( run < 10 )
-    return 45.;
+    return 50.;
   else if ( run < 20 )
     return 90.;
   else 
@@ -203,7 +203,7 @@ bool isPeakInRange(float minTime, char digitiser,
 }
 
 float gateWidth(){
-  return 44;
+  return 50;
 }
 
 // integration windows fixed wrt trigger
@@ -211,9 +211,9 @@ float gateWidth(){
 float Accumulate_Fixed(short VDC, float time){
 
   // Integrate pedestal using 
-  // 44 ns window before signal
+  // 50 ns window before signal
   // (max size given run 1 delay)
-  // And signal in 44 ns window
+  // And signal in 50 ns window
   // NB using factors of two
   // given VME sampling rate.
   // Using greater than 40 to 
