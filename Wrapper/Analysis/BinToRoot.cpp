@@ -282,6 +282,8 @@ TString getTestFolderName(char test){
   switch(test){
   case('S'):
     return "SPEtest/";
+  case('N'):
+    return "Nominal/";
   case('D'):
     return "DarkRateTest/";
   case('A'):
