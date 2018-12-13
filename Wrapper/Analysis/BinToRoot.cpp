@@ -307,14 +307,11 @@ TString getBinaryFilePath(TString filePath = "../../Data/",
   // filePath.Form(filePath,run,....);
   
   TString rtnFilePath = "";
-  cout << " filePath = " << filePath << endl;
   
   // append file path
   filePath += getRunFolderName(run);
   filePath += getPMTFolderName(pmt);
   filePath += getTestFolderName(test);
-  
-  cout << " filePath = " << filePath << endl;
   
   // append with filename
   switch(test){
@@ -323,15 +320,10 @@ TString getBinaryFilePath(TString filePath = "../../Data/",
     rtnFilePath.Form(filePath,run,pmt,loc,hvStep);
     break;
   default:
-
     filePath += "wave_%d.dat";
-    cout << " filePath = " << filePath << endl;
-    
     rtnFilePath.Form(filePath,run,pmt,loc);
   }
 
-  cout << " rtnFilePath = " << rtnFilePath << endl;
-    
   return rtnFilePath;
 }
 
@@ -401,16 +393,13 @@ int ProcessBinaryFile(TString inFilePath,
 		      char digitiser = 'V'
 		      ){
 
-  cout << endl;
-  cout << " Processing  " << inFilePath << endl;
-  
   inFilePath = getBinaryFilePath(inFilePath,
 				 run, pmt, loc, test, hvStep);
   
   cout << endl;
   cout << " Processing  " << inFilePath << endl;
 
-  bool  testMode  = true;
+  bool  testMode  = false;
   bool  keepGoing = true;
   int   maxEvents = 5000;
   
@@ -540,9 +529,10 @@ int ProcessBinaryFile(TString inFilePath,
     // file-level data
     event++;
     
-    if(event%1000000==0){
+    if( (event % 1000 == 0 && event < 5000) ||
+	(event % 1000000 == 0)              ){
       cout << endl;
-      cout << " event " << event << endl;;
+      cout << " event count " << event << endl;;
     }
 
     //-------------------
@@ -823,30 +813,60 @@ int main(int argc, char **argv)
   int  run = 1; 
   int  pmt = 90;
   int  loc = 0;
-  char test = 'S'; // 'S' SPE, 'G' Gain, 'D' Dark, 'A' After, 'E' Every
+  // 'S' SPE, 'G' Gain, 'D' Dark
+  // 'A' After, 'N' Nominal, 'E' Every
+  char test = 'S'; 
   int  hvStep = 0;
   int  nSteps = 1;
 
   int  nTests = 1;
-  char testList[4] = {'S','G','D','A'};
+  
+  // for processing all test types
+  char testList[5] = {'S','N','G','D','A'};
   
   if(test=='E')
-    nTests = 4;
+    nTests = 5;
   
-  // For comparisons
-  int  nRuns = 1;
-  int  runList[1] = {1};
+  static const int nRuns = 1;
+  int  runList[nRuns] = {1};
   //int  runList[3] = {4, 11, 20};
   
-  int  nPMTs = 1;
+  static const int nPMTsA = 80;
+  static const int nPMTsB = 20;
+  static const int nPMTs  = nPMTsA + nPMTsB;
+  //  int  pmtAList[nPMTsA] = {1};
   
-  //int  pmtList[4] = {90,90,90,90};
-  //int  pmtList[4] = {83,88,107,108};
-  int  pmtList[1] = {1};
+  // PMT 139 missing SPE data
+  int  pmtAList[nPMTsA] = {83 , 88,108,107,
+			   73 , 76, 84, 87,
+			   66 , 78, 82,103,
+			   104,106,112,141,
+			   61 , 65, 75,105,
+			   74 ,111,140,142,
+			   143,145,146,147,
+			   63 , 67,158,160,
+			   139,161,164,165,
+			   90 ,159,166,171,
+			   81 ,167,169,170,
+			   50 , 53,162,163,
+			   55 , 56, 92, 94,
+			   57 , 51, 54, 59,
+			   96 , 97, 98, 99,
+			   153,148,154,157,
+			   1  ,  3,  6,  7,
+			   34 , 37, 39, 42,
+			   26 , 27, 28, 29,
+			   130,131,132,133};
   
-  //int  locList[4] = {0,1,2,3};
-  //int  locList[4] = {0,0,0,0};
-  int  locList[1] = {0};
+  
+  int  pmtBList[nPMTsB] = {102,149,150,152,
+			   9  , 10, 12, 14,
+			   43 , 47, 48, 49,
+			   30 , 31, 32, 33,
+			   134,135,136,138};			   
+  
+  int  locAList[4] = {0,1,2,3};
+  int  locBList[4] = {4,5,6,7};
   
   TString inputDirectory  = "/Volumes/G-DRIVE/BinaryData/";
   
@@ -860,14 +880,20 @@ int main(int argc, char **argv)
   int nEvents = -2;
 
   for(int iRun = 0 ; iRun < nRuns ; iRun++ ){
-    
+
     run = runList[iRun];
-    
+
     for (int iPMT = 0 ; iPMT < nPMTs ; iPMT++){
       
-      pmt = pmtList[iPMT];
-      loc = locList[iPMT];
-
+      if( iPMT < nPMTsA ){
+	pmt = pmtAList[iPMT];
+	loc = locAList[iPMT%4];
+      }
+      else{
+	pmt = pmtBList[iPMT-nPMTsA];
+	loc = locBList[(iPMT-nPMTsA)%4];
+      }
+      
       for ( int iTest = 0 ; iTest < nTests ; iTest++ ){
 	
 	test = testList[iTest];
