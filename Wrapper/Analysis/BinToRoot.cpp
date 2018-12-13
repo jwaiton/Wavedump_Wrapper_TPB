@@ -302,6 +302,11 @@ TString getBinaryFilePath(TString filePath = "../../Data/",
 			  char test = 'S',
 			  int  hvStep = 0){
   
+  // Possible bug in ROOT versions
+  // leading to inconsistent use of 
+  // filePath.Form(filePath,run,....);
+  
+  TString rtnFilePath = "";
   cout << " filePath = " << filePath << endl;
   
   // append file path
@@ -315,17 +320,19 @@ TString getBinaryFilePath(TString filePath = "../../Data/",
   switch(test){
   case('G'):
     filePath += "wave_%d_hv%d.dat";
-    filePath.Form(filePath,run,pmt,loc,hvStep);
+    rtnFilePath.Form(filePath,run,pmt,loc,hvStep);
     break;
   default:
+
     filePath += "wave_%d.dat";
     cout << " filePath = " << filePath << endl;
-    filePath.Form(filePath,run,pmt,loc);
+    
+    rtnFilePath.Form(filePath,run,pmt,loc);
   }
 
-  cout << " filePath = " << filePath << endl;
+  cout << " rtnFilePath = " << rtnFilePath << endl;
     
-  return filePath;
+  return rtnFilePath;
 }
 
 TString getRawRootFilePath(TString filePath = "./",
@@ -345,17 +352,19 @@ TString getRawRootFilePath(TString filePath = "./",
   // or write to single folder
   bool singleOutputFolder = true;
 
+  TString rtnFilePath = "";
+
   if ( singleOutputFolder ){
     // append with filename
     // containing info
     switch(test){
     case('G'):
       filePath += "Run_%d_PMT_%d_Loc_%d_HV_%d";
-      filePath.Form(filePath,run,pmt,loc,hvStep);
+      rtnFilePath.Form(filePath,run,pmt,loc,hvStep);
       break;
     default:
       filePath += "Run_%d_PMT_%d_Loc_%d_Test_%c";
-      filePath.Form(filePath,run,pmt,loc,test);
+      rtnFilePath.Form(filePath,run,pmt,loc,test);
     }
   }
   else {
@@ -369,15 +378,15 @@ TString getRawRootFilePath(TString filePath = "./",
     switch(test){
     case('G'):
       filePath += "Run_%d_PMT_%d_Loc_%d_HV_%d";
-      filePath.Form(filePath,run,pmt,run,pmt,loc,hvStep);
+      rtnFilePath.Form(filePath,run,pmt,run,pmt,loc,hvStep);
       break;
     default:
       filePath += "Run_%d_PMT_%d_Loc_%d_Test_%c";
-      filePath.Form(filePath,run,pmt,run,pmt,loc,test);
+      rtnFilePath.Form(filePath,run,pmt,run,pmt,loc,test);
     }
   }
 
-  return filePath;
+  return rtnFilePath;
   
 }
 
@@ -440,20 +449,20 @@ int ProcessBinaryFile(TString inFilePath,
 				 "RECREATE",
 				 outFileName);
 
-  TString eventTreeName = "";
-  TString canvasName    = "";
+  TString eventTreeNameTemp = "", eventTreeName = "";;
+  TString canvasNameTemp    = "", canvasName    = "";
   
   if(hvStep == 0){
-    eventTreeName = "Events_Run_%d_PMT_%d_Loc_%d_Test_%c";
-    eventTreeName.Form(eventTreeName,run,pmt,loc,test);
-    canvasName = "Canvas_Run_%d_PMT_%d_Loc_%d_Test_%c";
-    canvasName.Form(canvasName,run,pmt,loc,test);
+    eventTreeNameTemp = "Events_Run_%d_PMT_%d_Loc_%d_Test_%c";
+    eventTreeName.Form(eventTreeNameTemp,run,pmt,loc,test);
+    canvasNameTemp = "Canvas_Run_%d_PMT_%d_Loc_%d_Test_%c";
+    canvasName.Form(canvasNameTemp,run,pmt,loc,test);
   }
   else{
-    eventTreeName = "Events_Run_%d_PMT_%d_Loc_%d_HV_%d";
-    eventTreeName.Form(eventTreeName,run,pmt,loc,hvStep);
-    canvasName = "Canvas_Run_%d_PMT_%d_Loc_%d_HV_%d";
-    canvasName.Form(canvasName,run,pmt,loc,hvStep);
+    eventTreeNameTemp = "Events_Run_%d_PMT_%d_Loc_%d_HV_%d";
+    eventTreeName.Form(eventTreeNameTemp,run,pmt,loc,hvStep);
+    canvasNameTemp = "Canvas_Run_%d_PMT_%d_Loc_%d_HV_%d";
+    canvasName.Form(canvasNameTemp,run,pmt,loc,hvStep);
   }
   //---------------------
   // Event Level Data
@@ -826,16 +835,18 @@ int main(int argc, char **argv)
   
   // For comparisons
   int  nRuns = 1;
-  int  runList[1] = {4};
+  int  runList[1] = {1};
   //int  runList[3] = {4, 11, 20};
   
-  int  nPMTs = 4;
+  int  nPMTs = 1;
   
+  //int  pmtList[4] = {90,90,90,90};
   //int  pmtList[4] = {83,88,107,108};
-  int  pmtList[4] = {90,90,90,90};
+  int  pmtList[1] = {1};
   
   //int  locList[4] = {0,1,2,3};
-  int  locList[4] = {0,0,0,0};
+  //int  locList[4] = {0,0,0,0};
+  int  locList[1] = {0};
   
   TString inputDirectory  = "/Volumes/G-DRIVE/BinaryData/";
   
@@ -870,7 +881,7 @@ int main(int argc, char **argv)
 	  hvStep = 0;
 	}
 	
-	for ( hvStep ; hvStep < nSteps ; hvStep++ )
+	for ( ; hvStep < nSteps ; hvStep++ )
 	  nEvents = ProcessBinaryFile(inputDirectory,
 				      outputDirectory, 
 				      run, loc, 
