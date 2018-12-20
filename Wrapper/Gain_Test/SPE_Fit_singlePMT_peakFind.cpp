@@ -81,7 +81,7 @@ int main(int argc,char **argv){
   int nominalHV;
   int pmt;
   int loc;
-  int run;
+  int run = 1;
   char histname[200]= "";
     //Determing the PMT number and the applied Voltage=====================================================
   cout << "Input the PMT number \n" ;
@@ -93,12 +93,10 @@ int main(int argc,char **argv){
   cin  >> loc; 
   cout <<endl;
 
-  cout << "Input the run number \n";
-  cin  >> run;
-  cout << endl;
+//  cout << "Input the run number \n";
+//  cin  >> run;
+//  cout << endl;
 
-//  cout << "Input the nominal HV \n";
-//  cin  >> nominalHV;
     
   for (int i=0;i<125; i++){
      
@@ -184,8 +182,8 @@ int main(int argc,char **argv){
 
     // returns the charge at the maximum of the SPE peak
     if (nfound == 1){
-      double XMin = 30.;
-      double XMax = 150.;
+      double XMin = 28.;
+      double XMax = 1500.;
       speData->GetXaxis()->SetRange(XMin,XMax);
       int binMax = speData->GetMaximumBin();
       signalMax = speData->GetBinCenter(binMax);
@@ -279,7 +277,7 @@ int main(int argc,char **argv){
   //check if voltages.root exists - if not, create it 
   //and set up tree and branches
   //if it exists, add to the branches
-
+  Double_t chi2 = f14->GetChisquare();
 
 //======= Write ntuples to file ===========
 
@@ -287,8 +285,8 @@ int main(int argc,char **argv){
   if(!fileStream.good()){
     TFile *outfile = new TFile("voltages.root","RECREATE");
 
-    TNtuple *voltages = new TNtuple("voltages","voltages","pmt:operatingHV:operatingHVError:nominalHV");
-    voltages->Fill(pmt,operatingHV,operatingHVError,nominalHV);
+    TNtuple *voltages = new TNtuple("voltages","voltages","pmt:operatingHV:operatingHVError:nominalHV:chi2");
+    voltages->Fill(pmt,operatingHV,operatingHVError,nominalHV,chi2);
     voltages->Write();
     outfile->Close();
     delete outfile;
@@ -297,7 +295,7 @@ int main(int argc,char **argv){
   else{
     TFile *outfile = new TFile("voltages.root","UPDATE");
     TNtuple *voltages = (TNtuple*)outfile->Get("voltages");
-    voltages->Fill(pmt,operatingHV,operatingHVError,nominalHV);
+    voltages->Fill(pmt,operatingHV,operatingHVError,nominalHV,chi2);
     voltages->Write("",TObject::kOverwrite);
     outfile->Close();
     delete outfile;
