@@ -78,7 +78,7 @@ typedef std::tuple<double,double,double,double,double,double> InitParams;
 InitParams initializeFit(TH1F* h){
 
   TSpectrum *spec = new TSpectrum(3,3);
-  Int_t nfound = spec->Search(h,1,"goff",0.0002);
+  Int_t nfound = spec->Search(h,2,"goff",0.0002);
   std::cout << "found peaks " << nfound << std::endl;
 
   /*** returns positions of Pedestal and Signal approx.****/
@@ -117,15 +117,16 @@ InitParams initializeFit(TH1F* h){
     pedPeak = peaks[0];
     std::cout << "charge is " << sigPeak << " for 2-peak spectrum \n" << std::endl;
       
-  } 
+  }
+
+  if (sigPeak < 100) sigPeak = 300;
+  
 
 
   /*** Find the valley ***/
   Int_t SigSig = h->FindBin(sigPeak); //Signal bin approx **used to find valley position
-  Int_t PedPed  = h->GetMaximumBin(); //pedestal bin
-   int PedMax = h->GetMaximum(); // pedestal events
-
-
+  Int_t PedPed  = h->FindBin(pedPeak); //pedestal bin
+  int PedMax = h->GetMaximum(); // pedestal events
 
   int Compare[2] = {PedMax,PedMax}; // array to store 2 numbers for comparison to determine which is larger
   Int_t ValleyBin = 0; //to hold valley bin number
@@ -140,9 +141,10 @@ InitParams initializeFit(TH1F* h){
       ValleyBin = i; //sets bin number for minimum
     }//end if
   }//end for
+  std::cout << "Ped pos " << PedPed << "Sig pos " << SigSig << "Valley bin " << ValleyBin << std::endl;
 
-  double ssignal = (sigPeak -  h->GetBinCenter(ValleyBin))/3.;
-  double sped = (h->GetBinCenter(ValleyBin) - peaks[0])/10.;
+  double ssignal = (sigPeak -  h->GetBinCenter(ValleyBin))/3.;// signal fit minimum?
+  double sped = (h->GetBinCenter(ValleyBin) - peaks[0])/10.;// pedestal fit minimum?
 
    /*****Finding Pedestal events****/
   int Noise = 0; //to hold pedestal events
@@ -157,7 +159,7 @@ InitParams initializeFit(TH1F* h){
   std::cout << "Peaks " << peaks[0] << " " << sigPeak << " " << sped <<   " " << ssignal << " "   <<  Ratio << std::endl;
 
   double valleyPos = h->GetBinCenter(ValleyBin) ;
-
+  std::cout << "Valley = " << valleyPos << std::endl;
   
   return InitParams(pedPeak,sigPeak-pedPeak,sped,ssignal,Ratio,valleyPos);
 }
@@ -185,42 +187,9 @@ TH1F* h2h(TH1D* hold ){
 }
 
 
-
-TH1D* findHisto(TFile *input, int histoVersion = 0){
-
-  if (histoVersion == 0 ){
-    TH1D* histo = (TH1D*)input->Get("SPE0");
-    if (histo) return histo;
-    histo = (TH1D*)input->Get("SPE1");
-    if (histo) return histo;
-    histo = (TH1D*)input->Get("SPE2");
-    if (histo) return histo;
-    histo = (TH1D*)input->Get("SPE3");
-    if (histo) return histo;
-  }
-  else{
-
-    TString hName = "";
-    hName.Form("hCharge%d",histoVersion);
-    cout << " hName " << hName << endl;
-
-    TH1D* histo = (TH1D*)input->Get(hName);
-
-    return histo;
-  }
-  std::cout << "no histo " << std::endl;
-
-  return 0;
-}
-
-//Result* fitModel(string file = "PMT_NB0066_HV1820_Analysis.root",
-//         int histoVersion = 0,
- //        double minval = -500,
-  //       double maxval = 2000 ){
-
 Result* fitModel(TH1F* fhisto,
-            double minval = -100,
-            double maxval = 1500){
+            double minval = -500,
+            double maxval = 2000){
 
   Result* res = new Result();
 
@@ -235,7 +204,10 @@ Result* fitModel(TH1F* fhisto,
   double valleyPos = std::get<5>(params);
   double peakPos = std::get<0>(params)+ std::get<1>(params);
   // gaussian fit to max
-  fhisto->Fit("gaus", "","", peakPos - 100, peakPos +120 );
+  std::cout << "Fitting gaussian to max..." << std::endl;
+  double gaussMin = valleyPos ;
+  double gaussMax = peakPos + 120;
+  fhisto->Fit("gaus", "","", gaussMin, gaussMax );
   TF1* gf = fhisto->GetFunction("gaus");
   TF1* f = (TF1*)gf->Clone();
   double sval = f->Eval(f->GetParameter(1));
@@ -244,7 +216,8 @@ Result* fitModel(TH1F* fhisto,
   f->SetLineWidth(3);
   f->Draw("SAME");
 
-
+  //polynomial fit to valley
+  std::cout << "Fitting polynomial to valley..." << std::endl;
   TFitResultPtr pres= fhisto->Fit("pol2", "S", "",valleyPos - 50 , valleyPos +50);
   TFitResult* polres = pres.Get();
   double ea = polres->Error(2); double eb = polres->Error(1);
@@ -256,6 +229,7 @@ Result* fitModel(TH1F* fhisto,
 
 
   // find min of parabola
+  std::cout << "Getting value for valley" << std::endl;
   TF1* f2 = fhisto->GetFunction("pol2");
   double a = f2->GetParameter(2); double b = f2->GetParameter(1);
   double vval = f2->GetMinimum( valleyPos -50, valleyPos +50);
@@ -275,11 +249,14 @@ Result* fitModel(TH1F* fhisto,
   f->Draw("SAME");
 
   canvas->SaveAs("./Plots/PeakToValley.pdf");
-
+  
   // fill result
       
   res->peak.value = f->GetParameter(1);
   res->peak.error = f->GetParError(1);
+  res->peakToValley.value = sval/vval;
+  res->peakToValley.error = ef;
+
   if (res->peak.value < 0){
     double XMin = 28.;
     double XMax = 1500.;
@@ -288,9 +265,6 @@ Result* fitModel(TH1F* fhisto,
     res->peak.value = fhisto->GetBinCenter(binMax);
     res->peak.error = 0;
   }
-  res->peakToValley.value = sval/vval;
-  res->peakToValley.error = ef;
-  //res->peak = sval;
 
  return res;
 }
@@ -436,7 +410,7 @@ int main(int argc,char **argv){
 
     // Fitting the SPE Spectrum =======================================================================
   
-    for (int r=0;r<5;r++){ 
+    for (int r=1;r<5;r++){ 
     
     // *************************
     // * Create output spectra *
@@ -458,12 +432,10 @@ int main(int argc,char **argv){
 
 	  
   	  /***Find the value at the maximum***/
-    
-      float signal; float signalError;
       Result * res = fitModel(fhisto);
-      signal = res->peak.value;
-      signalError = res->peak.error;
-
+      float signal = res->peak.value;
+      float signalError = res->peak.error;
+        
       cout << endl;
       cout << "peak           = " << signal << " (" << signalError << ") " << endl;
         
@@ -474,11 +446,8 @@ int main(int argc,char **argv){
   	  float amplification = 10.0; //amplification via amplifier
       float splitter = 2.0; //correction for use of splitter box
 	  float impedence = 50.0;
-	  double pmtGain = signal*10e-12*splitter/amplification/impedence/(1.602*10e-19)/1e7; //conversion from charge in mVns to gain
-	  double pmtGainError = signalError*10e-12*splitter/amplification/impedence/(1.602*10e-19)/1e7; //conversion from charge in mVns to gain
-	  gainVals[r] = pmtGain; //create a list of the gain values
-      gainValsError[r] = pmtGainError;
-   
+	  gainVals[r] = signal*10e-12*splitter/amplification/impedence/(1.602*10e-19)/1e7; //conversion from charge in mVns to gain
+	  gainValsError[r] = signalError*10e-12*splitter/amplification/impedence/(1.602*10e-19)/1e7; //conversion from charge in mVns to gain
       hvVals[r] = pmtHV[r];
 
     } 
@@ -534,9 +503,9 @@ int main(int argc,char **argv){
 
     //======= Write ntuples to file ===========
 
-    ifstream fileStream("voltages.root");
+    ifstream fileStream("voltages_peakFit.root");
     if(!fileStream.good()){
-      TFile *outfile = new TFile("voltages.root","RECREATE");
+      TFile *outfile = new TFile("voltages_peakFit.root","RECREATE");
 
       TNtuple *voltages = new TNtuple("voltages","voltages","pmt:operatingHV:operatingHVError:nominalHV:chi2");
       voltages->Fill(pmt,operatingHV,operatingHVError,nominalHV,chi2);
@@ -546,7 +515,7 @@ int main(int argc,char **argv){
     }  
 
     else{
-      TFile *outfile = new TFile("voltages.root","UPDATE");
+      TFile *outfile = new TFile("voltages_peakFit.root","UPDATE");
       TNtuple *voltages = (TNtuple*)outfile->Get("voltages");
       voltages->Fill(pmt,operatingHV,operatingHVError,nominalHV,chi2);
       voltages->Write("",TObject::kOverwrite);
