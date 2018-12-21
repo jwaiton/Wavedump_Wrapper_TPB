@@ -180,8 +180,13 @@ bool isCorrectDigitiser(int header,
 			int test){
   
   switch( test ){
-  case ('A'): // To do: add condition here
-    return true;
+  case ('A'): 
+    if( header == 10224 && digitiser == 'V')
+      return true;
+    else{
+      cerr << " Error: digitiser choice does not match header info " << endl;
+      return false;
+    }
   default:
     if( ( header == 244  &&  digitiser == 'V' ) || 
 	( header == 4120 &&  digitiser == 'D' ) )
@@ -401,7 +406,7 @@ int ProcessBinaryFile(TString inFilePath,
 
   //----------------------
   // Variables for testing
-  bool  testMode  = true;
+  bool  testMode  = false;
   bool  keepGoing = true;
   int   maxEvents = 100;
   
@@ -741,12 +746,11 @@ int ProcessBinaryFile(TString inFilePath,
   float minY = getVoltageRange(digitiser)*(16 - 2)/32*1.0e3;
   float maxY = getVoltageRange(digitiser)*(16 + 1)/32*1.0e3 ;
 
-
   hTV->SetAxisRange(minY,maxY,"Y");
 
   float minX = 0.;
-  float maxX = 220.;
-
+  float maxX = 1000.; // 220.
+  
   if(test=='A'){
     hTV->SetAxisRange(minX,maxX,"X");
   }
@@ -840,7 +844,7 @@ int main(int argc, char **argv)
   int  hvStep = 0; 
   int  nSteps = 1;
 
-  static const int nTests = 5;
+  static const int nTests = 1;
 
   // 'S' SPE, 'G' Gain, 'D' Dark
   // 'A' After, 'N' Nominal, 
@@ -856,7 +860,7 @@ int main(int argc, char **argv)
   
 
   static const int nPMTsA = 0;//80;
-  static const int nPMTsB = 3;//20;
+  static const int nPMTsB = 4;//20;
   static const int nPMTs  = nPMTsA + nPMTsB;
   
   //int  pmtAList[nPMTsA] = {130,131,132,133};  
@@ -909,7 +913,8 @@ int main(int argc, char **argv)
   TString outputDirectory = "/Users/gsmith23/Desktop/Watchman/PMT_Testing/";
   outputDirectory +=  "Wavedump_Wrapper/RawRootData/";
   
-  outputDirectory = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/";
+  //outputDirectory = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/";
+  outputDirectory = "/scratch/Gary/Wavedump_Wrapper/RawRootData/";
   
   int nEvents = -2;
   
