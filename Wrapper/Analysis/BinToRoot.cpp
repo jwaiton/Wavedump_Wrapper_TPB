@@ -142,14 +142,14 @@ float getPulseLength(char digitiser,
 }
 
 float getDelay(int run = 0){
-
-  if      ( run == 0 )
-    return 105.; 
-  else if ( run < 10 )
+  
+  if      ( run == 0 ) // 12th October
+    return 60.; 
+  else if ( run < 10 ) // 16th October
     return 50.;
-  else if ( run < 20 )
+  else if ( run < 20 ) // Underground
     return 90.;
-  else 
+  else                 // Surface
     return 60.;
 }
 
@@ -180,7 +180,7 @@ bool isCorrectDigitiser(int header,
 			int test){
   
   switch( test ){
-  case ('A'):
+  case ('A'): // To do: add condition here
     return true;
   default:
     if( ( header == 244  &&  digitiser == 'V' ) || 
@@ -209,10 +209,10 @@ float gateWidth(){
 }
 
 // integration windows fixed wrt trigger
-// pedestal window before signal window only
+// baseline window before signal window only
 float Accumulate_Fixed(short VDC, float time){
 
-  // Integrate pedestal using 
+  // Integrate baseline using 
   // 50 ns window before signal
   // (max size given run 1 delay)
   // And signal in 50 ns window
@@ -235,15 +235,15 @@ float Accumulate_Fixed(short VDC, float time){
 // Integration windows wrt pulse peak
 // -10 ns before to 20 ns after
 // timeRel is time relative to minT (in ns)
-// pedestal window before
+// baseline window before
 float Accumulate_Peak(short VDC, float timeRel){
   
   if      ( timeRel >= -50 && 
 	    timeRel <  -10 )
-    return((float)-VDC);
+    return((int)-VDC);
   else if ( timeRel >= -10 &&
 	    timeRel <   30 ){
-    return((float)VDC);
+    return((int)VDC);
   }
   else
     return 0.;
@@ -305,10 +305,6 @@ TString getBinaryFilePath(TString filePath = "../../Data/",
 			  int  loc  = 0,
 			  char test = 'S',
 			  int  hvStep = 0){
-  
-  // Possible bug in ROOT versions
-  // leading to inconsistent use of 
-  // filePath.Form(filePath,run,....);
   
   TString rtnFilePath = "";
   
@@ -403,7 +399,9 @@ int ProcessBinaryFile(TString inFilePath,
   cout << endl;
   cout << " Processing  " << inFilePath << endl;
 
-  bool  testMode  = false;
+  //----------------------
+  // Variables for testing
+  bool  testMode  = true;
   bool  keepGoing = true;
   int   maxEvents = 100;
   
@@ -414,6 +412,8 @@ int ProcessBinaryFile(TString inFilePath,
     maxEvents = 10;
   else if( verbosity == 2 )
     maxEvents = 1;
+  //----------------------
+
 
   // Read from here
   ifstream fileStream(inFilePath);
@@ -459,7 +459,6 @@ int ProcessBinaryFile(TString inFilePath,
     
     hQ_PeakNameTemp = "hQ_Peak_Run_%d_PMT_%d_Loc_%d_Test_%c";
     hQ_PeakName.Form(hQ_PeakNameTemp,run,pmt,loc,test);
-    
     
   }
   else{
@@ -830,38 +829,42 @@ int main(int argc, char **argv)
   char   digitiser = 'V';
 
   //-------------------
-  
   int  run = 1; 
-  int  pmt = 90;
-  int  loc = 0;
-  char test = 'S';
-  int  hvStep = 0;
+  int  pmt = 155;
+  int  loc = 6;
+  char test = 'A';
+
+  // Default - not gain test setting
+  // Set automatically for test type
+  // in loop below.
+  int  hvStep = 0; 
   int  nSteps = 1;
 
   static const int nTests = 5;
 
   // 'S' SPE, 'G' Gain, 'D' Dark
   // 'A' After, 'N' Nominal, 
-  //  char testList[nTests] = {'A'};
-  char testList[nTests] = {'S','N','G','D','A'};
+  char testList[nTests] = {'A'};
+  //char testList[nTests] = {'S','N','G','D','A'};
   
-  static const int nRuns = 5;
-  //int  runList[nRuns] = {1};
+  static const int nRuns = 1; // 5
+  int  runList[nRuns] = {1};
   
   // PMTS 130 131 132 133
-  //int  runList[nRuns] = {2,3,10,22,23};
-  int  runList[nRuns] = {4,11,12,20,21};
+  //int  runList[nRuns] = {2,3,10,22,23}; 
+  //int  runList[nRuns] = {4,11,12,20,21};
   
 
-  static const int nPMTsA = 4;//80;
-  static const int nPMTsB = 0;//20;
+  static const int nPMTsA = 0;//80;
+  static const int nPMTsB = 3;//20;
   static const int nPMTs  = nPMTsA + nPMTsB;
   
   //int  pmtAList[nPMTsA] = {130,131,132,133};  
-  int  pmtAList[nPMTsA] = {90,159,166,171};  
+  //int  pmtAList[nPMTsA] = {90,159,166,171};  
 
-  // dummy
-  int  pmtBList[1] = {0}; 
+  int  pmtAList[1] = {0};
+  // 
+  int  pmtBList[nPMTsB] = {0,0,155,0}; 
   
   // //-------------
   // // RUN 1
@@ -915,9 +918,10 @@ int main(int argc, char **argv)
   cout << " Processing Binary Data " << endl;
   
   for(int iRun = 0 ; iRun < nRuns ; iRun++ ){
-    
+
     run = runList[iRun];
     
+    // iPMT is index, ie not PMT serial number
     for (int iPMT = 0 ; iPMT < nPMTs ; iPMT++){
       
       if( iPMT < nPMTsA ){
@@ -929,10 +933,15 @@ int main(int argc, char **argv)
 	loc = locBList[(iPMT-nPMTsA)%4];
       }
       
+      if(pmt == 0) 
+	continue;
+
       for ( int iTest = 0 ; iTest < nTests ; iTest++ ){
 	
 	test = testList[iTest];
 	
+	// Gain test settings for
+	// Further loop over HV steps
 	if( test=='G'){
 	  nSteps = 6;
 	  hvStep = 1;
