@@ -405,10 +405,10 @@ int ProcessBinaryFile(TString inFilePath,
 
   bool  testMode  = false;
   bool  keepGoing = true;
-  int   maxEvents = 5000;
+  int   maxEvents = 100;
   
   if ( test == 'A' )
-    maxEvents = 500;
+    maxEvents = 2;
   
   if     ( verbosity == 1 )
     maxEvents = 10;
@@ -551,8 +551,9 @@ int ProcessBinaryFile(TString inFilePath,
     // file-level data
     event++;
     
-    if( (event % 1000 == 0 && event < 5000) ||
-	(event % 1000000 == 0)              ){
+    if( (event > 0) && 
+	((event % 1000 == 0 && event < 5000) ||
+	 (event % 1000000 == 0))              ){
       cout << endl;
       cout << " event count " << event << endl;;
     }
@@ -833,59 +834,67 @@ int main(int argc, char **argv)
   int  run = 1; 
   int  pmt = 90;
   int  loc = 0;
-  // 'S' SPE, 'G' Gain, 'D' Dark
-  // 'A' After, 'N' Nominal, 'E' Every
-  char test = 'N'; 
+  char test = 'S';
   int  hvStep = 0;
   int  nSteps = 1;
 
-  int  nTests = 1;
+  static const int nTests = 5;
+
+  // 'S' SPE, 'G' Gain, 'D' Dark
+  // 'A' After, 'N' Nominal, 
+  //  char testList[nTests] = {'A'};
+  char testList[nTests] = {'S','N','G','D','A'};
   
-  // for processing all test types
-  //char testList[5] = {'S','N','G','D','A'};
+  static const int nRuns = 5;
+  //int  runList[nRuns] = {1};
   
-  char testList[1] = {'G'};
+  // PMTS 130 131 132 133
+  //int  runList[nRuns] = {2,3,10,22,23};
+  int  runList[nRuns] = {4,11,12,20,21};
   
-  if(test=='E')
-    nTests = 5;
-  
-  static const int nRuns = 1;
-  int  runList[nRuns] = {1};
-  //int  runList[3] = {4, 11, 20};
-  
-  static const int nPMTsA = 80;
-  static const int nPMTsB = 20;
+
+  static const int nPMTsA = 4;//80;
+  static const int nPMTsB = 0;//20;
   static const int nPMTs  = nPMTsA + nPMTsB;
-  //  int  pmtAList[nPMTsA] = {1};
   
-  // PMT 139 missing SPE data
-  int  pmtAList[nPMTsA] = {83 , 88,108,107,
-			   73 , 76, 84, 87,
-			   66 , 78, 82,103,
-			   104,106,112,141,
-			   61 , 65, 75,105,
-			   74 ,111,140,142,
-			   143,145,146,147,
-			   63 , 67,158,160,
-			   139,161,164,165,
-			   90 ,159,166,171,
-			   81 ,167,169,170,
-			   50 , 53,162,163,
-			   55 , 56, 92, 94,
-			   57 , 51, 54, 59,
-			   96 , 97, 98, 99,
-			   153,148,154,157,
-			   1  ,  3,  6,  7,
-			   34 , 37, 39, 42,
-			   26 , 27, 28, 29,
-			   130,131,132,133};
+  //int  pmtAList[nPMTsA] = {130,131,132,133};  
+  int  pmtAList[nPMTsA] = {90,159,166,171};  
+
+  // dummy
+  int  pmtBList[1] = {0}; 
+  
+  // //-------------
+  // // RUN 1
+  // // PMT 139 missing SPE data
+  // int  pmtAList[nPMTsA] = {83 , 88,108,107,
+  // 			   73 , 76, 84, 87,
+  // 			   66 , 78, 82,103,
+  // 			   104,106,112,141,
+  // 			   61 , 65, 75,105,
+  // 			   74 ,111,140,142,
+  // 			   143,145,146,147,
+  // 			   63 , 67,158,160,
+  // 			   139,161,164,165,
+  // 			   90 ,159,166,171,
+  // 			   81 ,167,169,170,
+  // 			   50 , 53,162,163,
+  // 			   55 , 56, 92, 94,
+  // 			   57 , 51, 54, 59,
+  // 			   96 , 97, 98, 99,
+  // 			   153,148,154,157,
+  // 			   1  ,  3,  6,  7,
+  // 			   34 , 37, 39, 42,
+  // 			   26 , 27, 28, 29,
+  // 			   130,131,132,133};
   
   
-  int  pmtBList[nPMTsB] = {102,149,150,152,
-			   9  , 10, 12, 14,
-			   43 , 47, 48, 49,
-			   30 , 31, 32, 33,
-			   134,135,136,138};			   
+  // int  pmtBList[nPMTsB] = {102,149,150,152,
+  // 			   9  , 10, 12, 14,
+  // 			   43 , 47, 48, 49,
+  // 			   30 , 31, 32, 33,
+  // 			   134,135,136,138};			   
+  
+  //-------------
   
   int  locAList[4] = {0,1,2,3};
   int  locBList[4] = {4,5,6,7};
@@ -906,9 +915,9 @@ int main(int argc, char **argv)
   cout << " Processing Binary Data " << endl;
   
   for(int iRun = 0 ; iRun < nRuns ; iRun++ ){
-
+    
     run = runList[iRun];
-
+    
     for (int iPMT = 0 ; iPMT < nPMTs ; iPMT++){
       
       if( iPMT < nPMTsA ){
@@ -942,18 +951,15 @@ int main(int argc, char **argv)
 				      verbosity, 
 				      digitiser);
 	
-	
 	cout << endl;
 	cout << " Output file contains " << nEvents << " events " << endl; 
 	
       } // end:  for ( int iTest =...
     } // end: for (int iPMT = 0 ...
   } // end: for(int iRun = 0 ;...
-
+  
   cout << endl;
   cout << " Completed Processing    " << endl;
   cout << " ----------------------- " << endl;
-  
-
   
 }
