@@ -2,3 +2,4 @@ BinToRoot
 outputFile.root
 Plots/
 nohup*
+executePMTAnalysisDict_rdict.pcm
