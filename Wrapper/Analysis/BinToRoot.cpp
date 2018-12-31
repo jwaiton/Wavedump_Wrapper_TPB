@@ -684,8 +684,11 @@ int ProcessBinaryFile(TString inFilePath,
       
       // sample vs VDC and time vs voltage plots
       // for checking signals (delay etc) 
-      if( event < 100000   &&
-	  !( event % 1000 )){
+      // plot pulses for 1000 events
+      // from first 100,000
+      if( ( event < 100000    )  &&
+	  ( event % 100  == 0 )
+	  ){
 	
 	hPulses->Fill(iSample,pulse[iSample]);
 	
@@ -749,7 +752,7 @@ int ProcessBinaryFile(TString inFilePath,
   hTV->SetAxisRange(minY,maxY,"Y");
 
   float minX = 0.;
-  float maxX = 1000.; // 220.
+  float maxX = 500.; // 220.
   
   if(test=='A'){
     hTV->SetAxisRange(minX,maxX,"X");
@@ -781,12 +784,12 @@ int ProcessBinaryFile(TString inFilePath,
   
   canvas->cd(4);
   
-  minY = getNVDCBins(digitiser)*10/16 ;
-  maxY = getNVDCBins(digitiser)*6/16 ;
+  minY = getNVDCBins(digitiser)*10./16 ;
+  maxY = getNVDCBins(digitiser)*6./16 ;
   
-  hPulses->SetAxisRange(minY,maxY,"Y");
+  //hPulses->SetAxisRange(minY,maxY,"Y");
+  hPulses->SetAxisRange(7500.,8500.,"Y");
     
-  
   hPulses->Draw("colz");
   
   canvasName = "./Plots/";
