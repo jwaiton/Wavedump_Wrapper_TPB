@@ -42,8 +42,6 @@
 #include "TH2.h"
 #include "TLine.h"
 
-#include "TStopwatch.h"
-
 using namespace std;
 
 int  getNSamples(char digitiser,
