@@ -18,8 +18,8 @@ void PMTAnalyser::Loop()
    Short_t signalPeak = 0;
    
    Long64_t nentries = fChain->GetEntriesFast();
-   Long64_t nDark    = 0 ;
    //   nentries = 10;
+   Long64_t nDark    = 0 ;
    
    for (Long64_t jentry=0; jentry < nentries; jentry++) {
      
@@ -29,24 +29,17 @@ void PMTAnalyser::Loop()
      nb = fChain->GetEntry(jentry);   
      nbytes += nb;
 
-     //CalculateDarkRate()
-     
      peakTime = minT * nsPerSample; 
      
-     //cout <<  " peakTime = " << peakTime << endl;
-     
      eventBaseline = 0;
-     signalPeak = pulse[minT]*mVPerBin;
+     signalPeak = pulse[minT] * mVPerBin;
      
      for( int i = 0 ; i < 4 ; i++ )
        baselines[i] = 0;
      
-     for(int iSample = 0 ; iSample < NSamples; iSample++){
+     for( int iSample = 0 ; iSample < NSamples; iSample++){
        
        milliVolts = pulse[iSample]*mVPerBin;
-       
-//        cout << " iSample    = " << iSample    << endl;
-//        cout << " milliVolts = " << milliVolts << endl;
        
        if( (iSample/25) < 4 )
 	 baselines[iSample/25] += milliVolts;
@@ -60,9 +53,9 @@ void PMTAnalyser::Loop()
        baselines[i] = baselines[i] / 25.;
      
      if( peakTime > 60.  ) 
-       eventBaseline = baselines[3];
+       eventBaseline = baselines[0];
      else
-       eventBaseline = baselines[2];
+       eventBaseline = baselines[3];
      
      signalPeak = -1 * ( signalPeak - eventBaseline) ;
      
@@ -77,12 +70,6 @@ void PMTAnalyser::Loop()
 	 cout << " peakTime      = " << peakTime      << endl;
        }
      }
-     
-//      if(  )
-//      AccumulateDarkRate
-          
-     // Show();
-     // if (Cut(ientry) < 0) continue;
    }
    
    Float_t darkRate = (Float_t)nDark/nentries/220.*1.0e9;
