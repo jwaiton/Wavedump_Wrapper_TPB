@@ -78,7 +78,7 @@ typedef std::tuple<double,double,double,double,double,double> InitParams;
 InitParams initializeFit(TH1F* h){
 
   TSpectrum *spec = new TSpectrum(3,3);
-  Int_t nfound = spec->Search(h,2,"goff",0.0002);
+  Int_t nfound = spec->Search(h,3,"goff",0.0002);
   std::cout << "found peaks " << nfound << std::endl;
 
   /*** returns positions of Pedestal and Signal approx.****/
@@ -88,39 +88,42 @@ InitParams initializeFit(TH1F* h){
   std::cout << peaks[0] << " " << peaks[1]  << " " << peaks[2] << std::endl;
   
   /*** Find the approximate charge at the maximum of the SPE peak ***/
+
   if (nfound == 1){
-    double XMin = 28.;
-    double XMax = 1500.;
-    h->GetXaxis()->SetRange(XMin,XMax);
-    int binMax = h->GetMaximumBin();
-    sigPeak = h->GetBinCenter(binMax);
-    pedPeak = peaks[0];
-    std::cout << "charge is " << sigPeak << " for 1-peak spectrum \n" << std::endl;
-  }
-    
-
-  if (nfound == 3 && peaks[0] < -5){
-    sigPeak = peaks[2];
-    pedPeak = peaks[1];
-    std::cout << "charge is " << sigPeak << " for 3-peak spectrum \n" << std::endl;
-      
+      double XMin = 28.;
+      double XMax = 1500.;
+      h->GetXaxis()->SetRange(XMin,XMax);
+      int binMax = h->GetMaximumBin();
+      sigPeak = h->GetBinCenter(binMax);
+      pedPeak = peaks[0];
+      std::cout << "charge is " << sigPeak << " for 1-peak spectrum \n" << std::endl;
   }
 
-  if (nfound == 3 && peaks[0] > -5){
-    sigPeak = peaks[1];
-    pedPeak = peaks[0];
-    std::cout << "charge is " << sigPeak << " for 3-peak spectrum \n" << std::endl;
+
+  if ( (nfound == 3) && (peaks[0] < -5)) {// || (nfound == 3 and peaks[0] < -5) ){
+      sigPeak = peaks[2];
+      pedPeak = peaks[1];
+      std::cout << "charge is " << sigPeak << " for 3-peak spectrum \n" << std::endl;
+
   }
 
+  if (nfound == 3 && peaks[0] > -5 && peaks[1] > 100){
+        sigPeak = peaks[1];
+        pedPeak = peaks[0];
+        std::cout << "charge is " << sigPeak << " for 3-peak spectrum \n" << std::endl;
+  }
+
+  if (nfound == 3 && peaks[0] > -5 && peaks[1] < 100){
+        sigPeak = peaks[2];
+        pedPeak = peaks[0];
+        std::cout << "charge is " << sigPeak << " for 3-peak spectrum \n" << std::endl;
+  }
   if (nfound ==2) {
-    sigPeak = peaks[1];
-    pedPeak = peaks[0];
-    std::cout << "charge is " << sigPeak << " for 2-peak spectrum \n" << std::endl;
-      
-  }
+      sigPeak = peaks[1];
+      pedPeak = peaks[0];
+      std::cout << "charge is " << sigPeak << " for 2-peak spectrum \n" << std::endl;
 
-  if (sigPeak < 100) sigPeak = 300;
-  
+  }
 
 
   /*** Find the valley ***/
@@ -423,7 +426,7 @@ int main(int argc,char **argv){
       s.ls();
 
       char root_name[30];
-      sprintf(root_name, "hQ_Fixed_Run_%d_PMT_%d_Loc_%d_HV_%d",run,pmt,loc,hv);
+      sprintf(root_name, "hQ_Peak_Run_%d_PMT_%d_Loc_%d_HV_%d",run,pmt,loc,hv);
       TH1D *speData = (TH1D*)s.Get(root_name);
 
       TH1F* fhisto = h2h(speData);
