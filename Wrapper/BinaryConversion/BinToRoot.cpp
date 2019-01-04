@@ -42,8 +42,6 @@
 #include "TH2.h"
 #include "TLine.h"
 
-#include "TStopwatch.h"
-
 using namespace std;
 
 int  getNSamples(char digitiser,
@@ -142,14 +140,14 @@ float getPulseLength(char digitiser,
 }
 
 float getDelay(int run = 0){
-
-  if      ( run == 0 )
-    return 105.; 
-  else if ( run < 10 )
+  
+  if      ( run == 0 ) // 12th October
+    return 60.; 
+  else if ( run < 10 ) // 16th October
     return 50.;
-  else if ( run < 20 )
+  else if ( run < 20 ) // Underground
     return 90.;
-  else 
+  else                 // Surface
     return 60.;
 }
 
@@ -180,8 +178,13 @@ bool isCorrectDigitiser(int header,
 			int test){
   
   switch( test ){
-  case ('A'):
-    return true;
+  case ('A'): 
+    if( header == 10224 && digitiser == 'V')
+      return true;
+    else{
+      cerr << " Error: digitiser choice does not match header info " << endl;
+      return false;
+    }
   default:
     if( ( header == 244  &&  digitiser == 'V' ) || 
 	( header == 4120 &&  digitiser == 'D' ) )
@@ -209,10 +212,10 @@ float gateWidth(){
 }
 
 // integration windows fixed wrt trigger
-// pedestal window before signal window only
+// baseline window before signal window only
 float Accumulate_Fixed(short VDC, float time){
 
-  // Integrate pedestal using 
+  // Integrate baseline using 
   // 50 ns window before signal
   // (max size given run 1 delay)
   // And signal in 50 ns window
@@ -235,15 +238,15 @@ float Accumulate_Fixed(short VDC, float time){
 // Integration windows wrt pulse peak
 // -10 ns before to 20 ns after
 // timeRel is time relative to minT (in ns)
-// pedestal window before
+// baseline window before
 float Accumulate_Peak(short VDC, float timeRel){
   
   if      ( timeRel >= -50 && 
 	    timeRel <  -10 )
-    return((float)-VDC);
+    return((int)-VDC);
   else if ( timeRel >= -10 &&
 	    timeRel <   30 ){
-    return((float)VDC);
+    return((int)VDC);
   }
   else
     return 0.;
@@ -305,10 +308,6 @@ TString getBinaryFilePath(TString filePath = "../../Data/",
 			  int  loc  = 0,
 			  char test = 'S',
 			  int  hvStep = 0){
-  
-  // Possible bug in ROOT versions
-  // leading to inconsistent use of 
-  // filePath.Form(filePath,run,....);
   
   TString rtnFilePath = "";
   
@@ -403,17 +402,21 @@ int ProcessBinaryFile(TString inFilePath,
   cout << endl;
   cout << " Processing  " << inFilePath << endl;
 
+  //----------------------
+  // Variables for testing
   bool  testMode  = false;
   bool  keepGoing = true;
-  int   maxEvents = 5000;
+  int   maxEvents = 100;
   
   if ( test == 'A' )
-    maxEvents = 500;
+    maxEvents = 2;
   
   if     ( verbosity == 1 )
     maxEvents = 10;
   else if( verbosity == 2 )
     maxEvents = 1;
+  //----------------------
+
 
   // Read from here
   ifstream fileStream(inFilePath);
@@ -459,7 +462,6 @@ int ProcessBinaryFile(TString inFilePath,
     
     hQ_PeakNameTemp = "hQ_Peak_Run_%d_PMT_%d_Loc_%d_Test_%c";
     hQ_PeakName.Form(hQ_PeakNameTemp,run,pmt,loc,test);
-    
     
   }
   else{
@@ -551,8 +553,9 @@ int ProcessBinaryFile(TString inFilePath,
     // file-level data
     event++;
     
-    if( (event % 1000 == 0 && event < 5000) ||
-	(event % 1000000 == 0)              ){
+    if( (event > 0) && 
+	((event % 1000 == 0 && event < 5000) ||
+	 (event % 1000000 == 0))              ){
       cout << endl;
       cout << " event count " << event << endl;;
     }
@@ -741,12 +744,11 @@ int ProcessBinaryFile(TString inFilePath,
   float minY = getVoltageRange(digitiser)*(16 - 2)/32*1.0e3;
   float maxY = getVoltageRange(digitiser)*(16 + 1)/32*1.0e3 ;
 
-
   hTV->SetAxisRange(minY,maxY,"Y");
 
   float minX = 0.;
-  float maxX = 220.;
-
+  float maxX = 1000.; // 220.
+  
   if(test=='A'){
     hTV->SetAxisRange(minX,maxX,"X");
   }
@@ -829,63 +831,75 @@ int main(int argc, char **argv)
   char   digitiser = 'V';
 
   //-------------------
-  
   int  run = 1; 
-  int  pmt = 90;
-  int  loc = 0;
-  // 'S' SPE, 'G' Gain, 'D' Dark
-  // 'A' After, 'N' Nominal, 'E' Every
-  char test = 'N'; 
-  int  hvStep = 0;
+  int  pmt = 155;
+  int  loc = 6;
+  char test = 'A';
+
+  // Default - not gain test setting
+  // Set automatically for test type
+  // in loop below.
+  int  hvStep = 0; 
   int  nSteps = 1;
 
-  int  nTests = 1;
+  static const int nTests = 1;
+
+  // 'S' SPE, 'G' Gain, 'D' Dark
+  // 'A' After, 'N' Nominal, 
+  char testList[nTests] = {'A'};
+  //char testList[nTests] = {'S','N','G','D','A'};
   
-  // for processing all test types
-  //char testList[5] = {'S','N','G','D','A'};
-  
-  char testList[1] = {'G'};
-  
-  if(test=='E')
-    nTests = 5;
-  
-  static const int nRuns = 1;
+  static const int nRuns = 1; // 5
   int  runList[nRuns] = {1};
-  //int  runList[3] = {4, 11, 20};
   
-  static const int nPMTsA = 80;
-  static const int nPMTsB = 20;
+  // PMTS 130 131 132 133
+  //int  runList[nRuns] = {2,3,10,22,23}; 
+  //int  runList[nRuns] = {4,11,12,20,21};
+  
+
+  static const int nPMTsA = 0;//80;
+  static const int nPMTsB = 4;//20;
   static const int nPMTs  = nPMTsA + nPMTsB;
-  //  int  pmtAList[nPMTsA] = {1};
   
-  // PMT 139 missing SPE data
-  int  pmtAList[nPMTsA] = {83 , 88,108,107,
-			   73 , 76, 84, 87,
-			   66 , 78, 82,103,
-			   104,106,112,141,
-			   61 , 65, 75,105,
-			   74 ,111,140,142,
-			   143,145,146,147,
-			   63 , 67,158,160,
-			   139,161,164,165,
-			   90 ,159,166,171,
-			   81 ,167,169,170,
-			   50 , 53,162,163,
-			   55 , 56, 92, 94,
-			   57 , 51, 54, 59,
-			   96 , 97, 98, 99,
-			   153,148,154,157,
-			   1  ,  3,  6,  7,
-			   34 , 37, 39, 42,
-			   26 , 27, 28, 29,
-			   130,131,132,133};
+  //int  pmtAList[nPMTsA] = {130,131,132,133};  
+  //int  pmtAList[nPMTsA] = {90,159,166,171};  
+
+  int  pmtAList[1] = {0};
+  // 
+  int  pmtBList[nPMTsB] = {0,0,155,0}; 
+  
+  // //-------------
+  // // RUN 1
+  // // PMT 139 missing SPE data
+  // int  pmtAList[nPMTsA] = {83 , 88,108,107,
+  // 			   73 , 76, 84, 87,
+  // 			   66 , 78, 82,103,
+  // 			   104,106,112,141,
+  // 			   61 , 65, 75,105,
+  // 			   74 ,111,140,142,
+  // 			   143,145,146,147,
+  // 			   63 , 67,158,160,
+  // 			   139,161,164,165,
+  // 			   90 ,159,166,171,
+  // 			   81 ,167,169,170,
+  // 			   50 , 53,162,163,
+  // 			   55 , 56, 92, 94,
+  // 			   57 , 51, 54, 59,
+  // 			   96 , 97, 98, 99,
+  // 			   153,148,154,157,
+  // 			   1  ,  3,  6,  7,
+  // 			   34 , 37, 39, 42,
+  // 			   26 , 27, 28, 29,
+  // 			   130,131,132,133};
   
   
-  int  pmtBList[nPMTsB] = {102,149,150,152,
-			   9  , 10, 12, 14,
-			   43 , 47, 48, 49,
-			   30 , 31, 32, 33,
-			   134,135,136,138};			   
+  // int  pmtBList[nPMTsB] = {102,149,150,152,
+  // 			   9  , 10, 12, 14,
+  // 			   43 , 47, 48, 49,
+  // 			   30 , 31, 32, 33,
+  // 			   134,135,136,138};			   
+  
+  //-------------
   
   int  locAList[4] = {0,1,2,3};
   int  locBList[4] = {4,5,6,7};
@@ -897,7 +911,8 @@ int main(int argc, char **argv)
   TString outputDirectory = "/Users/gsmith23/Desktop/Watchman/PMT_Testing/";
   outputDirectory +=  "Wavedump_Wrapper/RawRootData/";
   
-  outputDirectory = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/";
+  //outputDirectory = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/";
+  outputDirectory = "/scratch/Gary/Wavedump_Wrapper/RawRootData/";
   
   int nEvents = -2;
   
@@ -908,7 +923,8 @@ int main(int argc, char **argv)
   for(int iRun = 0 ; iRun < nRuns ; iRun++ ){
 
     run = runList[iRun];
-
+    
+    // iPMT is index, ie not PMT serial number
     for (int iPMT = 0 ; iPMT < nPMTs ; iPMT++){
       
       if( iPMT < nPMTsA ){
@@ -920,10 +936,15 @@ int main(int argc, char **argv)
 	loc = locBList[(iPMT-nPMTsA)%4];
       }
       
+      if(pmt == 0) 
+	continue;
+
       for ( int iTest = 0 ; iTest < nTests ; iTest++ ){
 	
 	test = testList[iTest];
 	
+	// Gain test settings for
+	// Further loop over HV steps
 	if( test=='G'){
 	  nSteps = 6;
 	  hvStep = 1;
@@ -942,18 +963,15 @@ int main(int argc, char **argv)
 				      verbosity, 
 				      digitiser);
 	
-	
 	cout << endl;
 	cout << " Output file contains " << nEvents << " events " << endl; 
 	
       } // end:  for ( int iTest =...
     } // end: for (int iPMT = 0 ...
   } // end: for(int iRun = 0 ;...
-
+  
   cout << endl;
   cout << " Completed Processing    " << endl;
   cout << " ----------------------- " << endl;
-  
-
   
 }
