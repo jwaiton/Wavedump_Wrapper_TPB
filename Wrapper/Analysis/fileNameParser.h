@@ -1,5 +1,5 @@
-#ifndef _fnparse_h
-#define _fnparse_h 1
+#ifndef _fileNameParse_h
+#define _fileNameParse_h 1
 int parse(std::string f, std::string s1, std::string s2){
  
   int pos1 = f.find(s1,0);

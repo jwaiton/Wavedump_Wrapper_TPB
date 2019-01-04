@@ -5,9 +5,9 @@
 #include <TCanvas.h>
 #include "TBranch.h"
 
-void PMTAnalyser::Loop()
+Int_t PMTAnalyser::DarkRate(Float_t threshold = 10)
 {
-   if (fChain == 0) return;
+   if (fChain == 0) return -1;
 
    int verbosity = 0;
    
@@ -15,12 +15,15 @@ void PMTAnalyser::Loop()
    
    Float_t baselines[4] = {0.,0.,0.,0.};
    Short_t eventBaseline = 0;
+   
    Short_t signalPeak = 0;
    
    Long64_t nentries = fChain->GetEntriesFast();
-   //   nentries = 10;
    Long64_t nDark    = 0 ;
    
+   cout << endl;
+   cout << " Calculating Dark Rate " << endl;
+
    for (Long64_t jentry=0; jentry < nentries; jentry++) {
      
      ientry = LoadTree(jentry);
@@ -39,7 +42,7 @@ void PMTAnalyser::Loop()
      
      for( int iSample = 0 ; iSample < NSamples; iSample++){
        
-       milliVolts = pulse[iSample]*mVPerBin;
+       milliVolts = pulse[iSample] * mVPerBin;
        
        if( (iSample/25) < 4 )
 	 baselines[iSample/25] += milliVolts;
@@ -59,7 +62,7 @@ void PMTAnalyser::Loop()
      
      signalPeak = -1 * ( signalPeak - eventBaseline) ;
      
-     if( signalPeak > 10 ){
+     if( signalPeak > threshold ){
        nDark++;
 
        if(verbosity > 0){
@@ -73,8 +76,13 @@ void PMTAnalyser::Loop()
    }
    
    Float_t darkRate = (Float_t)nDark/nentries/220.*1.0e9;
-   cout << endl;
-   cout << " nentries = " << nentries << endl;
-   cout << " nDark    = " << nDark    << endl;
-   cout << " rate     = " << darkRate << endl;
+
+   if(verbosity > 0){  
+     cout << endl;
+     cout << " nentries = " << nentries << endl;
+     cout << " nDark    = " << nDark    << endl;
+     cout << " rate     = " << darkRate << endl;
+   }
+   
+   return darkRate;
 }
