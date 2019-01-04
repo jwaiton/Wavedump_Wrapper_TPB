@@ -12,7 +12,7 @@ void CSVToRoot(){
   
   TTree *T = new TTree("ShippingData","Arrg, this be Shipping Data from CSV file");
   Long64_t nlines;
-  TString lineFormat = "PMT:Sk:Skb:Sp:Idb:EBB:DR:TTS:PTV";
+  TString lineFormat = "PMT/I:Sk/F:Skb/F:Sp/F:Idb/F:EBB/I:DR/I:TTS/F:PTV/F";
   nlines = T->ReadFile("./ShippingData.csv",lineFormat,',');
   
   printf(" Shipping Data for %lld PMTs \n",nlines);
