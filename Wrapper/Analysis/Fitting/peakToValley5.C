@@ -1,8 +1,6 @@
 #include<iostream>
 #include<fstream>
 #include<vector>
-#include <string>
-
 #include"TMath.h"
 
 #include"TFile.h"
@@ -11,8 +9,6 @@
 #include "TROOT.h"
 #include "TStyle.h"
 #include "TSystem.h"
-
-#include "TString.h"
 
 #include "RooRealVar.h"
 #include "RooAddPdf.h"
@@ -31,8 +27,6 @@
 #include "RooExponential.h"
 #include "TFitResult.h"
 #include "TFitResultPtr.h"
-
-using namespace std;
 
 // Result
 
@@ -159,51 +153,34 @@ TH1F* h2h(TH1D* hold ){
 
 
 
-TH1D* findHisto(TFile *input, int histoVersion = 0){
-
-  if (histoVersion == 0 ){
-    TH1D* histo = (TH1D*)input->Get("SPE0");
-    if (histo) return histo;
-    histo = (TH1D*)input->Get("SPE1");
-    if (histo) return histo;
-    histo = (TH1D*)input->Get("SPE2");
-    if (histo) return histo;
-    histo = (TH1D*)input->Get("SPE3");
-    if (histo) return histo;
-  }
-  else{
-   
-    TString hName = "";
-    hName.Form("hCharge%d",histoVersion);
-    cout << " hName " << hName << endl;
-    
-    TH1D* histo = (TH1D*)input->Get(hName);
-
-    return histo;
-  }
+TH1D* findHisto(TFile *input){
+  TH1D* histo = (TH1D*)input->Get("SPE0");
+  if (histo) return histo;
+  histo = (TH1D*)input->Get("SPE1");
+  if (histo) return histo;
+  histo = (TH1D*)input->Get("SPE2");
+  if (histo) return histo;
+  histo = (TH1D*)input->Get("SPE3");
+  if (histo) return histo;
   std::cout << "no histo " << std::endl;
-
   return 0;
 }
 
-Result* fitModel(string file = "PMT_NB0066_HV1820_Analysis.root", 
-		 int histoVersion = 0,
-		 double minval = -500,
-		 double maxval = 2000 ){
-  
-  
-  
+Result* fitModel(TH1F* fhisto, double minval = -500 , double maxval = 2000 ){
+
+
+  TCanvas* can = new TCanvas("can","can",800,600);
   Result* res = new Result();
+  gROOT -> ProcessLine( ".x ./mattStyle.C" );
+
+  gStyle->SetOptFit(0);
+  gStyle->SetOptStat(0);
+  //
+  //TFile *input=new TFile(file.c_str());
+  //TH1D* histo = findHisto(input);
+  //if (histo ==0) return 0;
   
-  TCanvas * canvas = new TCanvas("Canvas", "Canvas");
-  
-  //gROOT -> ProcessLine( ".x ./mattStyle.C" );
-  
-  TFile *input=new TFile(file.c_str());
-  TH1D* histo = findHisto(input,histoVersion);
-  if (histo ==0) return 0;
-  
-  TH1F* fhisto = h2h(histo);
+  //TH1F* fhisto = h2h(histo);
   fhisto->GetXaxis()->SetTitle("charge [mV ns]");
   fhisto->GetYaxis()->SetTitle("Counts");
   fhisto->GetYaxis()->SetTitleOffset(1.3);
@@ -215,7 +192,15 @@ Result* fitModel(string file = "PMT_NB0066_HV1820_Analysis.root",
   double peakPos = std::get<0>(params)+ std::get<1>(params);
 
   // gaussian fit to max
-  fhisto->Fit("gaus", "","", peakPos - 100, peakPos +120 );
+  TH1F* thisto = (TH1F*)fhisto->Clone("thisto");
+  thisto->Fit("gaus", "","", peakPos - 100, peakPos +120 );
+  TF1* gf1 = thisto->GetFunction("gaus");
+  TF1* f1 = (TF1*)gf1->Clone();
+  double sval1 = f1->GetParameter(1);
+  std::cout << " s val " << peakPos <<  " " << sval1 << std::endl; 
+  
+  fhisto->Fit("gaus", "","", sval1 - 100, sval1 +100 );
+
   TF1* gf = fhisto->GetFunction("gaus");
   TF1* f = (TF1*)gf->Clone();
   double sval = f->Eval(f->GetParameter(1));
@@ -224,8 +209,13 @@ Result* fitModel(string file = "PMT_NB0066_HV1820_Analysis.root",
   f->SetLineWidth(3);
   f->Draw("SAME");
 
-
-  TFitResultPtr pres= fhisto->Fit("pol2", "S", "",valleyPos - 50 , valleyPos +50);
+  
+  fhisto->Fit("pol2", "S", "",valleyPos - 40 , valleyPos +50);
+  TF1* f2 = fhisto->GetFunction("pol2");
+  double a = f2->GetParameter(2); double b = f2->GetParameter(1);
+  double xmin = -b/(2*a);
+  
+  TFitResultPtr pres= fhisto->Fit("pol2", "S", "",xmin - 30 , xmin +50);
   TFitResult* polres = pres.Get();
   double ea = polres->Error(2); double eb = polres->Error(1);
 
@@ -236,11 +226,11 @@ Result* fitModel(string file = "PMT_NB0066_HV1820_Analysis.root",
 
  
   // find min of parabola
-  TF1* f2 = fhisto->GetFunction("pol2");
-  double a = f2->GetParameter(2); double b = f2->GetParameter(1);
+  f2 = fhisto->GetFunction("pol2");
+  a = f2->GetParameter(2); b = f2->GetParameter(1);
   double vval = f2->GetMinimum( valleyPos -50, valleyPos +50);
   double sum = std::pow(ea/a,2) +  std::pow(eb/b,2.) - (2*rho/(a*b));
-  double xmin = -b/(2*a);
+  xmin = -b/(2*a);
   double x2 = xmin *(1 + sum);
   double evval = f->Eval(x2) - f->Eval(xmin) ;
 
@@ -249,43 +239,26 @@ Result* fitModel(string file = "PMT_NB0066_HV1820_Analysis.root",
   // drawing stuff
   f2->SetLineColor(2);
   f2->SetLineWidth(3);
-  f2->Draw("SAME");
+  // f2->Draw("SAME");
+  fhisto->SetMaximum(100e3);
   fhisto->Draw("HISTO");
-  fhisto->SetMinimum(1000);
   f2->Draw("SAME");
   f->Draw("SAME");
-  
-  gPad->SetLogy(1);
-  canvas->SaveAs("./Plots/PeakToValley.pdf");
+
 
   // fill result
   res->peak.value = f->GetParameter(1); 
   res->peak.error = f->GetParError(1); 
   res->peakToValley.value = sval/vval;
   res->peakToValley.error = ef;
-  //res->peak = sval;
 
-  
+  std::string name = std::string(fhisto->GetName()) + ".png" ;
+  can->Print(name.c_str());
+
+  std::string epsname = std::string(fhisto->GetName()) + ".eps" ;
+  can->Print(epsname.c_str());
+    
  return res;
 }
 
-void GetPeakToValley(string rootFileName = "./outputFile.root",
-		     int histoVersion = 1){
-  
-  
-  // 
-  // histoVersion = 0;
-  // rootFileName = "PMT_NB0066_HV1820_Analysis.root";
-  
-  Result * res = nullptr;
-
-  res = fitModel(rootFileName,
-		 histoVersion);
-  
-  cout << endl;
-  cout << "peak           = " << res->peak.value << " (" << res->peak.error << ") " << endl;
-  cout << "peak to valley = " << res->peakToValley.value << " (" << res->peakToValley.error << ") " << endl;
-  
-  
-}
 
