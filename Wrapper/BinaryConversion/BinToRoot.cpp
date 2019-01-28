@@ -850,7 +850,7 @@ int main(int argc, char **argv)
 
   // 'S' SPE, 'G' Gain, 'D' Dark
   // 'A' After, 'N' Nominal, 
-  char testList[nTests] = {'A'};
+  char testList[nTests] = {'S'};
   //char testList[nTests] = {'S','N','G','D','A'};
   
   static const int nRuns = 1; // 5
@@ -861,47 +861,49 @@ int main(int argc, char **argv)
   //int  runList[nRuns] = {4,11,12,20,21};
   
 
-  static const int nPMTsA = 0;//80;
-  static const int nPMTsB = 4;//20;
+  //static const int nPMTsA = 0;//80;
+  static const int nPMTsA = 80;
+  //static const int nPMTsB = 4;//20;
+  static const int nPMTsB = 20;
   static const int nPMTs  = nPMTsA + nPMTsB;
   
   //int  pmtAList[nPMTsA] = {130,131,132,133};  
   //int  pmtAList[nPMTsA] = {90,159,166,171};  
 
-  int  pmtAList[1] = {0};
-  // 
-  int  pmtBList[nPMTsB] = {0,0,155,0}; 
+//   int  pmtAList[1] = {0};
+//   // 
+//   int  pmtBList[nPMTsB] = {0,0,155,0}; 
   
-  // //-------------
-  // // RUN 1
-  // // PMT 139 missing SPE data
-  // int  pmtAList[nPMTsA] = {83 , 88,108,107,
-  // 			   73 , 76, 84, 87,
-  // 			   66 , 78, 82,103,
-  // 			   104,106,112,141,
-  // 			   61 , 65, 75,105,
-  // 			   74 ,111,140,142,
-  // 			   143,145,146,147,
-  // 			   63 , 67,158,160,
-  // 			   139,161,164,165,
-  // 			   90 ,159,166,171,
-  // 			   81 ,167,169,170,
-  // 			   50 , 53,162,163,
-  // 			   55 , 56, 92, 94,
-  // 			   57 , 51, 54, 59,
-  // 			   96 , 97, 98, 99,
-  // 			   153,148,154,157,
-  // 			   1  ,  3,  6,  7,
-  // 			   34 , 37, 39, 42,
-  // 			   26 , 27, 28, 29,
-  // 			   130,131,132,133};
+  //-------------
+  // RUN 1
+  // PMT 139 missing SPE data
+  int  pmtAList[nPMTsA] = {83 , 88,108,107,
+  			   73 , 76, 84, 87,
+  			   66 , 78, 82,103,
+  			   104,106,112,141,
+  			   61 , 65, 75,105,
+  			   74 ,111,140,142,
+  			   143,145,146,147,
+  			   63 , 67,158,160,
+  			   139,161,164,165,
+  			   90 ,159,166,171,
+  			   81 ,167,169,170,
+  			   50 , 53,162,163,
+  			   55 , 56, 92, 94,
+  			   57 , 51, 54, 59,
+  			   96 , 97, 98, 99,
+  			   153,148,154,157,
+  			   1  ,  3,  6,  7,
+  			   34 , 37, 39, 42,
+  			   26 , 27, 28, 29,
+  			   130,131,132,133};
   
   
-  // int  pmtBList[nPMTsB] = {102,149,150,152,
-  // 			   9  , 10, 12, 14,
-  // 			   43 , 47, 48, 49,
-  // 			   30 , 31, 32, 33,
-  // 			   134,135,136,138};			   
+  int  pmtBList[nPMTsB] = {102,149,150,152,
+  			   9  , 10, 12, 14,
+  			   43 , 47, 48, 49,
+  			   30 , 31, 32, 33,
+  			   134,135,136,138};			   
   
   //-------------
   
