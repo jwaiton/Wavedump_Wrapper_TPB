@@ -485,13 +485,17 @@ int ProcessBinaryFile(TString inFilePath,
   TCanvas * canvas = new TCanvas(canvasName,
 				 canvasName);
   
+  // increase binning by 4 times
+  Int_t nBinsX = 512;
+  Float_t rangeX[2] = {-500.,2000.};
+
   TH1F * hQ_Fixed = new TH1F(hQ_FixedName,
 			     "Fixed gate;Charge (mV nS);Counts",
-			     128,-500.,2000.);
+			     nBinsX,rangeX[0],rangeX[1]);
   
   TH1F * hQ_Peak = new TH1F(hQ_PeakName,
 			    "Gate around peak;Charge (mV nS);Counts",
-			    128,-500.,2000.);
+			    nBinsX,rangeX[0],rangeX[1]);
   
   TH2F * hPulses = new TH2F("hPulses",
 			    "Subset of Raw Pulses;Sample;VDC",
