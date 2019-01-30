@@ -157,41 +157,24 @@ TH1F* h2h(TH1D* hold ){
   return h;
 }
 
+TH1D* findHisto(TFile *input, 
+		TString hName = "hQ_Fixed_Run_200_PMT_15_Loc_0_Test_S"){
 
-
-TH1D* findHisto(TFile *input, int histoVersion = 0){
-
-  if (histoVersion == 0 ){
-    TH1D* histo = (TH1D*)input->Get("SPE0");
-    if (histo) return histo;
-    histo = (TH1D*)input->Get("SPE1");
-    if (histo) return histo;
-    histo = (TH1D*)input->Get("SPE2");
-    if (histo) return histo;
-    histo = (TH1D*)input->Get("SPE3");
-    if (histo) return histo;
-  }
-  else{
-   
-    TString hName = "";
-    hName.Form("hCharge%d",histoVersion);
-    cout << " hName " << hName << endl;
+  cout << " hName " << hName << endl;
     
-    TH1D* histo = (TH1D*)input->Get(hName);
+  TH1D* histo = (TH1D*)input->Get(hName);
 
-    return histo;
-  }
+  if (histo) return histo;
+  
   std::cout << "no histo " << std::endl;
-
   return 0;
+
 }
 
-Result* fitModel(string file = "PMT_NB0066_HV1820_Analysis.root", 
-		 int histoVersion = 0,
+Result* fitModel(string file = "Run_200_PMT_15_Loc_0_Test_S.root", 
+		 string hName   = "hQ_Fixed_Run_200_PMT_15_Loc_0_Test_S",
 		 double minval = -500,
 		 double maxval = 2000 ){
-  
-  
   
   Result* res = new Result();
   
@@ -200,7 +183,8 @@ Result* fitModel(string file = "PMT_NB0066_HV1820_Analysis.root",
   //gROOT -> ProcessLine( ".x ./mattStyle.C" );
   
   TFile *input=new TFile(file.c_str());
-  TH1D* histo = findHisto(input,histoVersion);
+  TH1D* histo = findHisto(input,
+			  hName);
   if (histo ==0) return 0;
   
   TH1F* fhisto = h2h(histo);
@@ -251,7 +235,7 @@ Result* fitModel(string file = "PMT_NB0066_HV1820_Analysis.root",
   f2->SetLineWidth(3);
   f2->Draw("SAME");
   fhisto->Draw("HISTO");
-  fhisto->SetMinimum(1000);
+  //fhisto->SetMinimum(1000);
   f2->Draw("SAME");
   f->Draw("SAME");
   
@@ -264,27 +248,28 @@ Result* fitModel(string file = "PMT_NB0066_HV1820_Analysis.root",
   res->peakToValley.value = sval/vval;
   res->peakToValley.error = ef;
   //res->peak = sval;
-
   
- return res;
+  return res;
 }
 
-void GetPeakToValley(string rootFileName = "./outputFile.root",
-		     int histoVersion = 1){
-  
-  
-  // 
-  // histoVersion = 0;
-  // rootFileName = "PMT_NB0066_HV1820_Analysis.root";
-  
-  Result * res = nullptr;
+void GetPeakToValley(string rootFileName = "Run_200_PMT_15_Loc_0_Test_S"){
 
-  res = fitModel(rootFileName,
-		 histoVersion);
+  string hName = "hQ_Fixed_" + rootFileName;
+      
+  rootFileName = rootFileName + ".root";
+
+  //!!!!!
+  // set to relevant local path
+  string RawRootDataDIR = "/Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/RawRootData/";
+
+  rootFileName = RawRootDataDIR + rootFileName;
+  
+  Result * results = fitModel(rootFileName,
+			      hName);
   
   cout << endl;
-  cout << "peak           = " << res->peak.value << " (" << res->peak.error << ") " << endl;
-  cout << "peak to valley = " << res->peakToValley.value << " (" << res->peakToValley.error << ") " << endl;
+  cout << "peak           = " << results->peak.value         << " (" << results->peak.error         << ") " << endl;
+  cout << "peak to valley = " << results->peakToValley.value << " (" << results->peakToValley.error << ") " << endl;
   
   
 }
