@@ -820,90 +820,87 @@ string getDefaultFilePath(){
 int main(int argc, char **argv)
 {
   
-  // ------------------
-  // Optional variables
-  // - see ProcessBinaryFile()
-
-  // Printing  
-  // 0 - silence (default) 
-  // 1 - event-by-event
-  // 2 - sample-by-sample
-  int  verbosity   = 0;
-  
-  // 'V' - VME (default)
-  // 'D' - Desktop
-  char   digitiser = 'V';
+  int  verbosity = 0;   // 0 silence, 1 event, 2 sample
+  char digitiser = 'V'; // V VME, D Desktop
 
   //-------------------
-  int  run = 1; 
-  int  pmt = 155;
-  int  loc = 6;
-  char test = 'A';
-
-  // Default - not gain test setting
-  // Set automatically for test type
-  // in loop below.
+  // ProcessBinaryFile() argument variables
+  
+  int  run    = 1; 
+  int  pmt    = 155;
+  int  loc    = 6;
+  char test   = 'A';
   int  hvStep = 0; 
   int  nSteps = 1;
 
-  static const int nTests = 1;
-
-  // 'S' SPE, 'G' Gain, 'D' Dark
-  // 'A' After, 'N' Nominal, 
-  char testList[nTests] = {'S'};
-  //char testList[nTests] = {'S','N','G','D','A'};
+  // SPE, Nominal, Gain, Dark, After
+  char testList[5] = {'S','N','G','D','A'};
   
-  static const int nRuns = 1; // 5
-  int  runList[nRuns] = {1};
-  
+  static const int nRuns  = 5;
   // PMTS 130 131 132 133
-  //int  runList[nRuns] = {2,3,10,22,23}; 
+  int runList[5] = {2,3,10,22,23};
+  
+  int pmtAList[100] = {0};  
+  int pmtBList[100] = {0};  
+
+  for(int i = 0 ;
+
+	// PMTS 130 131 132 133
+  int runList[5] = {2,3,10,22,23};
+      
+  // PMTs  90 159 166 171  
   //int  runList[nRuns] = {4,11,12,20,21};
   
-
-  //static const int nPMTsA = 0;//80;
-  static const int nPMTsA = 80;
-  //static const int nPMTsB = 4;//20;
-  static const int nPMTsB = 20;
+  //static const int nPMTsA = 80;
+  
+  static const int nPMTsB = 0;;
+  
+  //static const int nPMTsB = 20;
+  
   static const int nPMTs  = nPMTsA + nPMTsB;
   
+  // {2,3,10,22,23};
   //int  pmtAList[nPMTsA] = {130,131,132,133};  
-  //int  pmtAList[nPMTsA] = {90,159,166,171};  
+  
+  // {4,11,12,20,21};
+  int  pmtAList[nPMTsA] = {90,159,166,171};  
 
-//   int  pmtAList[1] = {0};
-//   // 
-//   int  pmtBList[nPMTsB] = {0,0,155,0}; 
+  //int  pmtAList[1] = {0};
+  int  pmtBList[1] = {0};
+
+  //   // 
+  //   int  pmtBList[nPMTsB] = {0,0,155,0}; 
   
-  //-------------
-  // RUN 1
-  // PMT 139 missing SPE data
-  int  pmtAList[nPMTsA] = {83 , 88,108,107,
-  			   73 , 76, 84, 87,
-  			   66 , 78, 82,103,
-  			   104,106,112,141,
-  			   61 , 65, 75,105,
-  			   74 ,111,140,142,
-  			   143,145,146,147,
-  			   63 , 67,158,160,
-  			   139,161,164,165,
-  			   90 ,159,166,171,
-  			   81 ,167,169,170,
-  			   50 , 53,162,163,
-  			   55 , 56, 92, 94,
-  			   57 , 51, 54, 59,
-  			   96 , 97, 98, 99,
-  			   153,148,154,157,
-  			   1  ,  3,  6,  7,
-  			   34 , 37, 39, 42,
-  			   26 , 27, 28, 29,
-  			   130,131,132,133};
+  // //-------------
+  // // RUN 1
+  // // PMT 139 missing SPE data
+  // int  pmtAList[nPMTsA] = {83 , 88,108,107,
+  // 			   73 , 76, 84, 87,
+  // 			   66 , 78, 82,103,
+  // 			   104,106,112,141,
+  // 			   61 , 65, 75,105,
+  // 			   74 ,111,140,142,
+  // 			   143,145,146,147,
+  // 			   63 , 67,158,160,
+  // 			   139,161,164,165,
+  // 			   90 ,159,166,171,
+  // 			   81 ,167,169,170,
+  // 			   50 , 53,162,163,
+  // 			   55 , 56, 92, 94,
+  // 			   57 , 51, 54, 59,
+  // 			   96 , 97, 98, 99,
+  // 			   153,148,154,157,
+  // 			   1  ,  3,  6,  7,
+  // 			   34 , 37, 39, 42,
+  // 			   26 , 27, 28, 29,
+  // 			   130,131,132,133};
   
   
-  int  pmtBList[nPMTsB] = {102,149,150,152,
-  			   9  , 10, 12, 14,
-  			   43 , 47, 48, 49,
-  			   30 , 31, 32, 33,
-  			   134,135,136,138};			   
+  // int  pmtBList[nPMTsB] = {102,149,150,152,
+  // 			   9  , 10, 12, 14,
+  // 			   43 , 47, 48, 49,
+  // 			   30 , 31, 32, 33,
+  // 			   134,135,136,138};			   
   
   //-------------
   
@@ -914,11 +911,11 @@ int main(int argc, char **argv)
   
   inputDirectory = "/Disk/ds-sopa-group/PPE/Watchman/BinaryData/";
   
-  TString outputDirectory = "/Users/gsmith23/Desktop/Watchman/PMT_Testing/";
-  outputDirectory +=  "Wavedump_Wrapper/RawRootData/";
+  TString outputDirectory = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/";
+  //outputDirectory +=  "Wavedump_Wrapper/RawRootData/";
   
   //outputDirectory = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/";
-  outputDirectory = "/scratch/Gary/Wavedump_Wrapper/RawRootData/";
+  //outputDirectory = "/scratch/Gary/Wavedump_Wrapper/RawRootData/";
   
   int nEvents = -2;
   
