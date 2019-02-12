@@ -9,6 +9,7 @@ class DataInfo {
  public :
   
   DataInfo(){}
+  DataInfo(Char_t userTest){}
   ~DataInfo(){}
   int   GetNSamples(char test = 'G',
 		    char digitiser = 'V');
