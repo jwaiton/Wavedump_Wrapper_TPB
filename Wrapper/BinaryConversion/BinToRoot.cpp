@@ -903,7 +903,7 @@ char GetSamplingSetting(char digitiser){
     return 'S'; 
   
   char samplingSetting = 'S';
-  
+
   cout << " Enter sampling frequency: " << endl;
   cout << " 'S' (Standard)  5 GHZ "    << endl;
   cout << " 'L' (Low)       1 GHZ "    << endl;
