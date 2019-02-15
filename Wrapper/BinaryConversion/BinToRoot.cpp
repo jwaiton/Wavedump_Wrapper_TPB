@@ -20,15 +20,30 @@
  *  $ make BinToRoot
  *
  * How to run
- *  $ ./BinToRoot  
+ *  Option 1: 
+ *  $ ./BinToRoot run pmt loc test  
+ * 
  *
  * Dependencies
  *  root.cern
  *
  * Modified 
  *  gary.smith@ed.ac.uk
- *  11 12 18
+ *  15 02 19
  *
+ *  Pulse/pulse -> Waveform/waveform - previous name was incorrect
+ *  Note that this must be propagated to output file anaysis code.
+ *
+ *  third digitiser option 'd' for desktop version @ 1 GHz 
+ *
+ *  added negPulsePol as optional argument 
+ *  added samplingSetting  as optional argument 
+ *
+ *  removed unused variables qFixed and qPeak
+ *
+ *  New function ProcessBinaryFile() acts as 
+ *  intermediate step before ProcessBinaryFile()
+ *  accommodating a cleaner main() function
  */ 
 
 #include <cstdlib>
@@ -44,9 +59,9 @@
 
 using namespace std;
 
-int  getNSamples(char digitiser,
-		 char test = 'G'){
-
+int  GetNSamples(char digitiser,
+		 char test){
+  
   switch(digitiser){     
   case ('V'):
     if (test=='A')
@@ -62,7 +77,7 @@ int  getNSamples(char digitiser,
   
 }
 
-int  getNVDCBins(char digitiser){
+int  GetNVDCBins(char digitiser){
 
   if     ( digitiser == 'V' )
     return 16384;
@@ -75,7 +90,7 @@ int  getNVDCBins(char digitiser){
   
 }
 
-float getVoltageRange(char digitiser){
+float GetVoltageRange(char digitiser){
   
   if     ( digitiser == 'V' )
     return 2.0;
@@ -89,12 +104,21 @@ float getVoltageRange(char digitiser){
 
 }
 
-int getSampleRateInMHz(char digitiser){
+int GetSampleRateInMHz(char digitiser,
+		       char samplingSetting){
 
   if     ( digitiser == 'V' )
     return 500;
-  else if( digitiser == 'D' )
-    return 5000;
+  else if( digitiser == 'D' ){
+    if     (samplingSetting == 'S')
+      return 5000;
+    else if(samplingSetting == 'L') 
+      return 1000;
+    else{
+      cerr << "Error: Unknown sampling setting " << endl;
+      return 0;
+    }
+  }
   else{
     cerr << "Error: Unknown digitiser " << endl;
     return 0;
@@ -102,7 +126,9 @@ int getSampleRateInMHz(char digitiser){
 
 }
 
-void printDAQConfig(char digitiser){
+void printDAQConfig(char digitiser,
+		    char samplingSetting,
+		    bool negPulsePol){
   
 
   TString strDigitiser = "VME";
@@ -115,31 +141,44 @@ void printDAQConfig(char digitiser){
        << strDigitiser
        << " Digitiser "    << endl;
   cout << "   " 
-       << getNVDCBins(digitiser)        
+       << GetNVDCBins(digitiser)        
        << " VDC Bins "    << endl;
   cout << "   " 
-       << getVoltageRange(digitiser)    
+       << GetVoltageRange(digitiser)    
        << " Volts Range "  << endl;
   cout << "   " 
-	 << getSampleRateInMHz(digitiser) 
+       << GetSampleRateInMHz(digitiser, 
+			     samplingSetting) 
        << " MHz sample rate " << endl;
-
-}
-
-float getnsPerSample(char digitiser){
   
-  return (1.0e3 / (float)getSampleRateInMHz(digitiser));
+  if ( negPulsePol )
+    cout << "   Negative Pulse Polarity" 
+	 << endl;
+  else
+    cout << "   Positive Pulse Polarity" 
+	 << endl;
+  
+}
+
+float GetnsPerSample(char digitiser,
+		     char samplingSetting){
+  
+  return (1.0e3 / (float)GetSampleRateInMHz(digitiser,
+					    samplingSetting));
 
 }
 
-float getPulseLength(char digitiser,
-		     char test){
-
-  return (float)getNSamples(digitiser,test)*getnsPerSample(digitiser);
-
+float GetWaveformLength(char digitiser,
+			char test,
+			char samplingSetting){
+  
+  return (float)GetNSamples(digitiser,
+			    test)*GetnsPerSample(digitiser,
+						 samplingSetting);
+  
 }
 
-float getDelay(int run = 0){
+float GetDelay(int run = 0){
   
   if      ( run == 0 ) // 12th October
     return 60.; 
@@ -151,27 +190,29 @@ float getDelay(int run = 0){
     return 60.;
 }
 
-float getmVPerBin(char digitiser){
-  return ( 1.0e3 * getVoltageRange(digitiser) / 
-	   getNVDCBins(digitiser) );
+float GetmVPerBin(char digitiser){
+  return ( 1.0e3 * GetVoltageRange(digitiser) / 
+	   GetNVDCBins(digitiser) );
 }
 
-float getCharge(int intVDC, char digitiser = 'V'){
+float GetCharge(int intVDC, char digitiser,
+		char samplingSetting, bool negPulsePol){
   
-  float nsPerSample = getnsPerSample(digitiser);
+  float nsPerSample = GetnsPerSample(digitiser,
+				     samplingSetting);
   
-  float mVolts = (float)intVDC * getmVPerBin(digitiser);
+  float mVolts = (float)intVDC * GetmVPerBin(digitiser);
+
+  float charge = 0.;
   
-  float charge = -1. * nsPerSample * mVolts;
-  
-  if( digitiser == 'V' || 
-      digitiser == 'D' )
-    return charge; 
+  if(negPulsePol)
+    charge = -1. * nsPerSample * mVolts;
   else
-    return 0.;
-
+    charge = nsPerSample * mVolts;
+  
+  return charge; 
+  
 }
-
 
 bool isCorrectDigitiser(int header,
 			char digitiser,
@@ -198,10 +239,12 @@ bool isCorrectDigitiser(int header,
 
 // Must leave room for pedestal window
 bool isPeakInRange(float minTime, char digitiser,
-		   char test){
-				 
+		   char test, char samplingSetting){
+  
+  float waveformLength = GetWaveformLength(digitiser,test,samplingSetting);
+  
   if( minTime >= 50.   && 
-      minTime <  (getPulseLength(digitiser,test) - 30.0)  )
+      minTime <  ( waveformLength - 30.0 ) )
     return true;
   else
     return false;
@@ -213,7 +256,7 @@ float gateWidth(){
 
 // integration windows fixed wrt trigger
 // baseline window before signal window only
-float Accumulate_Fixed(short VDC, float time){
+int Accumulate_Fixed(short VDC, float time){
 
   // Integrate baseline using 
   // 50 ns window before signal
@@ -232,14 +275,13 @@ float Accumulate_Fixed(short VDC, float time){
   }
   else
     return 0.;
-  
 }
 
-// Integration windows wrt pulse peak
-// -10 ns before to 20 ns after
+// Integration windows wrt waveform peak
+// -10 ns before to 30 ns after
 // timeRel is time relative to minT (in ns)
 // baseline window before
-float Accumulate_Peak(short VDC, float timeRel){
+int Accumulate_Peak(short VDC, float timeRel){
   
   if      ( timeRel >= -50 && 
 	    timeRel <  -10 )
@@ -250,11 +292,10 @@ float Accumulate_Peak(short VDC, float timeRel){
   }
   else
     return 0.;
-
 }
 
 
-TString getRunFolderName(int run){
+TString GetRunFolderName(int run){
 
   if     ( run < 10  )
     return "RUN00000%d/";
@@ -270,7 +311,7 @@ TString getRunFolderName(int run){
     return "RUN%d/";
 }
 
-TString getPMTFolderName(int pmt){
+TString GetPMTFolderName(int pmt){
 
   if     ( pmt < 10  )
     return "PMT000%d/";
@@ -282,7 +323,7 @@ TString getPMTFolderName(int pmt){
     return "PMT%d/";
 }
 
-TString getTestFolderName(char test){
+TString GetTestFolderName(char test){
   
   switch(test){
   case('S'):
@@ -302,7 +343,7 @@ TString getTestFolderName(char test){
 }
 
 
-TString getBinaryFilePath(TString filePath = "../../Data/",
+TString GetBinaryFilePath(TString filePath = "../../Data/",
 			  int  run  = 1, 
 			  int  pmt  = 1, 
 			  int  loc  = 0,
@@ -312,9 +353,9 @@ TString getBinaryFilePath(TString filePath = "../../Data/",
   TString rtnFilePath = "";
   
   // append file path
-  filePath += getRunFolderName(run);
-  filePath += getPMTFolderName(pmt);
-  filePath += getTestFolderName(test);
+  filePath += GetRunFolderName(run);
+  filePath += GetPMTFolderName(pmt);
+  filePath += GetTestFolderName(test);
   
   // append with filename
   switch(test){
@@ -330,7 +371,7 @@ TString getBinaryFilePath(TString filePath = "../../Data/",
   return rtnFilePath;
 }
 
-TString getRawRootFilePath(TString filePath = "./",
+TString GetRawRootFilePath(TString filePath = "./",
 			   int  run  = 0, 
 			   int  pmt  = 1, 
 			   int  loc  = 0,
@@ -340,7 +381,7 @@ TString getRawRootFilePath(TString filePath = "./",
   // default option
   if( run == 0 )
     return "outputFile.root";
-
+  
   // Use same folder structure as
   // binary files ( folder creation
   // not implemented )
@@ -348,7 +389,7 @@ TString getRawRootFilePath(TString filePath = "./",
   bool singleOutputFolder = true;
 
   TString rtnFilePath = "";
-
+  
   if ( singleOutputFolder ){
     // append with filename
     // containing info
@@ -364,9 +405,9 @@ TString getRawRootFilePath(TString filePath = "./",
   }
   else {
     
-    filePath += getRunFolderName(run);
-    filePath += getPMTFolderName(pmt);
-    filePath += getTestFolderName(test);
+    filePath += GetRunFolderName(run);
+    filePath += GetPMTFolderName(pmt);
+    filePath += GetTestFolderName(test);
     
     // append with filename
     // containing info
@@ -389,14 +430,16 @@ TString getRawRootFilePath(TString filePath = "./",
 // write to root file
 int ProcessBinaryFile(TString inFilePath,
 		      TString outFilePath,
-		      int run = 0, int loc = 0,
-		      int pmt = 1, int hvStep = 0,
-		      char test = 'S',
-		      int  verbosity = 0,
-		      char digitiser = 'V'
+		      int run, int loc,
+		      int pmt, int hvStep,
+		      char test,
+		      int  verbosity,
+		      char digitiser,
+		      bool negPulsePol = true,
+		      char samplingSetting = 'S'
 		      ){
 
-  inFilePath = getBinaryFilePath(inFilePath,
+  inFilePath = GetBinaryFilePath(inFilePath,
 				 run, pmt, loc, test, hvStep);
   
   cout << endl;
@@ -428,9 +471,11 @@ int ProcessBinaryFile(TString inFilePath,
   }
   
   if( verbosity > 0 ) 
-    printDAQConfig(digitiser);
+    printDAQConfig(digitiser,
+		   samplingSetting,
+		   negPulsePol);
   
-  outFilePath = getRawRootFilePath(outFilePath,
+  outFilePath = GetRawRootFilePath(outFilePath,
 				   run, pmt, loc, test, hvStep);
 
   
@@ -485,10 +530,9 @@ int ProcessBinaryFile(TString inFilePath,
   TCanvas * canvas = new TCanvas(canvasName,
 				 canvasName);
   
-  // increase binning by 4 times
-  Int_t nBinsX = 512;
+  Int_t nBinsX  = 512;
   Float_t rangeX[2] = {-500.,2000.};
-
+  
   TH1F * hQ_Fixed = new TH1F(hQ_FixedName,
 			     "Fixed gate;Charge (mV nS);Counts",
 			     nBinsX,rangeX[0],rangeX[1]);
@@ -497,32 +541,41 @@ int ProcessBinaryFile(TString inFilePath,
 			    "Gate around peak;Charge (mV nS);Counts",
 			    nBinsX,rangeX[0],rangeX[1]);
   
-  TH2F * hPulses = new TH2F("hPulses",
-			    "Subset of Raw Pulses;Sample;VDC",
-			    getNSamples(digitiser,test),0,
-			    (getNSamples(digitiser,test)-1),
-			    getNVDCBins(digitiser),0.,
-			    (getNVDCBins(digitiser)-1));
+  TH2F * hWaveforms = new TH2F("hWaveforms",
+			       "Subset of Raw Waveforms;Sample;VDC",
+			       GetNSamples(digitiser,test),0,
+			       (GetNSamples(digitiser,test)-1),
+			       GetNVDCBins(digitiser),0.,
+			       (GetNVDCBins(digitiser)-1));
   
-  TH2F * hTV = new TH2F("hTV",
-			"Subset of calibrated pulses;Time (ns);Voltage (mV)",
-			getNSamples(digitiser,test),
-			0.,(getNSamples(digitiser,test)-1)*getnsPerSample(digitiser),
-			getNVDCBins(digitiser),
-			0.,getVoltageRange(digitiser)*1.0e3);
+  TString labels = "Subset of calibrated waveforms;Time (ns);Voltage (mV)";
+  
+  rangeX[0] = 0;
+  
+  rangeX[1] = GetNSamples(digitiser,test)-1;
+  rangeX[1] = rangeX[1] * GetnsPerSample(digitiser,
+					 samplingSetting);
+  
+  TH2F * hTV = new TH2F("hTV",labels,
+			GetNSamples(digitiser,test),
+			rangeX[0],rangeX[1],
+			GetNVDCBins(digitiser),
+			0.,GetVoltageRange(digitiser)*1.0e3);
   int   event  = -1;
-
-  // Note that pulses are negative polarity and
-  // the sign is preserved here, therefore 
-  // minima will be where the signal peaked
+  
+  // Note that the sign is preserved for VDC, therefore 
+  // minima (maxima) will be where the signal peaked 
+  // for negative (positive) signal pulses
   short minVDC = 32767, maxVDC = -32768;  
+  // sample numbers (indices) corresponding to minVDC and maxVDC
   short minT   = 32767, maxT   = -32768;  
+  
+  // accumulators for integrating the sample values
   int   intVDCfixed = 0, intVDCpeak = 0;
-  float qFixed = 0., qPeak = 0.;
 
-  // read in samples per event
+    // read in samples per event
   // vector may be better
-  short pulse[getNSamples(digitiser,test)];
+  short waveform[GetNSamples(digitiser,test)];
   
   eventTree->Branch("event",&event,"event/I");
   eventTree->Branch("minVDC",&minVDC,"minVDC/S");
@@ -531,9 +584,9 @@ int ProcessBinaryFile(TString inFilePath,
   eventTree->Branch("maxT",&maxT,"maxT/S");
   
   TString arrayString = "";
-  arrayString.Form("pulse[%d]/S",getNSamples(digitiser,test));
+  arrayString.Form("waveform[%d]/S",GetNSamples(digitiser,test));
   
-  eventTree->Branch("pulse",pulse,arrayString);
+  eventTree->Branch("waveform",waveform,arrayString);
   
   //---------------------
   // Sample Level Data
@@ -542,7 +595,10 @@ int ProcessBinaryFile(TString inFilePath,
   int   fileHeader = 0;
   float floatVDC   = 0.;
   
-  // Time (delay subtracted)
+  // waveform time in ns
+  float waveTime = 0.;
+  
+  // waveform time with delay subtracted
   float time = 0.;
   
   // read in data from streamer object
@@ -567,7 +623,6 @@ int ProcessBinaryFile(TString inFilePath,
     //-------------------
     // event-level data
     intVDCfixed = 0, intVDCpeak = 0;
-    qFixed = 0.,qPeak = 0.;
     
     // VDC range
     minVDC =  32767;
@@ -618,9 +673,9 @@ int ProcessBinaryFile(TString inFilePath,
       
     } // end: for (int i = 0 ; i < intsPerHeader
     
-    // read in pulse which comes 
+    // read in waveform which comes 
     // in 2 (VME) or 4 (Desktop) bit chunks
-    for (short iSample = 0; iSample < getNSamples(digitiser,test); iSample++){
+    for (short iSample = 0; iSample < GetNSamples(digitiser,test); iSample++){
       
       VDC = 0;
       
@@ -642,7 +697,7 @@ int ProcessBinaryFile(TString inFilePath,
       
       // for writing
       sample = iSample;
-      pulse[sample] = VDC;
+      waveform[sample] = VDC;
       
       if     ( VDC < minVDC ){
 	minVDC = VDC;
@@ -652,10 +707,13 @@ int ProcessBinaryFile(TString inFilePath,
 	maxVDC = VDC;
 	maxT   = sample;
       }
+
+      waveTime = sample * GetnsPerSample(digitiser,
+					 samplingSetting);
       
-      // use time with delay subtracted so that 
-      // any run can use same fixed windows
-      time = sample * getnsPerSample(digitiser) - getDelay(run);
+      // time with delay subtracted 
+      // too allow common fixed time windows per run
+      time = waveTime - GetDelay(run);
       
       // fixed window accumulations
       // add / subtract / skip sample VDC value
@@ -667,21 +725,26 @@ int ProcessBinaryFile(TString inFilePath,
     } // end: for (short iSample = 0; iSa
     
     // time of the signal peak
-    float minTime = minT*getnsPerSample(digitiser);
+    float minTime = minT*GetnsPerSample(digitiser,
+					samplingSetting);
+    
     float timeRelPeak = 0;
     
-    // Loop over pulse again
+    // Loop over waveform again
     // necessary for when event-level variables are used
-    // such as pulse minimum
-    for (short iSample = 0; iSample < getNSamples(digitiser,test); iSample++){
+    // such as waveform minimum
+    for (short iSample = 0; iSample < GetNSamples(digitiser,test); iSample++){
       
-      time = iSample*getnsPerSample(digitiser) - getDelay(run);
+      waveTime = iSample*GetnsPerSample(digitiser,
+					samplingSetting);
+      
+      time = waveTime - GetDelay(run);
 
-      timeRelPeak = time - minTime + getDelay(run);
+      timeRelPeak = waveTime - minTime;
 	
-      // accumulations wrt pulse peak (minimum)      
-      if( isPeakInRange(minTime,digitiser,test) )
-	intVDCpeak += Accumulate_Peak(pulse[iSample],
+      // accumulations wrt waveform peak (minimum)      
+      if( isPeakInRange(minTime,digitiser,test,samplingSetting) )
+	intVDCpeak += Accumulate_Peak(waveform[iSample],
 				      timeRelPeak);
       
       // sample vs VDC and time vs voltage plots
@@ -689,19 +752,21 @@ int ProcessBinaryFile(TString inFilePath,
       if( event < 100000   &&
 	  !( event % 1000 )){
 	
-	hPulses->Fill(iSample,pulse[iSample]);
+	hWaveforms->Fill(iSample,waveform[iSample]);
 	
-	hTV->Fill(time + getDelay(run),
-		  pulse[iSample]*getmVPerBin(digitiser));
+	hTV->Fill(time + GetDelay(run),
+		  waveform[iSample]*GetmVPerBin(digitiser));
 	
       }
       
     } // end: for (short iSample = 0; iS...
     
-    hQ_Fixed->Fill(getCharge(intVDCfixed,digitiser));
+    hQ_Fixed->Fill(GetCharge(intVDCfixed,digitiser,
+			     samplingSetting,negPulsePol));
     
-    if( isPeakInRange(minTime,digitiser,test) )
-      hQ_Peak->Fill(getCharge(intVDCpeak,digitiser));
+    if( isPeakInRange(minTime,digitiser,test,samplingSetting) )
+      hQ_Peak->Fill(GetCharge(intVDCpeak,digitiser,
+			      samplingSetting,negPulsePol));
     
     
     //--------------------------------
@@ -714,8 +779,6 @@ int ProcessBinaryFile(TString inFilePath,
       cout << " Event " << event << endl;
       cout << " minVDC(" << minT << ") = " << minVDC << endl;
       cout << " maxVDC(" << maxT << ") = " << maxVDC << endl;
-      cout << " qFixed = " << qFixed << endl;
-      cout << " qPeak = " << qPeak << endl;
       cout << endl;
     }
     
@@ -745,8 +808,8 @@ int ProcessBinaryFile(TString inFilePath,
   
   canvas->cd(3);
   
-  float minY = getVoltageRange(digitiser)*(16 - 2)/32*1.0e3;
-  float maxY = getVoltageRange(digitiser)*(16 + 1)/32*1.0e3 ;
+  float minY = GetVoltageRange(digitiser)*(16 - 2)/32*1.0e3;
+  float maxY = GetVoltageRange(digitiser)*(16 + 1)/32*1.0e3 ;
 
   hTV->SetAxisRange(minY,maxY,"Y");
 
@@ -762,15 +825,15 @@ int ProcessBinaryFile(TString inFilePath,
   float lineYMin = minY * (16 - 1)/(16 - 2); 
   float lineYMax = maxY * (16 + 0.25)/(16 + 1); 
   
-  float lineXMin = getDelay(run) - gateWidth();
-  float lineXMax = getDelay(run) + gateWidth();
+  float lineXMin = GetDelay(run) - gateWidth();
+  float lineXMax = GetDelay(run) + gateWidth();
   
   TLine *lPedMin = new TLine(lineXMin,lineYMin,
 			     lineXMin,lineYMax); 
   lPedMin->SetLineColor(kRed);
   
-  TLine *lSigMin = new TLine(getDelay(run),lineYMin,
-			     getDelay(run),lineYMax); 
+  TLine *lSigMin = new TLine(GetDelay(run),lineYMin,
+			     GetDelay(run),lineYMax); 
   lSigMin->SetLineColor(kBlue);
   
   TLine *lSigMax = new TLine(lineXMax,lineYMin,
@@ -783,13 +846,13 @@ int ProcessBinaryFile(TString inFilePath,
   
   canvas->cd(4);
   
-  minY = getNVDCBins(digitiser)*10/16 ;
-  maxY = getNVDCBins(digitiser)*6/16 ;
+  minY = GetNVDCBins(digitiser)*10/16 ;
+  maxY = GetNVDCBins(digitiser)*6/16 ;
   
-  hPulses->SetAxisRange(minY,maxY,"Y");
+  hWaveforms->SetAxisRange(minY,maxY,"Y");
     
   
-  hPulses->Draw("colz");
+  hWaveforms->Draw("colz");
   
   canvasName = "./Plots/";
   canvasName += canvas->GetName();
@@ -800,7 +863,7 @@ int ProcessBinaryFile(TString inFilePath,
   //--------------------------------
   // Write file info here
 
-  hPulses->Delete();
+  hWaveforms->Delete();
   hTV->Delete();
 
   eventTree->Write();
@@ -813,171 +876,309 @@ int ProcessBinaryFile(TString inFilePath,
 }
 
 
-string getDefaultFilePath(){
+string GetDefaultFilePath(){
   return  "../../Data/wave_0.dat";
+}
+
+bool GetNegPulsePol(char digitiser){
+  
+  bool negPulsePol = true;
+  
+  if( digitiser != 'V' ){
+    cout << " Enter negative pulse polarity: ";
+    cout << endl;
+    cout << " true  - negative  "; 
+    cout << endl;
+    cout << " false - positive  ";
+    cin >> negPulsePol;
+    cout << endl;
+  }
+  
+  return negPulsePol;
+}
+
+char GetSamplingSetting(char digitiser){
+
+  if  (digitiser == 'V')
+    return 'S'; 
+  
+  char samplingSetting = 'S';
+  
+  cout << " Enter sampling frequency: " << endl;
+  cout << " 'S' (Standard)  5 GHZ "    << endl;
+  cout << " 'L' (Low)       1 GHZ "    << endl;
+  cin  >> samplingSetting;
+  cout << endl;
+  
+  return samplingSetting;
+}  
+
+
+int GetRunUser(){
+  int run;
+  cout << " Enter run number: ";
+  cin >> run;
+  cout << endl;
+  return run;
+}
+
+int GetPMTUser(){
+  int pmt;
+  cout << " Enter pmt number: ";
+  cin >> pmt;
+  cout << endl;
+  return pmt;
+}
+
+int GetLocUser(){
+  int loc;
+  cout << " Enter rig location: ";
+  cin >> loc;
+  cout << endl;
+  return loc;
+}
+
+char GetTestUser(){
+  char test;
+  cout << " Enter test type : ";
+  cin >> test;
+  cout << endl;
+  return test;
+}
+
+char * GetInDirUser(){
+  char * inDir = new char[128];
+  cout << " Enter input path: ";
+  cin >> inDir;
+  cout << endl;
+  return inDir;
+}
+
+char * GetOutDirUser(){
+  char * outDir = new char[128];
+  cout << " Enter output path: ";
+  cin >> outDir;
+  cout << endl;
+  return outDir;
+}
+
+char GetDigitiserUser(){
+  char digitiser;
+  cout << " Enter digitiser type ('V', or 'D'): ";
+  cin >> digitiser;
+  cout << endl;
+  return digitiser;
+}
+
+int GetHVStep(char test ){
+  if( test == 'G')
+    return 1;
+  else
+    return 0;
+}
+
+int GetNSteps(char test ){
+  if( test == 'G')
+    return 5;
+  else
+    return 0;
+}
+
+void ExecuteProcessing(int run = 0, int pmt = 0,
+		       int loc = 0 ,char test = 'A',
+		       TString inDir = "./", 
+		       TString outDir = "./",
+		       char digitiser = 'V',
+		       char verbosity = 0
+		       ){
+  
+  bool negPulsePol = GetNegPulsePol(digitiser);
+  char samplingSetting = GetSamplingSetting(digitiser);
+
+  int  nEvents = -1;
+
+  for (int hvStep = GetHVStep(test) ; 
+       hvStep <= GetNSteps(test)    ; 
+       hvStep++ ){
+    
+    nEvents = ProcessBinaryFile(inDir,
+				outDir, 
+				run, loc, 
+				pmt, hvStep,
+				test,
+				verbosity, 
+				digitiser,
+				negPulsePol,
+				samplingSetting);
+    
+    cout << endl;
+    cout << " Output file contains " << nEvents << " events " << endl; 
+  }  
+  
+  cout << endl;
+  cout << " Completed Processing    " << endl;
+  cout << " ----------------------- " << endl;
+}
+
+int GetPMT(int run, int iPMT){
+  
+  if(run == 1){
+    int  pmtList[100] = {83 , 88,108,107, // Tent A
+			 73 , 76, 84, 87,
+			 66 , 78, 82,103,
+			 104,106,112,141,
+			 61 , 65, 75,105,
+			 74 ,111,140,142,
+			 143,145,146,147,
+			 63 , 67,158,160,
+			 139,161,164,165,
+			 90 ,159,166,171,
+			 81 ,167,169,170,
+			 50 , 53,162,163,
+			 55 , 56, 92, 94,
+			 57 , 51, 54, 59,
+			 96 , 97, 98, 99,
+			 153,148,154,157,
+			 1  ,  3,  6,  7,
+			 34 , 37, 39, 42,
+			 26 , 27, 28, 29,
+			 130,131,132,133, // Tent A
+			 102,149,150,152, // Tent B
+			 9  , 10, 12, 14,
+			 43 , 47, 48, 49,
+			 30 , 31, 32, 33,
+			 134,135,136,138};// Tent B	   
+    
+    return pmtList[iPMT];
+  }
+  else
+    return 1;
+
+}
+
+int GetLoc(int run, int iPMT){
+  
+  if(run == 1)
+    if( iPMT < 80 )
+      return (iPMT%4);
+    else
+      return (iPMT%4 + 4);
+  else
+    return 0;
+
+}
+
+int GetNPMTs(int run){
+
+  if(run == 1)
+    return 100;
+  else
+    return 1;
+}
+
+char GetTest(char choice, int iTest){
+
+  char testList[5] = {'S','N','G','D','A'};
+  
+  if( choice != 'E' )
+    return choice;
+  else
+    return testList[iTest]; 
+
+}
+
+int GetNTests(char choice){
+  if( choice != 'E' )
+    return 1;
+  else
+    return 5;
+}
+
+void ExecuteProcessingRun(int run){
+    
+  char choice;
+  cout << " Which test/s to process? " << endl;
+  cout << " 'S' - SPEtest "           << endl;
+  cout << " 'N' - Nominal "           << endl;
+  cout << " 'A' - APTest "            << endl;
+  cout << " 'D' - DarkRateTest "      << endl;
+  cout << " 'G' - GainTest     "      << endl;
+  cout << " 'E' - Every Test     "    << endl;
+  cin  >> choice;
+
+  for ( int iPMT = 0 ; iPMT < GetNPMTs(run) ; iPMT++)
+    for( int iTest = 0 ; iTest < GetNTests(choice) ; iTest++)
+      ExecuteProcessing(run,
+			GetPMT(run,iPMT),
+			GetLoc(run,iPMT),
+			GetTest(choice,iTest),
+			GetInDirUser(),
+			GetOutDirUser());
+  
+
 }
 
 int main(int argc, char **argv)
 {
   
-  // ------------------
-  // Optional variables
-  // - see ProcessBinaryFile()
-
-  // Printing  
-  // 0 - silence (default) 
-  // 1 - event-by-event
-  // 2 - sample-by-sample
-  int  verbosity   = 0;
+  cout << endl;
+  cout << " BinToRoot " << endl;
+  cout << endl;
   
-  // 'V' - VME (default)
-  // 'D' - Desktop
-  char   digitiser = 'V';
-
   //-------------------
-  int  run = 1; 
-  int  pmt = 155;
-  int  loc = 6;
-  char test = 'A';
-
-  // Default - not gain test setting
-  // Set automatically for test type
-  // in loop below.
-  int  hvStep = 0; 
-  int  nSteps = 1;
-
-  static const int nTests = 1;
-
-  // 'S' SPE, 'G' Gain, 'D' Dark
-  // 'A' After, 'N' Nominal, 
-  char testList[nTests] = {'S'};
-  //char testList[nTests] = {'S','N','G','D','A'};
+  int  run    = 160001; 
+  int  pmt    = 16;
+  int  loc    = 0;
+  char test   = 'S';
   
-  static const int nRuns = 1; // 5
-  int  runList[nRuns] = {1};
+//   char inDir[128];
+//   char outDir[128];
   
-  // PMTS 130 131 132 133
-  //int  runList[nRuns] = {2,3,10,22,23}; 
-  //int  runList[nRuns] = {4,11,12,20,21};
+//   char digitiser = 'V';
+  //---------------
+  // User Options
   
-
-  //static const int nPMTsA = 0;//80;
-  static const int nPMTsA = 80;
-  //static const int nPMTsB = 4;//20;
-  static const int nPMTsB = 20;
-  static const int nPMTs  = nPMTsA + nPMTsB;
-  
-  //int  pmtAList[nPMTsA] = {130,131,132,133};  
-  //int  pmtAList[nPMTsA] = {90,159,166,171};  
-
-//   int  pmtAList[1] = {0};
-//   // 
-//   int  pmtBList[nPMTsB] = {0,0,155,0}; 
-  
-  //-------------
-  // RUN 1
-  // PMT 139 missing SPE data
-  int  pmtAList[nPMTsA] = {83 , 88,108,107,
-  			   73 , 76, 84, 87,
-  			   66 , 78, 82,103,
-  			   104,106,112,141,
-  			   61 , 65, 75,105,
-  			   74 ,111,140,142,
-  			   143,145,146,147,
-  			   63 , 67,158,160,
-  			   139,161,164,165,
-  			   90 ,159,166,171,
-  			   81 ,167,169,170,
-  			   50 , 53,162,163,
-  			   55 , 56, 92, 94,
-  			   57 , 51, 54, 59,
-  			   96 , 97, 98, 99,
-  			   153,148,154,157,
-  			   1  ,  3,  6,  7,
-  			   34 , 37, 39, 42,
-  			   26 , 27, 28, 29,
-  			   130,131,132,133};
-  
-  
-  int  pmtBList[nPMTsB] = {102,149,150,152,
-  			   9  , 10, 12, 14,
-  			   43 , 47, 48, 49,
-  			   30 , 31, 32, 33,
-  			   134,135,136,138};			   
-  
-  //-------------
-  
-  int  locAList[4] = {0,1,2,3};
-  int  locBList[4] = {4,5,6,7};
-  
-  TString inputDirectory  = "/Volumes/G-DRIVE/BinaryData/";
-  
-  inputDirectory = "/Disk/ds-sopa-group/PPE/Watchman/BinaryData/";
-  
-  TString outputDirectory = "/Users/gsmith23/Desktop/Watchman/PMT_Testing/";
-  outputDirectory +=  "Wavedump_Wrapper/RawRootData/";
-  
-  //outputDirectory = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/";
-  outputDirectory = "/scratch/Gary/Wavedump_Wrapper/RawRootData/";
-  
-  int nEvents = -2;
-  
-  cout << endl;
-  cout << " ----------------------- "  << endl;
-  cout << " Processing Binary Data " << endl;
-  
-  for(int iRun = 0 ; iRun < nRuns ; iRun++ ){
-
-    run = runList[iRun];
+  switch ( argc ){
+    // No arguments passed to exectutable
+    // Normal use for single file processing
+    // Full user input required
+  case ( 1 ):
     
-    // iPMT is index, ie not PMT serial number
-    for (int iPMT = 0 ; iPMT < nPMTs ; iPMT++){
-      
-      if( iPMT < nPMTsA ){
-	pmt = pmtAList[iPMT];
-	loc = locAList[iPMT%4];
-      }
-      else{
-	pmt = pmtBList[iPMT-nPMTsA];
-	loc = locBList[(iPMT-nPMTsA)%4];
-      }
-      
-      if(pmt == 0) 
-	continue;
+    ExecuteProcessing(GetRunUser(),
+		      GetPMTUser(),
+		      GetLocUser(),
+		      GetTestUser(),
+		      GetInDirUser(),
+		      GetOutDirUser(),
+		      GetDigitiserUser());
+    break;
+  case ( 2 ):
+    // One argument (option) passed to executable
+    // Option '-1' - debugging mode
+    // Option '1' - process run 1
+    // Option 'N' - process run N (N is integer)
+    char * endPtr;
+    ExecuteProcessingRun(strtol(argv[1], &endPtr, 10));
+    break;
+  case ( 5 ):
+    run = strtol(argv[1], &endPtr, 10);
+    pmt = strtol(argv[2], &endPtr, 10);
+    loc = strtol(argv[3], &endPtr, 10);
+    test = *argv[4];
+    
+    ExecuteProcessing(run,pmt,loc,test);
+    
+    break;
+  default:
+    cerr << " Invalid option " << endl;
+    return 0;
+  }
+    
+  //
+  //---------------
+  
+    
 
-      for ( int iTest = 0 ; iTest < nTests ; iTest++ ){
-	
-	test = testList[iTest];
-	
-	// Gain test settings for
-	// Further loop over HV steps
-	if( test=='G'){
-	  nSteps = 6;
-	  hvStep = 1;
-	}
-	else{
-	  nSteps = 1;
-	  hvStep = 0;
-	}
-	
-	for ( ; hvStep < nSteps ; hvStep++ )
-	  nEvents = ProcessBinaryFile(inputDirectory,
-				      outputDirectory, 
-				      run, loc, 
-				      pmt, hvStep,
-				      test,
-				      verbosity, 
-				      digitiser);
-	
-	cout << endl;
-	cout << " Output file contains " << nEvents << " events " << endl; 
-	
-      } // end:  for ( int iTest =...
-    } // end: for (int iPMT = 0 ...
-  } // end: for(int iRun = 0 ;...
-  
-  cout << endl;
-  cout << " Completed Processing    " << endl;
-  cout << " ----------------------- " << endl;
-  
+    
+  return 1;  
 }
