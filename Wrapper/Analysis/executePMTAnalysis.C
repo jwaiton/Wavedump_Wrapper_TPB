@@ -1,6 +1,5 @@
-/***************************************************
+/*****************************************************
  * A program to process raw root files from wavedump
- *
  *
  * Author 
  *  gary.smith@ed.ac.uk
@@ -23,8 +22,6 @@
  *  Example Three - analyse multiple raw root files ( all run numbers )
  *  $ ./executePMTAnalysis ../../RawRootData/Run_*_PMT_90_Loc_0_Test_D.root  
  *
- *
- *
  * Dependencies
  *  root.cern
  *  PMTAnalyser
@@ -32,11 +29,12 @@
  *  ShippingData
  *
  * Known issues
- *   Under linux you may be required to add
- *
+ *   Under linux you will likely be required to add 
+ *   the shared (.so) file to your library path 
  *
  */ 
-#include<iostream>
+
+#include <iostream>
 
 #include <string>
 #include "TFile.h"
@@ -60,8 +58,8 @@ int main(Int_t argc, Char_t *argv[]){
   Float_t thresh_mV  = 10.0;
   Int_t   darkRate   = 8000.;
   
-  // Loop over argv[] which should be a path to a file
-  // This also works on multiple files using wildcards
+  // argv should be a path to a file
+  // or list of files ( wildcards work )
   for( int iFile = 1 ; iFile < argc ; iFile++){
      
      file = new TFile(argv[iFile],"READ");
