@@ -41,9 +41,13 @@
  *
  *  removed unused variables qFixed and qPeak
  *
- *  New function ProcessBinaryFile() acts as 
+ *  New function ExecuteProcessing() acts as 
  *  intermediate step before ProcessBinaryFile()
  *  accommodating a cleaner main() function
+ *
+ * New function ExecuteProcessingRun() acts
+ * as intermediate step before ExecuteProcessing()
+ * to accommodate processing entire runs
  */ 
 
 #include <cstdlib>
@@ -885,11 +889,11 @@ bool GetNegPulsePol(char digitiser){
   bool negPulsePol = true;
   
   if( digitiser != 'V' ){
-    cout << " Enter negative pulse polarity: ";
+    cout << " Enter pulse polarity: ";
     cout << endl;
-    cout << " true  - negative  "; 
+    cout << " 1  - negative  "; 
     cout << endl;
-    cout << " false - positive  ";
+    cout << " 0  - positive  ";
     cin >> negPulsePol;
     cout << endl;
   }
@@ -1125,25 +1129,9 @@ int main(int argc, char **argv)
   cout << " BinToRoot " << endl;
   cout << endl;
   
-  //-------------------
-  int  run    = 160001; 
-  int  pmt    = 16;
-  int  loc    = 0;
-  char test   = 'S';
-  
-//   char inDir[128];
-//   char outDir[128];
-  
-//   char digitiser = 'V';
-  //---------------
-  // User Options
-  
   switch ( argc ){
-    // No arguments passed to exectutable
-    // Normal use for single file processing
-    // Full user input required
   case ( 1 ):
-    
+
     ExecuteProcessing(GetRunUser(),
 		      GetPMTUser(),
 		      GetLocUser(),
@@ -1151,22 +1139,23 @@ int main(int argc, char **argv)
 		      GetInDirUser(),
 		      GetOutDirUser(),
 		      GetDigitiserUser());
+    
     break;
   case ( 2 ):
-    // One argument (option) passed to executable
-    // Option '-1' - debugging mode
-    // Option '1' - process run 1
-    // Option 'N' - process run N (N is integer)
     char * endPtr;
-    ExecuteProcessingRun(strtol(argv[1], &endPtr, 10));
-    break;
-  case ( 5 ):
-    run = strtol(argv[1], &endPtr, 10);
-    pmt = strtol(argv[2], &endPtr, 10);
-    loc = strtol(argv[3], &endPtr, 10);
-    test = *argv[4];
     
-    ExecuteProcessing(run,pmt,loc,test);
+    ExecuteProcessingRun(strtol(argv[1], &endPtr, 10));
+    
+    break;
+  case ( 8 ):
+
+    ExecuteProcessing(strtol(argv[1], &endPtr, 10),
+		      strtol(argv[2], &endPtr, 10),
+		      strtol(argv[3], &endPtr, 10),
+		      *argv[4],
+		      argv[5],
+		      argv[6],
+		      *argv[7]);
     
     break;
   default:
@@ -1176,9 +1165,6 @@ int main(int argc, char **argv)
     
   //
   //---------------
-  
-    
-
     
   return 1;  
 }
