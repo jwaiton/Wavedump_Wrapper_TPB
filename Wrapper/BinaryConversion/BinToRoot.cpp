@@ -574,9 +574,9 @@ int ProcessBinaryFile(TString inFilePath,
 
   //----------------------
   // Variables for testing
-  bool  testMode  = true;
+  bool  testMode  = false;
   bool  keepGoing = true;
-  int   maxEvents = 1000000;
+  int   maxEvents = 100;
   
   if ( test == 'A' )
     maxEvents = 2;
@@ -1223,9 +1223,12 @@ TString GetInDirUser(){
 
 TString GetInDir(int run){
 
-  if( run == 1000)
+  if( run < 30 ){
+    return "/Disk/ds-sopa-group/PPE/Watchman/BinaryData/";
+  }
+  else if( run == 1000)
     return "/Volumes/GS_External/BinaryData/";
-  if( run >= 1001)
+  else if( run >= 1001)
     return "/Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/BinaryData/";
   else 
     return GetInDirUser();
@@ -1243,7 +1246,10 @@ TString GetOutDirUser(){
 
 TString GetOutDir(int run){
 
-  if( run == 1000)
+  if( run < 30 ){
+    return "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/";
+  }
+  else if( run == 1000)
     return "/Volumes/GS_External/RawRootData/";
   if( run == 1001)
     return "/Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/RawRootData/";
@@ -1445,18 +1451,33 @@ int main(int argc, char **argv)
   cout << endl;
   cout << " BinToRoot " << endl;
   cout << endl;
-  
+
+  int run;
+  int pmt;
+  int loc;
+  char test;
+  TString inDir;
+  TString outDir;
+  char digitiser;
+
   switch ( argc ){
   case ( 1 ):
 
-    ExecuteProcessing(GetRunUser(),
-		      GetPMTUser(),
-		      GetLocUser(),
-		      GetTestUser(),
-		      GetInDirUser(),
-		      GetOutDirUser(),
-		      GetDigitiserUser());
+    run  = GetRunUser();
+    pmt  = GetPMTUser();
+    loc  = GetLocUser();
+    test = GetTestUser();
+    inDir  = GetInDirUser();
+    outDir = GetOutDirUser();
+    digitiser =  GetDigitiserUser();
     
+    ExecuteProcessing(run,
+    		      pmt,
+    		      loc,
+    		      test,
+    		      inDir,
+    		      outDir,
+    		      digitiser);
     break;
   case ( 2 ):
     char * endPtr;
