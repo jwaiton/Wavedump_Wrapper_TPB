@@ -21,8 +21,8 @@
  *
  * How to run
  *  Option 1: 
- *  $ ./BinToRoot run pmt loc test  
- * 
+ *  $ ./BinToRoot 
+ *  input data when prompted
  *
  * Dependencies
  *  root.cern
@@ -34,20 +34,24 @@
  *  Pulse/pulse -> Waveform/waveform - previous name was incorrect
  *  Note that this must be propagated to output file anaysis code.
  *
- *  third digitiser option 'd' for desktop version @ 1 GHz 
- *
- *  added negPulsePol as optional argument 
- *  added samplingSetting  as optional argument 
- *
  *  removed unused variables qFixed and qPeak
  *
  *  New function ExecuteProcessing() acts as 
  *  intermediate step before ProcessBinaryFile()
  *  accommodating a cleaner main() function
  *
- * New function ExecuteProcessingRun() acts
- * as intermediate step before ExecuteProcessing()
- * to accommodate processing entire runs
+ *  New function ExecuteProcessingRun() acts
+ *  as intermediate step before ExecuteProcessing()
+ *  to accommodate processing entire runs
+ *
+ *  ProcessBinaryFile()
+ *  added negPulsePol as optional argument 
+ *  added samplingSetting  as optional argument 
+ *
+ *  Added new histograms to canvas 
+ *  hPeakT_ns - time of pulse peak in ns
+ *  hQFixed_PeakV - peak voltage (baseline subtracted)
+ *  against charge accumulated around gate
  */ 
 
 #include <cstdlib>
@@ -60,6 +64,10 @@
 #include "TCanvas.h"
 #include "TH2.h"
 #include "TLine.h"
+
+#include "TROOT.h"
+#include "TStyle.h"
+#include "TColor.h"
 
 using namespace std;
 
@@ -190,6 +198,8 @@ float GetDelay(int run = 0){
     return 50.;
   else if ( run < 20 ) // Underground
     return 90.;
+  else if ( run > 999) // Bine
+    return 100.;
   else                 // Surface
     return 60.;
 }
@@ -241,14 +251,14 @@ bool isCorrectDigitiser(int header,
   }
 }
 
-// Must leave room for pedestal window
-bool isPeakInRange(float minTime, char digitiser,
+// Must leave room for baseline window
+bool isPeakInRange(float peakT_ns, char digitiser,
 		   char test, char samplingSetting){
   
   float waveformLength = GetWaveformLength(digitiser,test,samplingSetting);
   
-  if( minTime >= 50.   && 
-      minTime <  ( waveformLength - 30.0 ) )
+  if( peakT_ns >= 50.   && 
+      peakT_ns <  ( waveformLength - 30.0 ) )
     return true;
   else
     return false;
@@ -266,10 +276,6 @@ int Accumulate_Fixed(short VDC, float time){
   // 50 ns window before signal
   // (max size given run 1 delay)
   // And signal in 50 ns window
-  // NB using factors of two
-  // given VME sampling rate.
-  // Using greater than 40 to 
-  // allow for trigger jitter
   if      ( time >= -gateWidth()  && 
 	    time <    0 )
     return((int)-VDC);
@@ -280,6 +286,19 @@ int Accumulate_Fixed(short VDC, float time){
   else
     return 0.;
 }
+
+int Accumulate_Baseline(short VDC, float time){
+
+  // Integrate baseline using 
+  // 50 ns window before signal
+  if      ( time >= -gateWidth()  && 
+	    time <    0 )
+    return((int)VDC);
+  else
+    return 0;
+}
+
+
 
 // Integration windows wrt waveform peak
 // -10 ns before to 30 ns after
@@ -297,6 +316,8 @@ int Accumulate_Peak(short VDC, float timeRel){
   else
     return 0.;
 }
+
+
 
 
 TString GetRunFolderName(int run){
@@ -430,6 +451,101 @@ TString GetRawRootFilePath(TString filePath = "./",
   
 }
 
+void SetStyle(){
+  
+  TStyle     *binToRootStyle  = new TStyle("binToRootStyle","My Root Styles");
+  
+  const Int_t NCont = 255;
+  const Int_t NRGBs = 5;
+  
+  // Color scheme for 2D plotting with a better defined scale 
+  Double_t stops[NRGBs] = { 0.00, 0.34, 0.61, 0.84, 1.00 };
+  Double_t red[NRGBs]   = { 0.00, 0.00, 0.87, 1.00, 0.51 };
+  Double_t green[NRGBs] = { 0.00, 0.81, 1.00, 0.20, 0.00 };
+  Double_t blue[NRGBs]  = { 0.51, 1.00, 0.12, 0.00, 0.00 };          
+  TColor::CreateGradientColorTable(NRGBs, stops, red, green, blue, NCont);
+  
+  binToRootStyle->SetNumberContours(NCont);
+  
+  // General
+  // OPTIONS - FILL LINE TEXT MARKER
+  
+  binToRootStyle->SetFillColor(0);
+  binToRootStyle->SetTextSize(0.05);
+  
+  //-----------  Canvas
+  
+  binToRootStyle->SetCanvasBorderMode(0);
+  binToRootStyle->SetCanvasColor(kWhite);
+  
+  //------------- Pad
+  
+  binToRootStyle->SetPadBorderMode(0); 
+  binToRootStyle->SetPadColor(kWhite);
+  
+  // Make more room for X and Y titles
+  // one pad
+  // binToRootStyle->SetPadRightMargin(0.05);  //percentage
+  // binToRootStyle->SetPadLeftMargin(0.1);    //percentage
+  // binToRootStyle->SetPadBottomMargin(0.12); //percentage
+  
+  // six sub-pads
+  binToRootStyle->SetPadRightMargin(0.16);  //percentage
+  binToRootStyle->SetPadLeftMargin(0.2);    //percentage
+  binToRootStyle->SetPadBottomMargin(0.14); //percentage
+  
+  //----------- Histogram
+  
+  //Histos
+  binToRootStyle->SetHistLineWidth(1);
+  binToRootStyle->SetMarkerStyle(20);
+  
+  //  FILL CONTOURS LINE BAR 
+  //  Frames
+  binToRootStyle->SetFrameBorderMode(0);
+  
+  //  FILL BORDER LINE
+  //  Graphs
+  //  LINE ERRORS
+  
+  //---------  Axis 
+  
+  binToRootStyle->SetLabelFont(132,"XYZ"); 
+  binToRootStyle->SetLabelSize(0.04,"XYZ");
+  binToRootStyle->SetLabelOffset(0.01 ,"Y");
+  
+  //---------  Title
+  binToRootStyle->SetOptTitle(1);
+  binToRootStyle->SetTitleStyle(0);
+  binToRootStyle->SetTitleBorderSize(0);
+
+
+  binToRootStyle->SetTitleSize(0.03,"t");
+  binToRootStyle->SetTitleFont(132,"t"); 
+
+  binToRootStyle->SetTitleFont(132,"XYZ"); 
+
+  binToRootStyle->SetTitleSize(0.05,"XYZ");
+  
+  binToRootStyle->SetTitleOffset(1.0,"XYZ");
+  
+  // 6 sub-pads
+  binToRootStyle->SetTitleOffset(1.6,"Y");
+  
+  //----------  Stats
+  binToRootStyle->SetOptStat(0);
+  binToRootStyle->SetStatStyle(0);
+
+  binToRootStyle->SetOptFit(1);
+  
+  //----------  Legend
+  binToRootStyle->SetLegendBorderSize(0);
+  //binToRootStyle->SetLegendFont(132);
+  
+  gROOT->SetStyle("binToRootStyle");
+  gROOT->ForceStyle();
+}
+
 // Read in binary file and 
 // write to root file
 int ProcessBinaryFile(TString inFilePath,
@@ -451,9 +567,9 @@ int ProcessBinaryFile(TString inFilePath,
 
   //----------------------
   // Variables for testing
-  bool  testMode  = false;
+  bool  testMode  = true;
   bool  keepGoing = true;
-  int   maxEvents = 100;
+  int   maxEvents = 1000000;
   
   if ( test == 'A' )
     maxEvents = 2;
@@ -499,10 +615,13 @@ int ProcessBinaryFile(TString inFilePath,
   
   TString hQ_FixedNameTemp = "", hQ_FixedName = "";
   TString hQ_PeakNameTemp  = "", hQ_PeakName  = "";
-  
+  TString hPeakTimeNameTemp  = "", hPeakTimeName  = "";
+  TString hPeakVoltNameTemp  = "", hPeakVoltName  = "";
+
   if(hvStep == 0){
     eventTreeNameTemp = "Events_Run_%d_PMT_%d_Loc_%d_Test_%c";
     eventTreeName.Form(eventTreeNameTemp,run,pmt,loc,test);
+
     canvasNameTemp = "Canvas_Run_%d_PMT_%d_Loc_%d_Test_%c";
     canvasName.Form(canvasNameTemp,run,pmt,loc,test);
     
@@ -511,11 +630,18 @@ int ProcessBinaryFile(TString inFilePath,
     
     hQ_PeakNameTemp = "hQ_Peak_Run_%d_PMT_%d_Loc_%d_Test_%c";
     hQ_PeakName.Form(hQ_PeakNameTemp,run,pmt,loc,test);
+
+    hPeakTimeNameTemp = "hPeakTime_Run_%d_PMT_%d_Loc_%d_Test_%c";
+    hPeakTimeName.Form(hPeakTimeNameTemp,run,pmt,loc,test);
+    
+    hPeakVoltNameTemp = "hPeakVolt_Run_%d_PMT_%d_Loc_%d_Test_%c";
+    hPeakVoltName.Form(hPeakVoltNameTemp,run,pmt,loc,test);
     
   }
   else{
     eventTreeNameTemp = "Events_Run_%d_PMT_%d_Loc_%d_HV_%d";
     eventTreeName.Form(eventTreeNameTemp,run,pmt,loc,hvStep);
+
     canvasNameTemp = "Canvas_Run_%d_PMT_%d_Loc_%d_HV_%d";
     canvasName.Form(canvasNameTemp,run,pmt,loc,hvStep);
 
@@ -525,44 +651,83 @@ int ProcessBinaryFile(TString inFilePath,
     hQ_PeakNameTemp = "hQ_Peak_Run_%d_PMT_%d_Loc_%d_HV_%d";
     hQ_PeakName.Form(hQ_PeakNameTemp,run,pmt,loc,hvStep);
 
+    hPeakTimeNameTemp = "hPeakTime_Run_%d_PMT_%d_Loc_%d_HV_%D";
+    hPeakTimeName.Form(hPeakTimeNameTemp,run,pmt,loc,hvStep);
+
+    hPeakVoltNameTemp = "hPeakVolt_Run_%d_PMT_%d_Loc_%d_HV_%D";
+    hPeakVoltName.Form(hPeakVoltNameTemp,run,pmt,loc,hvStep);
+
   }
   //---------------------
   // Event Level Data
   TTree * eventTree  = new TTree(eventTreeName,
 				 eventTreeName);
   
+  UInt_t width = 1280, height = 800;
+  
+  SetStyle();
+  
   TCanvas * canvas = new TCanvas(canvasName,
-				 canvasName);
+				 canvasName,
+				 width,
+				 height);
+  
+
   
   Int_t nBinsX  = 512;
-  Float_t rangeX[2] = {-500.,2000.};
+  Float_t rangeQ[2] = {-500.,1500.};
   
   TH1F * hQ_Fixed = new TH1F(hQ_FixedName,
-			     "Fixed gate;Charge (mV nS);Counts",
-			     nBinsX,rangeX[0],rangeX[1]);
+			     "Gate around delay;Charge (mV ns);Counts",
+			     nBinsX,rangeQ[0],rangeQ[1]);
   
   TH1F * hQ_Peak = new TH1F(hQ_PeakName,
-			    "Gate around peak;Charge (mV nS);Counts",
-			    nBinsX,rangeX[0],rangeX[1]);
+			    "Gate around peak;Charge (mV ns);Counts",
+			    nBinsX,rangeQ[0],rangeQ[1]);
   
+  Float_t rangeV[2] = {-5.,155.};
+  
+  TH1F * hPeakV_mV = new TH1F(hPeakVoltName,
+			      "Waveform peak voltage; Voltage (mV);Counts",
+			      nBinsX,
+			      rangeV[0],rangeV[1]);
+  
+  TH1F * hPeakT_ns = new TH1F(hPeakTimeName,
+			      "Time of waveform peak; Time (ns);Counts",
+			      110,
+			      0.,
+			      GetWaveformLength(digitiser,
+						test,
+						samplingSetting));
+  
+  TString label;
+  label = "Signal charge vs peak voltage;Charge (mV ns);Peak voltage with baseline subtracted (mV)";
+  
+  TH2F * hQV = new TH2F("hQFixed_PeakV",
+			label,
+			nBinsX/4,rangeQ[0],rangeQ[1],
+			nBinsX/4,rangeV[0],rangeV[1]);
+  
+				   
   TH2F * hWaveforms = new TH2F("hWaveforms",
-			       "Subset of Raw Waveforms;Sample;VDC",
+			       "Subset of raw waveforms;Sample;VDC",
 			       GetNSamples(digitiser,test),0,
 			       (GetNSamples(digitiser,test)-1),
 			       GetNVDCBins(digitiser),0.,
 			       (GetNVDCBins(digitiser)-1));
-  
+
   TString labels = "Subset of calibrated waveforms;Time (ns);Voltage (mV)";
   
-  rangeX[0] = 0;
-  
-  rangeX[1] = GetNSamples(digitiser,test)-1;
-  rangeX[1] = rangeX[1] * GetnsPerSample(digitiser,
+  rangeQ[0] = 0;
+  rangeQ[1] = GetNSamples(digitiser,test)-1;
+  rangeQ[1] = rangeQ[1] * GetnsPerSample(digitiser,
 					 samplingSetting);
   
   TH2F * hTV = new TH2F("hTV",labels,
 			GetNSamples(digitiser,test),
-			rangeX[0],rangeX[1],
+			0.,GetWaveformLength(digitiser,
+					     test,
+					     samplingSetting),
 			GetNVDCBins(digitiser),
 			0.,GetVoltageRange(digitiser)*1.0e3);
   int   event  = -1;
@@ -572,10 +737,13 @@ int ProcessBinaryFile(TString inFilePath,
   // for negative (positive) signal pulses
   short minVDC = 32767, maxVDC = -32768;  
   // sample numbers (indices) corresponding to minVDC and maxVDC
-  short minT   = 32767, maxT   = -32768;  
+  short minT   = -1, maxT   = -1;  
+  
+  // ns, mV, mV-ns
+  float peakT_ns = -1., peakV_mV = 0., baselineV_mV =0.;
   
   // accumulators for integrating the sample values
-  int   intVDCfixed = 0, intVDCpeak = 0;
+  int   intVDCfixed = 0, intVDCpeak = 0, intVDCbaseline = 0;
 
     // read in samples per event
   // vector may be better
@@ -586,6 +754,9 @@ int ProcessBinaryFile(TString inFilePath,
   eventTree->Branch("maxVDC",&maxVDC,"maxVDC/S");
   eventTree->Branch("minT",&minT,"minT/S");
   eventTree->Branch("maxT",&maxT,"maxT/S");
+  
+  eventTree->Branch("peakT_ns",&peakT_ns,"peakT_ns/F");
+  eventTree->Branch("peakV_mV",&peakV_mV,"peakV_mV/F");
   
   TString arrayString = "";
   arrayString.Form("waveform[%d]/S",GetNSamples(digitiser,test));
@@ -626,7 +797,7 @@ int ProcessBinaryFile(TString inFilePath,
 
     //-------------------
     // event-level data
-    intVDCfixed = 0, intVDCpeak = 0;
+    intVDCfixed = 0, intVDCpeak = 0, intVDCbaseline = 0;
     
     // VDC range
     minVDC =  32767;
@@ -714,24 +885,50 @@ int ProcessBinaryFile(TString inFilePath,
 
       waveTime = sample * GetnsPerSample(digitiser,
 					 samplingSetting);
+
       
       // time with delay subtracted 
-      // too allow common fixed time windows per run
+      // to allow common fixed time windows per run
       time = waveTime - GetDelay(run);
       
       // fixed window accumulations
       // add / subtract / skip sample VDC value
       intVDCfixed += Accumulate_Fixed(VDC,time);
-
-      if(verbosity > 1)
-	cout << " VDC(" << iSample << ") = " << VDC << endl;
+      intVDCbaseline += Accumulate_Baseline(VDC,time);
       
+      if(verbosity > 1){
+	cout << " VDC(" << iSample << ") = " << VDC << endl;
+	cout << " intVDCbaseline = " << intVDCbaseline << endl;
+	cout << " time           = " << time << endl;
+      }
     } // end: for (short iSample = 0; iSa
     
     // time of the signal peak
-    float minTime = minT*GetnsPerSample(digitiser,
-					samplingSetting);
     
+    float nSamplesPerGate = gateWidth() / 1000.;
+    
+    nSamplesPerGate = nSamplesPerGate * GetSampleRateInMHz(digitiser,
+							   samplingSetting);
+    
+    baselineV_mV = (float)intVDCbaseline / nSamplesPerGate;
+    
+    if(negPulsePol){
+      peakT_ns = minT * GetnsPerSample(digitiser,
+				       samplingSetting);
+      
+      peakV_mV = baselineV_mV - waveform[minT];
+      
+      
+    }
+    else{
+      peakT_ns = maxT * GetnsPerSample(digitiser,
+				       samplingSetting);
+      
+      peakV_mV = waveform[maxT] - baselineV_mV;
+    }
+
+    peakV_mV = peakV_mV * GetmVPerBin(digitiser);
+
     float timeRelPeak = 0;
     
     // Loop over waveform again
@@ -744,10 +941,10 @@ int ProcessBinaryFile(TString inFilePath,
       
       time = waveTime - GetDelay(run);
 
-      timeRelPeak = waveTime - minTime;
+      timeRelPeak = waveTime - peakT_ns;
 	
       // accumulations wrt waveform peak (minimum)      
-      if( isPeakInRange(minTime,digitiser,test,samplingSetting) )
+      if( isPeakInRange(peakT_ns,digitiser,test,samplingSetting) )
 	intVDCpeak += Accumulate_Peak(waveform[iSample],
 				      timeRelPeak);
       
@@ -768,7 +965,13 @@ int ProcessBinaryFile(TString inFilePath,
     hQ_Fixed->Fill(GetCharge(intVDCfixed,digitiser,
 			     samplingSetting,negPulsePol));
     
-    if( isPeakInRange(minTime,digitiser,test,samplingSetting) )
+    hPeakT_ns->Fill(peakT_ns);
+    hPeakV_mV->Fill(peakV_mV);
+    hQV->Fill(GetCharge(intVDCfixed,digitiser,
+			samplingSetting,negPulsePol),
+	      peakV_mV);
+    
+    if( isPeakInRange(peakT_ns,digitiser,test,samplingSetting) )
       hQ_Peak->Fill(GetCharge(intVDCpeak,digitiser,
 			      samplingSetting,negPulsePol));
     
@@ -783,6 +986,8 @@ int ProcessBinaryFile(TString inFilePath,
       cout << " Event " << event << endl;
       cout << " minVDC(" << minT << ") = " << minVDC << endl;
       cout << " maxVDC(" << maxT << ") = " << maxVDC << endl;
+      cout << " peakV_mV               = " << peakV_mV << endl;
+      cout << " peakT_ns               = " << peakT_ns << endl;
       cout << endl;
     }
     
@@ -795,23 +1000,11 @@ int ProcessBinaryFile(TString inFilePath,
   // close wavedump file
   fileStream.close();	
 
-  canvas->Divide(2,2);
+  canvas->Divide(3,2);
 
   canvas->cd(1);
-  
-  hQ_Fixed->SetAxisRange(-500., 2500.,"X");
-
-  gPad->SetLogy(1);
-  hQ_Fixed->Draw();
-  
-  canvas->cd(2);
-  gPad->SetLogy(1);
-  
-  hQ_Peak->SetAxisRange(-500., 2500.,"X");
-  hQ_Peak->Draw();
-  
-  canvas->cd(3);
-  
+  //=================================
+  //   Calibrated Pulses
   float minY = GetVoltageRange(digitiser)*(16 - 2)/32*1.0e3;
   float maxY = GetVoltageRange(digitiser)*(16 + 1)/32*1.0e3 ;
 
@@ -847,21 +1040,60 @@ int ProcessBinaryFile(TString inFilePath,
   lPedMin->Draw("same");
   lSigMin->Draw("same");
   lSigMax->Draw("same");
+
+  //=================================
+  canvas->cd(2);
+  gPad->SetTicks();
+  //=================================
+  //  Gate around Delay
+  hQ_Fixed->SetAxisRange(-500., 2500.,"X");
+
+  gPad->SetLogy(1);
+  hQ_Fixed->Draw();
   
+  //=================================
+  canvas->cd(3);
+  gPad->SetTicks();
+  //=================================
+  //  Gate around Peak
+  gPad->SetLogy(1);
+  
+  hQ_Peak->SetAxisRange(-500., 2500.,"X");
+  hQ_Peak->Draw();
+  
+  //=================================
   canvas->cd(4);
+  gPad->SetTicks();
+  //=================================
+  //  Time of Peak
+  
+  hPeakT_ns->Draw();
+  
+  //=================================
+  canvas->cd(5);
+  gPad->SetTicks();
+  //=================================
+  // Charge vs Peak
+  gPad->SetLogz(1);
+
+  hQV->Draw("colz");
+
+  //=================================
+  canvas->cd(6);
+  //=================================
+  //  Raw Waveforms
   
   minY = GetNVDCBins(digitiser)*10/16 ;
   maxY = GetNVDCBins(digitiser)*6/16 ;
   
   hWaveforms->SetAxisRange(minY,maxY,"Y");
-    
   
   hWaveforms->Draw("colz");
+  //=================================
   
   canvasName = "./Plots/";
   canvasName += canvas->GetName();
   canvasName += ".png";
-
   canvas->SaveAs(canvasName);
   
   //--------------------------------
@@ -869,7 +1101,8 @@ int ProcessBinaryFile(TString inFilePath,
 
   hWaveforms->Delete();
   hTV->Delete();
-
+  hQV->Delete();
+  
   eventTree->Write();
   eventTree->Delete();
 
@@ -884,27 +1117,35 @@ string GetDefaultFilePath(){
   return  "../../Data/wave_0.dat";
 }
 
-bool GetNegPulsePol(char digitiser){
+bool GetNegPulsePolUser(){
   
   bool negPulsePol = true;
   
-  if( digitiser != 'V' ){
-    cout << " Enter pulse polarity: ";
-    cout << endl;
-    cout << " 1  - negative  "; 
-    cout << endl;
-    cout << " 0  - positive  ";
-    cin >> negPulsePol;
-    cout << endl;
-  }
+  cout << " Enter pulse polarity: ";
+  cout << endl;
+  cout << " 1  - negative  "; 
+  cout << endl;
+  cout << " 0  - positive  ";
+  cin >> negPulsePol;
+  cout << endl;
   
   return negPulsePol;
 }
 
-char GetSamplingSetting(char digitiser){
+bool GetNegPulsePol(char digitiser, int run){
+  
+  if(digitiser == 'V')
+    return true;
+  else if( run == 1000 ||
+	   run == 1001 )
+    return true;
+  else 
+    return GetNegPulsePolUser();
+      
+ 
+}
 
-  if  (digitiser == 'V')
-    return 'S'; 
+char GetSamplingSettingUser(){
   
   char samplingSetting = 'S';
 
@@ -917,6 +1158,17 @@ char GetSamplingSetting(char digitiser){
   return samplingSetting;
 }  
 
+char GetSamplingSetting(char digitiser,
+			int run){
+
+  if  (digitiser == 'V')
+    return 'S'; 
+  if  (run == 1000 ||
+       run == 1001 )
+    return 'S';
+  else 
+    return GetSamplingSettingUser();
+}
 
 int GetRunUser(){
   int run;
@@ -950,7 +1202,7 @@ char GetTestUser(){
   return test;
 }
 
-char * GetInDirUser(){
+TString GetInDirUser(){
   char * inDir = new char[128];
   cout << " Enter input path: ";
   cin >> inDir;
@@ -958,12 +1210,34 @@ char * GetInDirUser(){
   return inDir;
 }
 
-char * GetOutDirUser(){
+TString GetInDir(int run){
+
+  if( run == 1000)
+    return "/Volumes/GS_External/BinaryData/";
+  if( run >= 1001)
+    return "/Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/BinaryData/";
+  else 
+    return GetInDirUser();
+}
+
+
+TString GetOutDirUser(){
   char * outDir = new char[128];
   cout << " Enter output path: ";
   cin >> outDir;
   cout << endl;
   return outDir;
+}
+
+
+TString GetOutDir(int run){
+
+  if( run == 1000)
+    return "/Volumes/GS_External/RawRootData/";
+  if( run == 1001)
+    return "/Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/RawRootData/";
+  else 
+    return GetOutDirUser();
 }
 
 char GetDigitiserUser(){
@@ -973,6 +1247,15 @@ char GetDigitiserUser(){
   cout << endl;
   return digitiser;
 }
+
+char GetDigitiser(int run){
+
+  if   (run >= 1000)
+    return 'D';
+  else 
+    return 'V';
+}
+
 
 int GetHVStep(char test ){
   if( test == 'G')
@@ -995,9 +1278,10 @@ void ExecuteProcessing(int run = 0, int pmt = 0,
 		       char digitiser = 'V',
 		       char verbosity = 0
 		       ){
-  
-  bool negPulsePol = GetNegPulsePol(digitiser);
-  char samplingSetting = GetSamplingSetting(digitiser);
+
+  bool negPulsePol = GetNegPulsePol(digitiser,run);
+  char samplingSetting = GetSamplingSetting(digitiser,run);
+
 
   int  nEvents = -1;
 
@@ -1055,9 +1339,11 @@ int GetPMT(int run, int iPMT){
     
     return pmtList[iPMT];
   }
+  else if(run == 1001){
+    return 16;
+  }
   else
     return 1;
-
 }
 
 int GetLoc(int run, int iPMT){
@@ -1098,8 +1384,9 @@ int GetNTests(char choice){
     return 5;
 }
 
-void ExecuteProcessingRun(int run){
-    
+
+char GetChoiceUser(){
+
   char choice;
   cout << " Which test/s to process? " << endl;
   cout << " 'S' - SPEtest "           << endl;
@@ -1110,16 +1397,35 @@ void ExecuteProcessingRun(int run){
   cout << " 'E' - Every Test     "    << endl;
   cin  >> choice;
 
+  return choice;
+}
+
+char GetChoice(int run){
+
+  if( run > 100 ){
+    return 'S';
+  }
+  else
+    return GetChoiceUser();
+}
+
+
+
+void ExecuteProcessingRun(int run){
+    
+  char choice = GetChoice(run);
+
   for ( int iPMT = 0 ; iPMT < GetNPMTs(run) ; iPMT++)
     for( int iTest = 0 ; iTest < GetNTests(choice) ; iTest++)
       ExecuteProcessing(run,
 			GetPMT(run,iPMT),
 			GetLoc(run,iPMT),
 			GetTest(choice,iTest),
-			GetInDirUser(),
-			GetOutDirUser());
+			GetInDir(run),
+			GetOutDir(run),
+			GetDigitiser(run)
+			);
   
-
 }
 
 int main(int argc, char **argv)
