@@ -12,8 +12,8 @@ using namespace std;
 
 class PMTAnalyser {
  public :
-  TTree          *fChain;   // pointer to the analyzed TTree or TChain
-  Int_t           fCurrent; // current Tree number in a TChain
+  TTree          *rawRootTree;  
+  Int_t           fCurrent;
 
   char test;
   char digitiser;
@@ -25,16 +25,23 @@ class PMTAnalyser {
   Float_t        mVPerBin;
   Float_t        nsPerSample;
 
-  Int_t           event;
+  Int_t          event;
   
-  Short_t         minVDC;
-  Short_t         maxVDC;
-  Short_t         minT;
-  Short_t         maxT;
-  Short_t         pulse[5100];
+  Short_t        minVDC;
+  Short_t        maxVDC;
+  Short_t        minT;
+  Short_t        maxT;
+  Short_t        pulse[5100];
   
-  Short_t         milliVolts; 
-  Short_t         peakTime; 
+  // new variables / variable names
+  Short_t        peakSampleNo;
+  Short_t        peakADC;
+  
+  Short_t        voltage_mV; 
+  Short_t        peakVoltage_mV; 
+  
+  Short_t        time_ns; 
+  Short_t        peakTime_ns;
   
   TBranch        *b_event;
   TBranch        *b_minVDC;
@@ -56,7 +63,7 @@ class PMTAnalyser {
 #endif
 
 #ifdef PMTAnalyser_cxx
-PMTAnalyser::PMTAnalyser(TTree *tree) : fChain(0) 
+PMTAnalyser::PMTAnalyser(TTree *tree) : rawRootTree(0) 
 {
   
   Init(tree,dataInfo);
@@ -64,24 +71,24 @@ PMTAnalyser::PMTAnalyser(TTree *tree) : fChain(0)
 
 PMTAnalyser::~PMTAnalyser()
 {
-  if (!fChain) return;
-  delete fChain->GetCurrentFile();
+  if (!rawRootTree) return;
+  delete rawRootTree->GetCurrentFile();
 }
 
 Int_t PMTAnalyser::GetEntry(Long64_t entry)
 {
 // Read contents of entry.
-   if (!fChain) return 0;
-   return fChain->GetEntry(entry);
+   if (!rawRootTree) return 0;
+   return rawRootTree->GetEntry(entry);
 }
 Long64_t PMTAnalyser::LoadTree(Long64_t entry)
 {
 // Set the environment to read one entry
-   if (!fChain) return -5;
-   Long64_t centry = fChain->LoadTree(entry);
+   if (!rawRootTree) return -5;
+   Long64_t centry = rawRootTree->LoadTree(entry);
    if (centry < 0) return centry;
-   if (fChain->GetTreeNumber() != fCurrent) {
-      fCurrent = fChain->GetTreeNumber();
+   if (rawRootTree->GetTreeNumber() != fCurrent) {
+      fCurrent = rawRootTree->GetTreeNumber();
       Notify();
    }
    return centry;
@@ -100,19 +107,19 @@ void PMTAnalyser::Init(TTree *tree,
   NVDCBins     = dataInfo->GetNVDCBins();
   mVPerBin     = dataInfo->GetmVPerBin();  
   nsPerSample  = dataInfo->GetnsPerSample();  
-
-
-  if (!tree) return;
-  fChain = tree;
-  fCurrent = -1;
-  fChain->SetMakeClass(1);
   
-  fChain->SetBranchAddress("event", &event, &b_event);
-  fChain->SetBranchAddress("minVDC", &minVDC, &b_minVDC);
-  fChain->SetBranchAddress("maxVDC", &maxVDC, &b_maxVDC);
-  fChain->SetBranchAddress("minT", &minT, &b_minT);
-  fChain->SetBranchAddress("maxT", &maxT, &b_maxT);
-  fChain->SetBranchAddress("pulse", pulse, &b_pulse);
+  if (!tree) return;
+  rawRootTree = tree;
+  fCurrent = -1;
+  rawRootTree->SetMakeClass(1);
+  
+  rawRootTree->SetBranchAddress("event", &event, &b_event);
+  rawRootTree->SetBranchAddress("minVDC", &minVDC, &b_minVDC);
+  rawRootTree->SetBranchAddress("maxVDC", &maxVDC, &b_maxVDC);
+  rawRootTree->SetBranchAddress("minT", &minT, &b_minT);
+  rawRootTree->SetBranchAddress("maxT", &maxT, &b_maxT);
+  rawRootTree->SetBranchAddress("pulse", pulse, &b_pulse);
+
   Notify();
 }
 
@@ -123,8 +130,8 @@ Bool_t PMTAnalyser::Notify()
 
 void PMTAnalyser::Show(Long64_t entry)
 {
-   if (!fChain) return;
-   fChain->Show(entry);
+   if (!rawRootTree) return;
+   rawRootTree->Show(entry);
 }
 
 #endif // #ifdef PMTAnalyser_cxx
