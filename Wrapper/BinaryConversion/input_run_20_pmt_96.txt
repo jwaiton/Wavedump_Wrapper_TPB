@@ -2,6 +2,6 @@
 96
 4
 S
-/Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/BinaryData/
-/Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/RawRootData/
+/Disk/ds-sopa-group/PPE/Watchman/BinaryData/ 
+/Disk/ds-sopa-group/PPE/Watchman/RawRootData/
 V
