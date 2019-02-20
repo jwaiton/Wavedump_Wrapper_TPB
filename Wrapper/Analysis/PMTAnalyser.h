@@ -31,16 +31,26 @@ class PMTAnalyser {
   Short_t        maxVDC;
   Short_t        minT;
   Short_t        maxT;
-  Short_t        pulse[5100];
+  
+  //!!! new
+  Float_t        peakT_ns;
+  //!!! new
+  Float_t        peakV_mV;
+  
+  Short_t        waveform[5100];
   
   // new variables / variable names
   Short_t        peakSampleNo;
   Short_t        peakADC;
   
   Short_t        voltage_mV; 
+  
+  //!!! old
   Short_t        peakVoltage_mV; 
   
   Short_t        time_ns; 
+  
+  //!!! old
   Short_t        peakTime_ns;
   
   TBranch        *b_event;
@@ -48,7 +58,9 @@ class PMTAnalyser {
   TBranch        *b_maxVDC;
   TBranch        *b_minT;  
   TBranch        *b_maxT;  
-  TBranch        *b_pulse; 
+  TBranch        *b_peakT_ns;  
+  TBranch        *b_peakV_mV;  
+  TBranch        *b_waveform; 
   
   PMTAnalyser(TTree *tree=0);
   virtual ~PMTAnalyser();
@@ -118,7 +130,10 @@ void PMTAnalyser::Init(TTree *tree,
   rawRootTree->SetBranchAddress("maxVDC", &maxVDC, &b_maxVDC);
   rawRootTree->SetBranchAddress("minT", &minT, &b_minT);
   rawRootTree->SetBranchAddress("maxT", &maxT, &b_maxT);
-  rawRootTree->SetBranchAddress("pulse", pulse, &b_pulse);
+
+  rawRootTree->SetBranchAddress("peakT_ns", &peakT_ns, &b_peakT_ns);
+  rawRootTree->SetBranchAddress("peakV_mV", &peakV_mV, &b_peakV_mV);
+  rawRootTree->SetBranchAddress("waveform", waveform, &b_waveform);
 
   Notify();
 }
