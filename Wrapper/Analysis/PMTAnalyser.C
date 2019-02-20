@@ -32,17 +32,20 @@ Int_t PMTAnalyser::DarkRate(Float_t threshold = 10)
      nb = fChain->GetEntry(jentry);   
      nbytes += nb;
 
+     // !!! OLD
      peakTime = minT * nsPerSample; 
      
      eventBaseline = 0;
-     signalPeak = pulse[minT] * mVPerBin;
+     
+     // !!! OLD
+     signalPeak = waveform[minT] * mVPerBin;
      
      for( int i = 0 ; i < 4 ; i++ )
        baselines[i] = 0;
      
      for( int iSample = 0 ; iSample < NSamples; iSample++){
        
-       milliVolts = pulse[iSample] * mVPerBin;
+       milliVolts = waveform[iSample] * mVPerBin;
        
        if( (iSample/25) < 4 )
 	 baselines[iSample/25] += milliVolts;

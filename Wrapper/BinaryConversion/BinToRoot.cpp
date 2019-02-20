@@ -82,8 +82,6 @@ int  GetNSamples(char digitiser,
       return 110;
   case ('D'):
     return 1024;
-  case ('d'):
-    return 1024;
   default:
     cerr << "Error: Unknown digitiser " << endl;
     return 0;
@@ -95,8 +93,7 @@ int  GetNVDCBins(char digitiser){
 
   if     ( digitiser == 'V' )
     return 16384;
-  else if( digitiser == 'D' ||
-	   digitiser == 'd' )
+  else if( digitiser == 'D' )
     return 4096;
   else{
     cerr << "Error: Unknown digitiser " << endl;
@@ -109,8 +106,7 @@ float GetVoltageRange(char digitiser){
   
   if     ( digitiser == 'V' )
     return 2.0;
-  else if( digitiser == 'D' ||
-	   digitiser == 'd' )
+  else if( digitiser == 'D' )
     return 1.0;
   else{
     cerr << "Error: Unknown digitiser " << endl;
@@ -149,7 +145,7 @@ void printDAQConfig(char digitiser,
 
   TString strDigitiser = "VME";
   
-  if (digitiser=='d')
+  if (digitiser=='D')
     strDigitiser = "Desktop";
 
   cout << endl;
@@ -236,9 +232,6 @@ bool isCorrectDigitiser(int header,
 			char digitiser,
 			int test){
   
-  if( digitiser == 'd' )
-    digitiser = 'D';
-
   switch( test ){
   case ('A'): 
     if( header == 10224 && digitiser == 'V')
@@ -574,9 +567,9 @@ int ProcessBinaryFile(TString inFilePath,
 
   //----------------------
   // Variables for testing
-  bool  testMode  = false;
+  bool  testMode  = true;
   bool  keepGoing = true;
-  int   maxEvents = 100;
+  int   maxEvents = 100000;
   
   if ( test == 'A' )
     maxEvents = 2;
@@ -597,10 +590,9 @@ int ProcessBinaryFile(TString inFilePath,
     return -1;
   }
   
-  if( verbosity > 0 ) 
-    printDAQConfig(digitiser,
-		   samplingSetting,
-		   negPulsePol);
+  printDAQConfig(digitiser,
+		 samplingSetting,
+		 negPulsePol);
   
   outFilePath = GetRawRootFilePath(outFilePath,
 				   run, pmt, loc, test, hvStep);
@@ -701,7 +693,7 @@ int ProcessBinaryFile(TString inFilePath,
   
   TH1F * hPeakT_ns = new TH1F(hPeakTimeName,
 			      "Time of waveform peak; Time (ns);Counts",
-			      110,
+			      GetNSamples(digitiser,test),
 			      0.,
 			      GetWaveformLength(digitiser,
 						test,
@@ -866,8 +858,7 @@ int ProcessBinaryFile(TString inFilePath,
 	fileStream.read((char*)&VDC,2); 
       }
       // read 4 bits
-      else if( digitiser == 'D' ||
-	       digitiser == 'd'){
+      else if( digitiser == 'D' ){
 	fileStream.read((char*)&floatVDC,sizeof(float));
 	VDC = (short)floatVDC;
       }
@@ -1019,6 +1010,11 @@ int ProcessBinaryFile(TString inFilePath,
   float minY = GetVoltageRange(digitiser)*(16 - 2)/32*1.0e3;
   float maxY = GetVoltageRange(digitiser)*(16 + 1)/32*1.0e3 ;
 
+  if(!negPulsePol){
+    minY = GetVoltageRange(digitiser)*(16 - 1)/32*1.0e3;
+    maxY = GetVoltageRange(digitiser)*(16 + 2)/32*1.0e3;
+  }
+  
   hTV->SetAxisRange(minY,maxY,"Y");
 
   float minX = 0.;
@@ -1048,10 +1044,12 @@ int ProcessBinaryFile(TString inFilePath,
 			     lineXMax,lineYMax); 
   lSigMax->SetLineColor(kBlue);
   
-  lPedMin->Draw("same");
-  lSigMin->Draw("same");
-  lSigMax->Draw("same");
-
+  if(negPulsePol){
+    lPedMin->Draw("same");
+    lSigMin->Draw("same");
+    lSigMax->Draw("same");
+  }
+  
   //=================================
   canvas->cd(2);
   gPad->SetTicks();
@@ -1147,9 +1145,8 @@ bool GetNegPulsePol(char digitiser, int run){
   
   if(digitiser == 'V')
     return true;
-  else if( run == 1000 ||
-	   run == 1001 )
-    return true;
+  else if( run > 9999)
+    return false;
   else 
     return GetNegPulsePolUser();
       
@@ -1174,9 +1171,8 @@ char GetSamplingSetting(char digitiser,
 
   if  (digitiser == 'V')
     return 'S'; 
-  if  (run == 1000 ||
-       run == 1001 )
-    return 'S';
+  if  (run > 9999)
+    return 'L';
   else 
     return GetSamplingSettingUser();
 }
