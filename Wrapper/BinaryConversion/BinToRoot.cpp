@@ -80,7 +80,7 @@ int  GetNSamples(char digitiser,
       return 5100;
     else
       return 110;
-  case ('D'):
+  case ('D':
     return 1024;
   case ('d'):
     return 1024;
