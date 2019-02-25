@@ -6,6 +6,8 @@
 #include "TTree.h"
 #include "TFile.h"
 
+#include "TH2.h"
+
 #include "DataInfo.h"
 
 using namespace std;
@@ -15,7 +17,7 @@ class PMTAnalyser {
   TTree          *rawRootTree;  
   Int_t           fCurrent;
 
-  char test;
+  char testType;
   char digitiser;
   
   DataInfo      *dataInfo;
@@ -31,31 +33,30 @@ class PMTAnalyser {
   Short_t        maxVDC;
   Short_t        minT;
   Short_t        maxT;
-  Short_t        pulse[5100];
   
-  // new variables / variable names
-  Short_t        peakSampleNo;
-  Short_t        peakADC;
+  Float_t        peakT_ns;
+  Float_t        peakV_mV;
   
-  Short_t        voltage_mV; 
-  Short_t        peakVoltage_mV; 
-  
-  Short_t        time_ns; 
-  Short_t        peakTime_ns;
+  Short_t        waveform[5100];
   
   TBranch        *b_event;
   TBranch        *b_minVDC;
   TBranch        *b_maxVDC;
   TBranch        *b_minT;  
   TBranch        *b_maxT;  
-  TBranch        *b_pulse; 
+  TBranch        *b_peakT_ns;  
+  TBranch        *b_peakV_mV;  
+  TBranch        *b_waveform; 
   
-  PMTAnalyser(TTree *tree=0);
+  PMTAnalyser(TTree *tree=0, Char_t digitiser='V', Char_t userTest='S');
   virtual ~PMTAnalyser();
   virtual Int_t    GetEntry(Long64_t entry);
   virtual Long64_t LoadTree(Long64_t entry);
-  virtual void     Init(TTree *tree, DataInfo *dataInfo);
+  virtual void     Init(TTree *tree,Char_t digitiser,Char_t userTest);
   virtual Int_t    DarkRate(Float_t);
+  virtual Int_t    Make_FFT_Histos();
+  virtual Int_t    Make_hFixed_Filtered();
+  virtual Bool_t   IsCleanFFTWaveform(TH1D *);
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
 };
@@ -63,10 +64,12 @@ class PMTAnalyser {
 #endif
 
 #ifdef PMTAnalyser_cxx
-PMTAnalyser::PMTAnalyser(TTree *tree) : rawRootTree(0) 
+
+PMTAnalyser::PMTAnalyser(TTree *tree,
+			 Char_t digitiser,
+			 Char_t userTest) : rawRootTree(0) 
 {
-  
-  Init(tree,dataInfo);
+  Init(tree,digitiser,userTest);
 }
 
 PMTAnalyser::~PMTAnalyser()
@@ -95,18 +98,20 @@ Long64_t PMTAnalyser::LoadTree(Long64_t entry)
 }
 
 void PMTAnalyser::Init(TTree *tree,
-		       DataInfo *dataInfo)
+		       Char_t digitiser,
+		       Char_t userTest)
 {
-  // To do: Get test type from Tree Name
-  test      = 'D';
   
+  testType = userTest;
+
   dataInfo = new DataInfo();
-  
-  NSamples     = dataInfo->GetNSamples(test);
-  VoltageRange = dataInfo->GetVoltageRange();
-  NVDCBins     = dataInfo->GetNVDCBins();
-  mVPerBin     = dataInfo->GetmVPerBin();  
-  nsPerSample  = dataInfo->GetnsPerSample();  
+
+  NSamples     = dataInfo->GetNSamples(testType,
+				       digitiser);
+  VoltageRange = dataInfo->GetVoltageRange(digitiser);
+  NVDCBins     = dataInfo->GetNVDCBins(digitiser);
+  mVPerBin     = dataInfo->GetmVPerBin(digitiser);  
+  nsPerSample  = dataInfo->GetnsPerSample(digitiser);  
   
   if (!tree) return;
   rawRootTree = tree;
@@ -118,7 +123,18 @@ void PMTAnalyser::Init(TTree *tree,
   rawRootTree->SetBranchAddress("maxVDC", &maxVDC, &b_maxVDC);
   rawRootTree->SetBranchAddress("minT", &minT, &b_minT);
   rawRootTree->SetBranchAddress("maxT", &maxT, &b_maxT);
-  rawRootTree->SetBranchAddress("pulse", pulse, &b_pulse);
+
+  //!!!!!!!!
+  // temporary
+  Bool_t newFile = kFALSE;
+  
+  if(newFile){
+    rawRootTree->SetBranchAddress("waveform", waveform, &b_waveform);
+    rawRootTree->SetBranchAddress("peakT_ns", &peakT_ns, &b_peakT_ns);
+    rawRootTree->SetBranchAddress("peakV_mV", &peakV_mV, &b_peakV_mV);
+  }
+  else
+    rawRootTree->SetBranchAddress("pulse",waveform, &b_waveform);
 
   Notify();
 }

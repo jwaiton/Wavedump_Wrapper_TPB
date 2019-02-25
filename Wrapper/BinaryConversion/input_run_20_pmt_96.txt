@@ -1,7 +1,0 @@
-20 
-96
-4
-S
-/Disk/ds-sopa-group/PPE/Watchman/BinaryData/ 
-/Disk/ds-sopa-group/PPE/Watchman/RawRootData/
-V
