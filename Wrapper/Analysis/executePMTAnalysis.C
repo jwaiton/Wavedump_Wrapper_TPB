@@ -54,9 +54,11 @@ int main(Int_t argc, Char_t *argv[]){
   PMTAnalyser * PMT = nullptr;
 
   ShippingData * shipData = nullptr;
+
+  Char_t  digitiser = 'V';
   
-  Float_t thresh_mV  = 10.0;
-  Int_t   darkRate   = 8000.;
+  //Float_t thresh_mV  = 10.0;
+  //Int_t   darkRate   = 8000.;
   
   // argv should be a path to a file
   // or list of files ( wildcards work )
@@ -76,6 +78,10 @@ int main(Int_t argc, Char_t *argv[]){
      cout << " Run      " << run(argv[iFile])      << endl;
      cout << " PMT      " << pmtID(argv[iFile])    << endl;
      cout << " Location " << location(argv[iFile]) << endl;
+     cout << " Test     " << test(argv[iFile]) << endl;
+
+     if( test(argv[iFile])=='G')
+       cout << " HV step  " << HVStep(argv[iFile]) << endl; 
      
      cout << endl;
      shipData = new ShippingData(pmtID(argv[iFile]));
@@ -84,17 +90,24 @@ int main(Int_t argc, Char_t *argv[]){
      file->GetObject((TString)GetTreeName(argv[iFile]),tree); 
      
      // initalise analysis object using tree 
-     PMT = new PMTAnalyser(tree);
+     PMT = new PMTAnalyser(tree,
+			   digitiser,
+			   test(argv[iFile]));
      
      // Double Chooz dark rate threshold (x10 to include amplification)
-     darkRate   = PMT->DarkRate(thresh_mV);
+     // darkRate   = PMT->DarkRate(thresh_mV);
+     // cout << " Hamamatsu Dark Rate = " << shipData->GetDR() << endl;
+     // cout << " PMT Test  Dark Rate = " << darkRate          << endl;
      
-     cout << " Hamamatsu Dark Rate = " << shipData->GetDR() << endl;
-     cout << " PMT Test  Dark Rate = " << darkRate          << endl;
+     // Make Filtered Histograms
+     PMT->Make_FFT_Histos();
      
+     //PMT->Make_Fixed_Gate_Filtered();
+
   }
   
-  //TFile * resultsFile = new TFile("Results","RECREATE");
+  // To Do:
+  // TFile * resultsFile = new TFile("Results","RECREATE");
   
   return 1;
 }

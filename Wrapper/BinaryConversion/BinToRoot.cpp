@@ -80,9 +80,7 @@ int  GetNSamples(char digitiser,
       return 5100;
     else
       return 110;
-  case ('D':
-    return 1024;
-  case ('d'):
+  case ('D'):
     return 1024;
   default:
     cerr << "Error: Unknown digitiser " << endl;
@@ -95,8 +93,7 @@ int  GetNVDCBins(char digitiser){
 
   if     ( digitiser == 'V' )
     return 16384;
-  else if( digitiser == 'D' ||
-	   digitiser == 'd' )
+  else if( digitiser == 'D' )
     return 4096;
   else{
     cerr << "Error: Unknown digitiser " << endl;
@@ -109,8 +106,7 @@ float GetVoltageRange(char digitiser){
   
   if     ( digitiser == 'V' )
     return 2.0;
-  else if( digitiser == 'D' ||
-	   digitiser == 'd' )
+  else if( digitiser == 'D' )
     return 1.0;
   else{
     cerr << "Error: Unknown digitiser " << endl;
@@ -149,7 +145,7 @@ void printDAQConfig(char digitiser,
 
   TString strDigitiser = "VME";
   
-  if (digitiser=='d')
+  if (digitiser=='D')
     strDigitiser = "Desktop";
 
   cout << endl;
@@ -236,9 +232,6 @@ bool isCorrectDigitiser(int header,
 			char digitiser,
 			int test){
   
-  if( digitiser == 'd' )
-    digitiser = 'D';
-
   switch( test ){
   case ('A'): 
     if( header == 10224 && digitiser == 'V')
@@ -460,7 +453,8 @@ TString GetRawRootFilePath(TString filePath = "./",
 
 void SetStyle(){
   
-  TStyle     *binToRootStyle  = new TStyle("binToRootStyle","My Root Styles");
+  TStyle     *binToRootStyle  = new TStyle("binToRootStyle",
+					   "My Root Styles");
   
   const Int_t NCont = 255;
   const Int_t NRGBs = 5;
@@ -553,6 +547,32 @@ void SetStyle(){
   gROOT->ForceStyle();
 }
 
+Bool_t IsCleanFFTWaveform(TH1D * hWave,
+			  Char_t digitiser,
+			  Char_t test){
+  
+  Bool_t waveformIsClean = kFALSE;
+  
+  TH1F* hWaveFFT  = new TH1F("hWaveFFT","hWaveFFT",
+			     GetNSamples(digitiser,
+					 test),
+			     0,
+			     GetNSamples(digitiser,
+					 test));
+  
+  hWave->FFT(hWaveFFT ,"MAG");
+  
+  // delete zero frequency data
+  hWaveFFT->SetBinContent(1,0.) ;
+  
+  if(hWaveFFT->GetMaximumBin() == 2)
+    waveformIsClean = kTRUE;
+  
+  hWaveFFT->Delete();
+  
+  return waveformIsClean;
+}
+
 // Read in binary file and 
 // write to root file
 int ProcessBinaryFile(TString inFilePath,
@@ -574,9 +594,9 @@ int ProcessBinaryFile(TString inFilePath,
 
   //----------------------
   // Variables for testing
-  bool  testMode  = false;
+  bool  testMode  = true;
   bool  keepGoing = true;
-  int   maxEvents = 100;
+  int   maxEvents = 100000;
   
   if ( test == 'A' )
     maxEvents = 2;
@@ -597,10 +617,9 @@ int ProcessBinaryFile(TString inFilePath,
     return -1;
   }
   
-  if( verbosity > 0 ) 
-    printDAQConfig(digitiser,
-		   samplingSetting,
-		   negPulsePol);
+  printDAQConfig(digitiser,
+		 samplingSetting,
+		 negPulsePol);
   
   outFilePath = GetRawRootFilePath(outFilePath,
 				   run, pmt, loc, test, hvStep);
@@ -621,7 +640,10 @@ int ProcessBinaryFile(TString inFilePath,
   TString canvasNameTemp    = "", canvasName    = "";
   
   TString hQ_FixedNameTemp = "", hQ_FixedName = "";
+  TString hQ_FilterNameTemp = "", hQ_FilterName = "";
+  
   TString hQ_PeakNameTemp  = "", hQ_PeakName  = "";
+
   TString hPeakTimeNameTemp  = "", hPeakTimeName  = "";
   TString hPeakVoltNameTemp  = "", hPeakVoltName  = "";
 
@@ -634,6 +656,9 @@ int ProcessBinaryFile(TString inFilePath,
     
     hQ_FixedNameTemp = "hQ_Fixed_Run_%d_PMT_%d_Loc_%d_Test_%c";
     hQ_FixedName.Form(hQ_FixedNameTemp,run,pmt,loc,test);
+
+    hQ_FilterNameTemp = "hQ_Filter_Run_%d_PMT_%d_Loc_%d_Test_%c";
+    hQ_FilterName.Form(hQ_FilterNameTemp,run,pmt,loc,test);
     
     hQ_PeakNameTemp = "hQ_Peak_Run_%d_PMT_%d_Loc_%d_Test_%c";
     hQ_PeakName.Form(hQ_PeakNameTemp,run,pmt,loc,test);
@@ -654,6 +679,9 @@ int ProcessBinaryFile(TString inFilePath,
 
     hQ_FixedNameTemp = "hQ_Fixed_Run_%d_PMT_%d_Loc_%d_HV_%d";
     hQ_FixedName.Form(hQ_FixedNameTemp,run,pmt,loc,hvStep);
+
+    hQ_FilterNameTemp = "hQ_Filter_Run_%d_PMT_%d_Loc_%d_HV_%d";
+    hQ_FilterName.Form(hQ_FilterNameTemp,run,pmt,loc,hvStep);
     
     hQ_PeakNameTemp = "hQ_Peak_Run_%d_PMT_%d_Loc_%d_HV_%d";
     hQ_PeakName.Form(hQ_PeakNameTemp,run,pmt,loc,hvStep);
@@ -679,14 +707,19 @@ int ProcessBinaryFile(TString inFilePath,
 				 width,
 				 height);
   
-
-  
   Int_t nBinsX  = 512;
   Float_t rangeQ[2] = {-500.,1500.};
   
   TH1F * hQ_Fixed = new TH1F(hQ_FixedName,
 			     "Gate around delay;Charge (mV ns);Counts",
 			     nBinsX,rangeQ[0],rangeQ[1]);
+
+  TString label;
+  label = "Gate around delay filtered;Charge (mV ns);Counts";
+  
+  TH1F * hQ_Filter = new TH1F(hQ_FilterName,
+			      label,
+			      nBinsX,rangeQ[0],rangeQ[1]);
   
   TH1F * hQ_Peak = new TH1F(hQ_PeakName,
 			    "Gate around peak;Charge (mV ns);Counts",
@@ -701,14 +734,14 @@ int ProcessBinaryFile(TString inFilePath,
   
   TH1F * hPeakT_ns = new TH1F(hPeakTimeName,
 			      "Time of waveform peak; Time (ns);Counts",
-			      110,
+			      GetNSamples(digitiser,test),
 			      0.,
 			      GetWaveformLength(digitiser,
 						test,
 						samplingSetting));
   
-  TString label;
-  label = "Signal charge vs peak voltage;Charge (mV ns);Peak voltage with baseline subtracted (mV)";
+  label =  "Signal charge vs peak voltage;";
+  label += "Charge (mV ns);Peak voltage with baseline subtracted (mV)";
   
   TH2F * hQV = new TH2F("hQFixed_PeakV",
 			label,
@@ -723,20 +756,28 @@ int ProcessBinaryFile(TString inFilePath,
 			       GetNVDCBins(digitiser),0.,
 			       (GetNVDCBins(digitiser)-1));
 
-  TString labels = "Subset of calibrated waveforms;Time (ns);Voltage (mV)";
+  label = "Subset of calibrated waveforms;Time (ns);Voltage (mV)";
   
   rangeQ[0] = 0;
   rangeQ[1] = GetNSamples(digitiser,test)-1;
   rangeQ[1] = rangeQ[1] * GetnsPerSample(digitiser,
 					 samplingSetting);
   
-  TH2F * hTV = new TH2F("hTV",labels,
+  TH2F * hTV = new TH2F("hTV",label,
 			GetNSamples(digitiser,test),
 			0.,GetWaveformLength(digitiser,
 					     test,
 					     samplingSetting),
 			GetNVDCBins(digitiser),
 			0.,GetVoltageRange(digitiser)*1.0e3);
+
+  TH1D * hWave = new TH1D("hWave","hWaveform;Time (ns);ADC counts",
+			  GetNSamples(digitiser,
+				      test), 0., 
+			  GetWaveformLength(digitiser,
+					    test,
+					    samplingSetting));
+  
   int   event  = -1;
   
   // Note that the sign is preserved for VDC, therefore 
@@ -746,7 +787,6 @@ int ProcessBinaryFile(TString inFilePath,
   // sample numbers (indices) corresponding to minVDC and maxVDC
   short minT   = -1, maxT   = -1;  
   
-  // ns, mV, mV-ns
   float peakT_ns = -1., peakV_mV = 0., baselineV_mV =0.;
   
   // accumulators for integrating the sample values
@@ -782,6 +822,7 @@ int ProcessBinaryFile(TString inFilePath,
   
   // waveform time with delay subtracted
   float time = 0.;
+
   
   // read in data from streamer object
   // until the end of the file
@@ -858,7 +899,7 @@ int ProcessBinaryFile(TString inFilePath,
     // read in waveform which comes 
     // in 2 (VME) or 4 (Desktop) bit chunks
     for (short iSample = 0; iSample < GetNSamples(digitiser,test); iSample++){
-      
+  
       VDC = 0;
       
       // read 2 bits
@@ -866,17 +907,18 @@ int ProcessBinaryFile(TString inFilePath,
 	fileStream.read((char*)&VDC,2); 
       }
       // read 4 bits
-      else if( digitiser == 'D' ||
-	       digitiser == 'd'){
+      else if( digitiser == 'D' ){
 	fileStream.read((char*)&floatVDC,sizeof(float));
 	VDC = (short)floatVDC;
       }
       else {
-	
 	cerr << " Error:  incorrect digitiser " << endl;
 	return -1;
-	
       }
+
+      hWave->SetBinContent(iSample+1,
+			   (float)(8700 - waveform[iSample]));
+      
       
       // for writing
       sample = iSample;
@@ -911,6 +953,10 @@ int ProcessBinaryFile(TString inFilePath,
       }
     } // end: for (short iSample = 0; iSa
     
+    
+
+
+
     // time of the signal peak
     
     float nSamplesPerGate = gateWidth() / 1000.;
@@ -986,7 +1032,10 @@ int ProcessBinaryFile(TString inFilePath,
       hQ_Peak->Fill(GetCharge(intVDCpeak,digitiser,
 			      samplingSetting,negPulsePol));
     
-    
+    if( IsCleanFFTWaveform(hWave,digitiser,test) )
+      hQ_Filter->Fill(GetCharge(intVDCfixed,digitiser,
+				samplingSetting,negPulsePol));
+
     //--------------------------------
     // Write event by event data here
     
@@ -1019,6 +1068,11 @@ int ProcessBinaryFile(TString inFilePath,
   float minY = GetVoltageRange(digitiser)*(16 - 2)/32*1.0e3;
   float maxY = GetVoltageRange(digitiser)*(16 + 1)/32*1.0e3 ;
 
+  if(!negPulsePol){
+    minY = GetVoltageRange(digitiser)*(16 - 1)/32*1.0e3;
+    maxY = GetVoltageRange(digitiser)*(16 + 2)/32*1.0e3;
+  }
+  
   hTV->SetAxisRange(minY,maxY,"Y");
 
   float minX = 0.;
@@ -1048,19 +1102,23 @@ int ProcessBinaryFile(TString inFilePath,
 			     lineXMax,lineYMax); 
   lSigMax->SetLineColor(kBlue);
   
-  lPedMin->Draw("same");
-  lSigMin->Draw("same");
-  lSigMax->Draw("same");
-
+  if(negPulsePol){
+    lPedMin->Draw("same");
+    lSigMin->Draw("same");
+    lSigMax->Draw("same");
+  }
+  
   //=================================
   canvas->cd(2);
   gPad->SetTicks();
   //=================================
   //  Gate around Delay
   hQ_Fixed->SetAxisRange(-500., 2500.,"X");
+  hQ_Filter->SetLineColor(kRed);
 
   gPad->SetLogy(1);
   hQ_Fixed->Draw();
+  hQ_Filter->Draw("same");
   
   //=================================
   canvas->cd(3);
@@ -1113,6 +1171,7 @@ int ProcessBinaryFile(TString inFilePath,
   hWaveforms->Delete();
   hTV->Delete();
   hQV->Delete();
+  hWave->Delete();
   
   eventTree->Write();
   eventTree->Delete();
@@ -1147,9 +1206,8 @@ bool GetNegPulsePol(char digitiser, int run){
   
   if(digitiser == 'V')
     return true;
-  else if( run == 1000 ||
-	   run == 1001 )
-    return true;
+  else if( run > 9999)
+    return false;
   else 
     return GetNegPulsePolUser();
       
@@ -1174,9 +1232,8 @@ char GetSamplingSetting(char digitiser,
 
   if  (digitiser == 'V')
     return 'S'; 
-  if  (run == 1000 ||
-       run == 1001 )
-    return 'S';
+  if  (run > 9999)
+    return 'L';
   else 
     return GetSamplingSettingUser();
 }
