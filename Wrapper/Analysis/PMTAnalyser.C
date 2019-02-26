@@ -61,15 +61,8 @@ Int_t PMTAnalyser::Make_hFixed_Filtered(){
 
   if (rawRootTree == 0) return -1;
 
-  TCanvas * canvas = new TCanvas();
-  
-  int verbosity = 1;
-
   double waveformDuration = NSamples * nsPerSample;
 
-  Int_t nBinsX  = 512;
-  Float_t rangeQ[2] = {-500.,1500.};
-  
   TH1D * hWave = new TH1D("hWave","hWaveform;Time /ns;ADC counts",
 			NSamples, 0., waveformDuration);
   
@@ -244,6 +237,8 @@ Int_t PMTAnalyser::Make_FFT_Histos()
   canvas->Divide(2,1);
 
   canvas->cd(1);
+  gPad->SetLogy(1);
+
   hMaxADC->Draw();
   
   hMaxADC_Filtered->SetLineColor(kRed);

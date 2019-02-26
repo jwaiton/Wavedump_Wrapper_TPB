@@ -1272,46 +1272,87 @@ char GetTestUser(){
 
 TString GetInDirUser(){
   char * inDir = new char[128];
-  cout << " Enter input path: ";
+  cout << " Enter input path: " << endl;;
+  cout << " e.g. /Disk/ds-sopa-group/PPE/Watchman/BinaryData/ ";
   cin >> inDir;
   cout << endl;
   return inDir;
 }
 
-TString GetInDir(int run){
+TString GetInDir(){
+  
+  char userOption = 'z';
 
-  if( run < 30 ){
-    return "/Disk/ds-sopa-group/PPE/Watchman/BinaryData/";
-  }
-  else if( run == 1000)
-    return "/Volumes/GS_External/BinaryData/";
-  else if( run >= 1001)
-    return "/Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/BinaryData/";
-  else 
+  cout << " Proceed with hardcoded input path ? " << endl;
+  cout << " Options: " << endl;
+  cout << " 'N' : No  - input path when prompted " << endl;
+  cout << " 'Y' : Yes - select path from options " << endl;
+  cin >> userOption;
+  
+  if ( userOption == 'N' || userOption == 'n')
     return GetInDirUser();
+  
+  cout << " Select from the following: " << endl;
+  cout << " '1' : /Disk/ds-sopa-group/PPE/Watchman/BinaryData/ " << endl;
+  cout << " '2' : /Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/BinaryData/ " << endl;
+  cout << " '3' : /Volumes/GS_External/BinaryData/ " << endl;
+  
+  cin >> userOption;
+  
+  switch( userOption ){
+  case('1'):
+    return "/Disk/ds-sopa-group/PPE/Watchman/BinaryData/";
+  case('2'):
+    return "/Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/BinaryData/";
+  case('3'):
+    return "/Volumes/GS_External/BinaryData/";
+  default:
+    return GetInDirUser();
+  }
+
 }
 
 
 TString GetOutDirUser(){
   char * outDir = new char[128];
-  cout << " Enter output path: ";
+  cout << " Enter output path: " << endl;;
+  cout << " e.g. /Disk/ds-sopa-group/PPE/Watchman/RawRootData/ ";
   cin >> outDir;
   cout << endl;
   return outDir;
 }
 
 
-TString GetOutDir(int run){
+TString GetOutDir(){
 
-  if( run < 30 ){
-    return "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/";
-  }
-  else if( run == 1000)
-    return "/Volumes/GS_External/RawRootData/";
-  if( run == 1001)
-    return "/Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/RawRootData/";
-  else 
+ char userOption = 'z';
+
+  cout << " Proceed with hardcoded output path ? " << endl;
+  cout << " Options: " << endl;
+  cout << " 'N' : No  - input path when prompted " << endl;
+  cout << " 'Y' : Yes - select path from options " << endl;
+  cin >> userOption;
+  
+  if ( userOption == 'N' || userOption == 'n')
     return GetOutDirUser();
+  
+  cout << " Select from the following: " << endl;
+  cout << " '1' : /Disk/ds-sopa-group/PPE/Watchman/RawRootData/ " << endl;
+  cout << " '2' : /Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/RawRootData/ " << endl;
+  cout << " '3' : /Volumes/GS_External/RawRootData/ " << endl;
+  
+  cin >> userOption;
+  
+  switch( userOption ){
+  case('1'):
+    return "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/";
+  case('2'):
+    return "/Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/RawRootData/";
+  case('3'):
+    return "/Volumes/GS_External/RawRootData/";
+  default:
+    return GetInDirUser();
+  }
 }
 
 char GetDigitiserUser(){
@@ -1409,10 +1450,38 @@ int GetPMT(int run, int iPMT){
 			 9  , 10, 12, 14,
 			 43 , 47, 48, 49,
 			 30 , 31, 32, 33,
-			 134,135,136,138};// Tent B	   
+			 134,135,136,138};
     
     return pmtList[iPMT];
   }
+  else if(run == 2 || run == 3){
+    int  pmtList[8] = {130,131,132,133, // Tent A
+		       98,141,160,155}; // Tent B	   
+    return pmtList[iPMT];
+  }
+  else if(run == 4){
+    int  pmtList[8] = { 90,159,166,171,  // Tent A
+		        50, 53,162,163}; // Tent B	   
+    return pmtList[iPMT];
+  }
+  else if(run == 10 || run == 22 || run == 23){
+    int  pmtList[4] = {130,131,132,133};  // Tent A
+    return pmtList[iPMT];
+  }
+  else if(run == 11 || run == 12 || run == 21){
+    int  pmtList[4] = { 90,159,166,171}; // Tent A
+    return pmtList[iPMT];
+  }
+  else if(run == 20 ){
+    int  pmtList[8] = { 90,159,166,171,
+			96, 97, 98, 99};
+    return pmtList[iPMT];
+  }
+  else if(run == 20 ){
+    int  pmtList[8] = { 90,159,166,171,
+			96, 97, 98, 99};
+    return pmtList[iPMT];
+  } 
   else if(run == 1001){
     return 16;
   }
@@ -1483,20 +1552,21 @@ char GetChoice(int run){
     return GetChoiceUser();
 }
 
-
-
 void ExecuteProcessingRun(int run){
     
   char choice = GetChoice(run);
 
+  TString inDir  = GetInDir();
+  TString outDir = GetOutDir();
+  
   for ( int iPMT = 0 ; iPMT < GetNPMTs(run) ; iPMT++)
     for( int iTest = 0 ; iTest < GetNTests(choice) ; iTest++)
       ExecuteProcessing(run,
 			GetPMT(run,iPMT),
 			GetLoc(run,iPMT),
 			GetTest(choice,iTest),
-			GetInDir(run),
-			GetOutDir(run),
+			inDir,
+			outDir,
 			GetDigitiser(run)
 			);
   

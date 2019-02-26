@@ -56,7 +56,13 @@ int main(Int_t argc, Char_t *argv[]){
   ShippingData * shipData = nullptr;
 
   Char_t  digitiser = 'V';
-  
+
+  // Old style BinToRoot output
+  // or new BinToRoot output?
+  // (pulse[] -> waveform[] e.g.)
+  Bool_t oldRootFileVersion = kFALSE;
+
+  // Dark Rate
   //Float_t thresh_mV  = 10.0;
   //Int_t   darkRate   = 8000.;
   
@@ -92,7 +98,8 @@ int main(Int_t argc, Char_t *argv[]){
      // initalise analysis object using tree 
      PMT = new PMTAnalyser(tree,
 			   digitiser,
-			   test(argv[iFile]));
+			   test(argv[iFile]),
+			   oldRootFileVersion);
      
      // Double Chooz dark rate threshold (x10 to include amplification)
      // darkRate   = PMT->DarkRate(thresh_mV);
@@ -101,7 +108,7 @@ int main(Int_t argc, Char_t *argv[]){
      
      // Make Filtered Histograms
      PMT->Make_FFT_Histos();
-     
+
      //PMT->Make_Fixed_Gate_Filtered();
 
   }
