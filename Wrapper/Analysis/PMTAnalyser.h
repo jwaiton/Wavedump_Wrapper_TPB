@@ -9,6 +9,8 @@
 #include "TH2.h"
 
 #include "DataInfo.h"
+#include <TCanvas.h>
+
 
 using namespace std;
 
@@ -58,11 +60,12 @@ class PMTAnalyser {
   virtual void     Init(TTree *tree,Char_t digitiser,
 			Char_t userTest, Bool_t oldRootFileVersion);
   virtual Int_t    DarkRate(Float_t);
-  virtual Int_t    Make_FFT_Histos();
+  virtual TCanvas* Make_FFT_Canvas();
   virtual Int_t    Make_hFixed_Filtered();
   virtual Bool_t   IsCleanFFTWaveform(TH1D *);
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
+  virtual void     SetStyle();
 };
 
 #endif
