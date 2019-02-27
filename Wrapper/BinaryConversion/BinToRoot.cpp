@@ -1477,11 +1477,6 @@ int GetPMT(int run, int iPMT){
 			96, 97, 98, 99};
     return pmtList[iPMT];
   }
-  else if(run == 20 ){
-    int  pmtList[8] = { 90,159,166,171,
-			96, 97, 98, 99};
-    return pmtList[iPMT];
-  } 
   else if(run == 1001){
     return 16;
   }
@@ -1491,11 +1486,13 @@ int GetPMT(int run, int iPMT){
 
 int GetLoc(int run, int iPMT){
   
-  if(run == 1)
+  if      (run == 1)
     if( iPMT < 80 )
       return (iPMT%4);
     else
       return (iPMT%4 + 4);
+  else if(run > 1 && run < 30)
+    return iPMT;
   else
     return 0;
 
@@ -1503,8 +1500,15 @@ int GetLoc(int run, int iPMT){
 
 int GetNPMTs(int run){
 
-  if(run == 1)
+  if     (run == 1)
     return 100;
+  else if(run == 10  || run == 11 || 
+	  run == 12  || run == 21 || 
+	  run == 22  || run == 23)
+    return 4;
+  else if(run == 2  || run == 3 || 
+	  run == 4  || run == 20 )
+    return 8;
   else
     return 1;
 }
