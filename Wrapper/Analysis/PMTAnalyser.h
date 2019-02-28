@@ -28,6 +28,8 @@ class PMTAnalyser {
   Float_t        VoltageRange;
   Float_t        mVPerBin;
   Float_t        nsPerSample;
+  
+  Float_t        waveformDuration;
 
   Int_t          event;
   
@@ -61,11 +63,18 @@ class PMTAnalyser {
 			Char_t userTest, Bool_t oldRootFileVersion);
   virtual Int_t    DarkRate(Float_t);
   virtual TCanvas* Make_FFT_Canvas();
-  virtual Int_t    Make_hFixed_Filtered();
-  virtual Bool_t   IsCleanFFTWaveform(TH1D *);
+  virtual Int_t    FFT_Filter();
+  virtual Bool_t   IsCleanFFTWaveform(TH1F *);
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
   virtual void     SetStyle();
+  virtual void     SetTestMode(Bool_t userTestMode);
+
+
+ private:
+
+  Bool_t testMode;
+
 };
 
 #endif
@@ -122,6 +131,8 @@ void PMTAnalyser::Init(TTree *tree,
   mVPerBin     = dataInfo->GetmVPerBin(digitiser);  
   nsPerSample  = dataInfo->GetnsPerSample(digitiser);  
   
+  waveformDuration = (float)NSamples * nsPerSample;
+
   if (!tree) return;
   rawRootTree = tree;
   fCurrent = -1;
