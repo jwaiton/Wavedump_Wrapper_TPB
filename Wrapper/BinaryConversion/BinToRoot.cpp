@@ -251,8 +251,8 @@ bool isCorrectDigitiser(int header,
   }
 }
 
-// Must leave room for baseline window
-bool isPeakInRange(float peakT_ns, char digitiser,
+// Must leave room for baseline and signal windows
+bool IsPeakInRange(float peakT_ns, char digitiser,
 		   char test, char samplingSetting){
   
   float waveformLength = GetWaveformLength(digitiser,test,samplingSetting);
@@ -264,7 +264,7 @@ bool isPeakInRange(float peakT_ns, char digitiser,
     return false;
 }
 
-float gateWidth(){
+float GetGateWidth(){
   return 50;
 }
 
@@ -276,11 +276,11 @@ int Accumulate_Fixed(short VDC, float time){
   // 50 ns window before signal
   // (max size given run 1 delay)
   // And signal in 50 ns window
-  if      ( time >= -gateWidth()  && 
+  if      ( time >= -GetGateWidth()  && 
 	    time <    0 )
     return((int)-VDC);
   else if ( time >= 0 &&
-	    time <  gateWidth() ){
+	    time <  GetGateWidth() ){
     return((int)VDC);
   }
   else
@@ -291,7 +291,7 @@ int Accumulate_Baseline(short VDC, float time){
 
   // Integrate baseline using 
   // 50 ns window before signal
-  if      ( time >= -gateWidth()  && 
+  if      ( time >= -GetGateWidth()  && 
 	    time <    0 )
     return((int)VDC);
   else
@@ -547,32 +547,6 @@ void SetStyle(){
   gROOT->ForceStyle();
 }
 
-Bool_t IsCleanFFTWaveform(TH1D * hWave,
-			  Char_t digitiser,
-			  Char_t test){
-  
-  Bool_t waveformIsClean = kFALSE;
-  
-  TH1F* hWaveFFT  = new TH1F("hWaveFFT","hWaveFFT",
-			     GetNSamples(digitiser,
-					 test),
-			     0,
-			     GetNSamples(digitiser,
-					 test));
-  
-  hWave->FFT(hWaveFFT ,"MAG");
-  
-  // delete zero frequency data
-  hWaveFFT->SetBinContent(1,0.) ;
-  
-  if(hWaveFFT->GetMaximumBin() == 2)
-    waveformIsClean = kTRUE;
-  
-  hWaveFFT->Delete();
-  
-  return waveformIsClean;
-}
-
 // Read in binary file and 
 // write to root file
 int ProcessBinaryFile(TString inFilePath,
@@ -606,7 +580,6 @@ int ProcessBinaryFile(TString inFilePath,
   else if( verbosity == 2 )
     maxEvents = 1;
   //----------------------
-
 
   // Read from here
   ifstream fileStream(inFilePath);
@@ -778,6 +751,13 @@ int ProcessBinaryFile(TString inFilePath,
 					    test,
 					    samplingSetting));
   
+  TH1F* hWaveFFT  = new TH1F("hWaveFFT","hWaveFFT",
+			     GetNSamples(digitiser,
+					 test),
+			     0,
+			     GetNSamples(digitiser,
+					 test));
+  
   int   event  = -1;
   
   // Note that the sign is preserved for VDC, therefore 
@@ -791,8 +771,8 @@ int ProcessBinaryFile(TString inFilePath,
   
   // accumulators for integrating the sample values
   int   intVDCfixed = 0, intVDCpeak = 0, intVDCbaseline = 0;
-
-    // read in samples per event
+  
+  // read in samples per event
   // vector may be better
   short waveform[GetNSamples(digitiser,test)];
   
@@ -822,7 +802,6 @@ int ProcessBinaryFile(TString inFilePath,
   
   // waveform time with delay subtracted
   float time = 0.;
-
   
   // read in data from streamer object
   // until the end of the file
@@ -835,7 +814,8 @@ int ProcessBinaryFile(TString inFilePath,
     //-------------------
     // file-level data
     event++;
-    
+
+    // inform user of progress
     if( (event > 0) && 
 	((event % 1000 == 0 && event < 5000) ||
 	 (event % 1000000 == 0))              ){
@@ -919,7 +899,6 @@ int ProcessBinaryFile(TString inFilePath,
       hWave->SetBinContent(iSample+1,
 			   (float)(8700 - waveform[iSample]));
       
-      
       // for writing
       sample = iSample;
       waveform[sample] = VDC;
@@ -941,49 +920,37 @@ int ProcessBinaryFile(TString inFilePath,
       // to allow common fixed time windows per run
       time = waveTime - GetDelay(run);
       
-      // fixed window accumulations
+      // Fixed window accumulations
       // add / subtract / skip sample VDC value
-      intVDCfixed += Accumulate_Fixed(VDC,time);
+      // Note: no test to ensure delay >= 50 ns
+      // which it must be (currently 50 is hard-
+      // coded minimum so safe as of now)
+      intVDCfixed    += Accumulate_Fixed(VDC,time);
       intVDCbaseline += Accumulate_Baseline(VDC,time);
       
-      if(verbosity > 1){
-	cout << " VDC(" << iSample << ") = " << VDC << endl;
-	cout << " intVDCbaseline = " << intVDCbaseline << endl;
-	cout << " time           = " << time << endl;
-      }
     } // end: for (short iSample = 0; iSa
-    
-    
 
-
-
-    // time of the signal peak
-    
-    float nSamplesPerGate = gateWidth() / 1000.;
+    // time of the signal peak    
+    float nSamplesPerGate = GetGateWidth() / 1000.;
     
     nSamplesPerGate = nSamplesPerGate * GetSampleRateInMHz(digitiser,
 							   samplingSetting);
     
-    baselineV_mV = (float)intVDCbaseline / nSamplesPerGate;
-    
     if(negPulsePol){
-      peakT_ns = minT * GetnsPerSample(digitiser,
-				       samplingSetting);
-      
+      peakT_ns = minT * GetnsPerSample(digitiser,samplingSetting);
       peakV_mV = baselineV_mV - waveform[minT];
-      
-      
     }
     else{
       peakT_ns = maxT * GetnsPerSample(digitiser,
 				       samplingSetting);
-      
       peakV_mV = waveform[maxT] - baselineV_mV;
     }
-
+  
     peakV_mV = peakV_mV * GetmVPerBin(digitiser);
-
+    
     float timeRelPeak = 0;
+    
+    intVDCbaseline = 0;
     
     // Loop over waveform again
     // necessary for when event-level variables are used
@@ -996,9 +963,21 @@ int ProcessBinaryFile(TString inFilePath,
       time = waveTime - GetDelay(run);
 
       timeRelPeak = waveTime - peakT_ns;
-	
+      
+      // recalculate baseline for calculating
+      // peakV_mV if in standard baseline region 
+      if( peakT_ns <  GetDelay(run) &&  // top edge of standard baseline
+	  peakT_ns > (GetDelay(run)- GetGateWidth() ) ){// bottom edge
+	// shift time to iterate baseline in standard signal region  
+	// ie for time = [50,100) 
+	intVDCbaseline += Accumulate_Baseline(VDC,time - GetGateWidth());
+      }
+      else{
+	intVDCbaseline += Accumulate_Baseline(VDC,time);
+      }
+      
       // accumulations wrt waveform peak (minimum)      
-      if( isPeakInRange(peakT_ns,digitiser,test,samplingSetting) )
+      if( IsPeakInRange(peakT_ns,digitiser,test,samplingSetting) )
 	intVDCpeak += Accumulate_Peak(waveform[iSample],
 				      timeRelPeak);
       
@@ -1017,25 +996,60 @@ int ProcessBinaryFile(TString inFilePath,
 	
       }
       
+      if(verbosity > 1){
+	cout << " VDC(" << iSample << ") = " << VDC << endl;
+	cout << " intVDCbaseline = " << intVDCbaseline << endl;
+	cout << " time           = " << time << endl;
+      }
+
     } // end: for (short iSample = 0; iS...
     
+    // recalculate peakV_mV to accommodate standard baseline region 
+    baselineV_mV = (float)intVDCbaseline / nSamplesPerGate;
+    
+    if(negPulsePol){
+      peakT_ns = minT * GetnsPerSample(digitiser,samplingSetting);
+      peakV_mV = baselineV_mV - waveform[minT];
+    }
+    else{
+      peakT_ns = maxT * GetnsPerSample(digitiser,samplingSetting);      
+      peakV_mV = waveform[maxT] - baselineV_mV;
+    }
+    peakV_mV = peakV_mV * GetmVPerBin(digitiser);
+    
+
     hQ_Fixed->Fill(GetCharge(intVDCfixed,digitiser,
 			     samplingSetting,negPulsePol));
     
     hPeakT_ns->Fill(peakT_ns);
-    hPeakV_mV->Fill(peakV_mV);
+    
+    if( peakT_ns >= 50.0 )
+      hPeakV_mV->Fill(peakV_mV);
+    
     hQV->Fill(GetCharge(intVDCfixed,digitiser,
 			samplingSetting,negPulsePol),
 	      peakV_mV);
     
-    if( isPeakInRange(peakT_ns,digitiser,test,samplingSetting) )
+    if( IsPeakInRange(peakT_ns,digitiser,test,samplingSetting) )
       hQ_Peak->Fill(GetCharge(intVDCpeak,digitiser,
 			      samplingSetting,negPulsePol));
     
-    if( IsCleanFFTWaveform(hWave,digitiser,test) )
+    
+    //-------------------------------
+    // Replaces IsCleanWaveform()
+    hWaveFFT->Reset();
+    hWave->FFT(hWaveFFT ,"MAG");
+    
+    // delete zero frequency data
+    hWaveFFT->SetBinContent(1,0.) ;
+    
+    if(hWaveFFT->GetMaximumBin() == 2 )
       hQ_Filter->Fill(GetCharge(intVDCfixed,digitiser,
 				samplingSetting,negPulsePol));
-
+    
+    //
+    //--------------------------------
+    
     //--------------------------------
     // Write event by event data here
     
@@ -1087,8 +1101,8 @@ int ProcessBinaryFile(TString inFilePath,
   float lineYMin = minY * (16 - 1)/(16 - 2); 
   float lineYMax = maxY * (16 + 0.25)/(16 + 1); 
   
-  float lineXMin = GetDelay(run) - gateWidth();
-  float lineXMax = GetDelay(run) + gateWidth();
+  float lineXMin = GetDelay(run) - GetGateWidth();
+  float lineXMax = GetDelay(run) + GetGateWidth();
   
   TLine *lPedMin = new TLine(lineXMin,lineYMin,
 			     lineXMin,lineYMax); 
@@ -1172,7 +1186,8 @@ int ProcessBinaryFile(TString inFilePath,
   hTV->Delete();
   hQV->Delete();
   hWave->Delete();
-  
+  hWaveFFT->Delete();
+
   eventTree->Write();
   eventTree->Delete();
 

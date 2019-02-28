@@ -62,11 +62,11 @@ int main(Int_t argc, Char_t *argv[]){
   // Old style BinToRoot output
   // or new BinToRoot output?
   // (pulse[] -> waveform[] e.g.)
-  Bool_t oldRootFileVersion = kTRUE;
+  Bool_t oldRootFileVersion = kFALSE;
 
   // Dark Rate
-  //Float_t thresh_mV  = 10.0;
-  //Int_t   darkRate   = 8000.;
+  Float_t thresh_mV  = 10.0;
+  Int_t   darkRate   = 8000.;
   
   // argv should be a path to a file
   // or list of files ( wildcards work )
@@ -87,9 +87,7 @@ int main(Int_t argc, Char_t *argv[]){
      cout << " PMT      " << pmtID(argv[iFile])    << endl;
      cout << " Location " << location(argv[iFile]) << endl;
      cout << " Test     " << test(argv[iFile]) << endl;
-
      
-
      if( test(argv[iFile])=='G')
        cout << " HV step  " << HVStep(argv[iFile]) << endl; 
      
@@ -105,41 +103,49 @@ int main(Int_t argc, Char_t *argv[]){
 			   test(argv[iFile]),
 			   oldRootFileVersion);
      
+     // Set plot attributes to bespoke TStyle 
      PMT->SetStyle();
      
-     // Double Chooz dark rate threshold (x10 to include amplification)
-     // darkRate   = PMT->DarkRate(thresh_mV);
-     // cout << " Hamamatsu Dark Rate = " << shipData->GetDR() << endl;
-     // cout << " PMT Test  Dark Rate = " << darkRate          << endl;
+     // Limit to subset of entries for quicker testing
+     //PMT->SetTestMode(kTRUE);
      
+     cout << " Hamamatsu Dark Rate = " << shipData->GetDR() << endl;
+     if(oldRootFileVersion){
+       cout << " Dark Rate method only applicable to new BinToRoot files " << endl;
+     }
+     else{
+       darkRate   = PMT->DarkRate(thresh_mV);
+       cout << " PMT Test  Dark Rate = " << darkRate          << endl;
+     }
+   
+
+     Bool_t investigateFFT = kFALSE;
      // Make Filtered Histograms
-     TCanvas * canvas = PMT->Make_FFT_Canvas();
-     
-     TString canvasName;
-     canvasName.Form("FFT_Run_%d_PMT_%d_Test_%c.pdf",
-		     run(argv[iFile]),
-		     pmtID(argv[iFile]),
-		     test(argv[iFile]));
-     
-     if(canvas){
-       canvas->SaveAs(canvasName);
+     if(investigateFFT){ 
+       TCanvas * canvas = PMT->Make_FFT_Canvas();
        
-       canvasName.Form("FFT_Run_%d_PMT_%d_Test_%c.root",
+       TString canvasName;
+       canvasName.Form("./Plots/FFT_Run_%d_PMT_%d_Test_%c.pdf",
 		       run(argv[iFile]),
 		       pmtID(argv[iFile]),
 		       test(argv[iFile]));
-
-       canvas->SaveAs(canvasName);
-     }
-     else{
-       cout << endl;
-       cout << " No canvas produced " << endl;
+       
+       if(canvas){
+	 canvas->SaveAs(canvasName);
+	 
+	 canvasName.Form("./Plots/FFT_Run_%d_PMT_%d_Test_%c.root",
+			 run(argv[iFile]),
+			 pmtID(argv[iFile]),
+			 test(argv[iFile]));
+	 
+	 canvas->SaveAs(canvasName);
+       }
+       else{
+	 cout << endl;
+	 cout << " No canvas produced " << endl;
+       }
      }
        
-     
-     //PMT->Make_Fixed_Gate_Filtered();
-
-
   }
   
   // To Do:
