@@ -825,7 +825,7 @@ int ProcessBinaryFile(TString inFilePath,
 
     //-------------------
     // event-level data
-    intVDCfixed = 0, intVDCpeak = 0, intVDCbaseline = 0;
+    intVDCfixed = 0, intVDCpeak = 0;
     
     // VDC range
     minVDC =  32767;
@@ -926,7 +926,6 @@ int ProcessBinaryFile(TString inFilePath,
       // which it must be (currently 50 is hard-
       // coded minimum so safe as of now)
       intVDCfixed    += Accumulate_Fixed(VDC,time);
-      intVDCbaseline += Accumulate_Baseline(VDC,time);
       
     } // end: for (short iSample = 0; iSa
 
@@ -935,18 +934,6 @@ int ProcessBinaryFile(TString inFilePath,
     
     nSamplesPerGate = nSamplesPerGate * GetSampleRateInMHz(digitiser,
 							   samplingSetting);
-    
-    if(negPulsePol){
-      peakT_ns = minT * GetnsPerSample(digitiser,samplingSetting);
-      peakV_mV = baselineV_mV - waveform[minT];
-    }
-    else{
-      peakT_ns = maxT * GetnsPerSample(digitiser,
-				       samplingSetting);
-      peakV_mV = waveform[maxT] - baselineV_mV;
-    }
-  
-    peakV_mV = peakV_mV * GetmVPerBin(digitiser);
     
     float timeRelPeak = 0;
     
@@ -962,13 +949,21 @@ int ProcessBinaryFile(TString inFilePath,
       
       time = waveTime - GetDelay(run);
 
+      if(negPulsePol){
+	peakT_ns = minT * GetnsPerSample(digitiser,samplingSetting);
+      }
+      else{
+	peakT_ns = maxT * GetnsPerSample(digitiser,samplingSetting);      
+      }
+
       timeRelPeak = waveTime - peakT_ns;
       
-      // recalculate baseline for calculating
-      // peakV_mV if in standard baseline region 
-      if( peakT_ns <  GetDelay(run) &&  // top edge of standard baseline
-	  peakT_ns > (GetDelay(run)- GetGateWidth() ) ){// bottom edge
-	// shift time to iterate baseline in standard signal region  
+      // calculate baseline for peakV_mV 
+      // include option if waveform peak 
+      // is in standard baseline region 
+      if( peakT_ns <  GetDelay(run) &&  // top limit of standard baseline
+	  peakT_ns > (GetDelay(run)- GetGateWidth() ) ){// bottom limit
+	// shift time to accumulate baseline in standard signal region  
 	// ie for time = [50,100) 
 	intVDCbaseline += Accumulate_Baseline(VDC,time - GetGateWidth());
       }
