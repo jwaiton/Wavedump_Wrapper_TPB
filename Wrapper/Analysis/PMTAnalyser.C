@@ -315,7 +315,7 @@ TCanvas * PMTAnalyser::Make_FFT_Canvas()
     hWaveFFT->Reset();
 
     hWave->FFT(hWaveFFT ,"MAG");
-
+    
     hWaveFFT->SetBinContent(1,0.);
 
     // Store maximum FFT bin 
