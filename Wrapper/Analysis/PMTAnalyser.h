@@ -68,7 +68,7 @@ class PMTAnalyser {
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
   virtual void     SetStyle();
-  virtual void     SetTestMode(Bool_t userTestMode);
+  virtual void     SetTestMode(Bool_t userTestMode = kTRUE);
 
 
  private:
@@ -120,6 +120,8 @@ void PMTAnalyser::Init(TTree *tree,
 		       Bool_t oldRootFileVersion)
 {
   
+  testMode = kFALSE;
+
   testType = userTest;
 
   dataInfo = new DataInfo();
