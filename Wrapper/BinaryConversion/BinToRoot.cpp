@@ -69,6 +69,8 @@
 #include "TStyle.h"
 #include "TColor.h"
 
+#include "TLatex.h"
+
 using namespace std;
 
 int  GetNSamples(char digitiser,
@@ -138,7 +140,7 @@ int GetSampleRateInMHz(char digitiser,
 
 }
 
-void printDAQConfig(char digitiser,
+void PrintDAQConfig(char digitiser,
 		    char samplingSetting,
 		    bool negPulsePol){
   
@@ -228,7 +230,7 @@ float GetCharge(int intVDC, char digitiser,
   
 }
 
-bool isCorrectDigitiser(int header,
+bool IsCorrectDigitiser(int header,
 			char digitiser,
 			int test){
   
@@ -570,7 +572,9 @@ int ProcessBinaryFile(TString inFilePath,
   // Variables for testing
   bool  testMode  = false;
   bool  keepGoing = true;
-  int   maxEvents = 100000;
+  int   maxEvents = 10000;
+  
+  bool makeFilteredHisto = true;
   
   if ( test == 'A' )
     maxEvents = 2;
@@ -578,7 +582,7 @@ int ProcessBinaryFile(TString inFilePath,
   if     ( verbosity == 1 )
     maxEvents = 10;
   else if( verbosity == 2 )
-    maxEvents = 1;
+    maxEvents = 3;
   //----------------------
 
   // Read from here
@@ -590,7 +594,7 @@ int ProcessBinaryFile(TString inFilePath,
     return -1;
   }
   
-  printDAQConfig(digitiser,
+  PrintDAQConfig(digitiser,
 		 samplingSetting,
 		 negPulsePol);
   
@@ -688,7 +692,7 @@ int ProcessBinaryFile(TString inFilePath,
 			     nBinsX,rangeQ[0],rangeQ[1]);
 
   TString label;
-  label = "Gate around delay filtered;Charge (mV ns);Counts";
+  label = "Fixed Gate  filtered;Charge (mV ns);Counts";
   
   TH1F * hQ_Filter = new TH1F(hQ_FilterName,
 			      label,
@@ -712,7 +716,14 @@ int ProcessBinaryFile(TString inFilePath,
 			      GetWaveformLength(digitiser,
 						test,
 						samplingSetting));
+
+
+  TH1D* hMaxADC = new TH1D("hMaxADC","Waveform ADC Maximum;maxADC;counts",
+			   1000, 200.,1200.); 
   
+  TH1D* hMaxADC_Filtered = new TH1D("hMaxADC_Filtered",
+				    "hMaxADC_Filtered;maxADC;counts",
+				    1000, 200.,1200.);
   label =  "Signal charge vs peak voltage;";
   label += "Charge (mV ns);Peak voltage with baseline subtracted (mV)";
   
@@ -744,6 +755,8 @@ int ProcessBinaryFile(TString inFilePath,
 			GetNVDCBins(digitiser),
 			0.,GetVoltageRange(digitiser)*1.0e3);
 
+  //-----
+  // Histograms for FFT
   TH1D * hWave = new TH1D("hWave","hWaveform;Time (ns);ADC counts",
 			  GetNSamples(digitiser,
 				      test), 0., 
@@ -757,6 +770,7 @@ int ProcessBinaryFile(TString inFilePath,
 			     0,
 			     GetNSamples(digitiser,
 					 test));
+  //-----
   
   int   event  = -1;
   
@@ -814,15 +828,16 @@ int ProcessBinaryFile(TString inFilePath,
     //-------------------
     // file-level data
     event++;
-
+    
     // inform user of progress
     if( (event > 0) && 
-	((event % 1000 == 0 && event < 5000) ||
-	 (event % 1000000 == 0))              ){
+	((event % 1000  == 0 && event < 10000)  ||
+	 (event % 10000 == 0 && event < 100000) ||
+	 (event % 100000 == 0))              ){
       cout << endl;
       cout << " event count " << event << endl;;
     }
-
+    
     //-------------------
     // event-level data
     intVDCfixed = 0, intVDCpeak = 0;
@@ -846,6 +861,12 @@ int ProcessBinaryFile(TString inFilePath,
       cout << endl;
       cout << " event      = " << event << endl;
     }
+
+    //------------------
+    //------------------
+    //   Header
+    //------------------
+    //------------------
     
     // read in header info which comes 
     // as six four bit sized chunks
@@ -859,10 +880,10 @@ int ProcessBinaryFile(TString inFilePath,
       
       // check first header value matches expectations
       // NB other values may be acceptable so modify
-      // isCorrectDigitiser() as appropriate
+      // IsCorrectDigitiser() as appropriate
       if ( iHeader == 0 && 
 	   event   == 0 &&
-	   !isCorrectDigitiser(fileHeader,
+	   !IsCorrectDigitiser(fileHeader,
 			       digitiser,test)  
 	   ) {
 	
@@ -871,10 +892,16 @@ int ProcessBinaryFile(TString inFilePath,
       
       if(event < 10 && 
 	 verbosity > 0){
-	cout << " fileHeader = " << fileHeader << endl;
+	cout << " file header " << (iHeader) << " = " << fileHeader << endl;
       }
       
     } // end: for (int i = 0 ; i < intsPerHeader
+    
+    //------------------
+    //------------------
+    //   Waveform
+    //------------------
+    //------------------
     
     // read in waveform which comes 
     // in 2 (VME) or 4 (Desktop) bit chunks
@@ -896,8 +923,7 @@ int ProcessBinaryFile(TString inFilePath,
 	return -1;
       }
 
-      hWave->SetBinContent(iSample+1,
-			   (float)(8700 - waveform[iSample]));
+      waveform[iSample] = 0.;
       
       // for writing
       sample = iSample;
@@ -911,11 +937,15 @@ int ProcessBinaryFile(TString inFilePath,
 	maxVDC = VDC;
 	maxT   = sample;
       }
+      
+      hWave->SetBinContent(iSample+1,
+			   (double)(8700 - waveform[iSample]));
+
+      
 
       waveTime = sample * GetnsPerSample(digitiser,
 					 samplingSetting);
 
-      
       // time with delay subtracted 
       // to allow common fixed time windows per run
       time = waveTime - GetDelay(run);
@@ -927,8 +957,33 @@ int ProcessBinaryFile(TString inFilePath,
       // coded minimum so safe as of now)
       intVDCfixed    += Accumulate_Fixed(VDC,time);
       
-    } // end: for (short iSample = 0; iSa
+      if(verbosity > 1){
+	cout << " VDC(" << iSample << ") = " << VDC << endl;
+	cout << " waveTime       = " << waveTime << endl;
+	cout << " time           = " << time << endl;
+      }
 
+    } // end: for (short iSample = 0; iSa
+    
+    hMaxADC->Fill( hWave->GetMaximum() );
+
+    hWaveFFT->Reset();
+    
+    hWave->FFT(hWaveFFT ,"MAG");
+    
+    hWaveFFT->SetBinContent(1,0.) ;
+
+    
+    if(hWaveFFT->GetMaximumBin() == 2 ){
+      
+      hMaxADC_Filtered->Fill( hWave->GetMaximum());
+      
+      hQ_Filter->Fill(GetCharge(intVDCfixed,digitiser,
+				samplingSetting,negPulsePol));
+      
+    }
+    
+    
     // time of the signal peak    
     float nSamplesPerGate = GetGateWidth() / 1000.;
     
@@ -943,6 +998,9 @@ int ProcessBinaryFile(TString inFilePath,
     // necessary for when event-level variables are used
     // such as waveform minimum
     for (short iSample = 0; iSample < GetNSamples(digitiser,test); iSample++){
+
+
+
       
       waveTime = iSample*GetnsPerSample(digitiser,
 					samplingSetting);
@@ -976,6 +1034,8 @@ int ProcessBinaryFile(TString inFilePath,
 	intVDCpeak += Accumulate_Peak(waveform[iSample],
 				      timeRelPeak);
       
+
+      
       // sample vs VDC and time vs voltage plots
       // for checking signals (delay etc) 
       // plot pulses for 1000 events
@@ -991,14 +1051,10 @@ int ProcessBinaryFile(TString inFilePath,
 	
       }
       
-      if(verbosity > 1){
-	cout << " VDC(" << iSample << ") = " << VDC << endl;
-	cout << " intVDCbaseline = " << intVDCbaseline << endl;
-	cout << " time           = " << time << endl;
-      }
-
+      
     } // end: for (short iSample = 0; iS...
     
+
     // recalculate peakV_mV to accommodate standard baseline region 
     baselineV_mV = (float)intVDCbaseline / nSamplesPerGate;
     
@@ -1010,7 +1066,13 @@ int ProcessBinaryFile(TString inFilePath,
       peakT_ns = maxT * GetnsPerSample(digitiser,samplingSetting);      
       peakV_mV = waveform[maxT] - baselineV_mV;
     }
-    peakV_mV = peakV_mV * GetmVPerBin(digitiser);
+    peakV_mV     = peakV_mV * GetmVPerBin(digitiser);
+    baselineV_mV = baselineV_mV * GetmVPerBin(digitiser);
+    
+    if(verbosity > 1){
+      cout << " peakV_mV       = " <<  peakV_mV      << endl;
+      cout << " baselineV_mV   = " << baselineV_mV   << endl;
+    }
     
 
     hQ_Fixed->Fill(GetCharge(intVDCfixed,digitiser,
@@ -1018,8 +1080,7 @@ int ProcessBinaryFile(TString inFilePath,
     
     hPeakT_ns->Fill(peakT_ns);
     
-    if( peakT_ns >= 50.0 )
-      hPeakV_mV->Fill(peakV_mV);
+    hPeakV_mV->Fill(peakV_mV);
     
     hQV->Fill(GetCharge(intVDCfixed,digitiser,
 			samplingSetting,negPulsePol),
@@ -1029,21 +1090,6 @@ int ProcessBinaryFile(TString inFilePath,
       hQ_Peak->Fill(GetCharge(intVDCpeak,digitiser,
 			      samplingSetting,negPulsePol));
     
-    
-    //-------------------------------
-    // Replaces IsCleanWaveform()
-    hWaveFFT->Reset();
-    hWave->FFT(hWaveFFT ,"MAG");
-    
-    // delete zero frequency data
-    hWaveFFT->SetBinContent(1,0.) ;
-    
-    if(hWaveFFT->GetMaximumBin() == 2 )
-      hQ_Filter->Fill(GetCharge(intVDCfixed,digitiser,
-				samplingSetting,negPulsePol));
-    
-    //
-    //--------------------------------
     
     //--------------------------------
     // Write event by event data here
@@ -1123,12 +1169,15 @@ int ProcessBinaryFile(TString inFilePath,
   //=================================
   //  Gate around Delay
   hQ_Fixed->SetAxisRange(-500., 2500.,"X");
-  hQ_Filter->SetLineColor(kRed);
+  hQ_Filter->SetLineColor(kBlue);
 
   gPad->SetLogy(1);
   hQ_Fixed->Draw();
-  hQ_Filter->Draw("same");
-  
+
+  // 
+  if( makeFilteredHisto )
+    hQ_Filter->Draw("same");
+   
   //=================================
   canvas->cd(3);
   gPad->SetTicks();
@@ -1169,10 +1218,10 @@ int ProcessBinaryFile(TString inFilePath,
   hWaveforms->Draw("colz");
   //=================================
   
-  canvasName = "./Plots/";
-  canvasName += canvas->GetName();
-  canvasName += ".png";
-  canvas->SaveAs(canvasName);
+   canvasName = "./Plots/";
+   canvasName += canvas->GetName();
+   canvasName += ".png";
+   canvas->SaveAs(canvasName);
   
   //--------------------------------
   // Write file info here
@@ -1182,7 +1231,7 @@ int ProcessBinaryFile(TString inFilePath,
   hQV->Delete();
   hWave->Delete();
   hWaveFFT->Delete();
-
+  
   eventTree->Write();
   eventTree->Delete();
 
