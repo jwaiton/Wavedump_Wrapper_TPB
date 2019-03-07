@@ -119,7 +119,7 @@ int main(Int_t argc, Char_t *argv[]){
      }
    
 
-     Bool_t investigateFFT = kFALSE;
+     Bool_t investigateFFT = kTRUE;
      // Make Filtered Histograms
      if(investigateFFT){ 
        TCanvas * canvas = PMT->Make_FFT_Canvas();

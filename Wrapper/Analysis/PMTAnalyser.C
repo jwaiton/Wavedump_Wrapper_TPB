@@ -284,7 +284,7 @@ TCanvas * PMTAnalyser::Make_FFT_Canvas()
   cout << endl;
   cout << " Performing FFT " << endl;
   
-  if( testMode)
+  if( testMode )
     nentries = 1000;
   
   for (Long64_t jentry = 0; jentry < nentries; jentry++) {
@@ -360,17 +360,17 @@ TCanvas * PMTAnalyser::Make_FFT_Canvas()
    entriesStr.Form("hMaxADC: %d entries ",
 		   (int)hMaxADC->GetEntries());
    
-   latex->DrawLatex(0.5,0.8,entriesStr);
+   latex->DrawLatex(0.7,0.8,entriesStr);
    
-   latex->SetTextColor(kRed);
+   latex->SetTextColor(kBlue);
    
    entriesStr.Form("FFT Filtered: %d entries ",
 		   (int)hMaxADC_Filtered->GetEntries());
-   latex->DrawLatex(0.5,0.75,entriesStr);
+   latex->DrawLatex(0.7,0.75,entriesStr);
   
    canvas->cd(2);  
    
-   hWaveFFT_MaxBin->SetLineColor(kRed);  
+   hWaveFFT_MaxBin->SetLineColor(kBlue);  
    hWaveFFT_MaxBin->Draw();
    
    canvas->cd(3);  
