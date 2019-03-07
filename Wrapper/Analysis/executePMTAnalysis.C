@@ -110,16 +110,20 @@ int main(Int_t argc, Char_t *argv[]){
      //PMT->SetTestMode(kTRUE);
      
      cout << " Hamamatsu Dark Rate = " << shipData->GetDR() << endl;
-     if(oldRootFileVersion){
-       cout << " Dark Rate method only applicable to new BinToRoot files " << endl;
-     }
-     else{
-       darkRate   = PMT->DarkRate(thresh_mV);
-       cout << " PMT Test  Dark Rate = " << darkRate          << endl;
-     }
-   
 
-     Bool_t investigateFFT = kFALSE;
+     Bool_t investigateDarkRate = kFALSE;
+
+     if(investigateDarkRate){
+       if(oldRootFileVersion){
+	 cout << " Dark Rate method only applicable to new BinToRoot files " << endl;
+       }
+       else{
+	 darkRate   = PMT->DarkRate(thresh_mV);
+	 cout << " PMT Test  Dark Rate = " << darkRate          << endl;
+       }
+     }
+
+     Bool_t investigateFFT = kTRUE;
      // Make Filtered Histograms
      if(investigateFFT){ 
        TCanvas * canvas = PMT->Make_FFT_Canvas();
