@@ -284,8 +284,8 @@ TCanvas * PMTAnalyser::Make_FFT_Canvas()
   cout << endl;
   cout << " Performing FFT " << endl;
   
-  if( testMode )
-    nentries = 1000;
+  if( testMode)
+    nentries = 10000;
   
   for (Long64_t jentry = 0; jentry < nentries; jentry++) {
     
