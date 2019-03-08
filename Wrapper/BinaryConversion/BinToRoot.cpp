@@ -570,7 +570,7 @@ int ProcessBinaryFile(TString inFilePath,
 
   //----------------------
   // Variables for testing
-  bool  testMode  = true;
+  bool  testMode  = false;
   bool  keepGoing = true;
   int   maxEvents = 10000;
   
@@ -929,7 +929,7 @@ int ProcessBinaryFile(TString inFilePath,
       sample = iSample;
       waveform[sample] = VDC;
       
-      if     ( VDC <= minVDC ){
+      if     ( VDC < minVDC ){
 	minVDC = VDC;
 	minT   = sample;
       }
