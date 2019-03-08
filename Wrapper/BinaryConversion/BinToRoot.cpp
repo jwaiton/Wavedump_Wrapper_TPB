@@ -570,7 +570,7 @@ int ProcessBinaryFile(TString inFilePath,
 
   //----------------------
   // Variables for testing
-  bool  testMode  = false;
+  bool  testMode  = true;
   bool  keepGoing = true;
   int   maxEvents = 10000;
   
@@ -830,12 +830,12 @@ int ProcessBinaryFile(TString inFilePath,
     event++;
     
     // inform user of progress
-    if( (event > 0) && 
+    if( (event > 0) && (verbosity !=-1) &&
 	((event % 1000  == 0 && event < 10000)  ||
 	 (event % 10000 == 0 && event < 100000) ||
 	 (event % 100000 == 0))              ){
       cout << endl;
-      cout << " event count " << event << endl;;
+      cout << " event: " << event << endl;;
     }
     
     //-------------------
@@ -929,7 +929,7 @@ int ProcessBinaryFile(TString inFilePath,
       sample = iSample;
       waveform[sample] = VDC;
       
-      if     ( VDC < minVDC ){
+      if     ( VDC <= minVDC ){
 	minVDC = VDC;
 	minT   = sample;
       }
@@ -1455,8 +1455,13 @@ void ExecuteProcessing(int run = 0, int pmt = 0,
 
   bool negPulsePol = GetNegPulsePol(digitiser,run);
   char samplingSetting = GetSamplingSetting(digitiser,run);
-
-
+  
+  cout << endl;
+  cout << " run  = " << run  << endl; 
+  cout << " pmt  = " << pmt  << endl; 
+  cout << " loc  = " << loc  << endl; 
+  cout << " test = " << test << endl; 
+    
   int  nEvents = -1;
 
   for (int hvStep = GetHVStep(test) ; 
@@ -1515,7 +1520,7 @@ int GetPMT(int run, int iPMT){
   }
   else if(run == 2 || run == 3){
     int  pmtList[8] = {130,131,132,133, // Tent A
-		       98,141,160,155}; // Tent B	   
+		       98,141,155,160}; // Tent B	   
     return pmtList[iPMT];
   }
   else if(run == 4){
