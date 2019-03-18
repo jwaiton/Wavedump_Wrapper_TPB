@@ -941,8 +941,6 @@ int ProcessBinaryFile(TString inFilePath,
       hWave->SetBinContent(iSample+1,
 			   (double)(8700 - waveform[iSample]));
 
-      
-
       waveTime = sample * GetnsPerSample(digitiser,
 					 samplingSetting);
 
@@ -972,7 +970,6 @@ int ProcessBinaryFile(TString inFilePath,
     hWave->FFT(hWaveFFT ,"MAG");
     
     hWaveFFT->SetBinContent(1,0.) ;
-
     
     if(hWaveFFT->GetMaximumBin() == 2 ){
       
