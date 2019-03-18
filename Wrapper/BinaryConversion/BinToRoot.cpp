@@ -1447,7 +1447,7 @@ void ExecuteProcessing(int run = 0, int pmt = 0,
 		       TString inDir = "./", 
 		       TString outDir = "./",
 		       char digitiser = 'V',
-		       char verbosity = 0
+		       char verbosity = -1
 		       ){
 
   bool negPulsePol = GetNegPulsePol(digitiser,run);
