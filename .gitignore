@@ -49,9 +49,7 @@ Wavedump_Wrapper/
 .viminfo
 .gitconfig
 Instructions on how to use the WaveDump Wrapper.pdf
-<<<<<<< HEAD
 BinaryData/
-=======
 .DS_Store
 .gitignore~
->>>>>>> f2dda4accfa04e87c27f77c78ba8dd87ea153662
+./Data/
