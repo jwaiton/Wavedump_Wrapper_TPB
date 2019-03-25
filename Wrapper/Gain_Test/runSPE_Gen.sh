@@ -1,0 +1,1 @@
+./SPE_Gen < answers.txt

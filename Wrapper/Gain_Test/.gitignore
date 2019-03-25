@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Old_HV_SPE/
 HV_SPE/
 SPE_Fit.d
@@ -15,3 +16,17 @@ SPE_Gen_test
 SPE_Gen_test.cpp
 SPE_Gen_test.d
 SPE_Gen_test.o
+=======
+HV_SPE/
+SPE_Gen
+BinToRoot
+*.root
+*.dat
+SPE_Fit
+Plots/*
+SPE_Fit
+SPE_Gen_Desk
+peakToValley5.C
+peakToValley5_C.so
+peakToValley5_C_ACLiC_dict_rdict.pcm
+>>>>>>> developmentSPE

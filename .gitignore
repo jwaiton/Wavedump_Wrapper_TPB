@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 caen/
 checkUSBChannels.sh
 mkdir_script.sh
@@ -53,3 +54,14 @@ BinaryData/
 .DS_Store
 .gitignore~
 Data/
+=======
+*.d
+*.o
+*~
+DataAcquisition/Instructions.txt
+.DS_Store
+Data/
+RawRootData/
+Code_Fragments/
+BinaryData/
+>>>>>>> developmentSPE

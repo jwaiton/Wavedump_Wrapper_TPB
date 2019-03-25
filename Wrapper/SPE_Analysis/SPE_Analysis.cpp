@@ -1,5 +1,5 @@
 // Project include files.
-#include "ns.h"
+#include "./src/ns.h"
 
 // Standard library include files.
 #include <cmath>
