@@ -1,5 +1,3 @@
-#include "ns.h"
-//Standard library include files.
 #include <cstdlib>
 #include <fstream>
 #include <string>
@@ -17,23 +15,24 @@
 #include "TLegend.h"
 #include "TGraph.h"
 
-using namespace std;
+#include "TH1D.h"
 
+using namespace std;
 
 int main(int argc, char **argv)
 {
-	randomSeedTime();
-	
-	int channel[4]={0,0,0,0};
-	char answer;
-	char histname[200]= "";
-//	char pmt[4];
-	int test;
-//	char hvtest[3];
-	int Gain[4]={0,0,0,0};
-	
-	
-	//Read in the HV data ====================================================================================
+  
+  int channel[4]={0,0,0,0};
+  char answer;
+  char histname[200]= "";
+  //	char pmt[4];
+  int test;
+  //	char hvtest[3];
+  int Gain[4]={0,0,0,0};
+  
+  
+  //Read in the HV data ====================================================================================
+
 	string hvfile = "../HVScan.txt";
 	ifstream file(hvfile.c_str());
 	string hvdat;
@@ -90,7 +89,7 @@ int main(int argc, char **argv)
 //		sprintf(hvtest,"hv%d",test);
 		
 		for (int i=0;i<125; i++){
-			for(int j=0; j<4; j++){
+		  for(int j=0; j<4; j++){
 				
 				if (channel[j]==PMT_number[i]){
 					Gain[j]=HVstep[i][test-1];
@@ -195,47 +194,53 @@ int main(int argc, char **argv)
 			//Peak must appear in reasonable location relative to the trigger
 			if (maxtime>60.0 && maxtime<124.0){
 				//Define the accumulators
-				double A0=0;double A1=0;double A2=0;double A3=0;double A4=0;double A5=0;double A6=0;
-				for (int i=1; i<=102; i++){
-				
-					int time = i;
-					if (time>=gates[0] && time<=gates[1]){
-					
-						A0+=Wave->GetBinContent(i);
-					}	
-					if (time>=gates[1] && time<=gates[2]){
+			  double A0=0;double A1=0;double A2=0;double A3=0;double A4=0;double A5=0;double A6=0;
+			  for (int i=1; i<=102; i++){
+			    
+			    int time = i;
+			    //if (time>=gates[0] && time<=gates[1]){
+			    if (time>=gates[0] && time<gates[1]){
+			      
+			      A0+=Wave->GetBinContent(i);
+			    }	
+			    //if (time>=gates[1] && time<=gates[2]){
+			    if (time>=gates[1] && time<gates[2]){			    
+			      
+			      A1+=Wave->GetBinContent(i);
+			    }
+			    //if (time>=gates[2] && time<=gates[3]){
+			    if (time>=gates[2] && time<gates[3]){
+			      
+			      A2+=Wave->GetBinContent(i);
+			    }
+			    //if (time>=gates[3] && time<=gates[4]){
+			    if (time>=gates[3] && time<gates[4]){
+			      
+			      A3+=Wave->GetBinContent(i);
+			    }
+			    //if (time>=gates[4] && time<=gates[5]){
+			    if (time>=gates[4] && time<gates[5]){
+			      
+			      A4+=Wave->GetBinContent(i);
+			    }
+			    //if (time>=gates[5] && time<=gates[6]){
+			    if (time>=gates[5] && time<gates[6]){
+			      A5+=Wave->GetBinContent(i);
+			    }
+			    //if (time>=gates[6] && time<=gates[7]){
+			    if (time>=gates[6] && time<gates[7]){
+			      
+			      A6+=Wave->GetBinContent(i); 
+			    }
+			    
+			  }
 
-						A1+=Wave->GetBinContent(i);
-					}
-					if (time>=gates[2] && time<=gates[3]){
-					
-						A2+=Wave->GetBinContent(i);
-					}
-					if (time>=gates[3] && time<=gates[4]){
-					
-						A3+=Wave->GetBinContent(i);
-					}
-					if (time>=gates[4] && time<=gates[5]){
-					
-						A4+=Wave->GetBinContent(i);
-					}
-					if (time>=gates[5] && time<=gates[6]){
-						A5+=Wave->GetBinContent(i);
-					}
-					if (time>=gates[6] && time<=gates[7]){
-				
-						A6+=Wave->GetBinContent(i); 
-					}
-
-				}
-
-			
-
-				//Filling all the SPE
-				double ADC_Counts = A2+A3+A4-(A0+A1+A5+A6)*3.0/4.0;
-				double WaveCharge =  ADC_Counts*2.0/16384.0*2.0e3;
-				//printf("WaveCharge %f \n",WaveCharge);
-				SPE[w]->Fill(WaveCharge);
+			  
+			  //Filling all the SPE
+			  double ADC_Counts = A2+A3+A4-(A0+A1+A5+A6)*3.0/4.0;
+			  double WaveCharge =  ADC_Counts*2.0/16384.0*2.0e3;
+			  //printf("WaveCharge %f \n",WaveCharge);
+			  SPE[w]->Fill(WaveCharge);
 			}
 			
 			

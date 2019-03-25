@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 SPE_Analysis_Liz
 .goutputstream-D745NZ 
 .#wave_process.cpp
@@ -7,3 +8,11 @@ SPE_Analysis_Liz
 Analysis/
 Instructions.txt
 ../Data/
+=======
+10 Step Guide - PMT Testing_V2.docx
+Instructions.txt
+.DS_Store
+BinToRoot-Build-R10/
+BinToRoot-Build-R3/
+BinToRoot-Build-R4/
+>>>>>>> developmentSPE

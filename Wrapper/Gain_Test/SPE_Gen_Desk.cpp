@@ -1,9 +1,9 @@
-#include "ns.h"
 //Standard library include files.
 #include <cstdlib>
 #include <fstream>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "TApplication.h"
 #include "TCanvas.h"
@@ -16,20 +16,21 @@
 #include "TLegend.h"
 #include "TGraph.h"
 
+#include "TH1F.h"
+
 using namespace std;
 
 
 int main(int argc, char **argv)
 {
-	randomSeedTime();
 	
-
-	
-	int channel[4]={0,0,0,0};
-	char answer;
-	char histname[200]= "";
-	int test;
-	int Gain[4]={0,0,0,0};
+  //int channel[4]={0,0,0,0};
+  int channel[1]={0};
+  char answer;
+  char histname[200]= "";
+  int test;
+  //int Gain[4]={0,0,0,0};
+  int Gain[1]={0};
 	
 	
 	//Read in the HV data ====================================================================================
@@ -62,52 +63,29 @@ int main(int argc, char **argv)
 	//========================================================================================================
 	
 	while(answer!='Y'&& answer!='y'){
-		
 		//Determing the PMT number and the applied Voltage=====================================================
 		cout << "Input the PMT number in Channel 0 \n" ;
 		cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
 		cin  >> channel[0]; 
 		cout <<endl;
 		
-		cout << "Input the PMT VOLTAGE in Channel 0 \n" ;
-		cout << "ENTER THE VOLTAGE IN VOLTS \n" <<endl;
-		cin  >> Gain[0]; 
-		cout <<endl;
+		cout << "Please Specify which HV Test (1, 2, 3, 4, or 5)"<< endl;
+		cin>>test;
 		
-		cout << "Input the PMT number in Channel 1 \n" ;
-		cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
-		cin  >> channel[1]; 
-		cout <<endl;
-		
-		cout << "Input the PMT VOLTAGE in Channel 1 \n" ;
-		cout << "ENTER THE VOLTAGE IN VOLTS \n" <<endl;
-		cin  >> Gain[1]; 
-		cout <<endl;
-		
-		
-		cout << "Input the PMT number in Channel 2 \n" ;
-		cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
-		cin  >> channel[2]; 
-		cout <<endl;
-		
-		cout << "Input the PMT VOLTAGE in Channel 2 \n" ;
-		cout << "ENTER THE VOLTAGE IN VOLTS \n" <<endl;
-		cin  >> Gain[2]; 
-		cout <<endl;
-	
-		cout << "Input the PMT number in Channel 3 \n";
-		cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
-		cin  >> channel[3]; 
-		cout <<endl;
-		
-		cout << "Input the PMT VOLTAGE in Channel 3 \n" ;
-		cout << "ENTER THE VOLTAGE IN VOLTS \n" <<endl;
-		cin  >> Gain[3]; 
-		cout <<endl;
+		for (int i=0;i<125; i++){
+			for(int j=0; j<1; j++){
+				
+				if (channel[j]==PMT_number[i]){
+					Gain[j]=HVstep[i][test-1];
+					printf("Gain %d \n",HVstep[i][test-1]);
+					
+				}
+			}
+		}
 		
 		
 		cout <<"Please verifiy the following: "<<endl;
-		for (int i=0; i<4; i++){
+		for (int i=0; i<1; i++){
 			if (channel[i]<10)
 				sprintf(histname,"NB000%d is in Channel %d Biased at %d Volts \n",channel[i], i, Gain[i]);
 			if (channel[i]>=10 && channel[i] <100)
@@ -122,19 +100,23 @@ int main(int argc, char **argv)
 		cout <<answer<<endl;
 		
 	}
+	//======================================================================================================
+	
+	
 	
 	//Stores one waveform for processing
 	TH1D* Wave = new TH1D("Wave","Waveform; Time (ns); ADC Counts",1024,0,204.8);
 	
 	
 	//Single Photoelectron Spectra with averaged accumulators
-	TH1D **SPE=new TH1D*[4];	
-	for (int w=0;w<4;w++){
+	TH1D **SPE=new TH1D*[1];	
+	for (int w=0;w<1;w++){
 		sprintf(histname, "SPE%d",w);
 		SPE[w] = new TH1D(histname,"Single Photo-Electron; Charge (mV-ns); Counts",1500.0,-500.0,2000.0);
 	}
-
-	int totalwaves[4]={0,0,0,0};
+	
+	//	int totalwaves[4]={0,0,0,0};
+	int totalwaves[1]={0};
 
        
 	//================= Reads in the headers and assigns values for things=============
@@ -143,11 +125,11 @@ int main(int argc, char **argv)
 	//================= Reads in waveforms of length 1024 ==================
 
 	//Include a counter to know the code is still running
-	cout << "got here " << endl;
 	int counter = 0;
-	for (int w=0; w<4; w++){
+	for (int w=0; w<1; w++){
 
 		char filename[200]= "";
+		//sprintf(filename,"../../Data/wave_%d.dat",w);
 		sprintf(filename,"../../Data/wave_%d.dat",w);
 		ifstream fin(filename);
 		
@@ -182,7 +164,7 @@ int main(int argc, char **argv)
 		
 			//Determine the location of the peak
 			int binmax = Wave->GetMaximumBin(); 
-		     double maxtime = Wave->GetXaxis()->GetBinCenter(binmax);
+		        double maxtime = Wave->GetXaxis()->GetBinCenter(binmax);
 			//printf("maxtime: %f\n",maxtime);
 		
 			int gates[8] ={binmax-300,binmax-200,binmax-100,binmax,binmax+100,binmax+200,binmax+300,binmax+400};
@@ -235,15 +217,16 @@ int main(int argc, char **argv)
 				SPE[w]->Fill(WaveCharge);
 			}
 			
+			
+		
 		}
 		
 		totalwaves[w]=counter;
-		SPE[w]->Scale(1./(counter));
 		//closes the wave-dump file
 		fin.close();	
 	}
 	//Print out total number of waves for the relative quantum efficiency
-	for (int i=0; i<4; i++)
+	for (int i=0; i<1; i++)
 		printf("Total Triggers from Wave %d: %d \n", i, totalwaves[i]);
 	
 	//Create canvas allowing for window close
@@ -253,27 +236,23 @@ int main(int argc, char **argv)
 	tc1->SetGrid();
 	
 	SPE[0]->Draw("Same");
-	SPE[1]->Draw("Same");
-	SPE[2]->Draw("Same");
-	SPE[3]->Draw("Same");
+	// SPE[1]->Draw("Same");
+	// SPE[2]->Draw("Same");
+	// SPE[3]->Draw("Same");
 	
-	
-	
-	for (int i=0;i<4;i++){
+	for (int i=0;i<1;i++){
 
 		if (channel[i]<10)		
-			sprintf(histname, "SPE_Root/PMT_NB000%d_HV%d_Analysis.root",channel[i],  Gain[i]);
+			sprintf(histname, "HV_SPE/PMT_NB000%d_HV%d.root",channel[i],  Gain[i]);
 		if (channel[i]>=10 && channel[i] <100)
-			sprintf(histname, "SPE_Root/PMT_NB00%d_HV%d_Analysis.root",channel[i], Gain[i]);
+			sprintf(histname, "HV_SPE/PMT_NB00%d_HV%d.root",channel[i], Gain[i]);
 		if (channel[i]>=100)
-			sprintf(histname, "SPE_Root/PMT_NB0%d_HV%d_Analysis.root",channel[i],  Gain[i]);
+			sprintf(histname, "HV_SPE/PMT_NB0%d_HV%d.root",channel[i],  Gain[i]);
 			
 		SPE[i]->SaveAs(histname);
 	}
 		
-	
-		
-	ta->Run("false");
+	ta->Run();
 	
 	
 	return 0;
