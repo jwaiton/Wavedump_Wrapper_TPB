@@ -52,4 +52,4 @@ Instructions on how to use the WaveDump Wrapper.pdf
 BinaryData/
 .DS_Store
 .gitignore~
-./Data/
+Data/
