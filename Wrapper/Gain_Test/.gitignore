@@ -6,3 +6,12 @@ SPE_Fit_altered.cpp
 SPE_Gen.d
 SPE_Gen.o
 TestFolder/
+Gain_PMT_161.png
+SPE_Fit_test
+SPE_Fit_test.cpp
+SPE_Fit_test.d
+SPE_Fit_test.o
+SPE_Gen_test
+SPE_Gen_test.cpp
+SPE_Gen_test.d
+SPE_Gen_test.o
