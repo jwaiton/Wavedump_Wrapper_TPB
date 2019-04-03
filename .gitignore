@@ -1,4 +1,5 @@
-<<<<<<< HEAD
+Downloads/
+Instructions_on_how_to_use_the_WaveDump_Wrapper.pdf
 caen/
 checkUSBChannels.sh
 mkdir_script.sh
@@ -49,19 +50,15 @@ Wavedump_Wrapper/
 .vim/
 .viminfo
 .gitconfig
-Instructions on how to use the WaveDump Wrapper.pdf
 BinaryData/
 .DS_Store
 .gitignore~
 Data/
-=======
 *.d
 *.o
 *~
-DataAcquisition/Instructions.txt
 .DS_Store
 Data/
 RawRootData/
 Code_Fragments/
 BinaryData/
->>>>>>> developmentSPE

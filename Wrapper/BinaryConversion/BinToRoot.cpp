@@ -200,6 +200,9 @@ float GetDelay(int run = 0){
     return 50.;
   else if ( run < 20 ) // Underground
     return 90.;
+  else if ( run > 29 && 
+	    run < 100 ) // Noise investigation
+    return 70.;
   else if ( run > 999) // Bine
     return 100.;
   else                 // Surface
@@ -1541,6 +1544,11 @@ int GetPMT(int run, int iPMT){
 			96, 97, 98, 99};
     return pmtList[iPMT];
   }
+  else if(run == 30 ){
+    int  pmtList[8] = { 130,131,132,133,
+			1, 84, 90, 96};
+    return pmtList[iPMT];
+  }
   else if(run == 1001){
     return 16;
   }
@@ -1555,7 +1563,7 @@ int GetLoc(int run, int iPMT){
       return (iPMT%4);
     else
       return (iPMT%4 + 4);
-  else if(run > 1 && run < 30)
+  else if(run > 1 && run < 100)
     return iPMT;
   else
     return 0;
@@ -1570,8 +1578,9 @@ int GetNPMTs(int run){
 	  run == 12  || run == 21 || 
 	  run == 22  || run == 23)
     return 4;
-  else if(run == 2  || run == 3 || 
-	  run == 4  || run == 20 )
+  else if(run == 2  || run == 3  || 
+	  run == 4  || run == 20 ||
+	  run == 30 )
     return 8;
   else
     return 1;
