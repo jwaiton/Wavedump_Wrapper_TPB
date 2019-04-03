@@ -1570,8 +1570,9 @@ int GetNPMTs(int run){
 	  run == 12  || run == 21 || 
 	  run == 22  || run == 23)
     return 4;
-  else if(run == 2  || run == 3 || 
-	  run == 4  || run == 20 )
+  else if(run == 2  || run == 3  || 
+	  run == 4  || run == 20 ||
+	  run == 30 )
     return 8;
   else
     return 1;

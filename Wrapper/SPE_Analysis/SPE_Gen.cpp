@@ -43,43 +43,43 @@ int main(int argc, char **argv)
   for (int i=0; i<125; i++){
     for (int j=0; j<7; j++){
       file >> hvdat;
-			int pmt_info =atof(hvdat.c_str());
-			if (j==0){
-			  PMT_number[i]=pmt_info;
-			}
-			if (j!=0 && j!=6){
-			  HVstep[i][j-1]=pmt_info;
-			}
-			if (j==6){
-				HV[i]=pmt_info;
-			}
-			//printf("j %d, val %d \n",j,pmt_info);
+      int pmt_info =atof(hvdat.c_str());
+      if (j==0){
+	PMT_number[i]=pmt_info;
+      }
+      if (j!=0 && j!=6){
+	HVstep[i][j-1]=pmt_info;
+      }
+      if (j==6){
+	HV[i]=pmt_info;
+      }
+      //printf("j %d, val %d \n",j,pmt_info);
     }
   }
   //========================================================================================================
-	
-	while(answer!='Y'&& answer!='y'){
-		
-		//Determing the PMT number and the applied Voltage=====================================================
-		cout << "Input the PMT number in Channel 0 \n" ;
-		cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
-		cin  >> channel[0]; 
-		cout <<endl;
-		
-		//cout << "Input the PMT VOLTAGE in Channel 0 \n" ;
-		//cout << "ENTER THE VOLTAGE IN VOLTS \n" <<endl;
-		//cin  >> Gain[0]; 
-		//cout <<endl;
-		
-		cout << "Input the PMT number in Channel 1 \n" ;
-		cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
-		cin  >> channel[1]; 
-		cout <<endl;
-		
-		//cout << "Input the PMT VOLTAGE in Channel 1 \n" ;
-		//cout << "ENTER THE VOLTAGE IN VOLTS \n" <<endl;
-		//cin  >> Gain[1]; 
-		//cout <<endl;
+  
+  while(answer!='Y'&& answer!='y'){
+    
+    //Determing the PMT number and the applied Voltage=====================================================
+    cout << "Input the PMT number in Channel 0 \n" ;
+    cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
+    cin  >> channel[0]; 
+    cout <<endl;
+    
+    //cout << "Input the PMT VOLTAGE in Channel 0 \n" ;
+    //cout << "ENTER THE VOLTAGE IN VOLTS \n" <<endl;
+    //cin  >> Gain[0]; 
+    //cout <<endl;
+    
+    cout << "Input the PMT number in Channel 1 \n" ;
+    cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
+    cin  >> channel[1]; 
+    cout <<endl;
+    
+    //cout << "Input the PMT VOLTAGE in Channel 1 \n" ;
+    //cout << "ENTER THE VOLTAGE IN VOLTS \n" <<endl;
+    //cin  >> Gain[1]; 
+    //cout <<endl;
 		
 		
 		cout << "Input the PMT number in Channel 2 \n" ;
@@ -156,7 +156,8 @@ int main(int argc, char **argv)
 
 		char filename[200]= "";
 		//sprintf(filename,"../../Data/wave_%d.dat",w);
-		sprintf(filename,"/home/lhcbuser/watchman/Wrapper/Wavedump_Wrapper/DataAcquisition/BinaryData/PMT0001/SPEtest/wave_0.dat",w);
+		sprintf(filename,"/Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/BinaryData/RUN000030/PMT0090/SPEtest/wave_6.dat",w);
+		
 		ifstream fin(filename);
 		
 		for (int i=0; i<6; i++){
