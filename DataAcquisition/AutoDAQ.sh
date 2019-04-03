@@ -1,4 +1,4 @@
-4#!/bin/bash
+#!/bin/bash
 
 echo -e "\n-------------------------------------------"
 echo -e "About to initiate. \n"
@@ -20,18 +20,15 @@ read Hours
 echo -e "Input Run Number:"
 read Run 
 
-# !!!! CHECK PARENT FOLDER NAME
 OUTPUT_DIR=${BINARY_DATA_DIR}/Cooldown/RUN0000${Run}
 
 echo -e $OUTPUT_DIR
 
-mkdir ${OUTPUT_DIR}
+mkdir -p ${OUTPUT_DIR}
 
 for i in $(seq $Hours)
 do
-# !!!! MODIFY default config file for 'wavedump' or rewrite to accept alias
-#    (sleep 3s && echo "s" && sleep 3s && echo "W" && sleep 5s echo "W" && sleep 3s && echo "q") | wavedump
-    (sleep 3s && echo "s" && sleep 3s && echo "W" && sleep 5s && echo "W" && sleep 3s && echo "q") | wavedump
+    (sleep 3s && echo "s" && sleep 3s && echo "W" && sleep 15m && echo "W" && sleep 3s && echo "q") | wavedump_G_SPE_DR
 
     for j in 0 1 2 3 4 5 6 7    
     do
@@ -42,13 +39,9 @@ do
 	    mv wave_${j}.dat ${OUTPUT_DIR}/wave_${j}_${i}.dat    
 	fi
     done
-
-    sleep 10s
+    mv ${OUTPUT_DIR}* /mnt/usb-Seagate_BUP_RD_NA9FWF45-0\:0-part1/BinaryData_Backups/Cooldown/RUN000033/
+    sleep 42m
 done	
-
-else
-echo -e "Invalid input \n"
-echo -e "Exiting \n"	
 
 exit 1
 fi
