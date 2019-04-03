@@ -1,4 +1,6 @@
-( sleep 10 ; echo .q  ) | root -l 'GetPeakToValley.C++("Run_200_PMT_15_Loc_0_Test_S")';
+( sleep 10 ; echo .q  ) | root -lb 'GetPeakToValley.C++("Run_30_PMT_133_Loc_3_Test_S")';
+
+#Run_30_PMT_133_Loc_3_Test_S
 
 # mac command to open plot 
 # open ./Plots/*.pdf;

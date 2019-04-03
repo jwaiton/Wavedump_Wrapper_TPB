@@ -124,7 +124,7 @@ const char* varname(std::string header, std::string var){
 
 RooAddPdf* makePMTPDF(RooRealVar* counts,double pmval, double psval, double psval2,  double mval, double sval, double f1peval){//, double dmval = 15, double dsval = 20, double fdval = 0.9){
 
-  std::cout << pmval << " " << psval << " "  << mval << " "  << sval  << " "  <<f1peval << std::endl;
+  std::cout << pmval << " " << psval << " "  << mval << " "  << sval  << " mu: "  <<f1peval << std::endl;
 
 
   // RooRealVar* dm = new RooRealVar("dmean","dmean",dmval, 0, 100 );   // pedestal position
@@ -225,7 +225,7 @@ RooAddPdf* makePMTPDF(RooRealVar* counts,const RooArgList& fitpars){
 }
 
 RooAddPdf* makePMTPDF(RooRealVar* counts,InitParams& params){
-  return makePMTPDF(counts,std::get<0>(params),std::get<2>(params),2*std::get<2>(params), std::get<1>(params),std::get<3>(params),1-std::get<4>(params));
+  return makePMTPDF(counts,std::get<0>(params),std::get<2>(params),2*std::get<2>(params), std::get<1>(params),std::get<3>(params),-log(std::get<4>(params)));
 }
 
 
