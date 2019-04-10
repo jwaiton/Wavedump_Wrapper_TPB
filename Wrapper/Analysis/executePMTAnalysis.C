@@ -42,7 +42,7 @@
 #include "TString.h"
 #include "PMTAnalyser.h"
 #include "ShippingData.h"
-#include "fileNameParser.h"
+#include "FileNameParser.h"
     
 #include "TCanvas.h"
 
@@ -56,14 +56,16 @@ int main(Int_t argc, Char_t *argv[]){
   PMTAnalyser * PMT = nullptr;
 
   ShippingData * shipData = nullptr;
-
+  
+  FileNameParser * testInfo = new FileNameParser();
+  
   Char_t  digitiser = 'V';
 
   // Old style BinToRoot output
   // or new BinToRoot output?
   // (pulse[] -> waveform[] e.g.)
   Bool_t oldRootFileVersion = kFALSE;
-
+  
   // Dark Rate
   Float_t thresh_mV  = 10.0;
   Int_t   darkRate   = 8000.;
@@ -80,67 +82,76 @@ int main(Int_t argc, Char_t *argv[]){
        return -1;
      }
 
-     //-------
-     // use parser to extract test ID
-     cout << endl;
-     cout << " Run      " << run(argv[iFile])      << endl;
-     cout << " PMT      " << pmtID(argv[iFile])    << endl;
-     cout << " Location " << location(argv[iFile]) << endl;
-     cout << " Test     " << test(argv[iFile]) << endl;
-     
-     if( test(argv[iFile])=='G')
-       cout << " HV step  " << HVStep(argv[iFile]) << endl; 
+     if( testInfo->test(argv[iFile])=='G')
+       cout << " HV step  " << testInfo->hVStep(argv[iFile]) << endl; 
      
      cout << endl;
-     shipData = new ShippingData(pmtID(argv[iFile]));
+     shipData = new ShippingData(testInfo->pmtID(argv[iFile]));
 
      // connect to tree in input file
-     file->GetObject((TString)GetTreeName(argv[iFile]),tree); 
+     file->GetObject((TString)testInfo->GetTreeName(argv[iFile]),tree); 
      
      // initalise analysis object using tree 
      PMT = new PMTAnalyser(tree,
 			   digitiser,
-			   test(argv[iFile]),
 			   oldRootFileVersion);
      
      // Set plot attributes to bespoke TStyle 
      PMT->SetStyle();
      
      // Limit to subset of entries for quicker testing
-     //PMT->SetTestMode(kTRUE);
+     PMT->SetTestMode(kTRUE);
      
-     cout << " Hamamatsu Dark Rate = " << shipData->GetDR() << endl;
+     //PMT->MakeCalibratedTree();
+     
+     int event = 0;
+     
+     while ( event!= -1 ){
+       cout << " Which waveform to plot?" << endl;
+       cout << " enter event number " << endl;
+       cout << " (-1 to quit) " << endl;
+       cin >> event;
+       PMT->PlotWaveform(event);
+     }
+     //------------
+     // Timing
+     //PMT->TimeOfPeak();
 
+     //------------
+     //  Dark Rate
      Bool_t investigateDarkRate = kFALSE;
-
      if(investigateDarkRate){
+       cout << " Hamamatsu Dark Rate = " << shipData->GetDR() << endl;
+       
        if(oldRootFileVersion){
 	 cout << " Dark Rate method only applicable to new BinToRoot files " << endl;
        }
        else{
-	 darkRate   = PMT->DarkRate(thresh_mV);
+	 darkRate = PMT->DarkRate(thresh_mV);
 	 cout << " PMT Test  Dark Rate = " << darkRate          << endl;
        }
      }
-
-     Bool_t investigateFFT = kTRUE;
+     
+     //------------
+     //  FFT 
+     Bool_t investigateFFT = kFALSE;
      // Make Filtered Histograms
      if(investigateFFT){ 
        TCanvas * canvas = PMT->Make_FFT_Canvas();
        
        TString canvasName;
        canvasName.Form("./Plots/FFT_Run_%d_PMT_%d_Test_%c.pdf",
-		       run(argv[iFile]),
-		       pmtID(argv[iFile]),
-		       test(argv[iFile]));
+		       testInfo->run(argv[iFile]),
+		       testInfo->pmtID(argv[iFile]),
+		       testInfo->test(argv[iFile]));
        
        if(canvas){
 	 canvas->SaveAs(canvasName);
 	 
 	 canvasName.Form("./Plots/FFT_Run_%d_PMT_%d_Test_%c.root",
-			 run(argv[iFile]),
-			 pmtID(argv[iFile]),
-			 test(argv[iFile]));
+			 testInfo->run(argv[iFile]),
+			 testInfo->pmtID(argv[iFile]),
+			 testInfo->test(argv[iFile]));
 	 
 	 canvas->SaveAs(canvasName);
        }

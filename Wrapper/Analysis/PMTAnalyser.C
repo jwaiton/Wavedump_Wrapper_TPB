@@ -1,108 +1,394 @@
 #define PMTAnalyser_cxx
 #include "PMTAnalyser.h"
 #include <TH2.h>
+#include <TF1.h>
 #include <TStyle.h>
 #include "TBranch.h"
 #include "TLatex.h"
 #include "TROOT.h"
+#include "TRandom3.h"
 
-void PMTAnalyser::SetStyle(){
-  
-  TStyle     *watchStyle  = new TStyle("watchStyle",
-				       "My Root Styles");
-  
-  const Int_t NCont = 255;
-  const Int_t NRGBs = 5;
-  
-  // Color scheme for 2D plotting with a better defined scale 
-  Double_t stops[NRGBs] = { 0.00, 0.34, 0.61, 0.84, 1.00 };
-  Double_t red[NRGBs]   = { 0.00, 0.00, 0.87, 1.00, 0.51 };
-  Double_t green[NRGBs] = { 0.00, 0.81, 1.00, 0.20, 0.00 };
-  Double_t blue[NRGBs]  = { 0.51, 1.00, 0.12, 0.00, 0.00 };          
-  TColor::CreateGradientColorTable(NRGBs, stops, red, green, blue, NCont);
-  
-  watchStyle->SetNumberContours(NCont);
-  
-  // General
-  // OPTIONS - FILL LINE TEXT MARKER
-  
-  watchStyle->SetFillColor(0);
-  watchStyle->SetTextSize(0.05);
-  
-  //-----------  Canvas
-  
-  watchStyle->SetCanvasBorderMode(0);
-  watchStyle->SetCanvasColor(kWhite);
-  
-  //------------- Pad
-  
-  watchStyle->SetPadBorderMode(0); 
-  watchStyle->SetPadColor(kWhite);
-  
-  // Make more room for X and Y titles
-  // one pad
-  // watchStyle->SetPadRightMargin(0.05);  //percentage
-  // watchStyle->SetPadLeftMargin(0.1);    //percentage
-  // watchStyle->SetPadBottomMargin(0.12); //percentage
-  
-  // six sub-pads
-  watchStyle->SetPadRightMargin(0.16);  //percentage
-  watchStyle->SetPadLeftMargin(0.2);    //percentage
-  watchStyle->SetPadBottomMargin(0.14); //percentage
-  
-  //----------- Histogram
-  
-  // Histos
-  watchStyle->SetHistLineWidth(1);
-  watchStyle->SetMarkerStyle(20);
-  
-  //  FILL CONTOURS LINE BAR 
-  //  Frames
-  watchStyle->SetFrameBorderMode(0);
-  
-  //  FILL BORDER LINE
-  //  Graphs
-  //  LINE ERRORS
-  
-  //---------  Axis 
-  
-  watchStyle->SetLabelFont(132,"XYZ"); 
-  watchStyle->SetLabelSize(0.04,"XYZ");
-  watchStyle->SetLabelOffset(0.01 ,"Y");
-  
-  //---------  Title
-  watchStyle->SetOptTitle(1);
-  watchStyle->SetTitleStyle(0);
-  watchStyle->SetTitleBorderSize(0);
+#include "TApplication.h"
 
+void PMTAnalyser::MakeCalibratedTree(){
+  
+  if (rawRootTree == 0) return;
+  
+  int verbosity = 2;
 
-  watchStyle->SetTitleSize(0.03,"t");
-  watchStyle->SetTitleFont(132,"t"); 
+  Long64_t ientry;
+  Long64_t nentries = rawRootTree->GetEntriesFast();
 
-  watchStyle->SetTitleFont(132,"XYZ"); 
-
-  watchStyle->SetTitleSize(0.05,"XYZ");
+  if(testMode){
+    if     ( verbosity == 3 )
+      nentries = 2;
+    else if( verbosity == 2 )
+      nentries = 10;
+    else if( verbosity == 1 )
+      nentries = 10000;
+    else 
+      nentries = 100000;
+  }
   
-  watchStyle->SetTitleOffset(1.0,"XYZ");
+  cout << endl;
+  cout << " Making Calibrated Data Tree " << endl;
+  cout << " " << nentries << " entries " << endl;
   
-  // 6 sub-pads
-  watchStyle->SetTitleOffset(1.6,"Y");
-  
-  //----------  Stats
-  watchStyle->SetOptStat(0);
-  watchStyle->SetStatStyle(0);
-
-  watchStyle->SetOptFit(1);
-  
-  //----------  Legend
-  watchStyle->SetLegendBorderSize(0);
-  //watchStyle->SetLegendFont(132);
-  
-  gROOT->SetStyle("watchStyle");
-  gROOT->ForceStyle();
+  for (Long64_t jentry = 0; jentry < nentries; jentry++) {
+    
+    ientry = LoadTree(jentry);
+    if (ientry < 0) break;
+    rawRootTree->GetEntry(jentry);   
+    
+    if(verbosity > 1){
+      cout << endl;
+      cout << " entry = " << jentry << endl;
+    }
+    
+    for( int iSample = 0 ; iSample < NSamples; iSample++){
+      
+      if(verbosity > 2){
+	cout << endl;
+	cout << " sample = " << iSample << endl;
+      }
+    
+    }
+    
+  }  
+  return;  
 }
 
-// !!! IN PROGRESS
+
+void PMTAnalyser::PlotWaveform(Int_t firstEntry){
+  
+  TCanvas * canvas = new TCanvas();
+  
+  if(Test=='A'){
+    Float_t w = 20000., h = 10000.;
+    w = w + canvas->GetWw();
+    h = h + canvas->GetWh();
+    canvas->SetWindowSize(w,h);
+  }
+
+  static const int nEntries = 5;
+  
+  TH1F * hWave[nEntries];
+  TString hName;
+  TString hNameTemp = "hWave_%d";
+  
+  for (int i = 0 ; i < nEntries ; i++){
+    
+    hName.Form(hNameTemp,i);
+    hWave[i] = new TH1F(hName,"hWaveform;Time /ns;ADC counts",
+			NSamples, 0., waveformDuration);
+  
+  }
+
+  //   TH1F * hWaveFFT  = new TH1F("hWaveFFT","hWaveFFT",
+  // 			      NSamples, 0, NSamples);
+  
+
+  canvas->Divide(1,nEntries);
+  float aoff = 8700.;  
+  
+  int entry    = firstEntry;
+  int entryRelFrst = 0;
+  while ( entryRelFrst < (nEntries-1) && 
+	  firstEntry != -1){
+
+    cout << endl;
+    cout << " entry = " << entry << endl;
+    
+    entryRelFrst = entry-firstEntry;
+    
+    canvas->cd(entryRelFrst+1);
+    
+    LoadTree(entry);
+    rawRootTree->GetEntry(entry);   
+
+    for( int iSample = 0 ; iSample < NSamples; iSample++){
+      hWave[entryRelFrst]->SetBinContent(iSample+1,(aoff - waveform[iSample]));
+    }
+    
+    hWave[entryRelFrst]->SetMinimum(400);
+    hWave[entryRelFrst]->SetMaximum(700);
+    hWave[entryRelFrst]->Draw();
+
+    entry++;
+  }
+  
+  
+  hNameTemp = "./WaveForms/";
+  
+  hNameTemp += FileID;
+  //hNameTemp += "_Event_%d";
+  
+  // current
+  hNameTemp += "_Event_C";
+  hNameTemp += ".png";
+  
+  //hName.Form(hNameTemp,entry);
+  hName = hNameTemp;
+  canvas->SaveAs(hName);
+  
+  
+}
+
+void PMTAnalyser::TimeOfPeak()
+{
+  if (rawRootTree == 0) return;
+  
+  int verbosity = 0;
+  
+  Long64_t ientry;
+  Long64_t nentries = rawRootTree->GetEntriesFast();
+  
+  if(testMode)
+    nentries = 1000000;
+  
+  cout << endl;
+  cout << " Running: Time of Peak " << endl;
+  cout << " " << nentries << " entries " << endl;
+
+  float voltage_mV = 0.;
+  float time_ns = 0.;
+
+  // Count peaks
+  int   nPeaks = 0;
+  int   peakSampleArray[110] = {0};
+  int   peakSample = -1; // minT (take 2)
+  int   peakNumberChoice = -1;
+  int   samplesInBaseline = 0;
+  float baseline_mV = 0.0;
+  
+  TCanvas * canvas = new TCanvas();
+  
+  TH1F * hPeakT_ns_1 = new TH1F("hPeakT_ns_1",
+				"waveform peak time; Time (ns);Counts",
+				NSamples,0.,waveformDuration);
+  
+  TH1F * hPeakT_ns_2 = new TH1F("hPeakT_ns_2",
+				"waveform peak time (randomised); Time (ns);Counts",
+				NSamples,0.,waveformDuration);
+  
+  TH1F * hPeakV_mV = new TH1F("hPeakV_mV",
+			      "waveform peak voltage ; peak voltage (mV) (ns);Counts",
+			      NSamples,0.,waveformDuration);
+  
+  TH2F * hPeakT_PeakV = new TH2F("hPeakT_PeakV",
+				 "waveform peak time; Peak Time (ns); Peak Voltage (mV)",
+				 NSamples,0.,waveformDuration,
+				 100,-50.,150.);
+  
+  TRandom3 * random = new TRandom3(); 
+      
+  for (Long64_t jentry = 0; jentry < nentries; jentry++) {
+    
+    ientry = LoadTree(jentry);
+    if (ientry < 0) break;
+    rawRootTree->GetEntry(jentry);   
+ 
+    if(verbosity > 0){
+      cout << endl;
+      cout << " entry = " << jentry << endl;
+    }
+    
+    //------------------------------------
+    // event-by-event baseline
+    
+    samplesInBaseline = 0;
+    baseline_mV = 0.0;
+    
+    if( verbosity > 1 ){
+      cout << " peakT_ns = " << peakT_ns << endl;
+    }
+    
+    for( int iSample = 0 ; iSample < NSamples; iSample++){
+      
+      time_ns    = iSample * nsPerSample;
+      voltage_mV = waveform[iSample] * mVPerBin;
+      
+      // Which of two regions was peak in?
+      // use other region for baseline
+      if( peakT_ns >= 50.0 ) {
+	
+	// exclude 35 - 50 ns 
+	// in case peak is at 50 ns
+	// ~ 10 ns rise time
+	if( time_ns < 35.0 ){
+	  baseline_mV += voltage_mV;
+	  samplesInBaseline++;
+	}
+	
+      }
+      else { 
+	// peak < 50 ns 
+	// leave at least 100 ns 
+	// after peak 
+	if( time_ns >= 150.0 && 
+	    time_ns <  185.0 ){
+	  baseline_mV += voltage_mV;
+	  samplesInBaseline++;
+	}
+	
+      }
+      
+      if( verbosity > 1 ){
+	cout << endl;
+	cout << " samplesInBaseline = " << samplesInBaseline << endl;
+	cout << " voltage_mV        = " << voltage_mV        << endl;
+	cout << " baseline_mV       = " << baseline_mV       << endl;
+      }
+      
+    } // end of: for( int iSample = 0 ; iSample < N......
+    
+    baseline_mV = baseline_mV / samplesInBaseline; 
+    
+    if( verbosity > 0 ){
+      cout << endl;
+      cout << " baseline_mV       = " << baseline_mV       << endl;
+    }
+    
+    // event-by-event baseline
+    //------------------------------------
+    
+    //------------------------------------
+    // Find peaks
+    nPeaks = 0;
+    peakNumberChoice = -1;
+    peakSample = -1;
+
+    for( int iSample = 0 ; iSample < NSamples; iSample++){
+      peakSampleArray[iSample] = 0;
+      
+      time_ns    = iSample * nsPerSample;
+      voltage_mV = waveform[iSample] * mVPerBin;
+      voltage_mV = voltage_mV - baseline_mV;
+      
+      // count peaks
+      if( waveform[iSample] == minVDC ){
+	peakSampleArray[nPeaks] = iSample;
+	nPeaks++;
+      }
+      
+      if( verbosity > 1){
+	cout << endl;
+	cout << " waveform[" << iSample << "] = " << waveform[iSample] << endl; 
+	cout << " voltage = " << voltage_mV << " mV " << endl;
+      }
+    
+    } // end of: for( int iSample = 0 ; iSample < N......
+    
+    // Find peaks
+    //------------------------------------
+    
+    if( verbosity > 0 ){
+      if( nPeaks > 1 ){
+	cout << endl;
+	cout << " " <<  nPeaks << " peaks " <<  endl;
+	for ( int i = 0 ; i < nPeaks ; i++ )
+	cout << " peakSampleArray[" << i << "] = " 
+	     << peakSampleArray[i] << endl;
+      }
+    }
+    // BinToRoot method
+    hPeakT_ns_1->Fill(peakT_ns);
+    
+    // New Method
+    
+    // randomly assign integer from [0,(nPeaks-1)]
+    peakNumberChoice = (Int_t)random->Uniform(nPeaks);
+      
+    peakSample = peakSampleArray[peakNumberChoice];
+    
+    peakT_ns = peakSample * nsPerSample;
+    
+    peakV_mV = waveform[peakSample] * mVPerBin;
+    peakV_mV = baseline_mV - peakV_mV; 
+    
+    hPeakT_ns_2->Fill(peakT_ns);
+    
+    if(nPeaks == 0)
+      cerr << " no peaks found is...... impossible " << endl;
+   
+    hPeakT_PeakV->Fill(peakT_ns,peakV_mV);
+    
+    if(verbosity > 0){    
+      cout << endl;
+      cout << " nPeaks            = " << nPeaks           << endl;
+      
+      if(nPeaks > 1 ){
+	cout << " peakNumberChoice  = " << peakNumberChoice << endl;
+	cout << " Peak Sample       = " << peakSample       << endl;;
+      }
+      cout << " peakT_ns          = " << peakT_ns         << endl;;
+      cout << " peakV_mV          = " << peakV_mV         << endl;;
+      cout << " minVDC            = " << minVDC           << endl;
+      cout << " minT              = " << minT             << endl;
+    }
+    
+  }
+  // 
+  //------------------------------------
+  
+  if(verbosity > 0){  
+    cout << endl;
+    cout << " nentries = " << nentries << endl;
+  }
+
+  //------------------------------------
+  // Fitting
+  if(Test!='D'){
+    
+    double maxPeakT_ns = hPeakT_ns_2->GetXaxis()->GetBinCenter(hPeakT_ns_2->GetMaximumBin());
+  
+    double rangeFit = 8.5;
+    
+    hPeakT_ns_2->Fit("gaus","Q","", 
+		     maxPeakT_ns - rangeFit, 
+		     maxPeakT_ns + rangeFit );
+    
+    
+    TF1 * fPeakTimeGaus = new TF1("fPeakTimeGaus","gaus(0)",0.,220.);
+    
+    fPeakTimeGaus = hPeakT_ns_2->GetFunction("gaus");  
+    
+    // fit again based on first results
+    // 2 sigma range (95 %)   
+    maxPeakT_ns = fPeakTimeGaus->GetParameter(1);
+    rangeFit = fPeakTimeGaus->GetParameter(2) * 2.0;
+    
+    hPeakT_ns_2->Fit("gaus","Q","", 
+		     maxPeakT_ns - rangeFit, 
+		     maxPeakT_ns + rangeFit );
+    
+  }
+  
+  hPeakT_ns_1->SetMinimum(0);
+  hPeakT_ns_1->Draw();
+  
+  hPeakT_ns_2->SetMinimum(0);
+  hPeakT_ns_2->SetLineColor(kBlue);
+  hPeakT_ns_2->Draw("same");
+  
+  TString hName = "./Plots/PeakTime_";
+  hName += FileID;
+  hName += ".pdf";
+  
+  canvas->SaveAs(hName);
+  
+  hPeakT_PeakV->Draw("colz");
+  gPad->SetLogz(kTRUE);
+
+  hName = "./Plots/Volt_Time_";
+  hName += FileID;
+  hName += ".pdf";
+  
+  canvas->SaveAs(hName);
+  
+  return;
+}
+
 Int_t PMTAnalyser::DarkRate(Float_t threshold = 10)
 {
   if (rawRootTree == 0) return -1;
@@ -128,9 +414,11 @@ Int_t PMTAnalyser::DarkRate(Float_t threshold = 10)
     if (ientry < 0) break;
     rawRootTree->GetEntry(jentry);   
     
-//     for( int iSample = 0 ; iSample < NSamples; iSample++){
+    for( int iSample = 0 ; iSample < NSamples; iSample++){
       
-//     }
+      
+      
+    }
 
     if( peakV_mV > threshold )
       nDark++;
@@ -321,7 +609,7 @@ TCanvas * PMTAnalyser::Make_FFT_Canvas()
     // Store maximum FFT bin 
     hWaveFFT_MaxBin->Fill(hWaveFFT->GetMaximumBin());
     
-    if(hWaveFFT->GetMaximumBin() == 2)
+    if(hWaveFFT->GetMaximumBin() == 2 )
       hMaxADC_Filtered->Fill( hWave->GetMaximum());
     
     fftoff = hWaveFFT->GetBinContent(1)/(double)NSamples; 
@@ -360,13 +648,13 @@ TCanvas * PMTAnalyser::Make_FFT_Canvas()
    entriesStr.Form("hMaxADC: %d entries ",
 		   (int)hMaxADC->GetEntries());
    
-   latex->DrawLatex(0.7,0.8,entriesStr);
+   latex->DrawLatex(0.6,0.8,entriesStr);
    
    latex->SetTextColor(kBlue);
    
    entriesStr.Form("FFT Filtered: %d entries ",
 		   (int)hMaxADC_Filtered->GetEntries());
-   latex->DrawLatex(0.7,0.75,entriesStr);
+   latex->DrawLatex(0.6,0.75,entriesStr);
   
    canvas->cd(2);  
    
@@ -384,4 +672,101 @@ TCanvas * PMTAnalyser::Make_FFT_Canvas()
 
 void PMTAnalyser::SetTestMode(Bool_t userTestMode){
   testMode = userTestMode;
+}
+
+
+void PMTAnalyser::SetStyle(){
+  
+  TStyle     *watchStyle  = new TStyle("watchStyle",
+				       "My Root Styles");
+  
+  const Int_t NCont = 255;
+  const Int_t NRGBs = 5;
+  
+  // Color scheme for 2D plotting with a better defined scale 
+  Double_t stops[NRGBs] = { 0.00, 0.34, 0.61, 0.84, 1.00 };
+  Double_t red[NRGBs]   = { 0.00, 0.00, 0.87, 1.00, 0.51 };
+  Double_t green[NRGBs] = { 0.00, 0.81, 1.00, 0.20, 0.00 };
+  Double_t blue[NRGBs]  = { 0.51, 1.00, 0.12, 0.00, 0.00 };          
+  TColor::CreateGradientColorTable(NRGBs, stops, red, green, blue, NCont);
+  
+  watchStyle->SetNumberContours(NCont);
+  
+  // General
+  // OPTIONS - FILL LINE TEXT MARKER
+  
+  watchStyle->SetFillColor(0);
+  watchStyle->SetTextSize(0.05);
+  
+  //-----------  Canvas
+  
+  watchStyle->SetCanvasBorderMode(0);
+  watchStyle->SetCanvasColor(kWhite);
+  
+  //------------- Pad
+  
+  watchStyle->SetPadBorderMode(0); 
+  watchStyle->SetPadColor(kWhite);
+  
+  // Make more room for X and Y titles
+  // one pad
+  // watchStyle->SetPadRightMargin(0.05);  //percentage
+  // watchStyle->SetPadLeftMargin(0.1);    //percentage
+  // watchStyle->SetPadBottomMargin(0.12); //percentage
+  
+  // six sub-pads
+  watchStyle->SetPadRightMargin(0.16);  //percentage
+  watchStyle->SetPadLeftMargin(0.2);    //percentage
+  watchStyle->SetPadBottomMargin(0.14); //percentage
+  
+  //----------- Histogram
+  
+  // Histos
+  watchStyle->SetHistLineWidth(1);
+  watchStyle->SetMarkerStyle(20);
+  
+  //  FILL CONTOURS LINE BAR 
+  //  Frames
+  watchStyle->SetFrameBorderMode(0);
+  
+  //  FILL BORDER LINE
+  //  Graphs
+  //  LINE ERRORS
+  
+  //---------  Axis 
+  
+  watchStyle->SetLabelFont(132,"XYZ"); 
+  watchStyle->SetLabelSize(0.04,"XYZ");
+  watchStyle->SetLabelOffset(0.01 ,"Y");
+  
+  //---------  Title
+  watchStyle->SetOptTitle(1);
+  watchStyle->SetTitleStyle(0);
+  watchStyle->SetTitleBorderSize(0);
+
+
+  watchStyle->SetTitleSize(0.03,"t");
+  watchStyle->SetTitleFont(132,"t"); 
+
+  watchStyle->SetTitleFont(132,"XYZ"); 
+
+  watchStyle->SetTitleSize(0.05,"XYZ");
+  
+  watchStyle->SetTitleOffset(1.0,"XYZ");
+  
+  // 6 sub-pads
+  watchStyle->SetTitleOffset(1.6,"Y");
+  
+  //----------  Stats
+  watchStyle->SetOptStat(0);
+  watchStyle->SetStatStyle(0);
+
+  watchStyle->SetOptFit(1);
+  
+  //----------  Legend
+  watchStyle->SetLegendBorderSize(0);
+  //watchStyle->SetLegendFont(132);
+  
+  gROOT->SetStyle("watchStyle");
+  gROOT->ForceStyle();
 }

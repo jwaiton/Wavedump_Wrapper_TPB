@@ -77,7 +77,7 @@ endif
 
 #-------------------------------------------------------------------------
 
-SRC           = PMTAnalyser.C DataInfo.C ShippingData.C
+SRC           = PMTAnalyser.C DataInfo.C ShippingData.C FileNameParser.C
 
 OBJ           = $(SRC:.C=.o)
 HDR           = $(SRC:.C=.h)

@@ -1,108 +1,79 @@
-#ifndef _fileNameParse_h
-#define _fileNameParse_h 1
-int parseInt(std::string f, std::string s1, std::string s2){
- 
-  int pos1 = f.find(s1,0);
-  int pos2 = f.find(s2,pos1);
+#ifndef FileNameParser_h
+#define FileNameParser_h 
 
-  // "Test" not found for case "HV"
-  if     (pos1 == -1){
-    s1 = "HV";
-    pos1 = f.find(s1,0);
-  }
-  else if(pos2 == -1){
-    s2 = "HV";
-    pos2 = f.find(s2,pos1);
-  }
+#include <string>
+#include <cstdlib> 
+#include <iostream>
 
-  std::string str = f.substr(pos1,pos2 - pos1);
+class FileNameParser {
+public:
   
-  int first = str.find("_");
-  str = str.substr(first+1);
-  str = str.substr(0, str.size()-1);
+  FileNameParser();
+  FileNameParser(std::string);
+  ~FileNameParser();
   
-  return std::stoi(str);
-}
-
-char parseChar(std::string f, std::string s1, std::string s2){
- 
-  int pos1 = f.find(s1,0);
-  int pos2 = f.find(s2,pos1);
-
-  // "Test" not found for case "HV"
-  if     (pos1 == -1){
-    s1 = "HV";
-    pos1 = f.find(s1,0);
-  }
-  else if(pos2 == -1){
-    s2 = "HV";
-    pos2 = f.find(s2,pos1);
-  }
-
-  std::string str = f.substr(pos1,pos2 - pos1);
+  int    parseInt(std::string f, std::string s1, std::string s2);
+  char   parseChar(std::string f, std::string s1, std::string s2);
+  std::string GetFileName(std::string filePath);
+  std::string GetFileID(std::string fileName);
+  std::string GetTreeName(std::string filePath);
+  int    pmtID(std::string filename);
+  int    run(std::string filename);
+  int    location(std::string filename);
+  char   test(std::string filename);
+  int    hVStep(std::string filename);
   
-  int first = str.find("_");
-  str = str.substr(first+1);
-  str = str.substr(0, str.size()-1);
-  
-  return str[0];
-}
-
-string GetFileName(string filePath){
-
-  int pos1 = filePath.find("Run_",0);
-  string fileName = filePath.substr(pos1,filePath.size() - pos1);  
-  return fileName;
-}
-
-string GetFileID(string fileName){
-  return fileName.substr(0,fileName.size() - 5);
-}
-
-string GetTreeName(string filePath){
-  
-  string treeName = "Events_" + GetFileID(GetFileName(filePath));
-  
-  return treeName; 
-}
-
-int pmtID(string filename){
-  return parseInt(filename,"PMT_","Loc");
-}
-
-int run(string filename){
-  return parseInt(filename,"Run_","PMT");
-}
-
-int location(string filename){
-  return parseInt(filename,"Loc_","Test");
-}
-
-char test(string filename){ 
-  
-  char ctr = parseChar(filename,"Test_","root");
-
-  if( ctr > '0' && ctr < '6' ) 
-    return 'G';
-  else
-    return ctr;
-} 
-
-int HVStep(string filename){ 
-  
-  int step = parseInt(filename,"Test_","root");
-
-  if( step > 0 && step < 6)
-    return step;
-  else 
-    return 0;
-} 
+  // private:
+  int  PMT;   
+  int  Run;   
+  int  Loc;   
+  char Test;  
+  int  HVStep;
+  std::string FileID;
+};
 
 #endif
 
-/* void stringmess(){
+#ifdef FileNameParser_cxx
 
-  string runname = "Run_4_PMT_90_Loc_0_Test_N.root";
-  cout <<pmtID(runname)  <<  " " << run(runname) <<  " " << location(runname)<< endl; 
+FileNameParser::FileNameParser(){
+  PMT    = 0;   
+  Run    = 0;   
+  Loc    = -1;   
+  Test   = 'A';  
+  HVStep = -1;
 }
-*/
+
+// Option for use with TTree name
+FileNameParser::FileNameParser(std::string treeName){
+  
+  std::string fileName = GetFileName(treeName);
+  
+  // change to same format as root filename
+  fileName = fileName + ".root";
+  
+  FileID = GetFileID(fileName);
+
+  std::cout << " FileID = " << FileID << std::endl;
+  
+  PMT    = pmtID(fileName);
+  Run    = run(fileName);
+  Loc    = location(fileName);
+  Test   = test(fileName);
+  HVStep = hVStep(fileName); // 0 if Test!='G'
+  
+  
+  std::cout << std::endl;
+  std::cout << " Run    = " << Run    << std::endl;
+  std::cout << " PMT    = " << PMT    << std::endl;
+  std::cout << " Loc    = " << Loc    << std::endl;
+  std::cout << " Test   = " << Test   << std::endl;
+  std::cout << " HVStep = " << HVStep << std::endl;
+  
+}
+
+FileNameParser::~FileNameParser(){
+
+}
+    
+#endif
