@@ -9,8 +9,9 @@
 #include "TH2.h"
 
 #include "DataInfo.h"
-#include <TCanvas.h>
+#include "FileNameParser.h"
 
+#include <TCanvas.h>
 
 using namespace std;
 
@@ -19,10 +20,18 @@ class PMTAnalyser {
   TTree          *rawRootTree;  
   Int_t           fCurrent;
 
-  char testType;
-  char digitiser;
+  char  Test;
+  Int_t HVStep;
+  Int_t Loc;
+  Int_t PMT;
+  Int_t Run;
+  TString FileID;
+
+  char  digitiser;
   
-  DataInfo      *dataInfo;
+  DataInfo       * dataInfo;
+  FileNameParser * testInfo;
+
   Int_t          NSamples;
   Int_t          NVDCBins;
   Float_t        VoltageRange;
@@ -53,15 +62,17 @@ class PMTAnalyser {
   TBranch        *b_waveform; 
   
   PMTAnalyser(TTree *tree=0, Char_t digitiser='V',
-	      Char_t userTest='S', 
 	      Bool_t oldRootFileVersion = kFALSE);
   
   virtual ~PMTAnalyser();
   virtual Int_t    GetEntry(Long64_t entry);
   virtual Long64_t LoadTree(Long64_t entry);
   virtual void     Init(TTree *tree,Char_t digitiser,
-			Char_t userTest, Bool_t oldRootFileVersion);
+			Bool_t oldRootFileVersion);
+  virtual void     MakeCalibratedTree();
+  virtual void     PlotWaveform(Int_t entry);
   virtual Int_t    DarkRate(Float_t);
+  virtual void     TimeOfPeak();
   virtual TCanvas* Make_FFT_Canvas();
   virtual Int_t    FFT_Filter();
   virtual Bool_t   IsCleanFFTWaveform(TH1F *);
@@ -69,7 +80,6 @@ class PMTAnalyser {
   virtual void     Show(Long64_t entry = -1);
   virtual void     SetStyle();
   virtual void     SetTestMode(Bool_t userTestMode = kTRUE);
-
 
  private:
 
@@ -83,10 +93,10 @@ class PMTAnalyser {
 
 PMTAnalyser::PMTAnalyser(TTree *tree,
 			 Char_t digitiser,
-			 Char_t userTest,
 			 Bool_t oldRootFileVersion) : rawRootTree(0) 
 {
-  Init(tree,digitiser,userTest,oldRootFileVersion);
+  Init(tree,digitiser,
+       oldRootFileVersion);
 }
 
 PMTAnalyser::~PMTAnalyser()
@@ -116,17 +126,24 @@ Long64_t PMTAnalyser::LoadTree(Long64_t entry)
 
 void PMTAnalyser::Init(TTree *tree,
 		       Char_t digitiser,
-		       Char_t userTest,
 		       Bool_t oldRootFileVersion)
 {
-  
+
+  // default
   testMode = kFALSE;
-
-  testType = userTest;
-
+  
+  testInfo = new FileNameParser(tree->GetName());
+  
+  Test     = testInfo->Test;
+  HVStep   = testInfo->HVStep;
+  Run      = testInfo->Run;
+  PMT      = testInfo->PMT;
+  Loc      = testInfo->Loc;
+  FileID   = testInfo->FileID;
+  
   dataInfo = new DataInfo();
 
-  NSamples     = dataInfo->GetNSamples(testType,
+  NSamples     = dataInfo->GetNSamples(Test,
 				       digitiser);
   VoltageRange = dataInfo->GetVoltageRange(digitiser);
   NVDCBins     = dataInfo->GetNVDCBins(digitiser);

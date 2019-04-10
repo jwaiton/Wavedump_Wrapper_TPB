@@ -200,12 +200,15 @@ float GetDelay(int run = 0){
     return 50.;
   else if ( run < 20 ) // Underground
     return 90.;
+  else if ( run > 19 &&
+	    run < 30  ) // Post-underground at surface
+    return 60.;
   else if ( run > 29 && 
 	    run < 100 ) // Noise investigation
     return 70.;
-  else if ( run > 999) // Bine
+  else if ( run > 999 ) // Clean Lab
     return 100.;
-  else                 // Surface
+  else                  // Default
     return 60.;
 }
 
@@ -719,7 +722,7 @@ int ProcessBinaryFile(TString inFilePath,
 			      GetWaveformLength(digitiser,
 						test,
 						samplingSetting));
-
+  
 
   TH1D* hMaxADC = new TH1D("hMaxADC","Waveform ADC Maximum;maxADC;counts",
 			   1000, 200.,1200.); 
