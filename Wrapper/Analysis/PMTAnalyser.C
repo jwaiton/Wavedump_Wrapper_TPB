@@ -40,11 +40,23 @@ void PMTAnalyser::MakeCalibratedTree(){
     if (ientry < 0) break;
     rawRootTree->GetEntry(jentry);   
     
+    
+      if(testMode){
+    if     ( verbosity == 3 )
+      nentries = 2;
+    else if( verbosity == 2 )
+      nentries = 10;
+    else if( verbosity == 1 )
+      nentries = 10000;
+    else 
+      nentries = 100000;
+  }
+
     if(verbosity > 1){
       cout << endl;
       cout << " entry = " << jentry << endl;
     }
-    
+      
     for( int iSample = 0 ; iSample < NSamples; iSample++){
       
       if(verbosity > 2){
@@ -143,9 +155,17 @@ void PMTAnalyser::TimeOfPeak()
   Long64_t ientry;
   Long64_t nentries = rawRootTree->GetEntriesFast();
   
-  if(testMode)
-    nentries = 1000000;
-  
+  if(testMode){
+    if     ( verbosity == 3 )
+      nentries = 2;
+    else if( verbosity == 2 )
+      nentries = 10;
+    else if( verbosity == 1 )
+      nentries = 10000;
+    else 
+      nentries = 100000;
+  }
+
   cout << endl;
   cout << " Running: Time of Peak " << endl;
   cout << " " << nentries << " entries " << endl;
@@ -155,7 +175,7 @@ void PMTAnalyser::TimeOfPeak()
 
   // Count peaks
   int   nPeaks = 0;
-  int   peakSampleArray[110] = {0};
+  int   peakSampleArray[NSamples]; 
   int   peakSample = -1; // minT (take 2)
   int   peakNumberChoice = -1;
   int   samplesInBaseline = 0;
@@ -163,21 +183,30 @@ void PMTAnalyser::TimeOfPeak()
   
   TCanvas * canvas = new TCanvas();
   
+  float rangeX = waveformDuration;
+  int   binsX = NSamples;
+  
+  if( Test=='A' ){
+    rangeX = 220.;
+    
+    binsX = 110;
+  
+  }
   TH1F * hPeakT_ns_1 = new TH1F("hPeakT_ns_1",
 				"waveform peak time; Time (ns);Counts",
-				NSamples,0.,waveformDuration);
+				binsX,0.,rangeX);
   
   TH1F * hPeakT_ns_2 = new TH1F("hPeakT_ns_2",
 				"waveform peak time (randomised); Time (ns);Counts",
-				NSamples,0.,waveformDuration);
+				binsX,0.,rangeX);
   
   TH1F * hPeakV_mV = new TH1F("hPeakV_mV",
 			      "waveform peak voltage ; peak voltage (mV) (ns);Counts",
-			      NSamples,0.,waveformDuration);
+			      binsX,0.,rangeX);
   
   TH2F * hPeakT_PeakV = new TH2F("hPeakT_PeakV",
 				 "waveform peak time; Peak Time (ns); Peak Voltage (mV)",
-				 NSamples,0.,waveformDuration,
+				 binsX,0.,rangeX,
 				 100,-50.,150.);
   
   TRandom3 * random = new TRandom3(); 
