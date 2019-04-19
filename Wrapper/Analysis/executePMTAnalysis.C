@@ -88,6 +88,8 @@ int main(Int_t argc, Char_t *argv[]){
      cout << endl;
      shipData = new ShippingData(testInfo->pmtID(argv[iFile]));
 
+     //cout << " Nominal Voltage =  " <<  shipData->GetEBB() << endl;
+
      // connect to tree in input file
      file->GetObject((TString)testInfo->GetTreeName(argv[iFile]),tree); 
      
@@ -104,7 +106,7 @@ int main(Int_t argc, Char_t *argv[]){
      
      //PMT->MakeCalibratedTree();
      
-     int event = 0;
+     int event = -1;
      
      while ( event!= -1 ){
        cout << " Which waveform to plot?" << endl;
@@ -115,7 +117,7 @@ int main(Int_t argc, Char_t *argv[]){
      }
      //------------
      // Timing
-     //PMT->TimeOfPeak();
+     PMT->TimeOfPeak();
 
      //------------
      //  Dark Rate
