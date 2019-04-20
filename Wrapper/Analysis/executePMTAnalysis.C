@@ -67,9 +67,14 @@ int main(Int_t argc, Char_t *argv[]){
   Bool_t oldRootFileVersion = kFALSE;
   
   // Dark Rate
-  Float_t thresh_mV  = 10.0;
+  Float_t thresh_mV  = 25.0;
   Int_t   darkRate   = 8000.;
   
+  if(argc==1){
+    cerr << " Error, argument needed " << endl; 
+    return 2;
+  }
+
   // argv should be a path to a file
   // or list of files ( wildcards work )
   for( int iFile = 1 ; iFile < argc ; iFile++){
@@ -121,7 +126,7 @@ int main(Int_t argc, Char_t *argv[]){
 
      //------------
      //  Dark Rate
-     Bool_t investigateDarkRate = kFALSE;
+     Bool_t investigateDarkRate = kTRUE;
      if(investigateDarkRate){
        cout << " Hamamatsu Dark Rate = " << shipData->GetDR() << endl;
        

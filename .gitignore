@@ -58,7 +58,6 @@ Data/
 *.o
 *~
 .DS_Store
-Data/
 RawRootData/
 Code_Fragments/
 BinaryData/
