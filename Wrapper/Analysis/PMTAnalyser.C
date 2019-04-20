@@ -180,8 +180,9 @@ void PMTAnalyser::TimeOfPeak()
   rangeV[0] = -12.;
   rangeV[1] = 110.;
 
-  int binsV = NVDCBins;
-  binsV *= (int)(rangeV[1] - rangeV[0])/VoltageRange;
+  int binsV = (int)NVDCBins/4;
+    
+  binsV = binsV * (int)(rangeV[1] - rangeV[0])/1000/VoltageRange;
   
   if( Test=='A' ){
     rangeT = 220.;
@@ -189,7 +190,7 @@ void PMTAnalyser::TimeOfPeak()
   }
 
   TH1F * hPeakT_ns_1 = new TH1F("hPeakT_ns_1",
-				"peak time; Time (ns);Counts",
+				"time of peak voltage; Time (ns);Counts",
 				binsT,0.,rangeT);
   
   TH1F * hPeakT_ns_2 = new TH1F("hPeakT_ns_2",
@@ -197,9 +198,12 @@ void PMTAnalyser::TimeOfPeak()
 				binsT,0.,rangeT);
   
   TH1F * hPeakV_mV = new TH1F("hPeakV_mV",
-			      "Peak voltage ; Peak Voltage (mV) (ns);Counts",
+			      "peak voltage ; Peak Voltage (mV);Counts",
 			      binsV,rangeV[0],rangeV[1]);
   
+  binsT = binsT / 2;
+  binsV = binsV / 2;
+    
   TH2F * hPeakT_PeakV = new TH2F("hPeakT_PeakV",
 				 "peak time vs peak voltage; Peak Time (ns); Peak Voltage (mV)",
 				 binsT,0.,rangeT,
@@ -365,6 +369,9 @@ void PMTAnalyser::TimeOfPeak()
 
   //------------------------------------
   // Fitting
+
+  TF1 * fPeakTimeGaus = new TF1("fPeakTimeGaus","gaus(0)",0.,220.);
+  
   if(Test!='D'){
     
     double maxPeakT_ns = hPeakT_ns_2->GetXaxis()->GetBinCenter(hPeakT_ns_2->GetMaximumBin());
@@ -375,8 +382,6 @@ void PMTAnalyser::TimeOfPeak()
 		     maxPeakT_ns - rangeFit, 
 		     maxPeakT_ns + rangeFit );
     
-    
-    TF1 * fPeakTimeGaus = new TF1("fPeakTimeGaus","gaus(0)",0.,220.);
     
     fPeakTimeGaus = hPeakT_ns_2->GetFunction("gaus");  
     
@@ -389,11 +394,35 @@ void PMTAnalyser::TimeOfPeak()
 		     maxPeakT_ns - rangeFit, 
 		     maxPeakT_ns + rangeFit );
     
+    fPeakTimeGaus = hPeakT_ns_2->GetFunction("gaus");  
+    
   }
+  
+  hPeakT_ns_2->GetFunction("gaus")->SetLineColor(kBlue);
+
   
   hPeakT_ns_1->SetMinimum(0);
   hPeakT_ns_1->Draw();
   
+  TLatex * latex = new TLatex();
+  latex->SetNDC();
+  latex->SetTextSize(0.025);
+  latex->SetTextAlign(12);  //align at top
+  
+  TString tStr = " %d entries ";
+  
+  tStr.Form("Gaus Mean = %.2f  ",
+	    fPeakTimeGaus->GetParameter(1));
+   
+  latex->SetTextColor(kBlue);  
+
+  latex->DrawLatex(0.6,0.8,tStr);
+  
+  tStr.Form("Gaus Sigma = %.2f  ",
+	    fPeakTimeGaus->GetParameter(2));
+  
+  latex->DrawLatex(0.6,0.75,tStr);
+
   hPeakT_ns_2->SetMinimum(0);
   hPeakT_ns_2->SetLineColor(kBlue);
   hPeakT_ns_2->Draw("same");
@@ -430,7 +459,7 @@ Int_t PMTAnalyser::DarkRate(Float_t threshold = 10)
 {
   if (rawRootTree == 0) return -1;
   
-  int verbosity = 1;
+  int verbosity = 0;
   
   Long64_t ientry;
   
@@ -452,9 +481,7 @@ Int_t PMTAnalyser::DarkRate(Float_t threshold = 10)
     rawRootTree->GetEntry(jentry);   
     
     for( int iSample = 0 ; iSample < NSamples; iSample++){
-      
-      
-      
+      // do something
     }
 
     if( peakV_mV > threshold )
