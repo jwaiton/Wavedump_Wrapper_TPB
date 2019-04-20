@@ -69,17 +69,18 @@ class PMTAnalyser {
   virtual Long64_t LoadTree(Long64_t entry);
   virtual void     Init(TTree *tree,Char_t digitiser,
 			Bool_t oldRootFileVersion);
-  virtual void     MakeCalibratedTree();
-  virtual void     PlotWaveform(Int_t entry);
-  virtual Int_t    DarkRate(Float_t);
-  virtual void     TimeOfPeak();
-  virtual TCanvas* Make_FFT_Canvas();
-  virtual Int_t    FFT_Filter();
-  virtual Bool_t   IsCleanFFTWaveform(TH1F *);
-  virtual Bool_t   Notify();
-  virtual void     Show(Long64_t entry = -1);
-  virtual void     SetStyle();
-  virtual void     SetTestMode(Bool_t userTestMode = kTRUE);
+  Int_t    GetNEntriesTest(Int_t, Int_t);
+  void     MakeCalibratedTree();
+  void     PlotWaveform(Int_t entry);
+  Int_t    DarkRate(Float_t);
+  void     TimeOfPeak();
+  TCanvas* Make_FFT_Canvas();
+  Int_t    FFT_Filter();
+  Bool_t   IsCleanFFTWaveform(TH1F *);
+  Bool_t   Notify();
+  void     Show(Long64_t entry = -1);
+  void     SetStyle();
+  void     SetTestMode(Bool_t userTestMode = kTRUE);
 
  private:
 

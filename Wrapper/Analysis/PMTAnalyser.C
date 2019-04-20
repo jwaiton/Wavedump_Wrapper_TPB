@@ -10,6 +10,23 @@
 
 #include "TApplication.h"
 
+Int_t PMTAnalyser::GetNEntriesTest(Int_t verbosity,
+				   Int_t nentries){
+  switch ( verbosity ){
+  case(3):
+    return 2;
+  case(2):
+    return 10;
+  case(1):
+    return 10000;
+  case(0):
+    return 1000000;
+  default:
+    return nentries; 
+  }
+  
+}
+
 void PMTAnalyser::MakeCalibratedTree(){
   
   if (rawRootTree == 0) return;
@@ -19,16 +36,8 @@ void PMTAnalyser::MakeCalibratedTree(){
   Long64_t ientry;
   Long64_t nentries = rawRootTree->GetEntriesFast();
 
-  if(testMode){
-    if     ( verbosity == 3 )
-      nentries = 2;
-    else if( verbosity == 2 )
-      nentries = 10;
-    else if( verbosity == 1 )
-      nentries = 10000;
-    else 
-      nentries = 100000;
-  }
+  if(testMode)
+    nentries = GetNEntriesTest(verbosity,nentries);
   
   cout << endl;
   cout << " Making Calibrated Data Tree " << endl;
@@ -40,30 +49,18 @@ void PMTAnalyser::MakeCalibratedTree(){
     if (ientry < 0) break;
     rawRootTree->GetEntry(jentry);   
     
-    
-      if(testMode){
-    if     ( verbosity == 3 )
-      nentries = 2;
-    else if( verbosity == 2 )
-      nentries = 10;
-    else if( verbosity == 1 )
-      nentries = 10000;
-    else 
-      nentries = 100000;
-  }
-
     if(verbosity > 1){
       cout << endl;
       cout << " entry = " << jentry << endl;
     }
-      
+    
     for( int iSample = 0 ; iSample < NSamples; iSample++){
       
       if(verbosity > 2){
 	cout << endl;
 	cout << " sample = " << iSample << endl;
       }
-    
+      
     }
     
   }  
@@ -155,16 +152,8 @@ void PMTAnalyser::TimeOfPeak()
   Long64_t ientry;
   Long64_t nentries = rawRootTree->GetEntriesFast();
   
-  if(testMode){
-    if     ( verbosity == 3 )
-      nentries = 2;
-    else if( verbosity == 2 )
-      nentries = 10;
-    else if( verbosity == 1 )
-      nentries = 10000;
-    else 
-      nentries = 100000;
-  }
+  if(testMode)
+    nentries = GetNEntriesTest(verbosity,nentries);
 
   cout << endl;
   cout << " Running: Time of Peak " << endl;
@@ -183,31 +172,39 @@ void PMTAnalyser::TimeOfPeak()
   
   TCanvas * canvas = new TCanvas();
   
-  float rangeX = waveformDuration;
-  int   binsX = NSamples;
+  float rangeT = waveformDuration;
+  int   binsT  = NSamples;
+  
+
+  float rangeV[2];
+  rangeV[0] = -12.;
+  rangeV[1] = 110.;
+
+  int binsV = NVDCBins;
+  binsV *= (int)(rangeV[1] - rangeV[0])/VoltageRange;
   
   if( Test=='A' ){
-    rangeX = 220.;
-    
-    binsX = 110;
-  
+    rangeT = 220.;
+    binsT = 110;
   }
+
   TH1F * hPeakT_ns_1 = new TH1F("hPeakT_ns_1",
-				"waveform peak time; Time (ns);Counts",
-				binsX,0.,rangeX);
+				"peak time; Time (ns);Counts",
+				binsT,0.,rangeT);
   
   TH1F * hPeakT_ns_2 = new TH1F("hPeakT_ns_2",
-				"waveform peak time (randomised); Time (ns);Counts",
-				binsX,0.,rangeX);
+				"peak time (randomise repeat); Time (ns);Counts",
+				binsT,0.,rangeT);
   
   TH1F * hPeakV_mV = new TH1F("hPeakV_mV",
-			      "waveform peak voltage ; peak voltage (mV) (ns);Counts",
-			      binsX,0.,rangeX);
+			      "Peak voltage ; Peak Voltage (mV) (ns);Counts",
+			      binsV,rangeV[0],rangeV[1]);
   
   TH2F * hPeakT_PeakV = new TH2F("hPeakT_PeakV",
-				 "waveform peak time; Peak Time (ns); Peak Voltage (mV)",
-				 binsX,0.,rangeX,
-				 100,-50.,150.);
+				 "peak time vs peak voltage; Peak Time (ns); Peak Voltage (mV)",
+				 binsT,0.,rangeT,
+				 binsV,rangeV[0],rangeV[1]);
+				 
   
   TRandom3 * random = new TRandom3(); 
       
@@ -217,7 +214,7 @@ void PMTAnalyser::TimeOfPeak()
     if (ientry < 0) break;
     rawRootTree->GetEntry(jentry);   
  
-    if(verbosity > 0){
+    if(verbosity > 1){
       cout << endl;
       cout << " entry = " << jentry << endl;
     }
@@ -262,7 +259,7 @@ void PMTAnalyser::TimeOfPeak()
 	
       }
       
-      if( verbosity > 1 ){
+      if( verbosity > 2 ){
 	cout << endl;
 	cout << " samplesInBaseline = " << samplesInBaseline << endl;
 	cout << " voltage_mV        = " << voltage_mV        << endl;
@@ -273,7 +270,7 @@ void PMTAnalyser::TimeOfPeak()
     
     baseline_mV = baseline_mV / samplesInBaseline; 
     
-    if( verbosity > 0 ){
+    if( verbosity > 1 ){
       cout << endl;
       cout << " baseline_mV       = " << baseline_mV       << endl;
     }
@@ -300,7 +297,7 @@ void PMTAnalyser::TimeOfPeak()
 	nPeaks++;
       }
       
-      if( verbosity > 1){
+      if( verbosity > 2){
 	cout << endl;
 	cout << " waveform[" << iSample << "] = " << waveform[iSample] << endl; 
 	cout << " voltage = " << voltage_mV << " mV " << endl;
@@ -311,7 +308,7 @@ void PMTAnalyser::TimeOfPeak()
     // Find peaks
     //------------------------------------
     
-    if( verbosity > 0 ){
+    if( verbosity > 1 ){
       if( nPeaks > 1 ){
 	cout << endl;
 	cout << " " <<  nPeaks << " peaks " <<  endl;
@@ -341,8 +338,9 @@ void PMTAnalyser::TimeOfPeak()
       cerr << " no peaks found is...... impossible " << endl;
    
     hPeakT_PeakV->Fill(peakT_ns,peakV_mV);
-    
-    if(verbosity > 0){    
+    hPeakV_mV->Fill(peakV_mV);
+
+    if(verbosity > 1){    
       cout << endl;
       cout << " nPeaks            = " << nPeaks           << endl;
       
@@ -406,6 +404,16 @@ void PMTAnalyser::TimeOfPeak()
   
   canvas->SaveAs(hName);
   
+  hPeakV_mV->Draw();
+  gPad->SetLogy(kTRUE);
+
+  hName = "./Plots/PeakVolt_";
+  hName += FileID;
+  hName += ".pdf";
+  canvas->SaveAs(hName);
+  
+  gPad->SetLogy(kFALSE);
+
   hPeakT_PeakV->Draw("colz");
   gPad->SetLogz(kTRUE);
 
@@ -422,7 +430,7 @@ Int_t PMTAnalyser::DarkRate(Float_t threshold = 10)
 {
   if (rawRootTree == 0) return -1;
   
-  int verbosity = 0;
+  int verbosity = 1;
   
   Long64_t ientry;
   
@@ -430,7 +438,7 @@ Int_t PMTAnalyser::DarkRate(Float_t threshold = 10)
   Long64_t nDark    = 0 ;
   
   if(testMode)
-    nentries = 10000;
+    nentries = 100000;
   
   cout << endl;
   cout << " Calculating Dark Rate " << endl;
@@ -452,7 +460,7 @@ Int_t PMTAnalyser::DarkRate(Float_t threshold = 10)
     if( peakV_mV > threshold )
       nDark++;
 
-    if(verbosity > 0){
+    if(verbosity > 1){
       cout << endl;
       cout << " jentry = " << jentry << endl;
       cout << " nDark  = " << nDark  << endl;
@@ -462,6 +470,7 @@ Int_t PMTAnalyser::DarkRate(Float_t threshold = 10)
   }
 
   Float_t darkRate = (Float_t)nDark/nentries;
+  
   darkRate = darkRate/waveformDuration * 1.0e9;
   
   if(verbosity > 0){  

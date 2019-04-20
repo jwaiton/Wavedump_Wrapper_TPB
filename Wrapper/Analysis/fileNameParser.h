@@ -68,7 +68,9 @@ FileNameParser::FileNameParser(std::string treeName){
   std::cout << " PMT    = " << PMT    << std::endl;
   std::cout << " Loc    = " << Loc    << std::endl;
   std::cout << " Test   = " << Test   << std::endl;
-  std::cout << " HVStep = " << HVStep << std::endl;
+  
+  if(Test!='G')
+    std::cout << " HVStep = " << HVStep << std::endl;
   
 }
 
