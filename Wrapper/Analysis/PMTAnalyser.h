@@ -74,6 +74,7 @@ class PMTAnalyser {
   void     PlotWaveform(Int_t entry);
   Int_t    DarkRate(Float_t);
   void     TimeOfPeak();
+  TH1F*    FFTShift(TH1F *, Float_t);
   TCanvas* Make_FFT_Canvas();
   Int_t    FFT_Filter();
   Bool_t   IsCleanFFTWaveform(TH1F *);
