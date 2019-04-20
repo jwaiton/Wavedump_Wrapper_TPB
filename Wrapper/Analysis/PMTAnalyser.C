@@ -69,10 +69,10 @@ void PMTAnalyser::MakeCalibratedTree(){
 
 // Authored by Steve Quillin
 // dx is the untransformed data spacing 
-TH1F* PMTAnalyser::FFTShift(TH1F* thefft, Float_t dx){ 
+TH1F* PMTAnalyser::FFTShift(TH1F* hFFT, Float_t dx){ 
   
-  Int_t   N    = thefft->GetNbinsX(); 
-  Float_t df   = 1./dx/N / 1.E6; 
+  Int_t   N    = hFFT->GetNbinsX(); 
+  Float_t df   = 1./dx/N / 1.E6; // bin widthin MHz
   Int_t   newN = N/2; 
 
   TString tStr = "";
@@ -82,17 +82,16 @@ TH1F* PMTAnalyser::FFTShift(TH1F* thefft, Float_t dx){
   label  = "FFT Peak Frequency;";
   label += "FFT Frequency (MHz);";
   label += tStr;
-
     
-  TH1F* fftshift=new TH1F("fftshift",
+  TH1F* hFFT_Shift=new TH1F("hFFT_Shift",
 			  label,
 			  newN, 0.,df*newN); 
   
 
   for (int qq=1; qq<=newN; qq++) 
-    fftshift->SetBinContent(qq,thefft->GetBinContent(qq)); 
+    hFFT_Shift->SetBinContent(qq,hFFT->GetBinContent(qq)); 
   
-  return fftshift; 
+  return hFFT_Shift; 
 } 
 
 void PMTAnalyser::PlotWaveform(Int_t firstEntry){
@@ -177,7 +176,8 @@ void PMTAnalyser::PlotWaveform(Int_t firstEntry){
     hWave[entryRelFrst]->FFT(hWaveFFT ,"MAG");
     
     Float_t dx = nsPerSample * 1.E-9;
-      
+    
+    // convert to frequency bins
     hWaveFFT = FFTShift(hWaveFFT,dx);
 
     gPad->SetLogy();
