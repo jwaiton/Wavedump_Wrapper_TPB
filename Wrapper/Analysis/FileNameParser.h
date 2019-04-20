@@ -69,7 +69,7 @@ FileNameParser::FileNameParser(std::string treeName){
   std::cout << " Loc    = " << Loc    << std::endl;
   std::cout << " Test   = " << Test   << std::endl;
   
-  if(Test!='G')
+  if(Test=='G')
     std::cout << " HVStep = " << HVStep << std::endl;
   
 }

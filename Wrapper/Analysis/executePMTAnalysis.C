@@ -67,7 +67,7 @@ int main(Int_t argc, Char_t *argv[]){
   Bool_t oldRootFileVersion = kFALSE;
   
   // Dark Rate
-  Float_t thresh_mV  = 25.0;
+  Float_t thresh_mV  = 15.0;
   Int_t   darkRate   = 8000.;
   
   if(argc==1){
@@ -87,8 +87,8 @@ int main(Int_t argc, Char_t *argv[]){
        return -1;
      }
 
-     if( testInfo->test(argv[iFile])=='G')
-       cout << " HV step  " << testInfo->hVStep(argv[iFile]) << endl; 
+     
+
      
      cout << endl;
      shipData = new ShippingData(testInfo->pmtID(argv[iFile]));
@@ -127,7 +127,9 @@ int main(Int_t argc, Char_t *argv[]){
      //------------
      //  Dark Rate
      Bool_t investigateDarkRate = kTRUE;
-     if(investigateDarkRate){
+     if( investigateDarkRate && 
+	 testInfo->test(argv[iFile])=='D'){
+       
        cout << " Hamamatsu Dark Rate = " << shipData->GetDR() << endl;
        
        if(oldRootFileVersion){
