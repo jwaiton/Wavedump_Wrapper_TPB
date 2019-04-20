@@ -105,21 +105,25 @@ void PMTAnalyser::PlotWaveform(Int_t firstEntry){
 
   static const int nWaveforms = 1;
   
-  TH1F * hWave[nWaveforms];
+  TH1F *  hWave[nWaveforms];
+  TH1F *  hWaveFFT[nWaveforms];
   TString hName;
+
   TString hNameTemp = "hWave_%d";
   
   for (int i = 0 ; i < nWaveforms ; i++){
-    
+    hNameTemp = "hWave_%d";
     hName.Form(hNameTemp,i);
     hWave[i] = new TH1F(hName,"Waveform;Time (ns); Voltage (ADC counts)",
 			NSamples, 0., waveformDuration);
+    
+    hNameTemp = "hWaveFFT_%d";
+    hName.Form(hNameTemp,i);
+    hWaveFFT[i]= new TH1F(hName,"hWaveFFT",
+			  NSamples, 0, NSamples);
   
   }
 
-  TH1F * hWaveFFT  = new TH1F("hWaveFFT","hWaveFFT",
-   			      NSamples, 0, NSamples);
-  
 
   canvas->Divide(2,nWaveforms);
   
@@ -143,16 +147,17 @@ void PMTAnalyser::PlotWaveform(Int_t firstEntry){
     return;
   }
   
+  int canNo = 0;
   while ( entryRelFrst < nWaveforms && 
 	  firstEntry != -1 ){
 
     cout << endl;
     cout << " entry = " << entry << endl;
     
-    
     entryRelFrst = entry-firstEntry;
-    
-    canvas->cd(entryRelFrst+1);
+
+    canNo++;
+    canvas->cd(canNo);
     
     LoadTree(entry);
     rawRootTree->GetEntry(entry);  
@@ -169,24 +174,27 @@ void PMTAnalyser::PlotWaveform(Int_t firstEntry){
     tStr.Form("Entry %lld", entry);
     latex->DrawLatex(0.6,0.8,tStr);
     
-    canvas->cd(entryRelFrst+1+1);
-    
-    hWaveFFT->Reset();
+    canNo++;
+    canvas->cd(canNo);
+        
+    hWaveFFT[entryRelFrst]->Reset();
 
-    hWave[entryRelFrst]->FFT(hWaveFFT ,"MAG");
+    hWave[entryRelFrst]->FFT(hWaveFFT[entryRelFrst] ,"MAG");
     
     Float_t dx = nsPerSample * 1.E-9;
     
     // convert to frequency bins
-    hWaveFFT = FFTShift(hWaveFFT,dx);
+    hWaveFFT[entryRelFrst] = FFTShift(hWaveFFT[entryRelFrst],dx);
 
     gPad->SetLogy();
-    hWaveFFT->Draw();
+    hWaveFFT[entryRelFrst]->Draw();
       
     entry++;
     entryRelFrst++;
   }
   
+  if(firstEntry==-1)
+    return;
   
   hNameTemp = "./WaveForms/";
   
@@ -583,7 +591,6 @@ Int_t PMTAnalyser::FFT_Filter(){
   TH1F * hWaveFFT  = new TH1F("hWaveFFT","hWaveFFT",
 			      NSamples, 0, NSamples);
   
-
   Long64_t ientry;
   Long64_t nentries = rawRootTree->GetEntriesFast();
 

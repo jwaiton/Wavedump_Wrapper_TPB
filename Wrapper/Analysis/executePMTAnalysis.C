@@ -86,10 +86,7 @@ int main(Int_t argc, Char_t *argv[]){
        cerr << " Error, Check File: " << argv[iFile] << endl; 
        return -1;
      }
-
      
-
-          
      // connect to tree in input file
      file->GetObject((TString)testInfo->GetTreeName(argv[iFile]),tree); 
      
@@ -102,7 +99,7 @@ int main(Int_t argc, Char_t *argv[]){
      PMT->SetStyle();
      
      // Limit to subset of entries for quicker testing
-     PMT->SetTestMode(kTRUE);
+     //PMT->SetTestMode(kTRUE);
      
      // Towards saving analysis output 
      //PMT->MakeCalibratedTree();
@@ -121,7 +118,7 @@ int main(Int_t argc, Char_t *argv[]){
      }
      //------------
      // Timing
-     //PMT->TimeOfPeak();
+     PMT->TimeOfPeak();
 
      //------------
      //  Dark Rate
