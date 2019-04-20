@@ -89,12 +89,7 @@ int main(Int_t argc, Char_t *argv[]){
 
      
 
-     
-     cout << endl;
-     shipData = new ShippingData(testInfo->pmtID(argv[iFile]));
-
-     //cout << " Nominal Voltage =  " <<  shipData->GetEBB() << endl;
-
+          
      // connect to tree in input file
      file->GetObject((TString)testInfo->GetTreeName(argv[iFile]),tree); 
      
@@ -109,11 +104,15 @@ int main(Int_t argc, Char_t *argv[]){
      // Limit to subset of entries for quicker testing
      PMT->SetTestMode(kTRUE);
      
+     // Towards saving analysis output 
      //PMT->MakeCalibratedTree();
+
+     shipData = new ShippingData(testInfo->pmtID(argv[iFile]));
      
-     int event = -1;
+     int event = 0;
      
      while ( event!= -1 ){
+       cout << endl;
        cout << " Which waveform to plot?" << endl;
        cout << " enter event number " << endl;
        cout << " (-1 to quit) " << endl;
@@ -122,15 +121,13 @@ int main(Int_t argc, Char_t *argv[]){
      }
      //------------
      // Timing
-     PMT->TimeOfPeak();
+     //PMT->TimeOfPeak();
 
      //------------
      //  Dark Rate
      Bool_t investigateDarkRate = kTRUE;
      if( investigateDarkRate && 
 	 testInfo->test(argv[iFile])=='D'){
-       
-       cout << " Hamamatsu Dark Rate = " << shipData->GetDR() << endl;
        
        if(oldRootFileVersion){
 	 cout << " Dark Rate method only applicable to new BinToRoot files " << endl;

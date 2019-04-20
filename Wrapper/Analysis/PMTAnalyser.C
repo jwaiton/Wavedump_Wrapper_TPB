@@ -67,63 +67,124 @@ void PMTAnalyser::MakeCalibratedTree(){
   return;  
 }
 
+// Authored by Steve Quillin
+// dx is the untransformed data spacing 
+TH1F* PMTAnalyser::FFTShift(TH1F* thefft, Float_t dx){ 
+  
+  Int_t   N    = thefft->GetNbinsX(); 
+  Float_t df   = 1./dx/N / 1.E6; 
+  Int_t   newN = N/2; 
+
+  TString tStr = "";
+  tStr.Form(" Counts / %.1f MHz ",df);
+  
+  TString label;
+  label  = "FFT Peak Frequency;";
+  label += "FFT Frequency (MHz);";
+  label += tStr;
+
+    
+  TH1F* fftshift=new TH1F("fftshift",
+			  label,
+			  newN, 0.,df*newN); 
+  
+
+  for (int qq=1; qq<=newN; qq++) 
+    fftshift->SetBinContent(qq,thefft->GetBinContent(qq)); 
+  
+  return fftshift; 
+} 
 
 void PMTAnalyser::PlotWaveform(Int_t firstEntry){
   
   TCanvas * canvas = new TCanvas();
   
-  if(Test=='A'){
-    Float_t w = 20000., h = 10000.;
-    w = w + canvas->GetWw();
-    h = h + canvas->GetWh();
-    canvas->SetWindowSize(w,h);
-  }
+  Float_t w = 1000., h = 400.;
+  w = w + canvas->GetWw();
+  h = h + canvas->GetWh();
+  canvas->SetWindowSize(w,h);
 
-  static const int nEntries = 5;
+  static const int nWaveforms = 1;
   
-  TH1F * hWave[nEntries];
+  TH1F * hWave[nWaveforms];
   TString hName;
   TString hNameTemp = "hWave_%d";
   
-  for (int i = 0 ; i < nEntries ; i++){
+  for (int i = 0 ; i < nWaveforms ; i++){
     
     hName.Form(hNameTemp,i);
-    hWave[i] = new TH1F(hName,"hWaveform;Time /ns;ADC counts",
+    hWave[i] = new TH1F(hName,"Waveform;Time (ns); Voltage (ADC counts)",
 			NSamples, 0., waveformDuration);
   
   }
 
-  //   TH1F * hWaveFFT  = new TH1F("hWaveFFT","hWaveFFT",
-  // 			      NSamples, 0, NSamples);
+  TH1F * hWaveFFT  = new TH1F("hWaveFFT","hWaveFFT",
+   			      NSamples, 0, NSamples);
   
 
-  canvas->Divide(1,nEntries);
+  canvas->Divide(2,nWaveforms);
+  
+  TLatex * latex = new TLatex();
+  latex->SetNDC();
+  latex->SetTextSize(0.025);
+  latex->SetTextAlign(12);  //align at top
+  
+  TString tStr = " %d entry ";
+  
   float aoff = 8700.;  
   
-  int entry    = firstEntry;
+  Long64_t entry    = firstEntry;
   int entryRelFrst = 0;
-  while ( entryRelFrst < (nEntries-1) && 
-	  firstEntry != -1){
+
+  Long64_t nFileEntries = rawRootTree->GetEntriesFast();   
+  
+  if( entry > (nFileEntries-1) ){
+    cout << endl;
+    cout << " Last entry in file is " << (nFileEntries-1) << endl;
+    return;
+  }
+  
+  while ( entryRelFrst < nWaveforms && 
+	  firstEntry != -1 ){
 
     cout << endl;
     cout << " entry = " << entry << endl;
+    
     
     entryRelFrst = entry-firstEntry;
     
     canvas->cd(entryRelFrst+1);
     
     LoadTree(entry);
-    rawRootTree->GetEntry(entry);   
+    rawRootTree->GetEntry(entry);  
 
     for( int iSample = 0 ; iSample < NSamples; iSample++){
       hWave[entryRelFrst]->SetBinContent(iSample+1,(aoff - waveform[iSample]));
+      
     }
     
     hWave[entryRelFrst]->SetMinimum(400);
     hWave[entryRelFrst]->SetMaximum(700);
     hWave[entryRelFrst]->Draw();
+    
+    tStr.Form("Entry %lld", entry);
+    latex->DrawLatex(0.6,0.8,tStr);
+    
+    canvas->cd(entryRelFrst+1+1);
+    
+    hWaveFFT->Reset();
 
+    hWave[entryRelFrst]->FFT(hWaveFFT ,"MAG");
+    
+    Float_t dx = nsPerSample * 1.E-9;
+      
+    hWaveFFT = FFTShift(hWaveFFT,dx);
+
+    gPad->SetLogy();
+    hWaveFFT->Draw();
+      
     entry++;
+    entryRelFrst++;
   }
   
   
@@ -516,7 +577,7 @@ Int_t PMTAnalyser::FFT_Filter(){
   
   if (rawRootTree == 0) return -1;
 
-  TH1D * hWave = new TH1D("hWave","hWaveform;Time /ns;ADC counts",
+  TH1F * hWave = new TH1F("hWave","hWaveform;Time /ns;ADC counts",
 			  NSamples, 0., waveformDuration);
   
   TH1F * hWaveFFT  = new TH1F("hWaveFFT","hWaveFFT",
@@ -610,7 +671,7 @@ TCanvas * PMTAnalyser::Make_FFT_Canvas()
 
   double waveformDuration = NSamples * nsPerSample;
   
-  TH1D* hWave = new TH1D("hWave","hWaveform;Time /ns;ADC counts",
+  TH1F* hWave = new TH1F("hWave","hWaveform;Time /ns;ADC counts",
 			 NSamples, 0., waveformDuration);
   
   TH1F* hWaveFFT = new TH1F("hWaveFFT","hWaveFFT;",
@@ -620,10 +681,10 @@ TCanvas * PMTAnalyser::Make_FFT_Canvas()
 				    "hWaveFFT_MaxBin",
 				    NSamples, 0, NSamples);
   
-  TH1D* hMaxADC = new TH1D("hMaxADC","Waveform ADC Maximum;maxADC;counts",
+  TH1F* hMaxADC = new TH1F("hMaxADC","Waveform ADC Maximum;maxADC;counts",
 			   1000, 200.,1200.); 
   
-  TH1D* hMaxADC_Filtered = new TH1D("hMaxADC_Filtered",
+  TH1F* hMaxADC_Filtered = new TH1F("hMaxADC_Filtered",
 				    "hMaxADC_Filtered;maxADC;counts",
 				    1000, 200.,1200.);
   

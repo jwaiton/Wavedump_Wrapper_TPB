@@ -5,6 +5,9 @@
 #include <TChain.h>
 #include <TFile.h>
 
+#include <iostream>
+using namespace std;
+
 class ShippingData {
 public :
    TTree          *fTree;   //!pointer to the analyzed TTree or TChain
@@ -34,7 +37,8 @@ public :
    TBranch        *b_TTS;   //!
    TBranch        *b_PTV;   //!
 
-   ShippingData(int PMT = 0);
+   ShippingData(int PMT = 0,
+		int verbosity = 1);
    virtual ~ShippingData();
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
@@ -63,14 +67,18 @@ public :
    Float_t userTTS;
    Float_t userPTV;
 
+   Bool_t isAllSet;
    void  SetAll(int userPMT);
 
+   void  PrintAll();
+   
 };
 
 #endif
 
 #ifdef ShippingData_cxx
-ShippingData::ShippingData(int PMT)
+ShippingData::ShippingData(int PMT, 
+			   int verbosity)
 {
   TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("ShippingData.root");
   if (!f || !f->IsOpen()) {
@@ -79,8 +87,21 @@ ShippingData::ShippingData(int PMT)
 
   TTree * tree = nullptr;
   f->GetObject("ShippingData",tree);
+  
+  isAllSet = kFALSE;
+  
   Init(tree);
   SetAll(PMT);
+  
+  if(verbosity > 0 ){
+    if (isAllSet){
+      PrintAll();
+    }
+    else{
+      cout << endl;
+      cout << " Shipping Data Not Set " << endl;
+    }
+  }
   
 }
 
