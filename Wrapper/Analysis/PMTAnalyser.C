@@ -464,11 +464,9 @@ void PMTAnalyser::TimeOfPeak()
 		     maxPeakT_ns + rangeFit );
     
     fPeakTimeGaus = hPeakT_ns_2->GetFunction("gaus");  
-    
-  }
   
-  hPeakT_ns_2->GetFunction("gaus")->SetLineColor(kBlue);
-
+    hPeakT_ns_2->GetFunction("gaus")->SetLineColor(kBlue);
+  }
   
   hPeakT_ns_1->SetMinimum(0);
   hPeakT_ns_1->Draw();
