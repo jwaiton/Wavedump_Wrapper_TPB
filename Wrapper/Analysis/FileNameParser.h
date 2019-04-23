@@ -17,13 +17,13 @@ public:
   std::string GetFileName(std::string filePath);
   std::string GetFileID(std::string fileName);
   std::string GetTreeName(std::string filePath);
+  std::string Get_hQ_Fixed_Name(std::string filePath);
   int    pmtID(std::string filename);
   int    run(std::string filename);
   int    location(std::string filename);
   char   test(std::string filename);
   int    hVStep(std::string filename);
   
-  // private:
   int  PMT;   
   int  Run;   
   int  Loc;   
@@ -62,7 +62,6 @@ FileNameParser::FileNameParser(std::string treeName){
   Loc    = location(fileName);
   Test   = test(fileName);
   HVStep = hVStep(fileName); // 0 if Test!='G'
-  
   
   std::cout << std::endl;
   std::cout << " Run    = " << Run    << std::endl;
