@@ -67,6 +67,17 @@ std::string FileNameParser::GetTreeName(std::string filePath){
   return treeName; 
 }
 
+
+std::string FileNameParser::Get_hQ_Fixed_Name(std::string filePath){
+  
+  std::string hName = "hQ_Fixed_" + GetFileID(GetFileName(filePath));
+  
+  return hName; 
+}
+
+
+
+
 int FileNameParser::pmtID(std::string filename){
   return parseInt(filename,"PMT_","Loc");
 }
