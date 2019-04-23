@@ -39,23 +39,24 @@
 #include <string>
 #include "TFile.h"
 #include "TTree.h"
+#include "TH1.h"
 #include "TString.h"
 #include "PMTAnalyser.h"
 #include "ShippingData.h"
 #include "FileNameParser.h"
     
-#include "TCanvas.h"
-
 using namespace std;
 
 int main(Int_t argc, Char_t *argv[]){
-  
-  TFile * file = nullptr;
-  TTree * tree = nullptr;
-  
-  PMTAnalyser * PMT = nullptr;
 
-  ShippingData * shipData = nullptr;
+  TFile * outFile = nullptr;  
+  TFile * inFile = nullptr;
+  
+  TTree * tree = nullptr;
+    
+  PMTAnalyser * PMT = nullptr;
+ 
+  //  ShippingData * shipData = nullptr;
   
   FileNameParser * testInfo = new FileNameParser();
   
@@ -75,20 +76,27 @@ int main(Int_t argc, Char_t *argv[]){
     return 2;
   }
 
+  outFile = new TFile("./output.root","RECREATE");
+
+  // Testing reading from root file writing to new file
+  TH1F  * hQ   = nullptr;// new TH1F("hQ","hQ",100,0,10);
+
   // argv should be a path to a file
   // or list of files ( wildcards work )
   for( int iFile = 1 ; iFile < argc ; iFile++){
      
-     file = new TFile(argv[iFile],"READ");
+     inFile = new TFile(argv[iFile],"READ");
      
-     if (!file || !file->IsOpen()) {
-       file = new TFile();
+     if (!inFile || !inFile->IsOpen()) {
+       inFile = new TFile();
        cerr << " Error, Check File: " << argv[iFile] << endl; 
        return -1;
      }
      
      // connect to tree in input file
-     file->GetObject((TString)testInfo->GetTreeName(argv[iFile]),tree); 
+     TString treeName = (TString)testInfo->GetTreeName(argv[iFile]);
+     inFile->GetObject(treeName,tree); 
+     
      
      // initalise analysis object using tree 
      PMT = new PMTAnalyser(tree,
@@ -104,7 +112,7 @@ int main(Int_t argc, Char_t *argv[]){
      // Towards saving analysis output 
      //PMT->MakeCalibratedTree();
 
-     shipData = new ShippingData(testInfo->pmtID(argv[iFile]));
+     //shipData = new ShippingData(testInfo->pmtID(argv[iFile]));
      
      int event = 0;
      
@@ -117,8 +125,8 @@ int main(Int_t argc, Char_t *argv[]){
        PMT->PlotWaveform(event);
      }
      //------------
-     // Timing
-     PMT->TimeOfPeak();
+     // Timing Study
+     // PMT->TimeOfPeak();
 
      //------------
      //  Dark Rate
@@ -136,7 +144,7 @@ int main(Int_t argc, Char_t *argv[]){
      }
      
      //------------
-     //  FFT 
+     //  FFT investigation
      Bool_t investigateFFT = kFALSE;
      // Make Filtered Histograms
      if(investigateFFT){ 
@@ -163,11 +171,28 @@ int main(Int_t argc, Char_t *argv[]){
 	 cout << " No canvas produced " << endl;
        }
      }
-       
+     
+     inFile->Delete();
+
+     TString hName = testInfo->Get_hQ_Fixed_Name(argv[iFile]); 
+     hQ = (TH1F*)inFile->Get(hName);
+     
+     // Writing to file
+     // put file in same directory as objects
+     outFile->cd();
+     
+     // Write specific histogram
+     hQ->Write();
+     
+     // hQ->SetDirectory(outFile);
+     
+     // Write objects in directory 
+     // outFile->Write();
+     
+     outFile->Close();
+     
   }
-  
-  // To Do:
-  // TFile * resultsFile = new TFile("Results","RECREATE");
+
   
   return 1;
 }
