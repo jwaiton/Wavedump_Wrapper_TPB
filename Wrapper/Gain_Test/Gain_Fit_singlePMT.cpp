@@ -284,9 +284,9 @@ RooAddPdf* makePMTPDF(RooRealVar* counts,double pmval, double psval, double psva
 
   RooAddPdf* pedpdf = new RooAddPdf("pedpdf", "pedpdf",RooArgList(*pedgauss,*pedgauss2), *fped);
 
-  /*** construct the exponential fit to the thermionic emission ***/
-  RooRealVar* vm = new RooRealVar("vmin","vmin",pmval+psval*expvar,0,14); //TODO best nominal val so far: pmval+psval*4, vaval range 0,0.04
-  RooRealVar* va = new RooRealVar("valpha","valpha",vaval,0,0.06); //changed from 0.06
+  /*** construct the exponential fit to the thermionic emission/under-amplified signals ***/
+  RooRealVar* vm = new RooRealVar("vmin","vmin",pmval+psval*expvar,0,14); // start of exponential
+  RooRealVar* va = new RooRealVar("valpha","valpha",vaval,0,0.06); //exponential decay constant
   RooExpWindow* vexp = new RooExpWindow("vexp","vexp",*counts,*va,*vm);
 
   /***   construct the single- and multiple-pe pdf ***/
@@ -295,14 +295,6 @@ RooAddPdf* makePMTPDF(RooRealVar* counts,double pmval, double psval, double psva
   RooRealVar* s0 = new RooRealVar("sigma0","sigma0", sval,0, 10*sval);  // peak sigma 
 
   RooRealVar* npe = new RooRealVar ("npe","npe", f1peval,0.01,1); // number of photo electrons
-
-  /*** create the sum-of-Gaussians fit - not currently used ***/
-//  RooRealVar* km2 = new RooRealVar("kmean2","kmean2",mval/5,  0, mval  );
-//  RooRealVar* ks2 = new RooRealVar("ksigma2","ksigma2",sval/sqrt(10.),1, sval);
-//  RooFormulaVar* k = new RooFormulaVar("k","k", "mean0/kmean2",RooArgSet(*km2,*m0));
-
-//  RooAddPdf* pG1 = makePGaussPDF(1,counts,k,km2,ks2,pedm,peds, m0 ,mval,sval);
-//  RooAddPdf* pG2 = makePGaussPDF(2,counts,k,km2,ks2,pedm,peds,m0,mval,sval);
 
   std::string form1 = "mean0 + pedmean";
   RooFormulaVar* m =  new RooFormulaVar("mean","mean",form1.c_str(),RooArgSet(*m0,*pedm));
@@ -392,7 +384,7 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
    RooAddPdf* pdf = makePMTPDF(counts,sample);
    TF1* fmodel = pdf->asTF( *counts,fitpars,*counts);
    double vpos = fmodel->GetMinimumX(res->ped.value,res->pemean.value);
-   double ppos = fmodel->GetMaximumX(res->pemean.value - res->pewidth.value, res->pemean.value + 5*res->pewidth.value); //TODO increased the minimum value to better avoid the pedestal res->pemean.value - res->pewidth.value/2. 
+   double ppos = fmodel->GetMaximumX(res->pemean.value - res->pewidth.value, res->pemean.value + 5*res->pewidth.value); 
    histo->Fill(vpos);
    histo2->Fill(ppos);
 
@@ -490,9 +482,9 @@ Result* fitModel(TH1F* fhisto, int pmt, int hv,
   xachse->SetTitle("Relative Charge");
   //frame->SetMaximum(max);
   frame->Draw();
-//  canvas->SaveAs(Form("./Plots/FullFit/Fit_Run_1_PMT_%d_HV_%d_final_with2pe.C",pmt,hv));
+//  canvas->SaveAs(Form("./Plots/Fit/Fit_Run_1_PMT_%d_HV_%d.C",pmt,hv));
   gPad->SetLogy();  
-  canvas->SaveAs(Form("./Plots/FullFit/Fit_Run_1_PMT_%d_HV_%d_final_with2pe.png",pmt,hv));
+  canvas->SaveAs(Form("./Plots/Fit/Fit_Run_1_PMT_%d_HV_%d.png",pmt,hv));
  
   Result* res = propagateAndFill(counts,model,fres);
  
@@ -615,12 +607,12 @@ int main(int argc,char **argv){
   for (int r=0;r<5;r++){ 
     
     int hv = r+1; // gain test number
-    sprintf(histname, "../../RawRootData2/Run_%d_PMT_%d_Loc_%d_HV_%d.root",run,pmt,loc,hv); 
+    sprintf(histname, "../../RawRootData/Run_%d_PMT_%d_Loc_%d_HV_%d.root",run,pmt,loc,hv); 
     TFile s(histname);
     s.ls();
 
     char root_name[50];
-    sprintf(root_name, "hQ_Filter_Run_%d_PMT_%d_Loc_%d_HV_%d",run,pmt,loc,hv);//TODO try with gate-around-peak histograms 
+    sprintf(root_name, "hQ_Filter_Run_%d_PMT_%d_Loc_%d_HV_%d",run,pmt,loc,hv);
     TH1D *speData = (TH1D*)s.Get(root_name);
 
     TH1F* fhisto = h2h(speData);
@@ -651,7 +643,7 @@ int main(int argc,char **argv){
 
   TString canvasNameTemp    = "", canvasName    = "";
 
-  canvasNameTemp = "Canvas_Run_%d_PMT_%d_Loc_%d_G_final_with2pe";
+  canvasNameTemp = "Canvas_Run_%d_PMT_%d_Loc_%d_G";
   canvasName.Form(canvasNameTemp,run,pmt,loc);
 
   TCanvas *canvas=new TCanvas(canvasName,canvasName,1);
@@ -659,8 +651,8 @@ int main(int argc,char **argv){
   TGraph *Gain;
 
   /*** Plot gain vs voltage for the PMT ***/
-  Gain = new TGraph(4,hvVals,gainVals);
-  TGraphErrors *GainErrors = new TGraphErrors(4,hvVals,gainVals,hvValsError,gainValsError);
+  Gain = new TGraph(5,hvVals,gainVals);
+  TGraphErrors *GainErrors = new TGraphErrors(5,hvVals,gainVals,hvValsError,gainValsError);
 
 		
   /*** Do the gain fit ***/
@@ -699,10 +691,10 @@ int main(int argc,char **argv){
   // if not, create it and set up tree and branches
   // if it exists, add to the branches
   
-  ifstream fileStream("voltages_final_with2pe.root");
+  ifstream fileStream("voltages.root");
   if(!fileStream.good()){
 
-    TFile *outfile = new TFile("voltages_final_with2pe.root","RECREATE");
+    TFile *outfile = new TFile("voltages.root","RECREATE");
 
     TNtuple *voltages = new TNtuple("voltages","voltages","pmt:operatingHV:operatingHVError:nominalHV:chi2:NDf:prob");
     voltages->Fill(pmt,operatingHV,operatingHVError,nominalHV,chi2,NDf,prob);
@@ -712,7 +704,7 @@ int main(int argc,char **argv){
   }  
 
   else {
-    TFile *outfile = new TFile("voltages_final_with2pe.root","UPDATE");
+    TFile *outfile = new TFile("voltages.root","UPDATE");
     TNtuple *voltages = (TNtuple*)outfile->Get("voltages");
     voltages->Fill(pmt,operatingHV,operatingHVError,nominalHV,chi2,NDf,prob);
     voltages->Write("",TObject::kOverwrite);
