@@ -1,3 +1,44 @@
+/*
+ * A program to calculate the operating voltage for 10^7 gain
+ *
+ * Author
+ * Liz Kneale
+ * eskneale1@sheffield.ac.uk
+ * 
+ * Adapted from SPE_Fit.cpp by Tomi Akindele
+ *
+ * This program reads in the charge spectra output
+ * from BintoRoot.cpp in Wavedump_Wraper/RawRootData, 
+ * extracts SPE charge output from spectra fits 
+ * and calculates operating voltage from 
+ * gain curve fit.
+ *
+ * Outputs operating voltage and other data to ROOT ntuple
+ * and plots of SPE spectrum fits and gain curve fits. 
+ * Requires ./Plots and ./Plots/Fit in Gain_Tests directory.
+ *
+ *
+ * To build:
+ *
+ * First build the RooExpWindow roofit class:
+ * make -f Makefile-1
+ *
+ * then:
+ * make -f Makefile Gain_Fit_singlePMT
+ *
+ * To run:
+ *
+ * ./Gain_Fit_singlePMT
+ *
+ * then input the data as prompted.
+ *
+ * Data required: pmt, rig location, run
+ *
+ * Dependencies:
+ * ROOT
+ */
+
+
 #include <iostream>
 #include <cmath>
 #include <cstdlib>
