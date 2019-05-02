@@ -204,9 +204,12 @@ float GetDelay(int run = 0){
 	    run < 30  ) // Post-underground at surface
     return 60.;
   else if ( run > 29 && 
-	    run < 100 ) // Noise investigation
+	    run < 40 ) // Noise investigation
     return 70.;
-  else if ( run > 999 ) // Clean Lab
+  else if ( run > 39 && 
+	    run < 50 ) // 
+    return 200.; 
+  else if ( run > 999 ) // Bine
     return 100.;
   else                  // Default
     return 60.;
@@ -1134,6 +1137,11 @@ int ProcessBinaryFile(TString inFilePath,
     maxY = GetVoltageRange(digitiser)*(16 + 2)/32*1.0e3;
   }
   
+  if(run > 39 && run < 50){
+    minY = GetVoltageRange(digitiser)*(16 - 3)/32*1.0e3;
+    maxY = GetVoltageRange(digitiser)*(16    )/32*1.0e3;
+  } 
+
   hTV->SetAxisRange(minY,maxY,"Y");
 
   float minX = 0.;
@@ -1148,6 +1156,11 @@ int ProcessBinaryFile(TString inFilePath,
   float lineYMin = minY * (16 - 1)/(16 - 2); 
   float lineYMax = maxY * (16 + 0.25)/(16 + 1); 
   
+  // if( run > 39 && run < 50 ){
+  //   lineYMin = minY * (16 - 1)/(16 - 2); 
+  //   lineYMax = maxY * (16 + 0.25)/(16 + 1); 
+  // }
+
   float lineXMin = GetDelay(run) - GetGateWidth();
   float lineXMax = GetDelay(run) + GetGateWidth();
   
@@ -1297,7 +1310,9 @@ char GetSamplingSetting(char digitiser,
 
   if  (digitiser == 'V')
     return 'S'; 
-  if  (run > 9999)
+  if  ( run > 9999 || 
+	(run > 39 && run < 50) // cable test
+	)
     return 'L';
   else 
     return GetSamplingSettingUser();
