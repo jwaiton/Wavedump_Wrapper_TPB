@@ -1,0 +1,30 @@
+CFLAGS=`root-config --cflags` -fPIC -g -Wall -Werror
+LDFLAGS=`root-config --ldflags --glibs` -lRooFit -lRooFitCore -lMinuit 
+CC=gcc
+MAJOR=0
+MINOR=1
+NAME=RooExpWindow
+VERSION=$(MAJOR).$(MINOR)
+#temp : temp.cpp RooExpWindow.cxx RooExpWindowDict.cxx libRooExpWindow.so
+#	g++ -o temp temp.cpp RooExpWindow.cxx RooExpWindowDict.cxx $(CFLAGS) $(LDFLAGS)
+
+
+lib$(NAME).so: lib$(NAME).so.$(VERSION)
+	ln -sf lib$(NAME).so.$(VERSION) lib$(NAME).so.1
+	ln -sf lib$(NAME).so.$(VERSION) lib$(NAME).so
+
+lib$(NAME).so.$(VERSION): $(NAME).o $(NAME)Dict.o
+	$(CC) -shared -Wl,-soname,lib$(NAME).so.$(MAJOR) $^ -o $@ -lc
+
+$(NAME)Dict.o: $(NAME)Dict.cxx
+	$(CC) -Wall -c $(NAME)Dict.cxx $(CFLAGS) $(LDFLAGS)
+
+$(NAME)Dict.cxx : $(NAME).h LinkDef.h
+	rootcint -f $(NAME)Dict.cxx -c $(NAME).h LinkDef.h
+
+$(NAME).o: $(NAME).cxx $(NAME).h
+	$(CC) -c $(NAME).cxx $(CFLAGS) $(LDFLAGS)
+
+clean: 
+	$(RM) $(NAME).o $(NAME)Dict.* lib$(NAME).so* 
+
