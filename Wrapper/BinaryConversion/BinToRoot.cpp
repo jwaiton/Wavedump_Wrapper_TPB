@@ -204,8 +204,11 @@ float GetDelay(int run = 0){
 	    run < 30  ) // Post-underground at surface
     return 60.;
   else if ( run > 29 && 
-	    run < 100 ) // Noise investigation
+	    run < 40 ) // Noise investigation
     return 70.;
+  else if ( run > 39 && 
+	    run < 50 ) // Cable Test
+    return 150.;
   else if ( run > 999 ) // Clean Lab
     return 100.;
   else                  // Default
@@ -1297,7 +1300,7 @@ char GetSamplingSetting(char digitiser,
 
   if  (digitiser == 'V')
     return 'S'; 
-  if  (run > 9999)
+  if  (run > 39) 
     return 'L';
   else 
     return GetSamplingSettingUser();
