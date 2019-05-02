@@ -98,9 +98,9 @@ void PMTAnalyser::PlotWaveform(Int_t firstEntry){
   
   TCanvas * canvas = new TCanvas();
   
-  Float_t w = 1000., h = 400.;
-  w = w + canvas->GetWw();
-  h = h + canvas->GetWh();
+  Float_t w = 2000., h = 500.;
+  //w = w + canvas->GetWw();
+  //h = h + canvas->GetWh();
   canvas->SetWindowSize(w,h);
 
   static const int nWaveforms = 1;
@@ -167,8 +167,8 @@ void PMTAnalyser::PlotWaveform(Int_t firstEntry){
       
     }
     
-    hWave[entryRelFrst]->SetMinimum(400);
-    hWave[entryRelFrst]->SetMaximum(700);
+    //hWave[entryRelFrst]->SetMinimum(450);
+    //hWave[entryRelFrst]->SetMaximum(850);
     hWave[entryRelFrst]->Draw();
     
     tStr.Form("Entry %lld", entry);
@@ -208,6 +208,11 @@ void PMTAnalyser::PlotWaveform(Int_t firstEntry){
   //hName.Form(hNameTemp,entry);
   hName = hNameTemp;
   canvas->SaveAs(hName);
+
+  for (int i = 0 ; i < nWaveforms ; i++){
+    hWave[i]->Delete();
+    hWaveFFT[i]->Delete();
+  }    
   
   
 }
