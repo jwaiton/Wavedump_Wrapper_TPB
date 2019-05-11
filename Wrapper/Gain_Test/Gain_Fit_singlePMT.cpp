@@ -612,7 +612,7 @@ int main(int argc,char **argv){
     s.ls();
 
     char root_name[50];
-    sprintf(root_name, "hQ_Filter_Run_%d_PMT_%d_Loc_%d_HV_%d",run,pmt,loc,hv);
+    sprintf(root_name, "hQ_Fixed_Run_%d_PMT_%d_Loc_%d_HV_%d",run,pmt,loc,hv);
     TH1D *speData = (TH1D*)s.Get(root_name);
 
     TH1F* fhisto = h2h(speData);
