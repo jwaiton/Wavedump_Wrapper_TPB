@@ -1168,6 +1168,11 @@ int ProcessBinaryFile(TString inFilePath,
   float lineYMin = minY * (16 - 1)/(16 - 2); 
   float lineYMax = maxY * (16 + 0.25)/(16 + 1); 
   
+  // if( run > 39 && run < 50 ){
+  //   lineYMin = minY * (16 - 1)/(16 - 2); 
+  //   lineYMax = maxY * (16 + 0.25)/(16 + 1); 
+  // }
+
   float lineXMin = GetDelay(run) - GetGateWidth();
   float lineXMax = GetDelay(run) + GetGateWidth();
   
