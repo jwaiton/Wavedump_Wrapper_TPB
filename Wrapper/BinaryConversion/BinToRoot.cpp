@@ -194,21 +194,22 @@ float GetWaveformLength(char digitiser,
 
 float GetDelay(int run = 0){
   
-  if      ( run == 0 ) // 12th October
+  if      ( run ==  0 ) // 12th October
     return 60.; 
-  else if ( run < 10 ) // 16th October
+  else if ( run <  10 ) // 16th October
     return 50.;
-  else if ( run < 20 ) // Underground
+  else if ( run <  20 ) // Underground
     return 90.;
-  else if ( run > 19 &&
-	    run < 30  ) // Post-underground at surface
+  else if ( run >= 20 &&
+	    run <  30  ) // Post-underground at surface
     return 60.;
-  else if ( run > 29 && 
-	    run < 40 ) // Noise investigation
+  else if ( run >= 30 && 
+	    run <  40 )  // Noise investigation
     return 70.;
-  else if ( run > 39 && 
-	    run < 50 ) // Cable Test
-    return 150.;
+  else if ( run == 40 ) // Dark Box 
+    return 120.;
+  else if ( run == 41 ) // Dark Box 
+    return 160.;
   else if ( run > 999 ) // Clean Lab
     return 100.;
   else                  // Default
@@ -276,7 +277,7 @@ bool IsPeakInRange(float peakT_ns, char digitiser,
 }
 
 float GetGateWidth(){
-  return 50;
+  return 50.;
 }
 
 // integration windows fixed wrt trigger
@@ -579,9 +580,9 @@ int ProcessBinaryFile(TString inFilePath,
 
   //----------------------
   // Variables for testing
-  bool  testMode  = false;
+  bool  testMode  = true;
   bool  keepGoing = true;
-  int   maxEvents = 10000;
+  int   maxEvents = 100000;
   
   bool makeFilteredHisto = true;
   
@@ -695,7 +696,9 @@ int ProcessBinaryFile(TString inFilePath,
   
   Int_t nBinsX  = 512;
   Float_t rangeQ[2] = {-500.,1500.};
-  
+  Float_t rangeT[2] = {0.,220.};
+  Int_t  binsT = 110;
+
   TH1F * hQ_Fixed = new TH1F(hQ_FixedName,
 			     "Gate around delay;Charge (mV ns);Counts",
 			     nBinsX,rangeQ[0],rangeQ[1]);
@@ -756,11 +759,24 @@ int ProcessBinaryFile(TString inFilePath,
   rangeQ[1] = rangeQ[1] * GetnsPerSample(digitiser,
 					 samplingSetting);
   
+  rangeT[0] = 0.;
+  rangeT[1] = GetWaveformLength(digitiser,test,samplingSetting);
+  binsT = GetNSamples(digitiser,test);
+  
+  if( rangeT[1] > 220.){
+
+    rangeT[0] = GetDelay(run) - (GetGateWidth()*1.5);
+    rangeT[1] = GetDelay(run) + (GetGateWidth()*1.5);
+	
+    binsT = binsT*(Int_t)((rangeT[1]-rangeT[0])/rangeT[0]);
+  }
+  
+  
+  
+
   TH2F * hTV = new TH2F("hTV",label,
-			GetNSamples(digitiser,test),
-			0.,GetWaveformLength(digitiser,
-					     test,
-					     samplingSetting),
+			binsT,
+			rangeT[0],rangeT[1],
 			GetNVDCBins(digitiser),
 			0.,GetVoltageRange(digitiser)*1.0e3);
 
@@ -925,6 +941,7 @@ int ProcessBinaryFile(TString inFilePath,
       // read 4 bits
       else if( digitiser == 'D' ){
 	fileStream.read((char*)&floatVDC,sizeof(float));
+	// To Do: check for bias here
 	VDC = (short)floatVDC;
       }
       else {
@@ -1007,9 +1024,6 @@ int ProcessBinaryFile(TString inFilePath,
     // necessary for when event-level variables are used
     // such as waveform minimum
     for (short iSample = 0; iSample < GetNSamples(digitiser,test); iSample++){
-
-
-
       
       waveTime = iSample*GetnsPerSample(digitiser,
 					samplingSetting);
@@ -1136,7 +1150,10 @@ int ProcessBinaryFile(TString inFilePath,
     minY = GetVoltageRange(digitiser)*(16 - 1)/32*1.0e3;
     maxY = GetVoltageRange(digitiser)*(16 + 2)/32*1.0e3;
   }
-  
+  else if( run == 40 ){
+    minY = GetVoltageRange(digitiser)*(16 - 5)/32*1.0e3;
+    maxY = GetVoltageRange(digitiser)*(16    )/32*1.0e3;
+  }
   hTV->SetAxisRange(minY,maxY,"Y");
 
   float minX = 0.;
@@ -1278,8 +1295,6 @@ bool GetNegPulsePol(char digitiser, int run){
     return false;
   else 
     return GetNegPulsePolUser();
-      
- 
 }
 
 char GetSamplingSettingUser(){
@@ -1300,7 +1315,8 @@ char GetSamplingSetting(char digitiser,
 
   if  (digitiser == 'V')
     return 'S'; 
-  if  (run > 39) 
+  if  ( run >= 40 &&
+	run <  50)
     return 'L';
   else 
     return GetSamplingSettingUser();
