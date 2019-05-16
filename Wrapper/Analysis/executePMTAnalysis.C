@@ -53,14 +53,12 @@ int main(Int_t argc, Char_t *argv[]){
   TFile * inFile = nullptr;
   
   TTree * tree = nullptr;
-    
   PMTAnalyser * PMT = nullptr;
- 
-  //  ShippingData * shipData = nullptr;
-  
+  ShippingData * shipData = nullptr;
   FileNameParser * testInfo = new FileNameParser();
   
-  Char_t  digitiser = 'V';
+  // 'V' for VME, 'D' for desktop
+  Char_t  digitiser = 'D';
 
   // Old style BinToRoot output
   // or new BinToRoot output?
@@ -79,7 +77,7 @@ int main(Int_t argc, Char_t *argv[]){
   outFile = new TFile("./output.root","RECREATE");
 
   // Testing reading from root file writing to new file
-  TH1F  * hQ   = nullptr;// new TH1F("hQ","hQ",100,0,10);
+  TH1F  * hQ   = nullptr;
 
   // argv should be a path to a file
   // or list of files ( wildcards work )
@@ -107,12 +105,12 @@ int main(Int_t argc, Char_t *argv[]){
      PMT->SetStyle();
      
      // Limit to subset of entries for quicker testing
-     //PMT->SetTestMode(kTRUE);
+     PMT->SetTestMode(kTRUE);
      
      // Towards saving analysis output 
      //PMT->MakeCalibratedTree();
 
-     //shipData = new ShippingData(testInfo->pmtID(argv[iFile]));
+     shipData = new ShippingData(testInfo->pmtID(argv[iFile]));
      
      int event = 0;
      
@@ -126,7 +124,7 @@ int main(Int_t argc, Char_t *argv[]){
      }
      //------------
      // Timing Study
-     // PMT->TimeOfPeak();
+     PMT->TimeOfPeak();
 
      //------------
      //  Dark Rate

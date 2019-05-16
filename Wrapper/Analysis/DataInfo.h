@@ -61,13 +61,16 @@ int DataInfo::GetSampleRateInMHz(char digitiser){
 
   if     ( digitiser == 'V' )
     return 500;
-  else if( digitiser == 'D' )
-    return 5000;
+  else if( digitiser == 'D' ){
+    
+    //cout << "\n Add user input here." << endl;
+    return 1000;
+  }
   else{
     cerr << "Error: Unknown digitiser " << endl;
     return 0;
   }
-
+  
 }
 
 float DataInfo::GetmVPerBin(char digitiser){
