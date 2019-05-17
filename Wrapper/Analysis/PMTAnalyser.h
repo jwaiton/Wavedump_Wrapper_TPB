@@ -72,6 +72,7 @@ class PMTAnalyser {
   Int_t    GetNEntriesTest(Int_t, Int_t);
   void     MakeCalibratedTree();
   void     PlotWaveform(Long64_t entry);
+  void     PlotAccumulatedFFT();
   TH1F *   Get_hWave(Long64_t entry);
   TH1F *   Get_hFFT(Long64_t entry);
   Int_t    DarkRate(Float_t);
