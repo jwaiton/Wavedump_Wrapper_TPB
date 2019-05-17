@@ -43,7 +43,7 @@ void PMTAnalyser::MakeCalibratedTree(){
   cout << " Making Calibrated Data Tree " << endl;
   cout << " " << nentries << " entries " << endl;
   
-  for (Long64_t jentry = 0; jentry < nentries; jentry++) {
+  for(Long64_t jentry = 0; jentry < nentries; jentry++) {
     
     ientry = LoadTree(jentry);
     if (ientry < 0) break;
@@ -83,16 +83,55 @@ TH1F* PMTAnalyser::FFTShift(TH1F* hFFT, Float_t dx){
   label += "FFT Frequency (MHz);";
   label += tStr;
     
-  TH1F* hFFT_Shift=new TH1F("hFFT_Shift",
-			  label,
-			  newN, 0.,df*newN); 
+  TH1F* hFFT_Shift = new TH1F("hFFT_Shift",
+			      label,
+			      newN, 0.,df*newN); 
   
-
   for (int qq=1; qq<=newN; qq++) 
     hFFT_Shift->SetBinContent(qq,hFFT->GetBinContent(qq)); 
   
+  hFFT->Delete();
+  
   return hFFT_Shift; 
 } 
+
+
+void PMTAnalyser::PlotAccumulatedFFT(){
+  
+  TCanvas * canvas = new TCanvas();
+  
+  Float_t w = 1000., h = 500.;
+  canvas->SetWindowSize(w,h);
+  
+
+  Long64_t nentries = rawRootTree->GetEntriesFast();   
+  
+  //   //!!!
+  //nentries = 100000;
+  
+  cout << endl;
+  cout << " Running: PlotAccumulatedFFT " << endl;
+  cout << " " << nentries << " entries " << endl;
+  
+  TH1F * hFFT, * hTemp;
+  hTemp = Get_hFFT(0);
+  hFFT = (TH1F*)hTemp->Clone(); 
+  hTemp->Delete();
+
+  for(Long64_t jentry = 1; jentry < nentries; jentry++) {
+    hTemp = Get_hFFT(jentry);
+    hFFT->Add(hTemp);
+    hTemp->Delete();
+  }
+  
+  gPad->SetLogy();
+  hFFT->Draw();
+  
+  canvas->SaveAs("./Waveforms/hFFT.pdf");
+  
+  hFFT->Delete();
+  
+}
 
 void PMTAnalyser::PlotWaveform(Long64_t entry){
   
@@ -191,11 +230,13 @@ void PMTAnalyser::PlotWaveform(Long64_t entry){
 TH1F * PMTAnalyser::Get_hFFT(Long64_t entry){
 
   TH1F *  hFFT = new TH1F("hFFT","hFFT",
-			      NSamples, 0, NSamples);
+			  NSamples, 0, NSamples);
   
   TH1F * hWave = Get_hWave(entry); 
 
   hWave->FFT(hFFT ,"MAG");
+
+  hWave->Delete();
     
   Float_t dx = nsPerSample * 1.E-9;
   
@@ -203,7 +244,6 @@ TH1F * PMTAnalyser::Get_hFFT(Long64_t entry){
   hFFT = FFTShift(hFFT,dx);
   
   return hFFT;
-
 }
 
 TH1F * PMTAnalyser::Get_hWave(Long64_t entry){
