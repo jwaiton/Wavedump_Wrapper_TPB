@@ -52,14 +52,14 @@ int main(Int_t argc, Char_t *argv[]){
   TFile * outFile = nullptr;  
   TFile * inFile = nullptr;
   
-  TTree * tree = nullptr;
-  PMTAnalyser * PMT = nullptr;
-  ShippingData * shipData = nullptr;
+  TTree          * tree = nullptr;
+  PMTAnalyser    * PMT = nullptr;
+  ShippingData   * shipData = nullptr;
   FileNameParser * testInfo = new FileNameParser();
   
   // 'V' for VME, 'D' for desktop
-  Char_t  digitiser = 'V';
-
+  Char_t  digitiser = 'D';
+  
   // Old style BinToRoot output
   // or new BinToRoot output?
   // (pulse[] -> waveform[] e.g.)
