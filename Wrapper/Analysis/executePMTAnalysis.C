@@ -114,6 +114,8 @@ int main(Int_t argc, Char_t *argv[]){
      
      int event = 0;
      
+     PMT->PlotAccumulatedFFT();
+
      while ( event!= -1 ){
        cout << endl;
        cout << " Which waveform to plot?" << endl;
