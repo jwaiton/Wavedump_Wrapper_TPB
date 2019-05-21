@@ -133,6 +133,7 @@ InitParams initializeFit(TH1F* h){
   std::cout << "found peaks " << nfound << std::endl;
 
   /*** Find the approximate charge at the maximum of the SPE peak ***/
+  //  Use Double_t not Float_t
   Double_t *peaks;
   peaks = spec->GetPositionX();
   float sigPeak = 0; float pedPeak = 0;
@@ -607,12 +608,13 @@ int main(int argc,char **argv){
   for (int r=0;r<5;r++){ 
     
     int hv = r+1; // gain test number
-    sprintf(histname, "../../RawRootData/Run_%d_PMT_%d_Loc_%d_HV_%d.root",run,pmt,loc,hv); 
+    sprintf(histname, "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/Run_%d_PMT_%d_Loc_%d_HV_%d.root",run,pmt,loc,hv); 
     TFile s(histname);
     s.ls();
 
     char root_name[50];
-    sprintf(root_name, "hQ_Filter_Run_%d_PMT_%d_Loc_%d_HV_%d",run,pmt,loc,hv);
+    //sprintf(root_name, "hQ_Filter_Run_%d_PMT_%d_Loc_%d_HV_%d",run,pmt,loc,hv);
+    sprintf(root_name, "hQ_Fixed_Run_%d_PMT_%d_Loc_%d_HV_%d",run,pmt,loc,hv);
     TH1D *speData = (TH1D*)s.Get(root_name);
 
     TH1F* fhisto = h2h(speData);
