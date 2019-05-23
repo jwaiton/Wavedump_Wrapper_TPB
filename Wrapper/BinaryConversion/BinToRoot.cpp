@@ -208,8 +208,8 @@ float GetDelay(int run = 0){
     return 70.;
   else if ( run == 40 ) // Dark Box 
     return 120.;
-  else if ( run == 41 ) // Dark Box 
-    return 160.;
+  else if ( run == 41 && run < 50 ) // Cable Test 
+    return  95.;
   else if ( run > 999 ) // Clean Lab
     return 100.;
   else                  // Default
@@ -580,7 +580,7 @@ int ProcessBinaryFile(TString inFilePath,
 
   //----------------------
   // Variables for testing
-  bool  testMode  = true;
+  bool  testMode  = false;
   bool  keepGoing = true;
   int   maxEvents = 100000;
   
