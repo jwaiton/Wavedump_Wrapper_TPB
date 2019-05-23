@@ -112,7 +112,7 @@ int main(Int_t argc, Char_t *argv[]){
 
      shipData = new ShippingData(testInfo->pmtID(argv[iFile]));
      
-     int event = 0;
+     int event = -1;
      
      PMT->PlotAccumulatedFFT();
 
@@ -126,7 +126,7 @@ int main(Int_t argc, Char_t *argv[]){
      }
      //------------
      // Timing Study
-     PMT->TimeOfPeak();
+     //PMT->TimeOfPeak();
 
      //------------
      //  Dark Rate

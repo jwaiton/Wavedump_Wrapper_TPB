@@ -605,9 +605,9 @@ int main(int argc,char **argv){
   double hvVals[5]; double hvValsError[5]; double gainVals[5]; double gainValsError[5];
   
   for (int r=0;r<5;r++){ 
-    
+
     int hv = r+1; // gain test number
-    sprintf(histname, "../../RawRootData/Run_%d_PMT_%d_Loc_%d_HV_%d.root",run,pmt,loc,hv); 
+    sprintf(histname, "/home/ubuntu/WATCHMAN/BinaryData/Cable_Test/Run_%d_PMT_%d_Loc_%d_HV_%d.root",run,pmt,loc,hv); 
     TFile s(histname);
     s.ls();
 
