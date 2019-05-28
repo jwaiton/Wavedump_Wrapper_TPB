@@ -577,7 +577,7 @@ int ProcessBinaryFile(TString inFilePath,
   // Variables for testing
   bool  testMode  = false;
   bool  keepGoing = true;
-  int   maxEvents = 100000;
+  int   maxEvents = 10000;
   
   bool makeFilteredHisto = true;
   
@@ -1145,7 +1145,8 @@ int ProcessBinaryFile(TString inFilePath,
     minY = GetVoltageRange(digitiser)*(16 - 1)/32*1.0e3;
     maxY = GetVoltageRange(digitiser)*(16 + 2)/32*1.0e3;
   }
-  else if( run == 40 ){
+  else if( run > 40 &&
+	   run < 50 ){
     minY = GetVoltageRange(digitiser)*(16 - 5)/32*1.0e3;
     maxY = GetVoltageRange(digitiser)*(16    )/32*1.0e3;
   }
