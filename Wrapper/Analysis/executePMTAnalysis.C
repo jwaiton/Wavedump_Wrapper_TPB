@@ -58,7 +58,7 @@ int main(Int_t argc, Char_t *argv[]){
   FileNameParser * testInfo = new FileNameParser();
   
   // 'V' for VME, 'D' for desktop
-  Char_t  digitiser = 'D';
+  Char_t  digitiser = 'V';
 
   // Old style BinToRoot output
   // or new BinToRoot output?
@@ -76,7 +76,7 @@ int main(Int_t argc, Char_t *argv[]){
 
   outFile = new TFile("./output.root","RECREATE");
 
-  // Testing reading from root file writing to new file
+  // Testing reading from root file, writing to new file
   TH1F  * hQ   = nullptr;
 
   // argv should be a path to a file
@@ -114,6 +114,8 @@ int main(Int_t argc, Char_t *argv[]){
      
      int event = 0;
      
+     PMT->PlotAccumulatedFFT();
+
      while ( event!= -1 ){
        cout << endl;
        cout << " Which waveform to plot?" << endl;
