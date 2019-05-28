@@ -78,6 +78,7 @@
 #include "RooBernstein.h"
 #include "RooExponential.h"
 #include "RooExpWindow.h"
+#include "RooMsgService.h"
 
 #include "TObject.h"
 #include "TLegend.h"
@@ -530,7 +531,6 @@ float GainErrorCalc(double signalError){
 
 int main(int argc,char **argv){	
   
-	
   /*** Read in the HV data ***/
 
   int nominalHV;
@@ -566,8 +566,7 @@ int main(int argc,char **argv){
     }
 
   }
-
-
+  
   /*** Determine the PMT number and applied voltage for each step ***/
 
   cout << "Input the PMT number \n" ;
@@ -599,7 +598,18 @@ int main(int argc,char **argv){
     }
   }
 
+  // Track Messages
 
+  RooFit::MsgLevel msglevel = RooMsgService::instance().globalKillBelow();
+  
+  cout << endl;
+  cout << " msglevel = " << msglevel << endl;
+
+  RooMsgService::instance().setGlobalKillBelow(RooFit::ERROR);
+  msglevel = RooMsgService::instance().globalKillBelow();
+  
+  cout << endl;
+  cout << " msglevel = " << msglevel << endl;
 
   /*** Read in and fit the charge Spectrum ***/
     
@@ -613,7 +623,6 @@ int main(int argc,char **argv){
     s.ls();
 
     char root_name[50];
-    //sprintf(root_name, "hQ_Filter_Run_%d_PMT_%d_Loc_%d_HV_%d",run,pmt,loc,hv);
     sprintf(root_name, "hQ_Fixed_Run_%d_PMT_%d_Loc_%d_HV_%d",run,pmt,loc,hv);
     TH1D *speData = (TH1D*)s.Get(root_name);
 
@@ -634,8 +643,8 @@ int main(int argc,char **argv){
 
 
     /*** Calculate the gain ***/
-	gainVals[r] = GainCalc(signal);
-	gainValsError[r] = GainErrorCalc(signalError); 
+    gainVals[r] = GainCalc(signal);
+    gainValsError[r] = GainErrorCalc(signalError); 
     hvVals[r] = pmtHV[r];      
     hvValsError[r]=0;
     

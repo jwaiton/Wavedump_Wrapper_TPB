@@ -206,9 +206,10 @@ float GetDelay(int run = 0){
   else if ( run >= 30 && 
 	    run <  40 )  // Noise investigation
     return 70.;
-  else if ( run >= 40 && 
-	    run <  50 ) // Dark Box 
+  else if ( run == 40 )
     return 120.;
+  else if ( run == 41 ) // Cable Test
+    return 95.; 
   else if ( run > 999 ) // Clean Lab
     return 100.;
   else                  // Default
@@ -309,8 +310,6 @@ int Accumulate_Baseline(short VDC, float time){
     return 0;
 }
 
-
-
 // Integration windows wrt waveform peak
 // -10 ns before to 30 ns after
 // timeRel is time relative to minT (in ns)
@@ -327,9 +326,6 @@ int Accumulate_Peak(short VDC, float timeRel){
   else
     return 0.;
 }
-
-
-
 
 TString GetRunFolderName(int run){
 
