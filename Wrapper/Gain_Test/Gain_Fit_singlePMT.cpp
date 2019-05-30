@@ -604,7 +604,7 @@ int main(int argc,char **argv){
   
   cout << endl;
   cout << " msglevel = " << msglevel << endl;
-
+  
   RooMsgService::instance().setGlobalKillBelow(RooFit::ERROR);
   msglevel = RooMsgService::instance().globalKillBelow();
   
