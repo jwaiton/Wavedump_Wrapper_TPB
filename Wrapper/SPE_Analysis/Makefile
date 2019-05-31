@@ -23,10 +23,9 @@ LFOLDER =
 UNAME = $(shell uname)
 
 # Libraries to link to.
-#LIBS = -lgsl -lgslcblas `root-config --glibs`
-LIBS =  `root-config --glibs` 
+LIBS =  `root-config --glibs` -lSpectrum -lRooFit -lRooFitCore -lgsl -lm ./libRooExpWindow.so
 # Option flags for all build modes.
-CCOPT = -g -O2 -Wall -pedantic -Wno-long-long
+CCOPT = -g -O2 -Wall -pedantic -Wno-long-long  
 
 # Name of executable.
 TARGET = $(MAKECMDGOALS)
@@ -38,7 +37,7 @@ OBJS = $(patsubst %.cpp,%.o,$(wildcard $(NS)/src/*.cpp)) $(EXTRAOBJS)
 DEPS = $(patsubst %.o,%.d,$(OBJS))
 
 $(MAKECMDGOALS): $(OBJS) $(DEPS)
-	$(CC) $(CCOPT) -o $(TARGET) $(LFOLDER) $(OBJS) $(LIBS)
+	$(CC) $(CCOPT) -o $(TARGET) $(LFOLDER) $(OBJS) $(LIBS) -Wl,-rpath ./ ./libRooExpWindow.so
 
 %.o: %.cpp
 	$(CC) $(CCOPT) $(IFOLDER) -o $@ -c $<
