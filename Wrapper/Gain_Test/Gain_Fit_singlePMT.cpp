@@ -77,7 +77,7 @@
 #include "RooChebychev.h"
 #include "RooBernstein.h"
 #include "RooExponential.h"
-#include "RooExpWindow.h"
+#include "./RooExpWindow.h"
 #include "RooMsgService.h"
 
 #include "TObject.h"
@@ -237,9 +237,11 @@ RooAddPdf* makePGaussPDF(int n, RooRealVar* counts, RooFormulaVar* k,
                         RooRealVar* peds,RooRealVar* m0, 
                         double mval, double sval){
 
-
+  
   RooArgList pdfs; RooArgList coeffs ;
   int nlast = 10*n + 20;
+
+  
 
   for (int m = 1; m < nlast; ++m ){
 
@@ -270,10 +272,15 @@ RooAddPdf* makePGaussPDF(int n, RooRealVar* counts, RooFormulaVar* k,
  
 /*** construct the pdf ***/
 RooAddPdf* makePMTPDF(RooRealVar* counts,double pmval, double psval, double psval2,  double mval, double sval, double f1peval,double vmval, int expvar, double vaval = 0.03, double fvval = 0.3){// counts,pedPeak,sigPeak-pedPeak,sped,ssignal,Ratio,valleyPos
+  
   RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING) ;
+  
+  int verbosity = 0;
 
-  std::cout << "pedestal mean " << pmval << "pedestal sigma " << psval << "SPE mean "  << mval << "SPE sigma "  << sval  << std::endl;
-  std::cout << "SPE fraction " << f1peval << "valley min " << vmval << "valley alpha " << vaval << std::endl;
+  if( verbosity > 0 ){
+    std::cout << "pedestal mean " << pmval << "pedestal sigma " << psval << "SPE mean "  << mval << "SPE sigma "  << sval  << std::endl;
+    std::cout << "SPE fraction " << f1peval << "valley min " << vmval << "valley alpha " << vaval << std::endl;
+  }
   
   /*** construct the pedestal pdf ***/ 
   RooRealVar* pedm = new RooRealVar("pedmean","pedmean",pmval, pmval - 5*psval, pmval + 5*psval );   // pedestal position
@@ -509,7 +516,7 @@ Result* fitModel(TH1F* fhisto, int pmt, int hv,
   frame->Draw();
 //  canvas->SaveAs(Form("./Plots/FullFit/Fit_Run_1_PMT_%d_HV_%d.C",pmt,hv));
   gPad->SetLogy();  
-  canvas->SaveAs(Form("./Plots/FullFit/Fit_Run_1_PMT_%d_HV_%d.png",pmt,hv));
+  canvas->SaveAs(Form("./Plots/Fit/Fit_Run_1_PMT_%d_HV_%d.png",pmt,hv));
 
   Result* res = propagateAndFill(counts,model,fres);
  
@@ -542,17 +549,19 @@ float GainCalc(double mVnsval){
 
 /*********************************************************************/
 
-int main(int argc,char **argv){	
- 
-	
+//int main(int argc,char **argv){	
+int Gain_Fit_singlePMT(int pmt = 16,
+		       int loc = 0,
+		       int run = 40,
+		       TString dir = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/",
+		       Bool_t useFiltered = kFALSE){	
+  
+  
   /*** Read in the HV data ***/
 
   int nominalHV=0;
-  int pmt;
-  int loc;
-  int run =1;
   int pmtHV[5];
-  char histname[300]= "";
+  char filePath[300]= "";
 
   string hvfile = "../HVScan.txt";
   ifstream file(hvfile.c_str());
@@ -584,19 +593,24 @@ int main(int argc,char **argv){
 
   /*** Determine the PMT number and applied voltage for each step ***/
 
-  cout << "Input the PMT number \n" ;
-  cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
-  cin  >> pmt;
-  cout <<endl;
+  if( pmt == -1 ){
+    cout << "Input the PMT number \n" ;
+    cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
+    cin  >> pmt;
+    cout << endl;
+  }
 
-  cout << "Input the location number \n" ;
-  cin  >> loc;
-  cout <<endl;
-
-  cout << "Input the run number \n";
-  cin  >> run;
-  cout << endl;
-
+  if( loc == -1 ){
+    cout << "Input the location number \n" ;
+    cin  >> loc;
+    cout << endl;
+  }
+  
+  if( run == -1 ){
+    cout << "Input the run number \n";
+    cin  >> run;
+    cout << endl;
+  }
 
   for (int i=0;i<125; i++){
 
@@ -605,29 +619,48 @@ int main(int argc,char **argv){
       printf("nominal HV is %d \n",nominalHV);
     }
 
-    for(int h=0; h<5; h++){
-      if (pmt==PMT_number[i]){
+    for(int h = 0; h < 5; h++){
+      if (pmt == PMT_number[i]){
         pmtHV[h] =HVstep[i][h];
         printf("HV %d location  %d Test %d \n",pmtHV[h],loc,h);
       }
     }
   }
-
-
-
+  
   /*** Read in and fit the charge Spectrum ***/
     
   double hvVals[5]; double hvValsError[5]; double gainVals[5]; double gainValsError[5];
   
+  TString histoNameTemp = "Run_%d_PMT_%d_Loc_%d_HV_%d";
+  TString histoName     = "";
+  TString filePathTemp = "";
+
   for (int r=0;r<5;r++){ 
     
     int hv = r+1; // gain test number
-    sprintf(histname, "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/Run_%d_PMT_%d_Loc_%d_HV_%d.root",run,pmt,loc,hv); 
-    TFile s(histname);
+    
+    filePathTemp = dir + "/Run_%d_PMT_%d_Loc_%d_HV_%d.root";
+
+    cout << endl;
+    cout << " filePathTemp = " << filePathTemp << endl;
+    
+    sprintf(filePath,filePathTemp,run,pmt,loc,hv); 
+    TFile s(filePath);
+
     s.ls();
 
     char root_name[50];
-    sprintf(root_name, "hQ_Filter_Run_%d_PMT_%d_Loc_%d_HV_%d",run,pmt,loc,hv);
+    
+    if(useFiltered)
+      histoName = "hQ_Filter_" + histoNameTemp;
+    else
+      histoName = "hQ_Fixed_" + histoNameTemp;
+    
+    sprintf(root_name,histoName,run,pmt,loc,hv);
+    
+    cout << endl;
+    cout << " root_name = " << root_name << endl;
+
     TH1D *speData = (TH1D*)s.Get(root_name);
 
     TH1F* fhisto = h2h(speData);
@@ -644,10 +677,9 @@ int main(int argc,char **argv){
         
     printf(" voltage is  %d , charge is %f \n\n\n\n",pmtHV[r],signal); 
 
-
     /*** Calculate the gain ***/
-	gainVals[r] = GainCalc(signal);
-	gainValsError[r] = GainCalc(signalError); 
+    gainVals[r] = GainCalc(signal);
+    gainValsError[r] = GainCalc(signalError); 
     hvVals[r] = pmtHV[r];      
     hvValsError[r]=0;
     

@@ -766,8 +766,6 @@ int ProcessBinaryFile(TString inFilePath,
     binsT = binsT*(Int_t)((rangeT[1]-rangeT[0])/rangeT[0]);
   }
   
-  
-  
 
   TH2F * hTV = new TH2F("hTV",label,
 			binsT,

@@ -37,10 +37,6 @@
   * ROOT
  */
 
-
-
-
-
 #include <iostream>
 #include <cmath>
 #include <cstdlib>
@@ -274,8 +270,11 @@ RooAddPdf* makePGaussPDF(int n, RooRealVar* counts, RooFormulaVar* k,
 RooAddPdf* makePMTPDF(RooRealVar* counts,double pmval, double psval, double psval2,  double mval, double sval, double f1peval,double vmval, int expvar, double vaval = 0.03, double fvval = 0.3){// counts,pedPeak,sigPeak-pedPeak,sped,ssignal,Ratio,valleyPos
   RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING) ;
 
-  std::cout << "pedestal mean " << pmval << "pedestal sigma " << psval << "SPE mean "  << mval << "SPE sigma "  << sval  << std::endl;
-  std::cout << "SPE fraction " << f1peval << "valley min " << vmval << "valley alpha " << vaval << std::endl;
+  int verbosity = 0;
+  if( verbosity > 0 ){
+    std::cout << "pedestal mean " << pmval << "pedestal sigma " << psval << "SPE mean "  << mval << "SPE sigma "  << sval  << std::endl;
+    std::cout << "SPE fraction " << f1peval << "valley min " << vmval << "valley alpha " << vaval << std::endl;
+  }
   
   /*** construct the pedestal pdf ***/ 
   RooRealVar* pedm = new RooRealVar("pedmean","pedmean",pmval, pmval - 5*psval, pmval + 5*psval );   // pedestal position
@@ -525,48 +524,56 @@ float GainCalc(double mVnsval){
 
 /*********************************************************************/
 
-int main(int argc,char **argv){	
- 
-	
+//int main(int argc,char **argv){	
+int SPE_Fit_singlePMT(int pmt = 148,
+		      int loc = 0,
+		      int run = 45,
+		      TString dir = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/",
+		      Bool_t useFiltered = kFALSE){	
+  
+  
   /*** Read in the HV data ***/
 
-  int pmt;
-  int loc;
-  int run;
-  int hv;
+  int   hv = -1;
   float gain;
   float gainError;
   float peak2valley;
   float peak2valleyError;
-  char histname[300]= "";
-
-
+  char  filePath[300]= "";
 
   /*** Determine the PMT number and applied voltage for each step ***/
 
-  cout << "Input the PMT number \n" ;
-  cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
-  cin  >> pmt;
-  cout <<endl;
-
-  cout << "Input the location number \n" ;
-  cin  >> loc;
-  cout <<endl;
-
-  cout << "Input the run number \n";
-  cin  >> run;
-  cout << endl;
-
-  cout << "Input the applied voltage \n";
-  cin  >> hv;
-  cout << endl;
-
+  if( pmt < 0 || pmt > 200 ){
+    cout << "Input the PMT number \n" ;
+    cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
+    cin  >> pmt;
+    cout <<endl;
+  }
+  
+  if( loc < 0 || loc > 7){
+    cout << "Input the location number \n" ;
+    cin  >> loc;
+    cout <<endl;
+  }
+  
+  if( run < 0 ){
+    cout << "Input the run number \n";
+    cin  >> run;
+    cout << endl;
+  }
+  
+  if( hv < 0 ){
+    cout << "Input the applied voltage \n";
+    cin  >> hv;
+    cout << endl;
+  }
 
   /*** Read in and fit the charge Spectrum ***/
-    
+
+  TString filePathTemp = dir + "Run_%d_PMT_%d_Loc_%d_Test_S.root";
   
-  sprintf(histname, "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/Run_%d_PMT_%d_Loc_%d_Test_S.root",run,pmt,loc); 
-  TFile s(histname);
+  sprintf(filePath,filePathTemp,run,pmt,loc);
+  TFile s(filePath);
   s.ls();
 
   char root_name[50];
