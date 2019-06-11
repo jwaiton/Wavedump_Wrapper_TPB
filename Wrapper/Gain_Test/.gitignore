@@ -27,4 +27,6 @@ peakToValley5_C.so
 peakToValley5_C_ACLiC_dict_rdict.pcm
 Gain_Fit_singlePMT
 RooExpWindowDict*
-libRooExpWindow.so*
+*.so*
+*.pcm*
+example.c
