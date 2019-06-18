@@ -550,9 +550,9 @@ float GainCalc(double mVnsval){
 /*********************************************************************/
 
 //int main(int argc,char **argv){	
-int Gain_Fit_singlePMT(int pmt = 16,
+int Gain_Fit_singlePMT(int pmt = 130,
 		       int loc = 0,
-		       int run = 40,
+		       int run = 1,
 		       TString dir = "/Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/RawRootData/",
 		       Bool_t useFiltered = kFALSE){	
   
