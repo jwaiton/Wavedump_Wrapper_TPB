@@ -210,8 +210,26 @@ float GetDelay(int run = 0){
     return 120.;
   else if ( run == 41 ) // Cable Test
     return 95.; 
-  else if ( run > 999 ) // Clean Lab
+  else if ( run ==  50 )
     return 100.;
+  else if ( run ==  51 )
+    return 105.; // Best choice 105: the delay moves around from 95 - 120: N, G, S
+  else if ( run ==  52 )
+    return 80.; // Best choice 80:  delay moves, very noticable in HV steps 
+  else if ( run ==  53 )
+    return 90.; // Best choice 90: note that SPE delay is 80
+  else if ( run ==  54 )
+    return 90.;    
+  else if ( run ==  55 )
+    return 75.;  // Best choice 75: note that Nominal delay is 90
+  else if ( run ==  56 )
+    return 85.; // Best choice 75, note that Nominal delay is 85
+  else if ( run ==  57 )
+    return 90.;
+  else if ( run ==  58 )
+    return 90.;
+  else if ( run ==  59 )
+    return 90.;
   else                  // Default
     return 60.;
 }
@@ -581,6 +599,9 @@ int ProcessBinaryFile(TString inFilePath,
   
   bool makeFilteredHisto = true;
   
+  if( run > 40 ) 
+    makeFilteredHisto = false;
+
   if ( test == 'A' )
     maxEvents = 2;
   
@@ -759,11 +780,13 @@ int ProcessBinaryFile(TString inFilePath,
   binsT = GetNSamples(digitiser,test);
   
   if( rangeT[1] > 220.){
-
-    rangeT[0] = GetDelay(run) - (GetGateWidth()*1.5);
+    
+    binsT = binsT / (Int_t)rangeT[1];
+    
     rangeT[1] = GetDelay(run) + (GetGateWidth()*1.5);
-	
-    binsT = binsT*(Int_t)((rangeT[1]-rangeT[0])/rangeT[0]);
+    
+    binsT = binsT*(Int_t)rangeT[1];
+    
   }
   
 
@@ -1054,10 +1077,10 @@ int ProcessBinaryFile(TString inFilePath,
       
       // sample vs VDC and time vs voltage plots
       // for checking signals (delay etc) 
-      // plot pulses for 1000 events
-      // from first 100,000
-      if( ( event < 100000    )  &&
-	  ( event % 100  == 0 )
+      // plot pulses for 10000 events
+      // from first 1,000,000
+      if( ( event < 1000000    )  &&
+	  ( event % 1000  == 0 )
 	  ){
 	
 	hWaveforms->Fill(iSample,waveform[iSample]);
@@ -1143,8 +1166,7 @@ int ProcessBinaryFile(TString inFilePath,
     minY = GetVoltageRange(digitiser)*(16 - 1)/32*1.0e3;
     maxY = GetVoltageRange(digitiser)*(16 + 2)/32*1.0e3;
   }
-  else if( run > 40 &&
-	   run < 50 ){
+  else if( run > 40 ){
     minY = GetVoltageRange(digitiser)*(16 - 5)/32*1.0e3;
     maxY = GetVoltageRange(digitiser)*(16    )/32*1.0e3;
   }
@@ -1314,8 +1336,7 @@ char GetSamplingSetting(char digitiser,
 
   if  (digitiser == 'V')
     return 'S'; 
-  if  ( run >= 40 &&
-	run <  50)
+  if  ( run >= 40 )
     return 'L';
   else 
     return GetSamplingSettingUser();
