@@ -550,9 +550,9 @@ float GainCalc(double mVnsval){
 /*********************************************************************/
 
 //int main(int argc,char **argv){	
-int Gain_Fit_singlePMT(int pmt = 16,
+int Gain_Fit_singlePMT(int run = 40,
+		       int pmt = 152,
 		       int loc = 0,
-		       int run = 40,
 		       TString dir = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/",
 		       Bool_t useFiltered = kFALSE){	
   

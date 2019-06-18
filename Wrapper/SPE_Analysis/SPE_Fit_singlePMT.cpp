@@ -440,11 +440,13 @@ TH1F* h2h(TH1D* hold ){
 
 /******************** Carry out the fit ******************************/
 
-Result* fitModel(TH1F* fhisto, int pmt, int hv,
-            double minval = -100,
-            double maxval = 1800,
-            double max = 10000){
-//Result* res = new Result();
+Result* fitModel(TH1F* fhisto, 
+		 int run, int pmt, int hv, char test,
+		 double minval = -100,
+		 double maxval = 1800,
+		 double max = 10000){
+  
+  //Result* res = new Result();
   TCanvas * canvas = new TCanvas("Canvas","Canvas");
   fhisto->GetXaxis()->SetTitle("charge [mV ns]");
   fhisto->GetYaxis()->SetTitle("Counts");
@@ -503,7 +505,8 @@ Result* fitModel(TH1F* fhisto, int pmt, int hv,
   frame->Draw();
 //  canvas->SaveAs(Form("./Plots/FullFit/Fit_Run_1_PMT_%d_HV_%d.C",pmt,hv));
   gPad->SetLogy();  
-  canvas->SaveAs(Form("./Plots/Fit_Run_1_PMT_%d_HV_%d_Test_S.png",pmt,hv));
+  
+  canvas->SaveAs(Form("./Plots/Fit_Run_%d_PMT_%d_HV_%d_Test_%c.png",run,pmt,hv,test));
 
   Result* res = propagateAndFill(counts,model,fres);
  
@@ -525,9 +528,9 @@ float GainCalc(double mVnsval){
 /*********************************************************************/
 
 //int main(int argc,char **argv){	
-int SPE_Fit_singlePMT(int pmt = 148,
+int SPE_Fit_singlePMT(int run = 50,
+		      int pmt = 152,
 		      int loc = 0,
-		      int run = 45,
 		      TString dir = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/",
 		      Bool_t useFiltered = kFALSE){	
   
@@ -567,24 +570,46 @@ int SPE_Fit_singlePMT(int pmt = 148,
     cin  >> hv;
     cout << endl;
   }
+  
+  Char_t test = 'S';
+  Int_t  step = 4; 
 
+  cout << " Input Test (e.g. 'S' or 'N' or 'G') " << endl;
+  cin  >> test;
+  
   /*** Read in and fit the charge Spectrum ***/
 
-  TString filePathTemp = dir + "Run_%d_PMT_%d_Loc_%d_Test_S.root";
+  TString filePathTemp = dir + "Run_%d_PMT_%d_Loc_%d_Test_%c.root";
+
   
-  sprintf(filePath,filePathTemp,run,pmt,loc);
+  if(test=='G'){
+    cout << " Input Step (e.g. 4) " << endl;
+    cin  >> step;
+    filePathTemp = dir + "Run_%d_PMT_%d_Loc_%d_HV_%d.root";
+    sprintf(filePath,filePathTemp,run,pmt,loc,step);
+  }
+  else{
+    sprintf(filePath,filePathTemp,run,pmt,loc,test);
+  }
+
   TFile s(filePath);
   s.ls();
 
   char root_name[50];
-  sprintf(root_name, "hQ_Filter_Run_%d_PMT_%d_Loc_%d_Test_S",run,pmt,loc);
+  
+  if( test =='G')
+    sprintf(root_name, "hQ_Fixed_Run_%d_PMT_%d_Loc_%d_HV_%d",run,pmt,loc,step);
+  else
+    sprintf(root_name, "hQ_Fixed_Run_%d_PMT_%d_Loc_%d_Test_%c",run,pmt,loc,test);
+
+
   TH1D *speData = (TH1D*)s.Get(root_name);
 
   TH1F* fhisto = h2h(speData);
   printf("Getting data from SPE spectrum...\n");
 
   /*** Find the SPE charge output ***/
-  Result * res = fitModel(fhisto,pmt,hv);
+  Result * res = fitModel(fhisto,run, pmt,hv,test);
 
   float signal = res->pemean.value - res->ped.value;
   float signalError = res->pemean.error;
