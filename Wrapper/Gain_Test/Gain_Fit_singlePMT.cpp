@@ -446,7 +446,7 @@ TH1F* h2h(TH1D* hold ){
 
 /******************** Carry out the fit ******************************/
 
-Result* fitModel(TH1F* fhisto, int pmt, int hv,
+Result* fitModel(TH1F* fhisto, int run, int pmt, int hv,
             double minval = -100,
             double maxval = 1800,
             double max = 10000){
@@ -516,7 +516,7 @@ Result* fitModel(TH1F* fhisto, int pmt, int hv,
   frame->Draw();
 //  canvas->SaveAs(Form("./Plots/FullFit/Fit_Run_1_PMT_%d_HV_%d.C",pmt,hv));
   gPad->SetLogy();  
-  canvas->SaveAs(Form("./Plots/Fit/Fit_Run_1_PMT_%d_HV_%d.png",pmt,hv));
+  canvas->SaveAs(Form("./Plots/Fit/Fit_Run_%d_PMT_%d_HV_%d.png",run,pmt,hv));
 
   Result* res = propagateAndFill(counts,model,fres);
  
@@ -667,7 +667,7 @@ int Gain_Fit_singlePMT(int run = 40,
     printf("Getting data from SPE spectrum...\n");
 
   	/*** Find the SPE charge output ***/
-    Result * res = fitModel(fhisto,pmt,hv);
+    Result * res = fitModel(fhisto,run,pmt,hv);
 
     float signal = res->pemean.value - res->ped.value;
     float signalError = res->pemean.error;
