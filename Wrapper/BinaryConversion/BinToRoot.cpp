@@ -206,41 +206,30 @@ float GetDelay(int run = 0){
   else if ( run >= 30 && 
 	    run <  40 )  // Noise investigation
     return 70.;
-  else if ( run == 40 ) // Dark Box 
+  else if ( run == 40 )
     return 120.;
-  else if ( run == 41 )      // Cable Test 
-    return  95.;
-  else if ( run == 42 )      // Cable Test 
-    return  95.;
-  else if ( run == 43 )      // Cable Test 
-    return  95.;
-  else if ( run == 44 )      // Cable Test
-    return  95.;
-  else if ( run == 45 )      // PMT148
-    return  80.;
-  else if ( run >= 46 &&
-	    run <  51 )      // PMT 152 80m
-    return  105.;
-  else if ( run == 51 )      // PMT 152 Cable Test 64m
-    return  110.;
-  else if ( run == 52 )      // Cable Test 48m
-    return  80.;
-  else if ( run == 53 )      // Cable Test 40m
-    return  90.;
-  else if ( run == 54 )      // Cable Test 32m
-    return  90.;
-  else if ( run == 55 )      // Cable Test 24m
-    return  80.;
-  else if ( run == 56 )      // Cable Test 20m
-    return  80.;
-  else if ( run == 57 )      // Cable Test 16m
-    return  90.;
-  else if ( run == 58 )      // Cable Test 8m
-    return  90.;
-  else if ( run == 59 )      // Cable Test 2m
-    return  85.;
-  else if ( run > 999 ) // Clean Lab
-    return  100.;
+  else if ( run == 41 ) // Cable Test
+    return 95.; 
+  else if ( run ==  50 )
+    return 100.;
+  else if ( run ==  51 )
+    return 105.; // Best choice 105: the delay moves around from 95 - 120: N, G, S
+  else if ( run ==  52 )
+    return 80.; // Best choice 80:  delay moves, very noticable in HV steps 
+  else if ( run ==  53 )
+    return 90.; // Best choice 90: note that SPE delay is 80
+  else if ( run ==  54 )
+    return 90.;    
+  else if ( run ==  55 )
+    return 75.;  // Best choice 75: note that Nominal delay is 90
+  else if ( run ==  56 )
+    return 85.; // Best choice 75, note that Nominal delay is 85
+  else if ( run ==  57 )
+    return 90.;
+  else if ( run ==  58 )
+    return 90.;
+  else if ( run ==  59 )
+    return 90.;
   else                  // Default
     return  60.;
 }
@@ -339,8 +328,6 @@ int Accumulate_Baseline(short VDC, float time){
     return 0;
 }
 
-
-
 // Integration windows wrt waveform peak
 // -10 ns before to 30 ns after
 // timeRel is time relative to minT (in ns)
@@ -357,9 +344,6 @@ int Accumulate_Peak(short VDC, float timeRel){
   else
     return 0.;
 }
-
-
-
 
 TString GetRunFolderName(int run){
 
@@ -615,6 +599,9 @@ int ProcessBinaryFile(TString inFilePath,
   
   bool makeFilteredHisto = true;
   
+  if( run > 40 ) 
+    makeFilteredHisto = false;
+
   if ( test == 'A' )
     maxEvents = 2;
   
@@ -799,23 +786,14 @@ int ProcessBinaryFile(TString inFilePath,
   
   
   if( rangeT[1] > 220.){
-
-    cout << " GetDelay(run)  = " << GetDelay(run) << endl;
-    cout << " GetGateWidth() = " << GetGateWidth() << endl;
     
-    rangeT[0] = GetDelay(run) - (GetGateWidth()*1.5);
+    binsT = binsT / (Int_t)rangeT[1];
+    
     rangeT[1] = GetDelay(run) + (GetGateWidth()*1.5);
-
-    cout << " rangeT[0] = " << rangeT[0] << endl;
-    cout << " rangeT[1] = " << rangeT[1] << endl;
     
-    binsT = binsT*(rangeT[1]-rangeT[0]);
-    binsT = binsT/GetWaveformLength(digitiser,test,samplingSetting);
+    binsT = binsT*(Int_t)rangeT[1];
+    
   }
-
-  cout << endl;
-  cout << " binsT = " << binsT << endl;
-  
   
 
   TH2F * hTV = new TH2F("hTV",label,
@@ -1105,10 +1083,10 @@ int ProcessBinaryFile(TString inFilePath,
       
       // sample vs VDC and time vs voltage plots
       // for checking signals (delay etc) 
-      // plot pulses for 1000 events
-      // from first 100,000
-      if( ( event < 100000    )  &&
-	  ( event % 100  == 0 )
+      // plot pulses for 10000 events
+      // from first 1,000,000
+      if( ( event < 1000000    )  &&
+	  ( event % 1000  == 0 )
 	  ){
 	
 	hWaveforms->Fill(iSample,waveform[iSample]);
@@ -1194,8 +1172,7 @@ int ProcessBinaryFile(TString inFilePath,
     minY = GetVoltageRange(digitiser)*(16 - 1)/32*1.0e3;
     maxY = GetVoltageRange(digitiser)*(16 + 2)/32*1.0e3;
   }
-  else if( run > 40 &&
-	   run < 50 ){
+  else if( run > 40 ){
     minY = GetVoltageRange(digitiser)*(16 - 5)/32*1.0e3;
     maxY = GetVoltageRange(digitiser)*(16    )/32*1.0e3;
   }
