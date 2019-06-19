@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 Old_HV_SPE/
 HV_SPE/
 SPE_Fit.d
@@ -16,17 +15,17 @@ SPE_Gen_test
 SPE_Gen_test.cpp
 SPE_Gen_test.d
 SPE_Gen_test.o
-=======
-HV_SPE/
-SPE_Gen
-BinToRoot
-*.root
-*.dat
-SPE_Fit
-Plots/*
-SPE_Fit
-SPE_Gen_Desk
-peakToValley5.C
-peakToValley5_C.so
-peakToValley5_C_ACLiC_dict_rdict.pcm
->>>>>>> developmentSPE
+Gain_Fit_singlePMT
+Gain_PMT82/
+RooExpWindowDict.cxx
+RooExpWindowDict_rdict.pcm
+SingleFit.cpp
+input_pmt_16_loc_0_run_40.txt
+input_pmt_82_loc_0_run_41.txt
+input_pmt_82_loc_0_run_42.txt
+input_pmt_82_loc_0_run_43.txt
+input_pmt_82_loc_0_run_44.txt
+libRooExpWindow.so*
+make_Gain_Fit_singlePMT.sh
+Plots/
+voltages.root
