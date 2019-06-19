@@ -66,7 +66,7 @@ int main(Int_t argc, Char_t *argv[]){
   Bool_t oldRootFileVersion = kFALSE;
   
   // Dark Rate
-  Float_t thresh_mV  = 15.0;
+  Float_t thresh_mV  = 10.0;
   Int_t   darkRate   = 8000.;
   
   if(argc==1){
@@ -108,11 +108,11 @@ int main(Int_t argc, Char_t *argv[]){
      PMT->SetTestMode(kTRUE);
      
      // Towards saving analysis output 
-     //PMT->MakeCalibratedTree();
+     PMT->MakeCalibratedTree();
 
      shipData = new ShippingData(testInfo->pmtID(argv[iFile]));
      
-     int event = -1;
+     int event = 0;
      
      PMT->PlotAccumulatedFFT();
 
@@ -126,7 +126,7 @@ int main(Int_t argc, Char_t *argv[]){
      }
      //------------
      // Timing Study
-     //PMT->TimeOfPeak();
+     PMT->TimeOfPeak();
 
      //------------
      //  Dark Rate
