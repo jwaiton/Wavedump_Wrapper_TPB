@@ -423,11 +423,11 @@ TH1F* h2h(TH1D* hold ){
 
 /******************** Carry out the fit ******************************/
 
-Result* fitModel(TH1F* fhisto, int pmt, int hv,
-            double minval = -100,
-            double maxval = 1800,
-            double max = 10000){
-
+Result* fitModel(TH1F* fhisto, int run, int pmt, int hv,
+		 double minval = -100,
+		 double maxval = 1800,
+		 double max = 10000){
+  
 //Result* res = new Result();
 
   TCanvas * canvas = new TCanvas("Canvas","Canvas");
@@ -484,7 +484,7 @@ Result* fitModel(TH1F* fhisto, int pmt, int hv,
   frame->Draw();
 //  canvas->SaveAs(Form("./Plots/Fit/Fit_Run_1_PMT_%d_HV_%d.C",pmt,hv));
   gPad->SetLogy();  
-  canvas->SaveAs(Form("./Plots/Fit/Fit_Run_1_PMT_%d_HV_%d.png",pmt,hv));
+  canvas->SaveAs(Form("./Plots/Fit/Fit_Run_%d_PMT_%d_HV_%d.png",run,pmt,hv));
  
   Result* res = propagateAndFill(counts,model,fres);
  
@@ -532,7 +532,7 @@ int main(int argc,char **argv){
 	
   /*** Read in the HV data ***/
 
-  int nominalHV;
+  int nominalHV = -1000;
   int pmt;
   int loc;
   int run =1;
@@ -598,20 +598,27 @@ int main(int argc,char **argv){
     }
   }
 
+  if(nominalHV < 0 ){
 
+    cerr << endl;
+    cerr << " Error: Nominal HV not found" << endl;
+    return -1;
 
+  }
+  
   /*** Read in and fit the charge Spectrum ***/
-    
+  
   double hvVals[5]; double hvValsError[5]; double gainVals[5]; double gainValsError[5];
   
   for (int r=0;r<5;r++){ 
 
     int hv = r+1; // gain test number
-    sprintf(histname, "/home/ubuntu/WATCHMAN/BinaryData/Cable_Test/Run_%d_PMT_%d_Loc_%d_HV_%d.root",run,pmt,loc,hv); 
+    sprintf(histname, "/home/ubuntu/WATCHMAN/RootData/Run_%d_PMT_%d_Loc_%d_HV_%d.root",run,pmt,loc,hv); 
     TFile s(histname);
     s.ls();
 
     char root_name[50];
+    //sprintf(root_name, "hQ_Filter_Run_%d_PMT_%d_Loc_%d_HV_%d",run,pmt,loc,hv);
     sprintf(root_name, "hQ_Fixed_Run_%d_PMT_%d_Loc_%d_HV_%d",run,pmt,loc,hv);
     TH1D *speData = (TH1D*)s.Get(root_name);
 
@@ -620,7 +627,7 @@ int main(int argc,char **argv){
 
 	  
   	/*** Find the SPE charge output ***/
-    Result * res = fitModel(fhisto,pmt,hv);
+    Result * res = fitModel(fhisto,run,pmt,hv);
 
     float signal = res->pemean.value - res->ped.value;
     float signalError = res->peak.error;
@@ -632,8 +639,8 @@ int main(int argc,char **argv){
 
 
     /*** Calculate the gain ***/
-	gainVals[r] = GainCalc(signal);
-	gainValsError[r] = GainErrorCalc(signalError); 
+    gainVals[r] = GainCalc(signal);
+    gainValsError[r] = GainErrorCalc(signalError); 
     hvVals[r] = pmtHV[r];      
     hvValsError[r]=0;
     
@@ -663,10 +670,15 @@ int main(int argc,char **argv){
   f14->SetParameter(1,10);
   TFitResultPtr tfrp14=Gain->Fit("f14","RSE"); // fit TGraph since fit to TGraphErrors will not work
 
+  Gain->SetMinimum(0);
+
+  GainErrors->SetMinimum(0);
   GainErrors->Draw("AP");
   GainErrors->SetTitle(Form("Gain curve for PMT %d",pmt));
   GainErrors->GetYaxis()->SetTitle("Gain (10^7)");
   GainErrors->GetXaxis()->SetTitle("Applied Voltage (V)");
+
+  f14->SetMinimum(0);
   f14->Draw("same");
 
   canvasName = "./Plots/";

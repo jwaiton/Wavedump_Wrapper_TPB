@@ -208,12 +208,41 @@ float GetDelay(int run = 0){
     return 70.;
   else if ( run == 40 ) // Dark Box 
     return 120.;
-  else if ( run == 41 && run < 50 ) // Cable Test 
+  else if ( run == 41 )      // Cable Test 
     return  95.;
+  else if ( run == 42 )      // Cable Test 
+    return  95.;
+  else if ( run == 43 )      // Cable Test 
+    return  95.;
+  else if ( run == 44 )      // Cable Test
+    return  95.;
+  else if ( run == 45 )      // PMT148
+    return  80.;
+  else if ( run >= 46 &&
+	    run <  51 )      // PMT 152 80m
+    return  105.;
+  else if ( run == 51 )      // PMT 152 Cable Test 64m
+    return  110.;
+  else if ( run == 52 )      // Cable Test 48m
+    return  80.;
+  else if ( run == 53 )      // Cable Test 40m
+    return  90.;
+  else if ( run == 54 )      // Cable Test 32m
+    return  90.;
+  else if ( run == 55 )      // Cable Test 24m
+    return  80.;
+  else if ( run == 56 )      // Cable Test 20m
+    return  80.;
+  else if ( run == 57 )      // Cable Test 16m
+    return  90.;
+  else if ( run == 58 )      // Cable Test 8m
+    return  90.;
+  else if ( run == 59 )      // Cable Test 2m
+    return  85.;
   else if ( run > 999 ) // Clean Lab
-    return 100.;
+    return  100.;
   else                  // Default
-    return 60.;
+    return  60.;
 }
 
 float GetmVPerBin(char digitiser){
@@ -762,15 +791,30 @@ int ProcessBinaryFile(TString inFilePath,
   rangeT[0] = 0.;
   rangeT[1] = GetWaveformLength(digitiser,test,samplingSetting);
   binsT = GetNSamples(digitiser,test);
+
+  cout << endl;
+  cout << " binsT     = " << binsT << endl;
+  cout << " rangeT[0] = " << rangeT[0] << endl;
+  cout << " rangeT[1] = " << rangeT[1] << endl;
+  
   
   if( rangeT[1] > 220.){
 
+    cout << " GetDelay(run)  = " << GetDelay(run) << endl;
+    cout << " GetGateWidth() = " << GetGateWidth() << endl;
+    
     rangeT[0] = GetDelay(run) - (GetGateWidth()*1.5);
     rangeT[1] = GetDelay(run) + (GetGateWidth()*1.5);
-	
-    binsT = binsT*(Int_t)((rangeT[1]-rangeT[0])/rangeT[0]);
+
+    cout << " rangeT[0] = " << rangeT[0] << endl;
+    cout << " rangeT[1] = " << rangeT[1] << endl;
+    
+    binsT = binsT*(rangeT[1]-rangeT[0]);
+    binsT = binsT/GetWaveformLength(digitiser,test,samplingSetting);
   }
-  
+
+  cout << endl;
+  cout << " binsT = " << binsT << endl;
   
   
 
@@ -1321,8 +1365,7 @@ char GetSamplingSetting(char digitiser,
 
   if  (digitiser == 'V')
     return 'S'; 
-  if  ( run >= 40 &&
-	run <  50)
+  if  ( run >= 40 )
     return 'L';
   else 
     return GetSamplingSettingUser();
