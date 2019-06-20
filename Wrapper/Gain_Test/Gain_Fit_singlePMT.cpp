@@ -446,10 +446,11 @@ TH1F* h2h(TH1D* hold ){
 
 /******************** Carry out the fit ******************************/
 
-Result* fitModel(TH1F* fhisto, int pmt, int hv,
-            double minval = -100,
-            double maxval = 1800,
-            double max = 10000){
+Result* fitModel(TH1F* fhisto, int run, int pmt, int hv,
+		 double minval = -100,
+		 double maxval = 1800,
+		 double max = 10000){
+  
 //Result* res = new Result();
   TCanvas * canvas = new TCanvas("Canvas","Canvas");
   fhisto->GetXaxis()->SetTitle("charge [mV ns]");
@@ -516,8 +517,7 @@ Result* fitModel(TH1F* fhisto, int pmt, int hv,
   frame->Draw();
 //  canvas->SaveAs(Form("./Plots/FullFit/Fit_Run_1_PMT_%d_HV_%d.C",pmt,hv));
   gPad->SetLogy();  
-  canvas->SaveAs(Form("./Plots/Fit/Fit_Run_1_PMT_%d_HV_%d.png",pmt,hv));
-
+  canvas->SaveAs(Form("./Plots/Fit/Fit_Run_%d_PMT_%d_HV_%d.png",run,pmt,hv));
   Result* res = propagateAndFill(counts,model,fres);
  
   return res;
@@ -626,9 +626,16 @@ int Gain_Fit_singlePMT(int run = 40,
       }
     }
   }
+  if(nominalHV < 0 ){
+
+    cerr << endl;
+    cerr << " Error: Nominal HV not found" << endl;
+    return -1;
+
+  }
   
   /*** Read in and fit the charge Spectrum ***/
-    
+  
   double hvVals[5]; double hvValsError[5]; double gainVals[5]; double gainValsError[5];
   
   TString histoNameTemp = "Run_%d_PMT_%d_Loc_%d_HV_%d";
@@ -636,9 +643,8 @@ int Gain_Fit_singlePMT(int run = 40,
   TString filePathTemp = "";
 
   for (int r=0;r<5;r++){ 
-    
+
     int hv = r+1; // gain test number
-    
     filePathTemp = dir + "/Run_%d_PMT_%d_Loc_%d_HV_%d.root";
 
     cout << endl;
@@ -667,7 +673,7 @@ int Gain_Fit_singlePMT(int run = 40,
     printf("Getting data from SPE spectrum...\n");
 
   	/*** Find the SPE charge output ***/
-    Result * res = fitModel(fhisto,pmt,hv);
+    Result * res = fitModel(fhisto,run,pmt,hv);
 
     float signal = res->pemean.value - res->ped.value;
     float signalError = res->pemean.error;
@@ -710,10 +716,15 @@ int Gain_Fit_singlePMT(int run = 40,
   f14->SetParNames("1/optimalHV","power");
   TFitResultPtr tfrp14=Gain->Fit("f14","RSE"); // fit TGraph since fit to TGraphErrors will not work
 
+  Gain->SetMinimum(0);
+
+  GainErrors->SetMinimum(0);
   GainErrors->Draw("AP");
   GainErrors->SetTitle(Form("Gain curve for PMT %d",pmt));
   GainErrors->GetYaxis()->SetTitle("Gain (10^7)");
   GainErrors->GetXaxis()->SetTitle("Applied Voltage (V)");
+
+  f14->SetMinimum(0);
   f14->Draw("same");
 
   Gain->Draw("P same");
