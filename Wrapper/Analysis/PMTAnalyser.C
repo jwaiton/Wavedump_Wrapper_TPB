@@ -207,7 +207,7 @@ void PMTAnalyser::PlotWaveform(Long64_t entry){
     entryRelFrst++;
   }
   
-  hNameTemp = "./WaveForms/";
+  hNameTemp = "./Waveforms/";
   
   hNameTemp += FileID;
   //hNameTemp += "_Event_%d";

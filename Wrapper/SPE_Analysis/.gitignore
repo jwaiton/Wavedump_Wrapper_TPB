@@ -8,5 +8,6 @@ SPE_Root/
 src/
 *.root
 Plots/
-*.so
+*.so*
 *.pcm
+RooExpWindowDict.cxx

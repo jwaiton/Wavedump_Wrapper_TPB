@@ -550,10 +550,10 @@ float GainCalc(double mVnsval){
 /*********************************************************************/
 
 //int main(int argc,char **argv){	
-int Gain_Fit_singlePMT(int pmt = 130,
+int Gain_Fit_singlePMT(int run = 40,
+		       int pmt = 152,
 		       int loc = 0,
-		       int run = 1,
-		       TString dir = "/Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/RawRootData/",
+		       TString dir = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/",
 		       Bool_t useFiltered = kFALSE){	
   
   
@@ -646,6 +646,7 @@ int Gain_Fit_singlePMT(int pmt = 130,
     
     sprintf(filePath,filePathTemp,run,pmt,loc,hv); 
     TFile s(filePath);
+
     s.ls();
 
     char root_name[50];
