@@ -29,3 +29,4 @@ Gain_Fit_singlePMT
 RooExpWindowDict*
 *.so*
 *.pcm*
+example.c
