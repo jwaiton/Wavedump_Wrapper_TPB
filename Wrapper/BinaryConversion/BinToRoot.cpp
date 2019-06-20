@@ -231,7 +231,7 @@ float GetDelay(int run = 0){
   else if ( run ==  59 )
     return 90.;
   else                  // Default
-    return 60.;
+    return  60.;
 }
 
 float GetmVPerBin(char digitiser){
@@ -778,6 +778,12 @@ int ProcessBinaryFile(TString inFilePath,
   rangeT[0] = 0.;
   rangeT[1] = GetWaveformLength(digitiser,test,samplingSetting);
   binsT = GetNSamples(digitiser,test);
+
+  cout << endl;
+  cout << " binsT     = " << binsT << endl;
+  cout << " rangeT[0] = " << rangeT[0] << endl;
+  cout << " rangeT[1] = " << rangeT[1] << endl;
+  
   
   if( rangeT[1] > 220.){
     

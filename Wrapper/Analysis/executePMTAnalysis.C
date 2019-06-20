@@ -52,21 +52,20 @@ int main(Int_t argc, Char_t *argv[]){
   TFile * outFile = nullptr;  
   TFile * inFile = nullptr;
   
-  TTree * tree = nullptr;
-  PMTAnalyser * PMT = nullptr;
-  ShippingData * shipData = nullptr;
+  TTree          * tree = nullptr;
+  PMTAnalyser    * PMT = nullptr;
+  ShippingData   * shipData = nullptr;
   FileNameParser * testInfo = new FileNameParser();
   
   // 'V' for VME, 'D' for desktop
   Char_t  digitiser = 'D';
-
   // Old style BinToRoot output
   // or new BinToRoot output?
   // (pulse[] -> waveform[] e.g.)
   Bool_t oldRootFileVersion = kFALSE;
   
   // Dark Rate
-  Float_t thresh_mV  = 15.0;
+  Float_t thresh_mV  = 10.0;
   Int_t   darkRate   = 8000.;
   
   if(argc==1){
@@ -108,7 +107,7 @@ int main(Int_t argc, Char_t *argv[]){
      PMT->SetTestMode(kTRUE);
      
      // Towards saving analysis output 
-     //PMT->MakeCalibratedTree();
+     PMT->MakeCalibratedTree();
 
      shipData = new ShippingData(testInfo->pmtID(argv[iFile]));
      
