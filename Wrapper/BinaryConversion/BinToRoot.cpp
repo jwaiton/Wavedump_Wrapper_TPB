@@ -597,7 +597,7 @@ int ProcessBinaryFile(TString inFilePath,
 
   //----------------------
   // Variables for testing
-  bool  testMode  = false;
+  bool  testMode  = true;
   bool  keepGoing = true;
   int   maxEvents = 10000;
   
@@ -828,11 +828,13 @@ int ProcessBinaryFile(TString inFilePath,
   // Note that the sign is preserved for VDC, therefore 
   // minima (maxima) will be where the signal peaked 
   // for negative (positive) signal pulses
-  short minVDC = 32767, maxVDC = -32768;  
+  short minVDC = 32767, maxVDC = -32768;
+  Long64_t meanVDC = 0;  
   // sample numbers (indices) corresponding to minVDC and maxVDC
   short minT   = -1, maxT   = -1;  
   
   float peakT_ns = -1., peakV_mV = 0., baselineV_mV =0.;
+  Double_t mean_baselineV_mV = 0.;
   
   // accumulators for integrating the sample values
   int   intVDCfixed = 0, intVDCpeak = 0, intVDCbaseline = 0;
@@ -896,7 +898,10 @@ int ProcessBinaryFile(TString inFilePath,
     // VDC range
     minVDC =  32767;
     maxVDC = -32768;  
+    meanVDC = 0;  
 
+    baselineV_mV = 0.;
+    
     // time walk?
     minT   =  32767;
     // random?
@@ -990,6 +995,8 @@ int ProcessBinaryFile(TString inFilePath,
 	maxT   = sample;
       }
       
+      meanVDC += VDC;
+
       hWave->SetBinContent(iSample+1,
 			   (double)(8700 - waveform[iSample]));
 
@@ -1118,6 +1125,8 @@ int ProcessBinaryFile(TString inFilePath,
     peakV_mV     = peakV_mV * GetmVPerBin(digitiser);
     baselineV_mV = baselineV_mV * GetmVPerBin(digitiser);
     
+    mean_baselineV_mV += baselineV_mV;
+
     if(verbosity > 1){
       cout << " peakV_mV       = " <<  peakV_mV      << endl;
       cout << " baselineV_mV   = " << baselineV_mV   << endl;
