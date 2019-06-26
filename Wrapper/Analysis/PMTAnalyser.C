@@ -135,7 +135,7 @@ void PMTAnalyser::PlotAccumulatedFFT(){
   gPad->SetLogy();
   hFFT->Draw("hist");
 
-  TString hName = "./FFT/hFFT_";
+  TString hName = "./Waveforms/hFFT_";
   hName += FileID;
   hName += ".pdf";
   
