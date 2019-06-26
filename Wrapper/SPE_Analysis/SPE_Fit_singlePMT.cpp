@@ -531,7 +531,7 @@ float GainCalc(double mVnsval){
 int SPE_Fit_singlePMT(int run = 50,
 		      int pmt = 152,
 		      int loc = 0,
-		      TString dir = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/",
+		      TString dir = "~/WATCHMAN/RootData/",
 		      Bool_t useFiltered = kFALSE){	
   
   
