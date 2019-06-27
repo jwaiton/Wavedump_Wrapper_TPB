@@ -230,6 +230,10 @@ float GetDelay(int run = 0){
     return 90.;
   else if ( run ==  59 )
     return 90.;
+  else if ( run ==  60 )
+    return 90.;
+  else if ( run ==  61 )
+    return 90.;
   else                  // Default
     return  60.;
 }
@@ -1502,7 +1506,7 @@ int GetHVStep(char test ){
 
 int GetNSteps(char test ){
   if( test == 'G')
-    return 5;
+    return 10;
   else
     return 0;
 }
