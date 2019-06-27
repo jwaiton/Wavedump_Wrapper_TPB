@@ -406,6 +406,7 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
    histo->Fill(vpos);
    histo2->Fill(ppos);
    histo3->Fill(fmodel->Eval(ppos)/fmodel->Eval(vpos));
+
    counts->setRange("signal",vpos, 1000) ;
 
  }
@@ -507,8 +508,9 @@ Result* fitModel(TH1F* fhisto,
   frame->Draw();
 //  canvas->SaveAs(Form("./Plots/FullFit/Fit_Run_1_PMT_%d_HV_%d.C",pmt,hv));
   gPad->SetLogy();  
-  
-  canvas->SaveAs(Form("./Plots/Fit_Run_%d_PMT_%d_HV_%d_Test_%c.png",run,pmt,hv,test));
+  char buffer[300];
+  sprintf(buffer,"./Plots/Fit_Run_%d_PMT_%d_HV_%d_Test_%c.png",run,pmt,hv,test);
+  canvas->SaveAs(buffer);
 
   Result* res = propagateAndFill(counts,model,fres);
  
@@ -536,7 +538,6 @@ int SPE_Fit_singlePMT(int run = 50,
 		      string dir = "~/WATCHMAN/RootData/",
 		      bool useFiltered = kFALSE){	
   
-  
   /*** Read in the HV data ***/
 
   int   hv = -1;
@@ -544,7 +545,7 @@ int SPE_Fit_singlePMT(int run = 50,
   float gainError;
   float peak2valley;
   float peak2valleyError;
-  string filePath[300] = "";
+  char filePath[300] = "";
 
   /*** Determine the PMT number and applied voltage for each step ***/
 
@@ -582,16 +583,15 @@ int SPE_Fit_singlePMT(int run = 50,
   /*** Read in and fit the charge Spectrum ***/
 
   string filePathTemp = dir + "Run_%d_PMT_%d_Loc_%d_Test_%c.root";
-
   
   if(test=='G'){
     cout << " Input Step (e.g. 4) " << endl;
     cin  >> step;
-    filePathTemp = dir + "Run_%d_PMT_%d_Loc_%d_HV_%d.root";
-    sprintf(filePath,filePathTemp,run,pmt,loc,step);
+    sprintf(filePath,"%sRun_%d_PMT_%d_Loc_%d_HV_%d.root",dir.c_str(),run,pmt,loc,step);
+
   }
   else{
-    sprintf(filePath,filePathTemp,run,pmt,loc,test);
+    sprintf(filePath,"%sRun_%d_PMT_%d_Loc_%d_Test_%c.root",dir.c_str(),run,pmt,loc,test);
   }
 
   TFile s(filePath);
@@ -627,7 +627,6 @@ int SPE_Fit_singlePMT(int run = 50,
   cout << "peak           = " << signal << " (" << signalError << ") " << endl;
       
   printf(" charge is %f, gain is %f x 10^7 +/- %f, peak to valley is  %f +/- %f for pmt %d at %dV \n\n\n\n",signal,gain,gainError,peak2valley,peak2valleyError,pmt,hv); 
-
 
   return 0;
 }
