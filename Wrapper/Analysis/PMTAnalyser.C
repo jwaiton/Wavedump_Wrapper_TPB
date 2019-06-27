@@ -107,7 +107,7 @@ void PMTAnalyser::PlotAccumulatedFFT(){
   Long64_t nentries = rawRootTree->GetEntriesFast();   
   
   //   //!!!
-  nentries = 10000;
+  //nentries = 10000;
   
   cout << endl;
   cout << " Running: PlotAccumulatedFFT " << endl;
@@ -137,7 +137,7 @@ void PMTAnalyser::PlotAccumulatedFFT(){
 
   TString hName = "./FFT/hFFT_";
   hName += FileID;
-  hName += ".pdf";
+  hName += ".root";
   
   canvas->SaveAs(hName);
   
@@ -203,6 +203,8 @@ void PMTAnalyser::PlotWaveform(Long64_t entry){
     
     //hWave[entryRelFrst]->SetMinimum(450);
     //hWave[entryRelFrst]->SetMaximum(850);
+    
+    hWave[entryRelFrst]->GetXaxis()->SetRange(64,192);
     hWave[entryRelFrst]->Draw();
     
     tStr.Form("Entry %lld", entry);
