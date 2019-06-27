@@ -406,6 +406,7 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
    histo->Fill(vpos);
    histo2->Fill(ppos);
    histo3->Fill(fmodel->Eval(ppos)/fmodel->Eval(vpos));
+
    counts->setRange("signal",vpos, 1000) ;
 
  }
@@ -533,7 +534,7 @@ float GainCalc(double mVnsval){
 int SPE_Fit_singlePMT(int run = 50,
 		      int pmt = 152,
 		      int loc = 0,
-		      TString dir = "~/WATCHMAN/RootData/",
+		      string dir = "~/WATCHMAN/RootData/",
 		      Bool_t useFiltered = kFALSE){	
   
   
@@ -581,17 +582,16 @@ int SPE_Fit_singlePMT(int run = 50,
   
   /*** Read in and fit the charge Spectrum ***/
 
-  TString filePathTemp = dir + "Run_%d_PMT_%d_Loc_%d_Test_%c.root";
-
+  string filePathTemp = dir + "Run_%d_PMT_%d_Loc_%d_Test_%c.root";
   
   if(test=='G'){
     cout << " Input Step (e.g. 4) " << endl;
     cin  >> step;
-    filePathTemp = dir + "Run_%d_PMT_%d_Loc_%d_HV_%d.root";
-    sprintf(filePath,filePathTemp,run,pmt,loc,step);
+    sprintf(filePath,"%sRun_%d_PMT_%d_Loc_%d_HV_%d.root",dir.c_str(),run,pmt,loc,step);
+
   }
   else{
-    sprintf(filePath,filePathTemp,run,pmt,loc,test);
+    sprintf(filePath,"%sRun_%d_PMT_%d_Loc_%d_Test_%d.root",dir.c_str(),run,pmt,loc,test);
   }
 
   TFile s(filePath);
@@ -627,7 +627,6 @@ int SPE_Fit_singlePMT(int run = 50,
   cout << "peak           = " << signal << " (" << signalError << ") " << endl;
       
   printf(" charge is %f, gain is %f x 10^7 +/- %f, peak to valley is  %f +/- %f for pmt %d at %dV \n\n\n\n",signal,gain,gainError,peak2valley,peak2valleyError,pmt,hv); 
-
 
   return 0;
 }
