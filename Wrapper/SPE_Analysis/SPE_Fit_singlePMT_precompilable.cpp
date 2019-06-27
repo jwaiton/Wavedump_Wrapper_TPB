@@ -37,6 +37,7 @@
   * ROOT
  */
 
+
 #include <iostream>
 #include <cmath>
 #include <cstdlib>
@@ -132,7 +133,7 @@ InitParams initializeFit(TH1F* h){
   std::cout << "found peaks " << nfound << std::endl;
 
   /*** Find the approximate charge at the maximum of the SPE peak ***/
-  Double_t *peaks;
+  Float_t *peaks;
   peaks = spec->GetPositionX();
   float sigPeak = 0; float pedPeak = 0;
   std::cout << peaks[0] << " " << peaks[1]  << " " << peaks[2] << std::endl;
@@ -270,11 +271,8 @@ RooAddPdf* makePGaussPDF(int n, RooRealVar* counts, RooFormulaVar* k,
 RooAddPdf* makePMTPDF(RooRealVar* counts,double pmval, double psval, double psval2,  double mval, double sval, double f1peval,double vmval, int expvar, double vaval = 0.03, double fvval = 0.3){// counts,pedPeak,sigPeak-pedPeak,sped,ssignal,Ratio,valleyPos
   RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING) ;
 
-  int verbosity = 0;
-  if( verbosity > 0 ){
-    std::cout << "pedestal mean " << pmval << "pedestal sigma " << psval << "SPE mean "  << mval << "SPE sigma "  << sval  << std::endl;
-    std::cout << "SPE fraction " << f1peval << "valley min " << vmval << "valley alpha " << vaval << std::endl;
-  }
+  std::cout << "pedestal mean " << pmval << "pedestal sigma " << psval << "SPE mean "  << mval << "SPE sigma "  << sval  << std::endl;
+  std::cout << "SPE fraction " << f1peval << "valley min " << vmval << "valley alpha " << vaval << std::endl;
   
   /*** construct the pedestal pdf ***/ 
   RooRealVar* pedm = new RooRealVar("pedmean","pedmean",pmval, pmval - 5*psval, pmval + 5*psval );   // pedestal position
@@ -388,10 +386,9 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
  /*** now get the complicated ones that require sampling the fitted pdf/covariance ***/
  TH1D* histo = new TH1D("valley", "valley", 200, res->ped.value,  res->pemean.value ); histo->Sumw2();
  TH1D* histo2 = new TH1D("peak", "peak", 200,  res->pemean.value - res->pewidth.value ,  res->pemean.value +5* res->pewidth.value ); histo2->Sumw2();
- TH1D* histo3 = new TH1D("peakToValley","peakToValley",100,0.,10.); histo3->Sumw2();
+ TH1D* histo3 = new TH1D("peakToValley","peakToValley",00,0,10); histo->Sumw2();
 
  RooArgSet nset(*counts) ;
-
 
  for (int i = 0; i < 100; ++i){
    
@@ -406,7 +403,9 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
    histo->Fill(vpos);
    histo2->Fill(ppos);
    histo3->Fill(fmodel->Eval(ppos)/fmodel->Eval(vpos));
+
    counts->setRange("signal",vpos, 1000) ;
+   
 
  }
 
@@ -442,13 +441,11 @@ TH1F* h2h(TH1D* hold ){
 
 /******************** Carry out the fit ******************************/
 
-Result* fitModel(TH1F* fhisto, 
-		 int run, int pmt, int hv, char test,
-		 double minval = -100,
-		 double maxval = 1800,
-		 double max = 10000){
-  
-  //Result* res = new Result();
+Result* fitModel(TH1F* fhisto, int pmt, int hv,
+            double minval = -100,
+            double maxval = 1800,
+            double max = 10000){
+//Result* res = new Result();
   TCanvas * canvas = new TCanvas("Canvas","Canvas");
   fhisto->GetXaxis()->SetTitle("charge [mV ns]");
   fhisto->GetYaxis()->SetTitle("Counts");
@@ -507,8 +504,7 @@ Result* fitModel(TH1F* fhisto,
   frame->Draw();
 //  canvas->SaveAs(Form("./Plots/FullFit/Fit_Run_1_PMT_%d_HV_%d.C",pmt,hv));
   gPad->SetLogy();  
-  
-  canvas->SaveAs(Form("./Plots/Fit_Run_%d_PMT_%d_HV_%d_Test_%c.png",run,pmt,hv,test));
+  canvas->SaveAs(Form("./Plots/Fit_Run_1_PMT_%d_HV_%d_Test_S.png",pmt,hv));
 
   Result* res = propagateAndFill(counts,model,fres);
  
@@ -529,89 +525,59 @@ float GainCalc(double mVnsval){
 
 /*********************************************************************/
 
-//int main(int argc,char **argv){	
-int SPE_Fit_singlePMT(int run = 50,
-		      int pmt = 152,
-		      int loc = 0,
-		      TString dir = "~/WATCHMAN/RootData/",
-		      Bool_t useFiltered = kFALSE){	
-  
-  
+int main(int argc,char **argv){	
+ 
+	
   /*** Read in the HV data ***/
 
-  int   hv = -1;
+  int pmt;
+  int loc;
+  int run;
+  int hv;
   float gain;
   float gainError;
   float peak2valley;
   float peak2valleyError;
-  char  filePath[300]= "";
+  char histname[300]= "";
+
+
 
   /*** Determine the PMT number and applied voltage for each step ***/
 
-  if( pmt < 0 || pmt > 200 ){
-    cout << "Input the PMT number \n" ;
-    cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
-    cin  >> pmt;
-    cout <<endl;
-  }
-  
-  if( loc < 0 || loc > 7){
-    cout << "Input the location number \n" ;
-    cin  >> loc;
-    cout <<endl;
-  }
-  
-  if( run < 0 ){
-    cout << "Input the run number \n";
-    cin  >> run;
-    cout << endl;
-  }
-  
-  if( hv < 0 ){
-    cout << "Input the applied voltage \n";
-    cin  >> hv;
-    cout << endl;
-  }
-  
-  Char_t test = 'S';
-  Int_t  step = 4; 
+  cout << "Input the PMT number \n" ;
+  cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
+  cin  >> pmt;
+  cout <<endl;
 
-  cout << " Input Test (e.g. 'S' or 'N' or 'G') " << endl;
-  cin  >> test;
-  
+  cout << "Input the location number \n" ;
+  cin  >> loc;
+  cout <<endl;
+
+  cout << "Input the run number \n";
+  cin  >> run;
+  cout << endl;
+
+  cout << "Input the applied voltage \n";
+  cin  >> hv;
+  cout << endl;
+
+
   /*** Read in and fit the charge Spectrum ***/
-
-  TString filePathTemp = dir + "Run_%d_PMT_%d_Loc_%d_Test_%c.root";
-
+    
   
-  if(test=='G'){
-    cout << " Input Step (e.g. 4) " << endl;
-    cin  >> step;
-    filePathTemp = dir + "Run_%d_PMT_%d_Loc_%d_HV_%d.root";
-    sprintf(filePath,filePathTemp,run,pmt,loc,step);
-  }
-  else{
-    sprintf(filePath,filePathTemp,run,pmt,loc,test);
-  }
-
-  TFile s(filePath);
+  sprintf(histname, "../../RawRootData/Run_%d_PMT_%d_Loc_%d_Test_S.root",run,pmt,loc); 
+  TFile s(histname);
   s.ls();
 
   char root_name[50];
-  
-  if( test =='G')
-    sprintf(root_name, "hQ_Fixed_Run_%d_PMT_%d_Loc_%d_HV_%d",run,pmt,loc,step);
-  else
-    sprintf(root_name, "hQ_Fixed_Run_%d_PMT_%d_Loc_%d_Test_%c",run,pmt,loc,test);
-
-
+  sprintf(root_name, "hQ_Filter_Run_%d_PMT_%d_Loc_%d_Test_S",run,pmt,loc);
   TH1D *speData = (TH1D*)s.Get(root_name);
 
   TH1F* fhisto = h2h(speData);
   printf("Getting data from SPE spectrum...\n");
 
   /*** Find the SPE charge output ***/
-  Result * res = fitModel(fhisto,run, pmt,hv,test);
+  Result * res = fitModel(fhisto,pmt,hv);
 
   float signal = res->pemean.value - res->ped.value;
   float signalError = res->pemean.error;
@@ -625,7 +591,7 @@ int SPE_Fit_singlePMT(int run = 50,
 
   cout << endl;
   cout << "peak           = " << signal << " (" << signalError << ") " << endl;
-      
+
   printf(" charge is %f, gain is %f x 10^7 +/- %f, peak to valley is  %f +/- %f for pmt %d at %dV \n\n\n\n",signal,gain,gainError,peak2valley,peak2valleyError,pmt,hv); 
 
 
