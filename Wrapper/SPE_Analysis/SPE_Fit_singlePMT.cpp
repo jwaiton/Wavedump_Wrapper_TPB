@@ -406,7 +406,6 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
    histo->Fill(vpos);
    histo2->Fill(ppos);
    histo3->Fill(fmodel->Eval(ppos)/fmodel->Eval(vpos));
-
    counts->setRange("signal",vpos, 1000) ;
 
  }
@@ -626,7 +625,7 @@ int SPE_Fit_singlePMT(int run = 50,
 
   cout << endl;
   cout << "peak           = " << signal << " (" << signalError << ") " << endl;
-        
+      
   printf(" charge is %f, gain is %f x 10^7 +/- %f, peak to valley is  %f +/- %f for pmt %d at %dV \n\n\n\n",signal,gain,gainError,peak2valley,peak2valleyError,pmt,hv); 
 
 
