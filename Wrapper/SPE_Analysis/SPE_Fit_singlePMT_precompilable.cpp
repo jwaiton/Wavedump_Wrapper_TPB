@@ -1,21 +1,20 @@
 /*
- * A program to calculate the operating voltage for 10^7 gain
+ * A program to calculate the gain and peak-to-valley ratio
+ * at applied voltage
  *
  * Author
  * Liz Kneale
  * eskneale1@sheffield.ac.uk
  * 
  * Adapted from SPE_Fit.cpp by Tomi Akindele
+ * and fit code by Matt Needham
  *
  * This program reads in the charge spectra output
  * from BintoRoot.cpp in Wavedump_Wraper/RawRootData, 
- * extracts SPE charge output from spectra fits 
- * and calculates operating voltage from 
- * gain curve fit.
+ * and outputs SPE charge, gain and peak-to-valley.
  *
- * Outputs operating voltage and other data to ROOT ntuple
- * and plots of SPE spectrum fits and gain curve fits. 
- * Requires ./Plots and ./Plots/Fit in Gain_Tests directory.
+ * Outputs data to screen and plots of SPE spectrum 
+ * fit. Requires ./Plots/ in SPE_Test directory.
  *
  *
  * To build:
@@ -24,19 +23,20 @@
  * make -f Makefile-1
  *
  * then:
- * make -f Makefile Gain_Fit_singlePMT
+ * make -f Makefile SPE_Fit_singlePMT
  *
  * To run:
  *
- * ./Gain_Fit_singlePMT
+ * ./SPE_Fit_singlePMT
  *
  * then input the data as prompted.
  *
- * Data required: pmt, rig location, run
+ * Data required: pmt, rig location, run, applied voltage
  *
  * Dependencies:
- * ROOT
+  * ROOT
  */
+
 
 #include <iostream>
 #include <cmath>
@@ -76,7 +76,7 @@
 #include "RooChebychev.h"
 #include "RooBernstein.h"
 #include "RooExponential.h"
-#include "./RooExpWindow.h"
+#include "RooExpWindow.h"
 #include "RooMsgService.h"
 
 #include "TObject.h"
@@ -86,8 +86,6 @@
 using namespace std;
 using namespace TMath;
 using namespace RooFit;
-
-const Int_t nBins = 5; //ADDED
 
 /****************** Set up for charge spectrum fit ********************/
 typedef struct {
@@ -158,21 +156,21 @@ InitParams initializeFit(TH1F* h){
       std::cout << "charge is " << sigPeak << " for 2-peak spectrum \n" << std::endl;
 
   }
-  
-  if ( (nfound == 3) && (peaks[0] < -5)) { //ADDED 5
+
+  if ( (nfound == 3) && (peaks[0] < -5)) {
       sigPeak = peaks[2];
       pedPeak = peaks[1];
       std::cout << "charge is " << sigPeak << " for 3-peak spectrum \n" << std::endl;
 
   }
 
-  if (nfound == 3 && peaks[0] > -5 && peaks[1] > 100){ //ADDED 5
+  if (nfound == 3 && peaks[0] > -5 && peaks[1] > 100){
         sigPeak = peaks[1];
         pedPeak = peaks[0];
         std::cout << "charge is " << sigPeak << " for 3-peak spectrum \n" << std::endl;
   }
 
-  if (nfound == 3 && peaks[0] > -5 && peaks[1] < 100){ //ADDED 5
+  if (nfound == 3 && peaks[0] > -5 && peaks[1] < 100){
         sigPeak = peaks[2];
         pedPeak = peaks[0];
         std::cout << "charge is " << sigPeak << " for 3-peak spectrum \n" << std::endl;
@@ -238,11 +236,9 @@ RooAddPdf* makePGaussPDF(int n, RooRealVar* counts, RooFormulaVar* k,
                         RooRealVar* peds,RooRealVar* m0, 
                         double mval, double sval){
 
-  
+
   RooArgList pdfs; RooArgList coeffs ;
   int nlast = 10*n + 20;
-
-  
 
   for (int m = 1; m < nlast; ++m ){
 
@@ -273,20 +269,15 @@ RooAddPdf* makePGaussPDF(int n, RooRealVar* counts, RooFormulaVar* k,
  
 /*** construct the pdf ***/
 RooAddPdf* makePMTPDF(RooRealVar* counts,double pmval, double psval, double psval2,  double mval, double sval, double f1peval,double vmval, int expvar, double vaval = 0.03, double fvval = 0.3){// counts,pedPeak,sigPeak-pedPeak,sped,ssignal,Ratio,valleyPos
-  
   RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING) ;
-  
-  int verbosity = 0;
 
-  if( verbosity > 0 ){
-    std::cout << "pedestal mean " << pmval << "pedestal sigma " << psval << "SPE mean "  << mval << "SPE sigma "  << sval  << std::endl;
-    std::cout << "SPE fraction " << f1peval << "valley min " << vmval << "valley alpha " << vaval << std::endl;
-  }
+  std::cout << "pedestal mean " << pmval << "pedestal sigma " << psval << "SPE mean "  << mval << "SPE sigma "  << sval  << std::endl;
+  std::cout << "SPE fraction " << f1peval << "valley min " << vmval << "valley alpha " << vaval << std::endl;
   
   /*** construct the pedestal pdf ***/ 
-  RooRealVar* pedm = new RooRealVar("pedmean","pedmean",pmval, pmval - 5*psval, pmval + 5*psval );   // pedestal position //ADDED 5 twice
-  RooRealVar* peds = new RooRealVar("pedsigma","pedsigma",psval,0,5*psval ); // pedestal sigma //ADDED 5
-  RooRealVar* peds2 = new RooRealVar("pedsigma2","pedsigma2",psval2,psval,10*psval ); // pedestal sigma //NO ADDED
+  RooRealVar* pedm = new RooRealVar("pedmean","pedmean",pmval, pmval - 5*psval, pmval + 5*psval );   // pedestal position
+  RooRealVar* peds = new RooRealVar("pedsigma","pedsigma",psval,0,5*psval ); // pedestal sigma
+  RooRealVar* peds2 = new RooRealVar("pedsigma2","pedsigma2",psval2,psval,10*psval ); // pedestal sigma
   
   RooRealVar* fped = new RooRealVar("fped","fped",0.9,0,1 );
   RooGaussian* pedgauss = new  RooGaussian("pedgauss","pedgauss", *counts, *pedm, *peds);
@@ -394,10 +385,10 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
 
  /*** now get the complicated ones that require sampling the fitted pdf/covariance ***/
  TH1D* histo = new TH1D("valley", "valley", 200, res->ped.value,  res->pemean.value ); histo->Sumw2();
- TH1D* histo2 = new TH1D("peak", "peak", 200,  res->pemean.value - res->pewidth.value ,  res->pemean.value +5* res->pewidth.value ); histo2->Sumw2(); //ADDED 5
+ TH1D* histo2 = new TH1D("peak", "peak", 200,  res->pemean.value - res->pewidth.value ,  res->pemean.value +5* res->pewidth.value ); histo2->Sumw2();
+ TH1D* histo3 = new TH1D("peakToValley","peakToValley",00,0,10); histo->Sumw2();
 
  RooArgSet nset(*counts) ;
-
 
  for (int i = 0; i < 100; ++i){
    
@@ -408,16 +399,19 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
 
    TF1* fmodel = pdf->asTF( *counts,fitpars,*counts);
    double vpos = fmodel->GetMinimumX(res->ped.value,res->pemean.value);
-   double ppos = fmodel->GetMaximumX(res->pemean.value - res->pewidth.value, res->pemean.value + 5*res->pewidth.value); //ADDED 5
+   double ppos = fmodel->GetMaximumX(res->pemean.value - res->pewidth.value, res->pemean.value + 5*res->pewidth.value);
    histo->Fill(vpos);
    histo2->Fill(ppos);
+   histo3->Fill(fmodel->Eval(ppos)/fmodel->Eval(vpos));
 
    counts->setRange("signal",vpos, 1000) ;
+   
 
  }
 
-// fillValueWithError(&res->valley,histo);
+ fillValueWithError(&res->valley,histo);
  fillValueWithError(&res->peak,histo2);
+ fillValueWithError(&res->peakToValley,histo3);
 
  return res;
 }
@@ -447,11 +441,10 @@ TH1F* h2h(TH1D* hold ){
 
 /******************** Carry out the fit ******************************/
 
-Result* fitModel(TH1F* fhisto, int run, int pmt, int hv,
-		 double minval = -100,
-		 double maxval = 1800,
-		 double max = 10000){
-  
+Result* fitModel(TH1F* fhisto, int pmt, int hv,
+            double minval = -100,
+            double maxval = 1800,
+            double max = 10000){
 //Result* res = new Result();
   TCanvas * canvas = new TCanvas("Canvas","Canvas");
   fhisto->GetXaxis()->SetTitle("charge [mV ns]");
@@ -477,13 +470,6 @@ Result* fitModel(TH1F* fhisto, int run, int pmt, int hv,
   /*** build and fit the model starting from the initial parameters ***/
   RooAddPdf* model = makePMTPDF(counts,params,expvar);
 
-//  RooFit::MsgLevel msglevel = RooMsgService::instance().globalKillBelow();
-//  cout << endl;
-//  cout << " msglevel = " << msglevel << endl;
-//  RooMsgService::instance().setGlobalKillBelow(RooFit::ERROR);
-//  msglevel = RooMsgService::instance().globalKillBelow();
-//  cout << endl;
-//  cout << " msglevel = " << msglevel << endl;
   RooMsgService::instance().setSilentMode(true);
   RooMsgService::instance().setGlobalKillBelow(RooFit::ERROR);
 
@@ -518,24 +504,13 @@ Result* fitModel(TH1F* fhisto, int run, int pmt, int hv,
   frame->Draw();
 //  canvas->SaveAs(Form("./Plots/FullFit/Fit_Run_1_PMT_%d_HV_%d.C",pmt,hv));
   gPad->SetLogy();  
-  canvas->SaveAs(Form("./Plots/Fit/Fit_Run_%d_PMT_%d_HV_%d.png",run,pmt,hv));
+  canvas->SaveAs(Form("./Plots/Fit_Run_1_PMT_%d_HV_%d_Test_S.png",pmt,hv));
+
   Result* res = propagateAndFill(counts,model,fres);
  
   return res;
 } //fitModel
 
-
-/****************** Gain curve power law fit *************************/
-
-inline double PowerFunc(double x, double A, double alpha)
-{
-  return pow(A*x,alpha);
-} // PowerFunc
-
-double fitPow(double *x, double *k)
-{
-  return PowerFunc(x[0], k[0], k[1]);
-} // fitPow
 
 /**************** Gain calculation **********************************/
 
@@ -550,237 +525,74 @@ float GainCalc(double mVnsval){
 
 /*********************************************************************/
 
-//int main(int argc,char **argv){	
-int Gain_Fit_singlePMT(int run = 60,
-		       int pmt = 152,
-		       int loc = 0,
-		       TString dir = "~/WATCHMAN/RootData/",
-		       Bool_t useFiltered = kFALSE){	
-  
-  
+int main(int argc,char **argv){	
+ 
+	
   /*** Read in the HV data ***/
 
-  int nominalHV=0;
-  int pmtHV[nBins]; //ADDED 5
-  char filePath[300]= "";
+  int pmt;
+  int loc;
+  int run;
+  int hv;
+  float gain;
+  float gainError;
+  float peak2valley;
+  float peak2valleyError;
+  char histname[300]= "";
 
-  string hvfile = "../HVScan.txt";
-  ifstream file(hvfile.c_str());
-  string hvdat;
- 
-  vector<int> PMT_number(125,0), HV(125,0);
-  vector< vector <int> > HVstep;
-  vector<int> step(nBins,0); //ADDED 5
-  for (int i=0; i<125; i++)
-    HVstep.push_back(step);
-  
-  for (int i=0; i<125; i++){
-    for (int j=0; j<(nBins+2); j++){ //ADDED 7
-      file >> hvdat;
-      int pmt_info =atof(hvdat.c_str());
-      if (j==0){
-	PMT_number[i]=pmt_info;
-      }
-      if (j!=0 && j!=(nBins+1)){ //ADDED 6
-	HVstep[i][j-1]=pmt_info;
-      }
-      if (j==(nBins+1)){  //ADDED 6
-	HV[i]=pmt_info;
-      }
-    }
-
-  }
 
 
   /*** Determine the PMT number and applied voltage for each step ***/
 
-  if( pmt == -1 ){
-    cout << "Input the PMT number \n" ;
-    cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
-    cin  >> pmt;
-    cout << endl;
-  }
+  cout << "Input the PMT number \n" ;
+  cout << "Note: please neglect the NB and the zeros before the number \n" <<endl;
+  cin  >> pmt;
+  cout <<endl;
 
-  if( loc == -1 ){
-    cout << "Input the location number \n" ;
-    cin  >> loc;
-    cout << endl;
-  }
-  
-  if( run == -1 ){
-    cout << "Input the run number \n";
-    cin  >> run;
-    cout << endl;
-  }
+  cout << "Input the location number \n" ;
+  cin  >> loc;
+  cout <<endl;
 
-  for (int i=0;i<125; i++){
+  cout << "Input the run number \n";
+  cin  >> run;
+  cout << endl;
 
-    if (pmt == PMT_number[i]){
-      nominalHV = HV[i];
-      printf("nominal HV is %d \n",nominalHV);
-    }
+  cout << "Input the applied voltage \n";
+  cin  >> hv;
+  cout << endl;
 
-    for(int h = 0; h < nBins; h++){ //ADDED 5
-      if (pmt == PMT_number[i]){
-        pmtHV[h] =HVstep[i][h];
-	cout << HVstep[i][h] << endl;
-        printf("HV %d location  %d Test %d \n",pmtHV[h],loc,h);
-      }
-    }
-  }
-  if(nominalHV < 0 ){
 
-    cerr << endl;
-    cerr << " Error: Nominal HV not found" << endl;
-    return -1;
-
-  }
-  
   /*** Read in and fit the charge Spectrum ***/
+    
   
-  double hvVals[nBins]; double hvValsError[nBins]; double gainVals[nBins]; double gainValsError[nBins]; //ADDED 5 to Four
-  
-  TString histoNameTemp = "Run_%d_PMT_%d_Loc_%d_HV_%d";
-  TString histoName     = "";
-  TString filePathTemp = "";
+  sprintf(histname, "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/Run_%d_PMT_%d_Loc_%d_Test_S.root",run,pmt,loc); 
+  TFile s(histname);
+  s.ls();
 
-  for (int r=0;r<nBins;r++){ //ADDED 5 
+  char root_name[50];
+  sprintf(root_name, "hQ_Filter_Run_%d_PMT_%d_Loc_%d_Test_S",run,pmt,loc);
+  TH1D *speData = (TH1D*)s.Get(root_name);
 
-    int hv = r+1; // gain test number
-    filePathTemp = dir + "/Run_%d_PMT_%d_Loc_%d_HV_%d.root";
+  TH1F* fhisto = h2h(speData);
+  printf("Getting data from SPE spectrum...\n");
 
-    cout << endl;
-    cout << " filePathTemp = " << filePathTemp << endl;
-    
-    sprintf(filePath,filePathTemp,run,pmt,loc,hv); 
-    TFile s(filePath);
+  /*** Find the SPE charge output ***/
+  Result * res = fitModel(fhisto,pmt,hv);
 
-    s.ls();
-
-    char root_name[50];
-    
-    if(useFiltered)
-      histoName = "hQ_Filter_" + histoNameTemp;
-    else
-      histoName = "hQ_Fixed_" + histoNameTemp;
-    
-    sprintf(root_name,histoName,run,pmt,loc,hv);
-    
-    cout << endl;
-    cout << " root_name = " << root_name << endl;
-
-    TH1D *speData = (TH1D*)s.Get(root_name);
-
-    TH1F* fhisto = h2h(speData);
-    printf("Getting data from SPE spectrum...\n");
-
-  	/*** Find the SPE charge output ***/
-    Result * res = fitModel(fhisto,run,pmt,hv);
-
-    float signal = res->pemean.value - res->ped.value;
-    float signalError = res->pemean.error;
+  float signal = res->pemean.value - res->ped.value;
+  float signalError = res->pemean.error;
         
-    cout << endl;
-    cout << "peak           = " << signal << " (" << signalError << ") " << endl;
-        
-    printf(" voltage is  %d , charge is %f \n\n\n\n",pmtHV[r],signal); 
 
-    /*** Calculate the gain ***/
-    gainVals[r] = GainCalc(signal);
-    gainValsError[r] = GainCalc(signalError); 
-    hvVals[r] = pmtHV[r];      
-    hvValsError[r]=0;
-    
-  } 
-  
-  /*** Fit the gain curve ***/
+  /*** Calculate the gain ***/
+  gain = GainCalc(signal);
+  gainError = GainCalc(signalError); 
+  peak2valley = res->peakToValley.value;
+  peak2valleyError = res->peakToValley.error;
 
-  TString canvasNameTemp    = "", canvasName    = "";
+  cout << endl;
+  cout << "peak           = " << signal << " (" << signalError << ") " << endl;
 
-  canvasNameTemp = "Canvas_Run_%d_PMT_%d_Loc_%d_G";
-  canvasName.Form(canvasNameTemp,run,pmt,loc);
-
-  TCanvas *canvas=new TCanvas(canvasName,canvasName,1);
-
-  TGraph *Gain;
-
-  /*** Plot gain vs voltage for the PMT ***/
-  for (int n = 0; n<nBins; n++){
-    cout << "hvVals ["<<n<<"]="<<hvVals[n]<<endl;
-  }
-  Gain = new TGraph(nBins,hvVals,gainVals); //ADDED 5
-  TGraphErrors *GainErrors = new TGraphErrors(nBins,hvVals,gainVals,hvValsError,gainValsError); //ADDED 5
-
-		
-  /*** Do the gain curve fit ***/
-  double fitMin = hvVals[0]-50;
-  double fitMax = hvVals[nBins-1]+50;  //ADDED 4
-  TF1 *f14 = new TF1("f14",fitPow,fitMin,fitMax,2);
-  f14->SetParameter(0,nBins);  //ADDED 5
-  f14->SetParameter(1,nBins);  //ADDED 5
-  f14->SetParNames("1/optimalHV","power");
-  TFitResultPtr tfrp14=Gain->Fit("f14","RSE"); // fit TGraph since fit to TGraphErrors will not work
-
-  Gain->SetMinimum(0);
-
-  GainErrors->SetMinimum(0);
-  GainErrors->Draw("AP");
-  GainErrors->SetTitle(Form("Gain curve for PMT %d",pmt));
-  GainErrors->GetYaxis()->SetTitle("Gain (10^7)");
-  GainErrors->GetXaxis()->SetTitle("Applied Voltage (V)");
-
-  f14->SetMinimum(0);
-  f14->Draw("same");
-
-  Gain->Draw("P same");
-  Gain->SetMarkerStyle(24);
-
-  canvasName = "./Plots/";
-  canvasName += canvas->GetName();
-  canvasName += ".png";
-  canvas->SaveAs(canvasName);
-
-	
-  /*** get fit results ***/
-  
-  double_t operatingHV = 1/f14->GetParameter(0);
-  double_t operatingHVError = f14->GetParError(0);
-
-  double_t power = f14->GetParameter(1);
-  double_t chi2 = f14->GetChisquare();
-  double_t NDf = f14->GetNDF();
-  double_t prob = f14->GetProb();
-
-  std::cout  << Form("\n\n\n\n\n Operating voltage for 10^7 Gain for PMT%d: %f +/- %f \n",pmt, operatingHV,operatingHVError) << std::endl;
-
-
-  /*** Write fit results to root file ***/
-  // check if voltages_test.root exists
-  //Bins = 10; //AD  // if not, create it and set up tree and branches
-  // if it exists, add to the branches
- 
-  /*** Writ ntuples to file ***/ 
-  ifstream fileStream("voltages_test.root");
-  if(!fileStream.good()){
-
-    TFile *outfile = new TFile("voltages_test.root","RECREATE");
-
-    TNtuple *voltages = new TNtuple("voltages","voltages","pmt:operatingHV:operatingHVError:power:nominalHV:chi2:NDf:prob");
-    voltages->Fill(pmt,operatingHV,operatingHVError,power,nominalHV,chi2,NDf,prob);
-    voltages->Write();
-    outfile->Close();
-    delete outfile;
-  }  
-
-  else {
-    TFile *outfile = new TFile("voltages_test.root","UPDATE");
-    TNtuple *voltages = (TNtuple*)outfile->Get("voltages");
-    voltages->Fill(pmt,operatingHV,operatingHVError,power,nominalHV,chi2,NDf,prob);
-    voltages->Write("",TObject::kOverwrite);
-    outfile->Close();
-    delete outfile;
-  }
-  
+  printf(" charge is %f, gain is %f x 10^7 +/- %f, peak to valley is  %f +/- %f for pmt %d at %dV \n\n\n\n",signal,gain,gainError,peak2valley,peak2valleyError,pmt,hv); 
 
 
   return 0;

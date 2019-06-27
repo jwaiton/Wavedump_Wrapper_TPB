@@ -120,6 +120,7 @@ int main(Int_t argc, Char_t *argv[]){
        cout << " Which waveform to plot?" << endl;
        cout << " enter event number " << endl;
        cout << " (-1 to quit) " << endl;
+
        cin >> event;
        if( event > -1)
 	 PMT->PlotWaveform(event);

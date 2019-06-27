@@ -230,6 +230,10 @@ float GetDelay(int run = 0){
     return 90.;
   else if ( run ==  59 )
     return 90.;
+  else if ( run ==  60 )
+    return 90.;
+  else if ( run ==  61 )
+    return 90.;
   else                  // Default
     return  60.;
 }
@@ -308,9 +312,9 @@ int Accumulate_Fixed(short VDC, float time){
   // And signal in 50 ns window
   if      ( time >= -GetGateWidth()  && 
 	    time <    0 )
-    return((int)-VDC);
-  else if ( time >= 0 &&
-	    time <  GetGateWidth() ){
+    return((int)-3*VDC);
+  else if ( time >= 0 && //!!!
+	    time <  3.0*GetGateWidth() ){
     return((int)VDC);
   }
   else
@@ -779,17 +783,17 @@ int ProcessBinaryFile(TString inFilePath,
   rangeT[1] = GetWaveformLength(digitiser,test,samplingSetting);
   binsT = GetNSamples(digitiser,test);
 
-  cout << endl;
-  cout << " binsT     = " << binsT << endl;
-  cout << " rangeT[0] = " << rangeT[0] << endl;
-  cout << " rangeT[1] = " << rangeT[1] << endl;
-  
-  
+//   cout << endl;
+//   cout << " binsT     = " << binsT << endl;
+//   cout << " rangeT[0] = " << rangeT[0] << endl;
+//   cout << " rangeT[1] = " << rangeT[1] << endl;
+    
   if( rangeT[1] > 220.){
     
     binsT = binsT / (Int_t)rangeT[1];
     
-    rangeT[1] = GetDelay(run) + (GetGateWidth()*1.5);
+    //!!!!
+    rangeT[1] = GetDelay(run) + (GetGateWidth()*3.5);
     
     binsT = binsT*(Int_t)rangeT[1];
     
@@ -824,11 +828,13 @@ int ProcessBinaryFile(TString inFilePath,
   // Note that the sign is preserved for VDC, therefore 
   // minima (maxima) will be where the signal peaked 
   // for negative (positive) signal pulses
-  short minVDC = 32767, maxVDC = -32768;  
+  short minVDC = 32767, maxVDC = -32768;
+  Long64_t meanVDC = 0;  
   // sample numbers (indices) corresponding to minVDC and maxVDC
   short minT   = -1, maxT   = -1;  
   
   float peakT_ns = -1., peakV_mV = 0., baselineV_mV =0.;
+  Double_t mean_baselineV_mV = 0.;
   
   // accumulators for integrating the sample values
   int   intVDCfixed = 0, intVDCpeak = 0, intVDCbaseline = 0;
@@ -892,7 +898,10 @@ int ProcessBinaryFile(TString inFilePath,
     // VDC range
     minVDC =  32767;
     maxVDC = -32768;  
+    meanVDC = 0;  
 
+    baselineV_mV = 0.;
+    
     // time walk?
     minT   =  32767;
     // random?
@@ -986,6 +995,8 @@ int ProcessBinaryFile(TString inFilePath,
 	maxT   = sample;
       }
       
+      meanVDC += VDC;
+
       hWave->SetBinContent(iSample+1,
 			   (double)(8700 - waveform[iSample]));
 
@@ -1114,6 +1125,8 @@ int ProcessBinaryFile(TString inFilePath,
     peakV_mV     = peakV_mV * GetmVPerBin(digitiser);
     baselineV_mV = baselineV_mV * GetmVPerBin(digitiser);
     
+    mean_baselineV_mV += baselineV_mV;
+
     if(verbosity > 1){
       cout << " peakV_mV       = " <<  peakV_mV      << endl;
       cout << " baselineV_mV   = " << baselineV_mV   << endl;
@@ -1196,7 +1209,9 @@ int ProcessBinaryFile(TString inFilePath,
   // }
 
   float lineXMin = GetDelay(run) - GetGateWidth();
-  float lineXMax = GetDelay(run) + GetGateWidth();
+  
+  //!!!!
+  float lineXMax = GetDelay(run) + 3.0*GetGateWidth();
   
   TLine *lPedMin = new TLine(lineXMin,lineYMin,
 			     lineXMin,lineYMax); 
@@ -1491,7 +1506,7 @@ int GetHVStep(char test ){
 
 int GetNSteps(char test ){
   if( test == 'G')
-    return 5;
+    return 10;
   else
     return 0;
 }

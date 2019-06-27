@@ -35,7 +35,7 @@ void PMTAnalyser::MakeCalibratedTree(){
 
   Long64_t ientry;
   Long64_t nentries = rawRootTree->GetEntriesFast();
-
+  
   if(testMode)
     nentries = GetNEntriesTest(verbosity,nentries);
   
@@ -58,7 +58,8 @@ void PMTAnalyser::MakeCalibratedTree(){
       
       if(verbosity > 2){
 	cout << endl;
-	cout << " sample = " << iSample << endl;
+	cout << " waveform[" << iSample << "] = " << waveform[iSample] << endl;
+	
       }
       
     }
@@ -120,6 +121,8 @@ void PMTAnalyser::PlotAccumulatedFFT(){
 
   for(Long64_t jentry = 1; jentry < nentries; jentry++) {
     hTemp = Get_hFFT(jentry);
+    
+    if (peakV_mV > 10.)
     hFFT->Add(hTemp);
     hTemp->Delete();
   }

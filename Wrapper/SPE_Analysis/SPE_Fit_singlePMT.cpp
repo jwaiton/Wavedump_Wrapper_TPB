@@ -388,6 +388,7 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
  /*** now get the complicated ones that require sampling the fitted pdf/covariance ***/
  TH1D* histo = new TH1D("valley", "valley", 200, res->ped.value,  res->pemean.value ); histo->Sumw2();
  TH1D* histo2 = new TH1D("peak", "peak", 200,  res->pemean.value - res->pewidth.value ,  res->pemean.value +5* res->pewidth.value ); histo2->Sumw2();
+ TH1D* histo3 = new TH1D("peakToValley","peakToValley",100,0.,10.); histo3->Sumw2();
 
  RooArgSet nset(*counts) ;
 
@@ -404,13 +405,14 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
    double ppos = fmodel->GetMaximumX(res->pemean.value - res->pewidth.value, res->pemean.value + 5*res->pewidth.value);
    histo->Fill(vpos);
    histo2->Fill(ppos);
-
+   histo3->Fill(fmodel->Eval(ppos)/fmodel->Eval(vpos));
    counts->setRange("signal",vpos, 1000) ;
 
  }
 
  fillValueWithError(&res->valley,histo);
  fillValueWithError(&res->peak,histo2);
+ fillValueWithError(&res->peakToValley,histo3);
 
  return res;
 }
@@ -531,8 +533,8 @@ float GainCalc(double mVnsval){
 int SPE_Fit_singlePMT(int run = 50,
 		      int pmt = 152,
 		      int loc = 0,
-		      TString dir = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/",
-		      Bool_t useFiltered = kFALSE){	
+		      string dir = "~/WATCHMAN/RootData/",
+		      bool useFiltered = kFALSE){	
   
   
   /*** Read in the HV data ***/
@@ -542,7 +544,7 @@ int SPE_Fit_singlePMT(int run = 50,
   float gainError;
   float peak2valley;
   float peak2valleyError;
-  char  filePath[300]= "";
+  string filePath[300] = "";
 
   /*** Determine the PMT number and applied voltage for each step ***/
 
@@ -579,7 +581,7 @@ int SPE_Fit_singlePMT(int run = 50,
   
   /*** Read in and fit the charge Spectrum ***/
 
-  TString filePathTemp = dir + "Run_%d_PMT_%d_Loc_%d_Test_%c.root";
+  string filePathTemp = dir + "Run_%d_PMT_%d_Loc_%d_Test_%c.root";
 
   
   if(test=='G'){
@@ -618,12 +620,12 @@ int SPE_Fit_singlePMT(int run = 50,
   /*** Calculate the gain ***/
   gain = GainCalc(signal);
   gainError = GainCalc(signalError); 
-  peak2valley = res->peak.value/res->valley.value;
-  peak2valleyError = sqrt(pow(res->peak.error/res->peak.value,2) + pow(res->valley.error/res->valley.value,2));
+  peak2valley = res->peakToValley.value;
+  peak2valleyError = res->peakToValley.error;
 
   cout << endl;
   cout << "peak           = " << signal << " (" << signalError << ") " << endl;
-        
+      
   printf(" charge is %f, gain is %f x 10^7 +/- %f, peak to valley is  %f +/- %f for pmt %d at %dV \n\n\n\n",signal,gain,gainError,peak2valley,peak2valleyError,pmt,hv); 
 
 
