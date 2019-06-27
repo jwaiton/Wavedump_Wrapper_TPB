@@ -16,7 +16,7 @@ void GetPeakToValley(TString rootFileName = "Run_60_PMT_152_Loc_0_HV_7"){
 
   //!!!!!
   // set to relevant local path
-  TString RawRootDataDIR = "~/WATCHMAN/RootData/";
+  TString RawRootDataDIR = "./";
   
   rootFileName = RawRootDataDIR + rootFileName;
   
