@@ -308,9 +308,9 @@ int Accumulate_Fixed(short VDC, float time){
   // And signal in 50 ns window
   if      ( time >= -GetGateWidth()  && 
 	    time <    0 )
-    return((int)-VDC);
-  else if ( time >= 0 &&
-	    time <  GetGateWidth() ){
+    return((int)-3*VDC);
+  else if ( time >= 0 && //!!!
+	    time <  3.0*GetGateWidth() ){
     return((int)VDC);
   }
   else
@@ -593,7 +593,7 @@ int ProcessBinaryFile(TString inFilePath,
 
   //----------------------
   // Variables for testing
-  bool  testMode  = true;
+  bool  testMode  = false;
   bool  keepGoing = true;
   int   maxEvents = 10000;
   
@@ -779,17 +779,17 @@ int ProcessBinaryFile(TString inFilePath,
   rangeT[1] = GetWaveformLength(digitiser,test,samplingSetting);
   binsT = GetNSamples(digitiser,test);
 
-  cout << endl;
-  cout << " binsT     = " << binsT << endl;
-  cout << " rangeT[0] = " << rangeT[0] << endl;
-  cout << " rangeT[1] = " << rangeT[1] << endl;
-  
-  
+//   cout << endl;
+//   cout << " binsT     = " << binsT << endl;
+//   cout << " rangeT[0] = " << rangeT[0] << endl;
+//   cout << " rangeT[1] = " << rangeT[1] << endl;
+    
   if( rangeT[1] > 220.){
     
     binsT = binsT / (Int_t)rangeT[1];
     
-    rangeT[1] = GetDelay(run) + (GetGateWidth()*1.5);
+    //!!!!
+    rangeT[1] = GetDelay(run) + (GetGateWidth()*3.5);
     
     binsT = binsT*(Int_t)rangeT[1];
     
@@ -1205,7 +1205,9 @@ int ProcessBinaryFile(TString inFilePath,
   // }
 
   float lineXMin = GetDelay(run) - GetGateWidth();
-  float lineXMax = GetDelay(run) + GetGateWidth();
+  
+  //!!!!
+  float lineXMax = GetDelay(run) + 3.0*GetGateWidth();
   
   TLine *lPedMin = new TLine(lineXMin,lineYMin,
 			     lineXMin,lineYMax); 
