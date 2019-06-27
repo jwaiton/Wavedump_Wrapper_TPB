@@ -87,6 +87,8 @@ using namespace std;
 using namespace TMath;
 using namespace RooFit;
 
+const Int_t nBins = 5; //ADDED
+
 /****************** Set up for charge spectrum fit ********************/
 typedef struct {
 
@@ -156,21 +158,21 @@ InitParams initializeFit(TH1F* h){
       std::cout << "charge is " << sigPeak << " for 2-peak spectrum \n" << std::endl;
 
   }
-
-  if ( (nfound == 3) && (peaks[0] < -5)) {
+  
+  if ( (nfound == 3) && (peaks[0] < -5)) { //ADDED 5
       sigPeak = peaks[2];
       pedPeak = peaks[1];
       std::cout << "charge is " << sigPeak << " for 3-peak spectrum \n" << std::endl;
 
   }
 
-  if (nfound == 3 && peaks[0] > -5 && peaks[1] > 100){
+  if (nfound == 3 && peaks[0] > -5 && peaks[1] > 100){ //ADDED 5
         sigPeak = peaks[1];
         pedPeak = peaks[0];
         std::cout << "charge is " << sigPeak << " for 3-peak spectrum \n" << std::endl;
   }
 
-  if (nfound == 3 && peaks[0] > -5 && peaks[1] < 100){
+  if (nfound == 3 && peaks[0] > -5 && peaks[1] < 100){ //ADDED 5
         sigPeak = peaks[2];
         pedPeak = peaks[0];
         std::cout << "charge is " << sigPeak << " for 3-peak spectrum \n" << std::endl;
@@ -282,9 +284,9 @@ RooAddPdf* makePMTPDF(RooRealVar* counts,double pmval, double psval, double psva
   }
   
   /*** construct the pedestal pdf ***/ 
-  RooRealVar* pedm = new RooRealVar("pedmean","pedmean",pmval, pmval - 5*psval, pmval + 5*psval );   // pedestal position
-  RooRealVar* peds = new RooRealVar("pedsigma","pedsigma",psval,0,5*psval ); // pedestal sigma
-  RooRealVar* peds2 = new RooRealVar("pedsigma2","pedsigma2",psval2,psval,10*psval ); // pedestal sigma
+  RooRealVar* pedm = new RooRealVar("pedmean","pedmean",pmval, pmval - 5*psval, pmval + 5*psval );   // pedestal position //ADDED 5 twice
+  RooRealVar* peds = new RooRealVar("pedsigma","pedsigma",psval,0,5*psval ); // pedestal sigma //ADDED 5
+  RooRealVar* peds2 = new RooRealVar("pedsigma2","pedsigma2",psval2,psval,10*psval ); // pedestal sigma //NO ADDED
   
   RooRealVar* fped = new RooRealVar("fped","fped",0.9,0,1 );
   RooGaussian* pedgauss = new  RooGaussian("pedgauss","pedgauss", *counts, *pedm, *peds);
@@ -392,7 +394,7 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
 
  /*** now get the complicated ones that require sampling the fitted pdf/covariance ***/
  TH1D* histo = new TH1D("valley", "valley", 200, res->ped.value,  res->pemean.value ); histo->Sumw2();
- TH1D* histo2 = new TH1D("peak", "peak", 200,  res->pemean.value - res->pewidth.value ,  res->pemean.value +5* res->pewidth.value ); histo2->Sumw2();
+ TH1D* histo2 = new TH1D("peak", "peak", 200,  res->pemean.value - res->pewidth.value ,  res->pemean.value +5* res->pewidth.value ); histo2->Sumw2(); //ADDED 5
 
  RooArgSet nset(*counts) ;
 
@@ -406,7 +408,7 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
 
    TF1* fmodel = pdf->asTF( *counts,fitpars,*counts);
    double vpos = fmodel->GetMinimumX(res->ped.value,res->pemean.value);
-   double ppos = fmodel->GetMaximumX(res->pemean.value - res->pewidth.value, res->pemean.value + 5*res->pewidth.value);
+   double ppos = fmodel->GetMaximumX(res->pemean.value - res->pewidth.value, res->pemean.value + 5*res->pewidth.value); //ADDED 5
    histo->Fill(vpos);
    histo2->Fill(ppos);
 
@@ -549,17 +551,17 @@ float GainCalc(double mVnsval){
 /*********************************************************************/
 
 //int main(int argc,char **argv){	
-int Gain_Fit_singlePMT(int run = 40,
+int Gain_Fit_singlePMT(int run = 60,
 		       int pmt = 152,
 		       int loc = 0,
-		       TString dir = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/",
+		       TString dir = "~/WATCHMAN/RootData/",
 		       Bool_t useFiltered = kFALSE){	
   
   
   /*** Read in the HV data ***/
 
   int nominalHV=0;
-  int pmtHV[5];
+  int pmtHV[nBins]; //ADDED 5
   char filePath[300]= "";
 
   string hvfile = "../HVScan.txt";
@@ -568,21 +570,21 @@ int Gain_Fit_singlePMT(int run = 40,
  
   vector<int> PMT_number(125,0), HV(125,0);
   vector< vector <int> > HVstep;
-  vector<int> step(5,0);
+  vector<int> step(nBins,0); //ADDED 5
   for (int i=0; i<125; i++)
     HVstep.push_back(step);
   
   for (int i=0; i<125; i++){
-    for (int j=0; j<7; j++){
+    for (int j=0; j<(nBins+2); j++){ //ADDED 7
       file >> hvdat;
       int pmt_info =atof(hvdat.c_str());
       if (j==0){
 	PMT_number[i]=pmt_info;
       }
-      if (j!=0 && j!=6){
+      if (j!=0 && j!=(nBins+1)){ //ADDED 6
 	HVstep[i][j-1]=pmt_info;
       }
-      if (j==6){
+      if (j==(nBins+1)){  //ADDED 6
 	HV[i]=pmt_info;
       }
     }
@@ -618,9 +620,10 @@ int Gain_Fit_singlePMT(int run = 40,
       printf("nominal HV is %d \n",nominalHV);
     }
 
-    for(int h = 0; h < 5; h++){
+    for(int h = 0; h < nBins; h++){ //ADDED 5
       if (pmt == PMT_number[i]){
         pmtHV[h] =HVstep[i][h];
+	cout << HVstep[i][h] << endl;
         printf("HV %d location  %d Test %d \n",pmtHV[h],loc,h);
       }
     }
@@ -635,13 +638,13 @@ int Gain_Fit_singlePMT(int run = 40,
   
   /*** Read in and fit the charge Spectrum ***/
   
-  double hvVals[5]; double hvValsError[5]; double gainVals[5]; double gainValsError[5];
+  double hvVals[nBins]; double hvValsError[nBins]; double gainVals[nBins]; double gainValsError[nBins]; //ADDED 5 to Four
   
   TString histoNameTemp = "Run_%d_PMT_%d_Loc_%d_HV_%d";
   TString histoName     = "";
   TString filePathTemp = "";
 
-  for (int r=0;r<5;r++){ 
+  for (int r=0;r<nBins;r++){ //ADDED 5 
 
     int hv = r+1; // gain test number
     filePathTemp = dir + "/Run_%d_PMT_%d_Loc_%d_HV_%d.root";
@@ -702,16 +705,19 @@ int Gain_Fit_singlePMT(int run = 40,
   TGraph *Gain;
 
   /*** Plot gain vs voltage for the PMT ***/
-  Gain = new TGraph(5,hvVals,gainVals);
-  TGraphErrors *GainErrors = new TGraphErrors(5,hvVals,gainVals,hvValsError,gainValsError);
+  for (int n = 0; n<nBins; n++){
+    cout << "hvVals ["<<n<<"]="<<hvVals[n]<<endl;
+  }
+  Gain = new TGraph(nBins,hvVals,gainVals); //ADDED 5
+  TGraphErrors *GainErrors = new TGraphErrors(nBins,hvVals,gainVals,hvValsError,gainValsError); //ADDED 5
 
 		
   /*** Do the gain curve fit ***/
   double fitMin = hvVals[0]-50;
-  double fitMax = hvVals[4]+50;
+  double fitMax = hvVals[nBins-1]+50;  //ADDED 4
   TF1 *f14 = new TF1("f14",fitPow,fitMin,fitMax,2);
-  f14->SetParameter(0,10);
-  f14->SetParameter(1,10);
+  f14->SetParameter(0,nBins);  //ADDED 5
+  f14->SetParameter(1,nBins);  //ADDED 5
   f14->SetParNames("1/optimalHV","power");
   TFitResultPtr tfrp14=Gain->Fit("f14","RSE"); // fit TGraph since fit to TGraphErrors will not work
 
@@ -750,7 +756,7 @@ int Gain_Fit_singlePMT(int run = 40,
 
   /*** Write fit results to root file ***/
   // check if voltages_test.root exists
-  // if not, create it and set up tree and branches
+  //Bins = 10; //AD  // if not, create it and set up tree and branches
   // if it exists, add to the branches
  
   /*** Writ ntuples to file ***/ 

@@ -388,6 +388,7 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
  /*** now get the complicated ones that require sampling the fitted pdf/covariance ***/
  TH1D* histo = new TH1D("valley", "valley", 200, res->ped.value,  res->pemean.value ); histo->Sumw2();
  TH1D* histo2 = new TH1D("peak", "peak", 200,  res->pemean.value - res->pewidth.value ,  res->pemean.value +5* res->pewidth.value ); histo2->Sumw2();
+ TH1D* histo3 = new TH1D("peakToValley","peakToValley",100,0.,1.); histo3->Sumw2();
 
  RooArgSet nset(*counts) ;
 
@@ -404,6 +405,7 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
    double ppos = fmodel->GetMaximumX(res->pemean.value - res->pewidth.value, res->pemean.value + 5*res->pewidth.value);
    histo->Fill(vpos);
    histo2->Fill(ppos);
+   histo3->Fill(fmodel->Eval(ppos)/fmodel->Eval(vpos));
 
    counts->setRange("signal",vpos, 1000) ;
 
@@ -411,6 +413,7 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
 
  fillValueWithError(&res->valley,histo);
  fillValueWithError(&res->peak,histo2);
+ fillValueWithError(&res->peakToValley,histo3);
 
  return res;
 }
@@ -531,7 +534,7 @@ float GainCalc(double mVnsval){
 int SPE_Fit_singlePMT(int run = 50,
 		      int pmt = 152,
 		      int loc = 0,
-		      TString dir = "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/",
+		      TString dir = "~/WATCHMAN/RootData/",
 		      Bool_t useFiltered = kFALSE){	
   
   
@@ -618,8 +621,8 @@ int SPE_Fit_singlePMT(int run = 50,
   /*** Calculate the gain ***/
   gain = GainCalc(signal);
   gainError = GainCalc(signalError); 
-  peak2valley = res->peak.value/res->valley.value;
-  peak2valleyError = sqrt(pow(res->peak.error/res->peak.value,2) + pow(res->valley.error/res->valley.value,2));
+  peak2valley = res->peakToValley.value;
+  peak2valleyError = res->peakToValley.error;
 
   cout << endl;
   cout << "peak           = " << signal << " (" << signalError << ") " << endl;
