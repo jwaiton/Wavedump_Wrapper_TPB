@@ -405,8 +405,12 @@ Result* propagateAndFill(RooRealVar* counts,RooAddPdf* model ,RooFitResult* fres
    double ppos = fmodel->GetMaximumX(res->pemean.value - res->pewidth.value, res->pemean.value + 5*res->pewidth.value);
    histo->Fill(vpos);
    histo2->Fill(ppos);
-   histo3->Fill(fmodel->Eval(ppos)/fmodel->Eval(vpos));
-
+   //histo3->Fill(fmodel->Eval(ppos)/fmodel->Eval(vpos));
+   
+   double sn = fmodel->Eval(ppos)/fmodel->Eval(vpos);
+   std::cout << "peak to valley " << sn << " " << fmodel->Eval(ppos) 
+	     << " " << fmodel->Eval(vpos);
+   
    counts->setRange("signal",vpos, 1000) ;
 
  }
@@ -509,7 +513,9 @@ Result* fitModel(TH1F* fhisto,
 //  canvas->SaveAs(Form("./Plots/FullFit/Fit_Run_1_PMT_%d_HV_%d.C",pmt,hv));
   gPad->SetLogy();  
   
-  canvas->SaveAs(Form("./Plots/Fit_Run_%d_PMT_%d_HV_%d_Test_%c.png",run,pmt,hv,test));
+  char buffer[300];
+  sprintf(buffer,"./Plots/Fit_Run_%d_PMT_%d_HV_%d_Test_%c.png",run,pmt,hv,test);
+  canvas->SaveAs(buffer);
 
   Result* res = propagateAndFill(counts,model,fres);
  
