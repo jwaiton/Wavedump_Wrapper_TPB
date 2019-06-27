@@ -113,7 +113,7 @@ int main(Int_t argc, Char_t *argv[]){
      
      int event = 0;
      
-     PMT->PlotAccumulatedFFT();
+     //PMT->PlotAccumulatedFFT();
 
      while ( event!= -1 ){
        cout << endl;
@@ -121,11 +121,12 @@ int main(Int_t argc, Char_t *argv[]){
        cout << " enter event number " << endl;
        cout << " (-1 to quit) " << endl;
        cin >> event;
-       PMT->PlotWaveform(event);
+       if( event > -1)
+	 PMT->PlotWaveform(event);
      }
      //------------
      // Timing Study
-     PMT->TimeOfPeak();
+     //PMT->TimeOfPeak();
 
      //------------
      //  Dark Rate
