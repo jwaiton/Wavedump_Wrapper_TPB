@@ -8,7 +8,7 @@ Result* Fit_PeakAndValley(TH1F*  fhisto,
 			  double minval, 
 			  double maxval);
 
-void GetPeakToValley(TString rootFileName = "Run_200_PMT_15_Loc_0_Test_S"){
+void GetPeakToValley(TString rootFileName = "Run_60_PMT_152_Loc_0_HV_7"){
 
   TString hName = "hQ_Fixed_" + rootFileName;
       
@@ -16,7 +16,7 @@ void GetPeakToValley(TString rootFileName = "Run_200_PMT_15_Loc_0_Test_S"){
 
   //!!!!!
   // set to relevant local path
-  TString RawRootDataDIR = "/Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/RawRootData/";
+  TString RawRootDataDIR = "~/WATCHMAN/RootData/";
   
   rootFileName = RawRootDataDIR + rootFileName;
   

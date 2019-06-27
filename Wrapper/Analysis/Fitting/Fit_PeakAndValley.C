@@ -216,7 +216,7 @@ Result* Fit_PeakAndValley(TH1F*  fhisto,
   f->SetLineColor(2);
   f->SetLineWidth(3);
   f->Draw("SAME");
-
+  
   
   fhisto->Fit("pol2", "S", "",valleyPos - 40 , valleyPos +50);
   TF1* f2 = fhisto->GetFunction("pol2");
@@ -237,6 +237,10 @@ Result* Fit_PeakAndValley(TH1F*  fhisto,
   f2 = fhisto->GetFunction("pol2");
   a = f2->GetParameter(2); b = f2->GetParameter(1);
   double vval = f2->GetMinimum( valleyPos -50, valleyPos +50);
+
+  f2->Draw();
+  
+  
   double sum = sqrt(std::pow(ea/a,2) +  std::pow(eb/b,2.) - (2*rho/(a*b)));
   xmin = -b/(2*a);
   double x2 = xmin *(1 + sum);
@@ -250,13 +254,13 @@ Result* Fit_PeakAndValley(TH1F*  fhisto,
   // drawing stuff
   f2->SetLineColor(2);
   f2->SetLineWidth(3);
-  // f2->Draw("SAME");
-  fhisto->SetMaximum(100e3);
+  //f2->Draw("SAME");
+  //fhisto->SetMaximum(100e3);
   fhisto->Draw("HISTO");
-  f2->Draw("SAME");
   f->Draw("SAME");
+  f2->Draw("SAME");
+  gPad->SetLogy();
   
-
   // fill result
   res->peak.value = f->GetParameter(1); 
   res->peak.error = f->GetParError(1); 
@@ -264,14 +268,19 @@ Result* Fit_PeakAndValley(TH1F*  fhisto,
   res->peakToValley.error = ef;
   res->mu.value = -log(pzero);
   res->valley.value = f2->GetMinimumX( valleyPos -50, valleyPos +50);
-  
+
+  //----------------------------------
+  // Pedestal Study
   // noise gauss
   std::cout << "fit the noise " << std::endl;
   TF1* noise = new TF1("ngaus","gaus", -40, 40);
   noise->SetParameter(1,0);
   noise->SetParameter(2,10);
   double maxN = TMath::Max( std::get<0>(params) + 5, f2->GetMinimumX( valleyPos -50, valleyPos +50) - 20 );
-  fhisto->Fit(noise, "","", -40,  f2->GetMinimumX( valleyPos -50, valleyPos +50) - 20 );
+
+  //!!!!!!
+  // Fitting below causes the valley fit to disappear
+  //fhisto->Fit(noise, "","", -40,  f2->GetMinimumX( valleyPos -50, valleyPos +50) - 20 );
   res->noise.value = noise->GetParameter(2);
   res->noise.error = noise->GetParError(2);
 
