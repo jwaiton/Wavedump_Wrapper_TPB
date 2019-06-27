@@ -35,7 +35,7 @@ void PMTAnalyser::MakeCalibratedTree(){
 
   Long64_t ientry;
   Long64_t nentries = rawRootTree->GetEntriesFast();
-
+  
   if(testMode)
     nentries = GetNEntriesTest(verbosity,nentries);
   
@@ -58,7 +58,8 @@ void PMTAnalyser::MakeCalibratedTree(){
       
       if(verbosity > 2){
 	cout << endl;
-	cout << " sample = " << iSample << endl;
+	cout << " waveform[" << iSample << "] = " << waveform[iSample] << endl;
+	
       }
       
     }
@@ -120,6 +121,8 @@ void PMTAnalyser::PlotAccumulatedFFT(){
 
   for(Long64_t jentry = 1; jentry < nentries; jentry++) {
     hTemp = Get_hFFT(jentry);
+    
+    if (peakV_mV > 10.)
     hFFT->Add(hTemp);
     hTemp->Delete();
   }
@@ -135,7 +138,7 @@ void PMTAnalyser::PlotAccumulatedFFT(){
   gPad->SetLogy();
   hFFT->Draw("hist");
 
-  TString hName = "./Waveforms/hFFT_";
+  TString hName = "./FFT/hFFT_";
   hName += FileID;
   hName += ".pdf";
   
@@ -203,7 +206,9 @@ void PMTAnalyser::PlotWaveform(Long64_t entry){
     
     //hWave[entryRelFrst]->SetMinimum(450);
     //hWave[entryRelFrst]->SetMaximum(850);
+    
     hWave[entryRelFrst]->Draw();
+    hWave[entryRelFrst]->GetXaxis()->SetRange(1,250);;
     
     tStr.Form("Entry %lld", entry);
     latex->DrawLatex(0.6,0.8,tStr);
