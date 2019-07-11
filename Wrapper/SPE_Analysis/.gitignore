@@ -11,3 +11,4 @@ Plots/
 *.so*
 *.pcm
 RooExpWindowDict.cxx
+SPE_Fit_singlePMT_precompilable
