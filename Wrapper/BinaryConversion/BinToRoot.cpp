@@ -314,7 +314,7 @@ int Accumulate_Fixed(short VDC, float time){
   // And signal in 50 ns window
   if      ( time >= -GetGateWidth()  && 
 	    time <    0 )
-    return((int)VDC);
+    return((int)-1*VDC);
   else if ( time >= 0 && 
 	    time <  GetGateWidth() ){
     return((int)VDC);
@@ -609,9 +609,9 @@ int ProcessBinaryFile(TString inFilePath,
 
   //----------------------
   // Variables for testing
-  bool  testMode  = true;
+  bool  testMode  = false;
   bool  keepGoing = true;
-  int   maxEvents = 10000;
+  int   maxEvents = 100000;
   
   bool makeFilteredHisto = true;
   
@@ -874,8 +874,8 @@ int ProcessBinaryFile(TString inFilePath,
   short VDC = 0, sample = 0;
   int   fileHeader = 0;
   float floatVDC   = 0.;
-  
-  // waveform time in ns
+ 
+  //t waveform time in ns
   float waveTime = 0.;
   
   // waveform time with delay subtracted
@@ -1027,6 +1027,7 @@ int ProcessBinaryFile(TString inFilePath,
       
       if(verbosity > 1){
 	cout << " VDC(" << iSample << ") = " << VDC << endl;
+	cout << " intVDCfixed    = " << intVDCfixed << endl;
 	cout << " waveTime       = " << waveTime << endl;
 	cout << " time           = " << time << endl;
       }
@@ -1172,6 +1173,8 @@ int ProcessBinaryFile(TString inFilePath,
     if(verbosity > 0){
       cout << endl;
       cout << " Event " << event << endl;
+      cout << " intVDCfixed " << intVDCfixed << endl;
+      cout << " Charge " << GetCharge(intVDCfixed,digitiser,samplingSetting,negPulsePol) << endl;
       cout << " minVDC(" << minT << ") = " << minVDC << endl;
       cout << " maxVDC(" << maxT << ") = " << maxVDC << endl;
       cout << " peakV_mV               = " << peakV_mV << endl;
