@@ -705,10 +705,10 @@ int ProcessBinaryFile(TString inFilePath,
     hQ_PeakNameTemp = "hQ_Peak_Run_%d_PMT_%d_Loc_%d_HV_%d";
     hQ_PeakName.Form(hQ_PeakNameTemp,run,pmt,loc,hvStep);
 
-    hPeakTimeNameTemp = "hPeakTime_Run_%d_PMT_%d_Loc_%d_HV_%D";
+    hPeakTimeNameTemp = "hPeakTime_Run_%d_PMT_%d_Loc_%d_HV_%d";
     hPeakTimeName.Form(hPeakTimeNameTemp,run,pmt,loc,hvStep);
 
-    hPeakVoltNameTemp = "hPeakVolt_Run_%d_PMT_%d_Loc_%d_HV_%D";
+    hPeakVoltNameTemp = "hPeakVolt_Run_%d_PMT_%d_Loc_%d_HV_%d";
     hPeakVoltName.Form(hPeakVoltNameTemp,run,pmt,loc,hvStep);
 
   }
@@ -1044,7 +1044,11 @@ int ProcessBinaryFile(TString inFilePath,
       
       hWaveFFT->SetBinContent(1,0.) ;
       
-      if(hWaveFFT->GetMaximumBin() == 2 ){
+      //if(hWaveFFT->GetMaximumBin() == 2 ){
+      if( (hWaveFFT->GetMaximumBin() > 1  && hWaveFFT->GetMaximumBin() < 8 ) || 
+	  (hWaveFFT->GetMaximumBin() > 13 && hWaveFFT->GetMaximumBin() < 23) || 
+	  (hWaveFFT->GetMaximumBin() > 23 && hWaveFFT->GetMaximumBin() < 33) || 
+	  (hWaveFFT->GetMaximumBin() > 44 && hWaveFFT->GetMaximumBin() < 55)){ //(hWaveFFT->GetMaximumBin() != 2 && hWave->GetMaximum() < -100) ){
 	
 	hMaxADC_Filtered->Fill( hWave->GetMaximum());
 	
@@ -1516,7 +1520,7 @@ int GetHVStep(char test ){
 
 int GetNSteps(char test ){
   if( test == 'G')
-    return 10;
+    return 5;
   else
     return 0;
 }
