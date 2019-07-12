@@ -197,7 +197,7 @@ float GetDelay(int run = 0){
   if      ( run ==  0 ) // 12th October
     return 60.; 
   else if ( run <  10 ) // 16th October
-    return 50.;
+    return 70.; // why was this set to 50?
   else if ( run <  20 ) // Underground
     return 90.;
   else if ( run >= 20 &&
@@ -312,9 +312,9 @@ int Accumulate_Fixed(short VDC, float time){
   // And signal in 50 ns window
   if      ( time >= -GetGateWidth()  && 
 	    time <    0 )
-    return((int)-3*VDC);
-  else if ( time >= 0 && //!!!
-	    time <  3.0*GetGateWidth() ){
+    return((int)VDC);
+  else if ( time >= 0 && 
+	    time <  GetGateWidth() ){
     return((int)VDC);
   }
   else
@@ -597,7 +597,7 @@ int ProcessBinaryFile(TString inFilePath,
 
   //----------------------
   // Variables for testing
-  bool  testMode  = false;
+  bool  testMode  = falsE;
   bool  keepGoing = true;
   int   maxEvents = 10000;
   
@@ -693,10 +693,10 @@ int ProcessBinaryFile(TString inFilePath,
     hQ_PeakNameTemp = "hQ_Peak_Run_%d_PMT_%d_Loc_%d_HV_%d";
     hQ_PeakName.Form(hQ_PeakNameTemp,run,pmt,loc,hvStep);
 
-    hPeakTimeNameTemp = "hPeakTime_Run_%d_PMT_%d_Loc_%d_HV_%D";
+    hPeakTimeNameTemp = "hPeakTime_Run_%d_PMT_%d_Loc_%d_HV_%d";
     hPeakTimeName.Form(hPeakTimeNameTemp,run,pmt,loc,hvStep);
 
-    hPeakVoltNameTemp = "hPeakVolt_Run_%d_PMT_%d_Loc_%d_HV_%D";
+    hPeakVoltNameTemp = "hPeakVolt_Run_%d_PMT_%d_Loc_%d_HV_%d";
     hPeakVoltName.Form(hPeakVoltNameTemp,run,pmt,loc,hvStep);
 
   }
@@ -792,8 +792,7 @@ int ProcessBinaryFile(TString inFilePath,
     
     binsT = binsT / (Int_t)rangeT[1];
     
-    //!!!!
-    rangeT[1] = GetDelay(run) + (GetGateWidth()*3.5);
+    rangeT[1] = GetDelay(run) + (GetGateWidth()*1.5);
     
     binsT = binsT*(Int_t)rangeT[1];
     
@@ -1033,7 +1032,11 @@ int ProcessBinaryFile(TString inFilePath,
       
       hWaveFFT->SetBinContent(1,0.) ;
       
-      if(hWaveFFT->GetMaximumBin() == 2 ){
+      //if(hWaveFFT->GetMaximumBin() == 2 ){
+      if( (hWaveFFT->GetMaximumBin() > 1  && hWaveFFT->GetMaximumBin() < 8 ) || 
+	  (hWaveFFT->GetMaximumBin() > 13 && hWaveFFT->GetMaximumBin() < 23) || 
+	  (hWaveFFT->GetMaximumBin() > 23 && hWaveFFT->GetMaximumBin() < 33) || 
+	  (hWaveFFT->GetMaximumBin() > 44 && hWaveFFT->GetMaximumBin() < 55)){ //(hWaveFFT->GetMaximumBin() != 2 && hWave->GetMaximum() < -100) ){
 	
 	hMaxADC_Filtered->Fill( hWave->GetMaximum());
 	
@@ -1210,8 +1213,7 @@ int ProcessBinaryFile(TString inFilePath,
 
   float lineXMin = GetDelay(run) - GetGateWidth();
   
-  //!!!!
-  float lineXMax = GetDelay(run) + 3.0*GetGateWidth();
+  float lineXMax = GetDelay(run) + GetGateWidth();
   
   TLine *lPedMin = new TLine(lineXMin,lineYMin,
 			     lineXMin,lineYMax); 
@@ -1506,7 +1508,7 @@ int GetHVStep(char test ){
 
 int GetNSteps(char test ){
   if( test == 'G')
-    return 10;
+    return 5;
   else
     return 0;
 }
