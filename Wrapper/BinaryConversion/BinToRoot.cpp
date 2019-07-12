@@ -609,7 +609,7 @@ int ProcessBinaryFile(TString inFilePath,
 
   //----------------------
   // Variables for testing
-  bool  testMode  = false;
+  bool  testMode  = true;
   bool  keepGoing = true;
   int   maxEvents = 10000;
   
