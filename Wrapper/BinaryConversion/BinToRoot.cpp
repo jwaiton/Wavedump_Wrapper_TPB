@@ -71,6 +71,8 @@
 
 #include "TLatex.h"
 
+#include "wmStyle.C"
+
 using namespace std;
 
 int  GetNSamples(char digitiser,
@@ -482,8 +484,7 @@ TString GetRawRootFilePath(TString filePath = "./",
 
 void SetStyle(){
   
-  TStyle     *binToRootStyle  = new TStyle("binToRootStyle",
-					   "My Root Styles");
+  TStyle * wmStyle = GetwmStyle();
   
   const Int_t NCont = 255;
   const Int_t NRGBs = 5;
@@ -495,85 +496,96 @@ void SetStyle(){
   Double_t blue[NRGBs]  = { 0.51, 1.00, 0.12, 0.00, 0.00 };          
   TColor::CreateGradientColorTable(NRGBs, stops, red, green, blue, NCont);
   
-  binToRootStyle->SetNumberContours(NCont);
+  wmStyle->SetNumberContours(NCont);
   
-  // General
-  // OPTIONS - FILL LINE TEXT MARKER
+  //-----------
   
-  binToRootStyle->SetFillColor(0);
-  binToRootStyle->SetTextSize(0.05);
-  
-  //-----------  Canvas
-  
-  binToRootStyle->SetCanvasBorderMode(0);
-  binToRootStyle->SetCanvasColor(kWhite);
-  
-  //------------- Pad
-  
-  binToRootStyle->SetPadBorderMode(0); 
-  binToRootStyle->SetPadColor(kWhite);
-  
-  // Make more room for X and Y titles
-  // one pad
-  // binToRootStyle->SetPadRightMargin(0.05);  //percentage
-  // binToRootStyle->SetPadLeftMargin(0.1);    //percentage
-  // binToRootStyle->SetPadBottomMargin(0.12); //percentage
-  
-  // six sub-pads
-  binToRootStyle->SetPadRightMargin(0.16);  //percentage
-  binToRootStyle->SetPadLeftMargin(0.2);    //percentage
-  binToRootStyle->SetPadBottomMargin(0.14); //percentage
-  
-  //----------- Histogram
-  
-  //Histos
-  binToRootStyle->SetHistLineWidth(1);
-  binToRootStyle->SetMarkerStyle(20);
-  
-  //  FILL CONTOURS LINE BAR 
-  //  Frames
-  binToRootStyle->SetFrameBorderMode(0);
-  
-  //  FILL BORDER LINE
-  //  Graphs
-  //  LINE ERRORS
-  
-  //---------  Axis 
-  
-  binToRootStyle->SetLabelFont(132,"XYZ"); 
-  binToRootStyle->SetLabelSize(0.04,"XYZ");
-  binToRootStyle->SetLabelOffset(0.01 ,"Y");
-  
-  //---------  Title
-  binToRootStyle->SetOptTitle(1);
-  binToRootStyle->SetTitleStyle(0);
-  binToRootStyle->SetTitleBorderSize(0);
-
-
-  binToRootStyle->SetTitleSize(0.03,"t");
-  binToRootStyle->SetTitleFont(132,"t"); 
-
-  binToRootStyle->SetTitleFont(132,"XYZ"); 
-
-  binToRootStyle->SetTitleSize(0.05,"XYZ");
-  
-  binToRootStyle->SetTitleOffset(1.0,"XYZ");
-  
-  // 6 sub-pads
-  binToRootStyle->SetTitleOffset(1.6,"Y");
-  
-  //----------  Stats
-  binToRootStyle->SetOptStat(0);
-  binToRootStyle->SetStatStyle(0);
-
-  binToRootStyle->SetOptFit(1);
-  
-  //----------  Legend
-  binToRootStyle->SetLegendBorderSize(0);
-  //binToRootStyle->SetLegendFont(132);
-  
-  gROOT->SetStyle("binToRootStyle");
+  gROOT->SetStyle("wmStyle");
   gROOT->ForceStyle();
+  
+
+//   TStyle     *binToRootStyle  = new TStyle("binToRootStyle",
+// 					   "My Root Styles");
+  
+  
+//   // General
+//   // OPTIONS - FILL LINE TEXT MARKER
+  
+//   binToRootStyle->SetFillColor(0);
+//   binToRootStyle->SetTextSize(0.05);
+  
+//   //-----------  Canvas
+  
+//   binToRootStyle->SetCanvasBorderMode(0);
+//   binToRootStyle->SetCanvasColor(kWhite);
+  
+//   //------------- Pad
+  
+//   binToRootStyle->SetPadBorderMode(0); 
+//   binToRootStyle->SetPadColor(kWhite);
+  
+//   // Make more room for X and Y titles
+//   // one pad
+//   // binToRootStyle->SetPadRightMargin(0.05);  //percentage
+//   // binToRootStyle->SetPadLeftMargin(0.1);    //percentage
+//   // binToRootStyle->SetPadBottomMargin(0.12); //percentage
+  
+//   // six sub-pads
+//   binToRootStyle->SetPadRightMargin(0.16);  //percentage
+//   binToRootStyle->SetPadLeftMargin(0.2);    //percentage
+//   binToRootStyle->SetPadBottomMargin(0.14); //percentage
+  
+//   //----------- Histogram
+  
+//   //Histos
+//   binToRootStyle->SetHistLineWidth(1);
+//   binToRootStyle->SetMarkerStyle(20);
+  
+//   //  FILL CONTOURS LINE BAR 
+//   //  Frames
+//   binToRootStyle->SetFrameBorderMode(0);
+  
+//   //  FILL BORDER LINE
+//   //  Graphs
+//   //  LINE ERRORS
+  
+//   //---------  Axis 
+  
+//   binToRootStyle->SetLabelFont(132,"XYZ"); 
+//   binToRootStyle->SetLabelSize(0.04,"XYZ");
+//   binToRootStyle->SetLabelOffset(0.01 ,"Y");
+  
+//   //---------  Title
+//   binToRootStyle->SetOptTitle(1);
+//   binToRootStyle->SetTitleStyle(0);
+//   binToRootStyle->SetTitleBorderSize(0);
+
+
+//   binToRootStyle->SetTitleSize(0.03,"t");
+//   binToRootStyle->SetTitleFont(132,"t"); 
+
+//   binToRootStyle->SetTitleFont(132,"XYZ"); 
+
+//   binToRootStyle->SetTitleSize(0.05,"XYZ");
+  
+//   binToRootStyle->SetTitleOffset(1.0,"XYZ");
+  
+//   // 6 sub-pads
+//   binToRootStyle->SetTitleOffset(1.6,"Y");
+  
+//   //----------  Stats
+//   binToRootStyle->SetOptStat(0);
+//   binToRootStyle->SetStatStyle(0);
+
+//   binToRootStyle->SetOptFit(1);
+  
+//   //----------  Legend
+//   binToRootStyle->SetLegendBorderSize(0);
+//   //binToRootStyle->SetLegendFont(132);
+  
+//   gROOT->SetStyle("binToRootStyle");
+//   gROOT->ForceStyle();
+  
 }
 
 // Read in binary file and 
