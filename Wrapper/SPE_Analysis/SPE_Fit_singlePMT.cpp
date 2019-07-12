@@ -512,7 +512,7 @@ Result* fitModel(TH1F* fhisto,
   frame->Draw();
 //  canvas->SaveAs(Form("./Plots/FullFit/Fit_Run_1_PMT_%d_HV_%d.C",pmt,hv));
   gPad->SetLogy();  
-  
+
   char buffer[300];
   sprintf(buffer,"./Plots/Fit_Run_%d_PMT_%d_HV_%d_Test_%c.png",run,pmt,hv,test);
   canvas->SaveAs(buffer);
@@ -541,8 +541,7 @@ int SPE_Fit_singlePMT(int run = 50,
 		      int pmt = 152,
 		      int loc = 0,
 		      string dir = "~/WATCHMAN/RootData/",
-		      Bool_t useFiltered = kFALSE){	
-  
+		      bool useFiltered = kFALSE){	
   
   /*** Read in the HV data ***/
 
@@ -551,7 +550,7 @@ int SPE_Fit_singlePMT(int run = 50,
   float gainError;
   float peak2valley;
   float peak2valleyError;
-  char  filePath[300]= "";
+  char filePath[300] = "";
 
   /*** Determine the PMT number and applied voltage for each step ***/
 
@@ -597,7 +596,7 @@ int SPE_Fit_singlePMT(int run = 50,
 
   }
   else{
-    sprintf(filePath,"%sRun_%d_PMT_%d_Loc_%d_Test_%d.root",dir.c_str(),run,pmt,loc,test);
+    sprintf(filePath,"%sRun_%d_PMT_%d_Loc_%d_Test_%c.root",dir.c_str(),run,pmt,loc,test);
   }
 
   TFile s(filePath);
