@@ -133,7 +133,7 @@ InitParams initializeFit(TH1F* h){
   std::cout << "found peaks " << nfound << std::endl;
 
   /*** Find the approximate charge at the maximum of the SPE peak ***/
-  Float_t *peaks;
+  Double_t *peaks;
   peaks = spec->GetPositionX();
   float sigPeak = 0; float pedPeak = 0;
   std::cout << peaks[0] << " " << peaks[1]  << " " << peaks[2] << std::endl;
@@ -565,7 +565,7 @@ int main(int argc,char **argv){
   /*** Read in and fit the charge Spectrum ***/
     
   
-  sprintf(histname, "../../RawRootData/Run_%d_PMT_%d_Loc_%d_Test_S.root",run,pmt,loc); 
+  sprintf(histname, "/Disk/ds-sopa-group/PPE/Watchman/RawRootData/Run_%d_PMT_%d_Loc_%d_Test_S.root",run,pmt,loc); 
   TFile s(histname);
   s.ls();
 
