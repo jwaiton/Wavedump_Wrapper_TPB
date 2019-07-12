@@ -8,6 +8,8 @@
 #include "TROOT.h"
 #include "TRandom3.h"
 
+#include "../BinaryConversion/wmStyle.C"
+
 #include "TApplication.h"
 
 Int_t PMTAnalyser::GetNEntriesTest(Int_t verbosity,
@@ -284,9 +286,9 @@ TH1F * PMTAnalyser::Get_hWave(Long64_t entry){
   return hWave;
 }
 
-void PMTAnalyser::TimeOfPeak()
+Float_t PMTAnalyser::TimeOfPeak()
 {
-  if (rawRootTree == 0) return;
+  if (rawRootTree == 0) return -1.;
   
   int verbosity = 0;
   
@@ -513,6 +515,8 @@ void PMTAnalyser::TimeOfPeak()
 
   TF1 * fPeakTimeGaus = new TF1("fPeakTimeGaus","gaus(0)",0.,220.);
   
+  Float_t peakMean = -1.;
+  
   if(Test!='D'){
     
     double maxPeakT_ns = hPeakT_ns_2->GetXaxis()->GetBinCenter(hPeakT_ns_2->GetMaximumBin());
@@ -536,8 +540,11 @@ void PMTAnalyser::TimeOfPeak()
 		     maxPeakT_ns + rangeFit );
     
     fPeakTimeGaus = hPeakT_ns_2->GetFunction("gaus");  
-  
+    
     hPeakT_ns_2->GetFunction("gaus")->SetLineColor(kBlue);
+    
+    peakMean = fPeakTimeGaus->GetParameter(1);
+  
   }
   
   hPeakT_ns_1->SetMinimum(0);
@@ -591,7 +598,7 @@ void PMTAnalyser::TimeOfPeak()
   
   canvas->SaveAs(hName);
   
-  return;
+  return peakMean;
 }
 
 Int_t PMTAnalyser::DarkRate(Float_t threshold = 10)
@@ -880,8 +887,7 @@ void PMTAnalyser::SetTestMode(Bool_t userTestMode){
 
 void PMTAnalyser::SetStyle(){
   
-  TStyle     *watchStyle  = new TStyle("watchStyle",
-				       "My Root Styles");
+  TStyle *wmStyle = GetwmStyle();
   
   const Int_t NCont = 255;
   const Int_t NRGBs = 5;
@@ -893,83 +899,84 @@ void PMTAnalyser::SetStyle(){
   Double_t blue[NRGBs]  = { 0.51, 1.00, 0.12, 0.00, 0.00 };          
   TColor::CreateGradientColorTable(NRGBs, stops, red, green, blue, NCont);
   
-  watchStyle->SetNumberContours(NCont);
+  wmStyle->SetNumberContours(NCont);
   
-  // General
-  // OPTIONS - FILL LINE TEXT MARKER
   
-  watchStyle->SetFillColor(0);
-  watchStyle->SetTextSize(0.05);
+  // // General
+//   // OPTIONS - FILL LINE TEXT MARKER
   
-  //-----------  Canvas
+//   wmStyle->SetFillColor(0);
+//   wmStyle->SetTextSize(0.05);
   
-  watchStyle->SetCanvasBorderMode(0);
-  watchStyle->SetCanvasColor(kWhite);
+//   //-----------  Canvas
   
-  //------------- Pad
+//   wmStyle->SetCanvasBorderMode(0);
+//   wmStyle->SetCanvasColor(kWhite);
   
-  watchStyle->SetPadBorderMode(0); 
-  watchStyle->SetPadColor(kWhite);
+//   //------------- Pad
   
-  // Make more room for X and Y titles
-  // one pad
-  // watchStyle->SetPadRightMargin(0.05);  //percentage
-  // watchStyle->SetPadLeftMargin(0.1);    //percentage
-  // watchStyle->SetPadBottomMargin(0.12); //percentage
+//   wmStyle->SetPadBorderMode(0); 
+//   wmStyle->SetPadColor(kWhite);
   
-  // six sub-pads
-  watchStyle->SetPadRightMargin(0.16);  //percentage
-  watchStyle->SetPadLeftMargin(0.2);    //percentage
-  watchStyle->SetPadBottomMargin(0.14); //percentage
+//   // Make more room for X and Y titles
+//   // one pad
+//   // wmStyle->SetPadRightMargin(0.05);  //percentage
+//   // wmStyle->SetPadLeftMargin(0.1);    //percentage
+//   // wmStyle->SetPadBottomMargin(0.12); //percentage
   
-  //----------- Histogram
+//   // six sub-pads
+//   wmStyle->SetPadRightMargin(0.16);  //percentage
+//   wmStyle->SetPadLeftMargin(0.2);    //percentage
+//   wmStyle->SetPadBottomMargin(0.14); //percentage
   
-  // Histos
-  watchStyle->SetHistLineWidth(1);
-  watchStyle->SetMarkerStyle(20);
+//   //----------- Histogram
   
-  //  FILL CONTOURS LINE BAR 
-  //  Frames
-  watchStyle->SetFrameBorderMode(0);
+//   // Histos
+//   wmStyle->SetHistLineWidth(1);
+//   wmStyle->SetMarkerStyle(20);
   
-  //  FILL BORDER LINE
-  //  Graphs
-  //  LINE ERRORS
+//   //  FILL CONTOURS LINE BAR 
+//   //  Frames
+//   wmStyle->SetFrameBorderMode(0);
   
-  //---------  Axis 
+//   //  FILL BORDER LINE
+//   //  Graphs
+//   //  LINE ERRORS
   
-  watchStyle->SetLabelFont(132,"XYZ"); 
-  watchStyle->SetLabelSize(0.04,"XYZ");
-  watchStyle->SetLabelOffset(0.01 ,"Y");
+//   //---------  Axis 
   
-  //---------  Title
-  watchStyle->SetOptTitle(1);
-  watchStyle->SetTitleStyle(0);
-  watchStyle->SetTitleBorderSize(0);
+//   wmStyle->SetLabelFont(132,"XYZ"); 
+//   wmStyle->SetLabelSize(0.04,"XYZ");
+//   wmStyle->SetLabelOffset(0.01 ,"Y");
+  
+//   //---------  Title
+//   wmStyle->SetOptTitle(1);
+//   wmStyle->SetTitleStyle(0);
+//   wmStyle->SetTitleBorderSize(0);
 
 
-  watchStyle->SetTitleSize(0.03,"t");
-  watchStyle->SetTitleFont(132,"t"); 
+//   wmStyle->SetTitleSize(0.03,"t");
+//   wmStyle->SetTitleFont(132,"t"); 
 
-  watchStyle->SetTitleFont(132,"XYZ"); 
+//   wmStyle->SetTitleFont(132,"XYZ"); 
 
-  watchStyle->SetTitleSize(0.05,"XYZ");
+//   wmStyle->SetTitleSize(0.05,"XYZ");
   
-  watchStyle->SetTitleOffset(1.0,"XYZ");
+//   wmStyle->SetTitleOffset(1.0,"XYZ");
   
-  // 6 sub-pads
-  watchStyle->SetTitleOffset(1.6,"Y");
+//   // 6 sub-pads
+//   wmStyle->SetTitleOffset(1.6,"Y");
   
-  //----------  Stats
-  watchStyle->SetOptStat(0);
-  watchStyle->SetStatStyle(0);
+//   //----------  Stats
+//   wmStyle->SetOptStat(0);
+//   wmStyle->SetStatStyle(0);
 
-  watchStyle->SetOptFit(1);
+//   wmStyle->SetOptFit(1);
   
-  //----------  Legend
-  watchStyle->SetLegendBorderSize(0);
-  //watchStyle->SetLegendFont(132);
+//   //----------  Legend
+//   wmStyle->SetLegendBorderSize(0);
+//   //wmStyle->SetLegendFont(132);
   
-  gROOT->SetStyle("watchStyle");
+  gROOT->SetStyle("wmStyle");
   gROOT->ForceStyle();
 }
