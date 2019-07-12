@@ -61,7 +61,7 @@ class PMTAnalyser {
   TBranch        *b_peakV_mV;  
   TBranch        *b_waveform; 
   
-  PMTAnalyser(TTree *tree=0, Char_t digitiser='V',
+  PMTAnalyser(TTree *tree=0, Char_t userDigitiser='V',
 	      Bool_t oldRootFileVersion = kFALSE);
   
   virtual ~PMTAnalyser();
@@ -97,9 +97,10 @@ class PMTAnalyser {
 #ifdef PMTAnalyser_cxx
 
 PMTAnalyser::PMTAnalyser(TTree *tree,
-			 Char_t digitiser,
+			 Char_t userDigitiser,
 			 Bool_t oldRootFileVersion) : rawRootTree(0) 
 {
+  digitiser = userDigitiser;
   Init(tree,digitiser,
        oldRootFileVersion);
 }
