@@ -21,7 +21,7 @@
   now have to be implemented locally
   
   USAGE
-  #include "TStyle.C"
+  #include "TStyle.h"
   #include "wmStyle.C"
   
   //..... code
