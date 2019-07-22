@@ -1,54 +1,95 @@
- /*****************************************************
-  * A program to process raw root files from wavedump
-  *
-  * Author 
-  *  gary.smith@ed.ac.uk
-  *  01 01 2019
-  *
-  * Purpose
-  *  This program reads a TTree
-  *
-  * How to build
-  *  $ make 
-  *
-  * How to run
-  *
-  *  Example One - analyse one raw root file
-  *  $ ./executePMTAnalysis ../../RawRootData/Run_11_PMT_90_Loc_0_Test_D.root  
-  *
-  *  Example Two - analyse two raw root files (two HV steps)
-  *  $ ./executePMTAnalysis ../../RawRootData/Run_11_PMT_90_Loc_0_HV_1.root ../../RawRootData/Run_11_PMT_90_Loc_0_HV_2.root 
-  *
-  *  Example Three - analyse multiple raw root files ( all run numbers )
-  *  $ ./executePMTAnalysis ../../RawRootData/Run_*_PMT_90_Loc_0_Test_D.root  
-  *
-  * Dependencies
-  *  root.cern
-  *  PMTAnalyser
-  *  DataInfo
-  *  ShippingData
-  *
-  * Known issues
-  *   Under linux you will likely be required to add 
-  *   the shared (.so) file to your library path 
-  *
-  */ 
+/*****************************************************
+ * A program to process raw root files from wavedump
+ *
+ * Author 
+ *  gary.smith@ed.ac.uk
+ *  01 01 2019
+ *
+ * Purpose
+ *  This program reads a TTree
+ *
+ * How to build
+ *  $ make 
+ *
+ * How to run
+ *
+ *  Example One - analyse one raw root file
+ *  $ ./executePMTAnalysis ../../RawRootData/Run_11_PMT_90_Loc_0_Test_D.root  
+ *
+ *  Example Two - analyse two raw root files (two HV steps)
+ *  $ ./executePMTAnalysis ../../RawRootData/Run_11_PMT_90_Loc_0_HV_1.root ../../RawRootData/Run_11_PMT_90_Loc_0_HV_2.root 
+ *
+ *  Example Three - analyse multiple raw root files ( all run numbers )
+ *  $ ./executePMTAnalysis ../../RawRootData/Run_*_PMT_90_Loc_0_Test_D.root  
+ *
+ * Dependencies
+ *  root.cern
+ *  PMTAnalyser
+ *  DataInfo
+ *  ShippingData
+ *
+ * Known issues
+ *   Under linux you will likely be required to add 
+ *   the shared (.so) file to your library path 
+ *
+ */ 
 
- #include <iostream>
+#include <iostream>
 
- #include <string>
- #include "TFile.h"
- #include "TTree.h"
- #include "TH1.h"
- #include "TString.h"
- #include "PMTAnalyser.h"
- #include "ShippingData.h"
- #include "FileNameParser.h"
+#include <string>
+#include "TFile.h"
+#include "TTree.h"
+#include "TH1.h"
+#include "TString.h"
+#include "PMTAnalyser.h"
+#include "ShippingData.h"
+#include "FileNameParser.h"
 
- using namespace std;
+using namespace std;
 
- int main(Int_t argc, Char_t *argv[]){
+bool IsValidDigitiser(Char_t digitiser,
+		      Int_t  run){
+  
+  if( digitiser=='V' && run > 39 ){
+    cerr << " \n Error: Invalid digitiser setting \n" << endl;
+    return false;
+  }
+  else if( digitiser=='D'&& 
+	   run < 40 ){
+    cerr << " \n Error: Invalid digitiser setting \n" << endl;
+    return false;
+  }
+  else 
+    return true;
+}
 
+Bool_t IsInteger(string usrInput){
+  
+  try {
+    stoi(usrInput);
+  }
+  catch (...) {
+    cout << "Invalid input. Please try again!\n";
+    return kFALSE;
+  }
+  
+  return kTRUE;
+}
+
+Bool_t IsYes(string usrInput){
+  
+  Char_t buff[usrInput.length()+1];
+  strcpy(buff,usrInput.c_str());
+  
+  if( ( usrInput.length() == 1      ) && 
+      ( buff[0]=='y' || buff[0]=='Y') )
+    return kTRUE;
+  else
+    return kFALSE;
+}
+
+int main(Int_t argc, Char_t *argv[]){
+  
    TFile * outFile = nullptr;  
    TFile * inFile = nullptr;
 
@@ -60,6 +101,9 @@
    // 'V' for VME, 'D' for desktop
    Char_t  digitiser = 'V';
 
+   if( !IsValidDigitiser(digitiser,testInfo->run(argv[1])))
+     return -1;
+
    TString strDigi = "Desktop";
 
    if(digitiser=='V')
@@ -67,11 +111,6 @@
 
    cout << endl;
    cout << " Using " << strDigi << " digitiser settings " << endl;
-
-   // Old style BinToRoot output
-   // or new BinToRoot output?
-   // (pulse[] -> waveform[] e.g.)
-   Bool_t oldRootFileVersion = kFALSE;
 
    // Dark Rate
    Float_t thresh_mV  = 10.0;
@@ -85,7 +124,11 @@
    // Testing reading from root file, writing to new file
    TH1F  * hQ   = nullptr;
 
-   Float_t peakMeans[5];
+   Bool_t investigateTiming = kFALSE;
+   
+   Float_t peakMeans[argc-1];
+   for (Int_t i = 0 ; i < (argc-1) ; i++)
+     peakMeans[i] = 0.;
 
    // argv should be a path to a file
    // or list of files ( wildcards work )
@@ -106,8 +149,7 @@
 
      // initalise analysis object using tree 
      PMT = new PMTAnalyser(tree,
-			   digitiser,
-			   oldRootFileVersion);
+			   digitiser);
      
      // Set plot attributes to bespoke TStyle 
      PMT->SetStyle();
@@ -126,27 +168,48 @@
      //PMT->PlotAccumulatedFFT();
      
      // plot waveforms
-     event = -1;
+     event = 0;
      while ( event!= -1 ){
        cout << endl;
        cout << " Which waveform to plot?" << endl;
-       cout << " enter event number " << endl;
-       cout << " (-1 to quit) " << endl;
+       cout << " enter event number,    " << endl;
+       cout << " enter for next event   " << endl;
+       cout << " or -1 to quit          " << endl;
        
-       cin >> event;
-       if( event > -1)
+       string usrInput;
+       getline(cin, usrInput);
+       
+       if (usrInput.empty())
+	 event++;
+       else if(IsInteger(usrInput))
+	   event = stoi(usrInput); 
+       else 
+	 continue;
+       
+       if ( event > -1 )
 	 PMT->PlotWaveform(event);
+       else
+	 continue;
+       
+       cout << endl;
+       cout << " Plot FFT?" << endl;
+       cout << " answer: y/n " << endl;
+       
+       getline(cin, usrInput);
+
+       if ( IsYes(usrInput) )
+	 PMT->PlotFFT(event);
+       
      }
+     
      //------------
      // Timing Study
      
-     cout << endl;
-     cout << " Timing " << endl;
-     
-     if(iFile < 6){
+     if(iFile < argc && investigateTiming){
        peakMeans[iFile-1] = PMT->TimeOfPeak();
        cout << endl;
-       cout << " mean of gaussian fit to peak " << peakMeans[iFile-1] << endl;
+       cout << " mean of gaussian fit to peak " << 
+	 peakMeans[iFile-1] << endl;
      }
      //------------
      //  Dark Rate
@@ -154,13 +217,8 @@
      if( investigateDarkRate && 
 	 testInfo->test(argv[iFile])=='D'){
        
-       if(oldRootFileVersion){
-	 cout << " Dark Rate method only applicable to new BinToRoot files " << endl;
-       }
-       else{
-	 darkRate = PMT->DarkRate(thresh_mV);
-	 cout << " PMT Test  Dark Rate = " << darkRate          << endl;
-       }
+       darkRate = PMT->DarkRate(thresh_mV);
+       cout << " PMT Test  Dark Rate = " << darkRate          << endl;
      }
      
      //------------
@@ -198,11 +256,13 @@
      hQ = (TH1F*)inFile->Get(hName);
      
      TString outputName = "_out.root";
-  
-     outputName = treeName + outputName;
+     
+     TString fileID = (TString)testInfo->GetFileID(argv[iFile]);
+     
+     outputName = fileID + outputName;
      
      outFile = new TFile(outputName,"RECREATE");
-
+     
      // Writing to file
      // put file in same directory as objects
      outFile->cd();
@@ -217,11 +277,13 @@
      
      outFile->Close();
      
-  }
-  
-  cout << endl;
-  for (Int_t i = 0 ; i < 5 ; i++)
-    cout << "peakMeans[" << i << "]= " << peakMeans[i] << endl;; 
-  
+   }
+   
+   if(investigateTiming){
+     cout << endl;
+     for (Int_t i = 0 ; i < (argc-1) ; i++)
+       cout << "peakMeans[" << i << "]= " << peakMeans[i] << endl;; 
+   }
+   
   return 1;
 }
