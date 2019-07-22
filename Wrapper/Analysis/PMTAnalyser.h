@@ -13,6 +13,8 @@
 
 #include <TCanvas.h>
 
+#include "TRandom3.h"
+
 using namespace std;
 
 class PMTAnalyser {
@@ -52,15 +54,17 @@ class PMTAnalyser {
   
   Short_t        waveform[5100];
   
-  TBranch        *b_event;
-  TBranch        *b_minVDC;
-  TBranch        *b_maxVDC;
-  TBranch        *b_minT;  
-  TBranch        *b_maxT;  
-  TBranch        *b_peakT_ns;  
-  TBranch        *b_peakV_mV;  
-  TBranch        *b_waveform; 
+  TBranch        * b_event;
+  TBranch        * b_minVDC;
+  TBranch        * b_maxVDC;
+  TBranch        * b_minT;  
+  TBranch        * b_maxT;  
+  TBranch        * b_peakT_ns;  
+  TBranch        * b_peakV_mV;  
+  TBranch        * b_waveform; 
   
+  TRandom3       * rand3; 
+
   PMTAnalyser(TTree *tree=0, Char_t userDigitiser='V',
 	      Bool_t oldRootFileVersion = kFALSE);
   
@@ -70,17 +74,24 @@ class PMTAnalyser {
   virtual void     Init(TTree *tree,Char_t digitiser,
 			Bool_t oldRootFileVersion);
   Int_t    GetNEntriesTest(Int_t, Int_t);
-  void     MakeCalibratedTree();
+  Bool_t   IsValidEntry(Long64_t);
+  void     PlotFFT(Long64_t entry);
   void     PlotWaveform(Long64_t entry);
   void     PlotAccumulatedFFT();
   TH1F *   Get_hWave(Long64_t entry);
   TH1F *   Get_hFFT(Long64_t entry);
   Int_t    DarkRate(Float_t);
+  Short_t  Get_baseline_ADC(Long64_t);
+  Float_t  Get_baseline_mV(Short_t waveform[],
+			   Float_t peakT_ns);
+  Short_t  Select_peakSample(Short_t waveform[],
+			     Short_t peakVDC);
   Float_t  TimeOfPeak();
   TH1F*    FFTShift(TH1F *, Float_t);
   TCanvas* Make_FFT_Canvas();
   Int_t    FFT_Filter();
   Bool_t   IsCleanFFTWaveform(TH1F *);
+  void     MakeCalibratedTree();
   Bool_t   Notify();
   void     Show(Long64_t entry = -1);
   void     SetStyle();
@@ -157,6 +168,9 @@ void PMTAnalyser::Init(TTree *tree,
   nsPerSample  = dataInfo->GetnsPerSample(digitiser);  
   
   waveformDuration = (float)NSamples * nsPerSample;
+  
+  // initalise to 0 to guarantee uniqueness
+  rand3 = new TRandom3(0); 
 
   if (!tree) return;
   rawRootTree = tree;

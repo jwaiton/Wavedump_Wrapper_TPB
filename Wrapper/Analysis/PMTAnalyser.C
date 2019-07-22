@@ -6,11 +6,10 @@
 #include "TBranch.h"
 #include "TLatex.h"
 #include "TROOT.h"
-#include "TRandom3.h"
+
+#include <stdlib.h>
 
 #include "../BinaryConversion/wmStyle.C"
-
-#include "TApplication.h"
 
 Int_t PMTAnalyser::GetNEntriesTest(Int_t verbosity,
 				   Int_t nentries){
@@ -150,103 +149,126 @@ void PMTAnalyser::PlotAccumulatedFFT(){
   
 }
 
-void PMTAnalyser::PlotWaveform(Long64_t entry){
-  
-  static const int nWaveforms = 1;
-
-  TCanvas * canvas = new TCanvas();
-  
-  Float_t w = 2000., h = 500.;
-  canvas->SetWindowSize(w,h);
-  canvas->Divide(2,nWaveforms);
-
-  TH1F *  hWave[nWaveforms];
-  TH1F *  hFFT[nWaveforms];
-  
-  TString hName,hNameTemp;
-  
-  for (int i = 0 ; i < nWaveforms ; i++){
-    
-    hWave[i] = Get_hWave(entry+i);
-
-    hNameTemp = "hWave_%d";
-    hName.Form(hNameTemp,i);
-    hWave[i]->SetNameTitle(hName,
-			   "Waveform;Time (ns); Voltage (ADC counts)");
-    
-    hFFT[i]  = Get_hFFT(entry+i);
-    
-    hNameTemp = "hFFT_%d";
-    hName.Form(hNameTemp,i);
-    hFFT[i]->SetNameTitle(hName,"hFFT");
-  }
-  
-  Long64_t firstEntry = entry;
-  int entryRelFrst = 0;
+Bool_t PMTAnalyser::IsValidEntry(Long64_t entry){
   
   Long64_t nFileEntries = rawRootTree->GetEntriesFast();   
   
   if( entry > (nFileEntries-1) ){
     cout << endl;
     cout << " Last entry in file is " << (nFileEntries-1) << endl;
-    return;
+    return kFALSE;
   }
+  
+  return kTRUE;
+
+}
+
+void PMTAnalyser::PlotFFT(Long64_t entry){
+
+  if(!IsValidEntry(entry))
+    return;
+  
+  TCanvas * canvas = new TCanvas();
+  
+  Float_t w = 600., h = 500.;
+  canvas->SetWindowSize(w,h);
+  
+  TH1F *  hFFT = Get_hFFT(entry);
+  hFFT->SetNameTitle("hFFT","hFFT");
+  
+  gPad->SetLogy();
+  hFFT->Draw();
+
+  TString hName;
+  hName = "./FFT/";
+  hName += FileID;
+  hName += "_FFT_C";
+  hName += ".png";
+  canvas->SaveAs(hName);
+  
+  string sysCommand = "open ";
+  sysCommand += hName;
+  system(sysCommand.c_str());
+  
+  hFFT->Delete();
+}
+
+void PMTAnalyser::PlotWaveform(Long64_t entry){
+  
+  if(!IsValidEntry(entry))
+    return;
+
+  TCanvas * canvas = new TCanvas();
+  
+  Float_t w = 600., h = 500.;
+  canvas->SetWindowSize(w,h);
+
+  TH1F *  hWave;
+  TString hName;
+  hWave = Get_hWave(entry);
+  hName = "hWave";
+  
+  hWave->SetNameTitle(hName,
+		      "Waveform;Time (ns); Voltage (ADC counts)");
+    
+  
+  Float_t lineXMin = 0.;
+  Float_t lineXMax = 35.;
+
+  Float_t lineYMin = Get_baseline_ADC(entry);
+ 
+  Float_t lineYMax = lineYMin;
+
+  TLine *baselineLine = new TLine(lineXMin,lineYMin,
+				  lineXMax,lineYMax); 
+  
+  Float_t lineXLimit = hWave->GetXaxis()->GetXmax();
+  
+  TLine *bigLine = new TLine(lineXMax,lineYMin,
+			     lineXLimit,lineYMax); 
+  
+  baselineLine->SetLineColor(kBlue);
+  baselineLine->SetLineWidth(4.0);
+
+  bigLine->SetLineColor(kRed);
+  bigLine->SetLineWidth(4.0);
   
   TString tStr = "";
   TLatex * latex = new TLatex();
-  int canNo = 0;
-  while ( entryRelFrst < nWaveforms && 
-	  firstEntry != -1 ){
-    
-    cout << endl;
-    cout << " entry = " << entry << endl;
-    
-    entryRelFrst = entry-firstEntry;
 
-    canNo++;
-    canvas->cd(canNo);
+  cout << endl;
+  cout << " entry = " << entry << endl;
     
-    //hWave[entryRelFrst]->SetMinimum(450);
-    //hWave[entryRelFrst]->SetMaximum(850);
-    
-    if(digitiser=='D')
-      hWave[entryRelFrst]->GetXaxis()->SetRange(1,500);
+  //hWave->SetMinimum(450);
+  //hWave->SetMaximum(850);
+  
+  // if(digitiser=='D')
+  //     hWave->GetXaxis()->SetRange(1,500);
       
-      //hWave[entryRelFrst]->GetXaxis()->SetRange(64,192);
+  //hWave->GetXaxis()->SetRange(64,192);
     
-    hWave[entryRelFrst]->Draw();
-    
-    tStr.Form("Entry %lld", entry);
-    latex->DrawLatex(0.6,0.8,tStr);
-    
-    canNo++;
-    canvas->cd(canNo);
+  hWave->Draw();
+  baselineLine->Draw();
+  bigLine->Draw();
+  
+  tStr.Form("Entry %lld", entry);
+  latex->DrawLatex(0.6,0.8,tStr);
 
-
-    gPad->SetLogy();
-    hFFT[entryRelFrst]->Draw();
-      
-    entry++;
-    entryRelFrst++;
-  }
+  cout << endl;
+  cout << " Plotting Waveform" << endl;
   
-  hNameTemp = "./Waveforms/";
-  
-  hNameTemp += FileID;
-  //hNameTemp += "_Event_%d";
-  
-  // current
-  hNameTemp += "_Event_C";
-  hNameTemp += ".png";
-  
-  //hName.Form(hNameTemp,entry);
-  hName = hNameTemp;
+  hName = "./Waveforms/";
+  hName += FileID;
+  hName += "_Wave_C";
+  hName += ".png";
   canvas->SaveAs(hName);
 
-  for (int i = 0 ; i < nWaveforms ; i++){
-    hWave[i]->Delete();
-    hFFT[i]->Delete();
-  }    
+  string sysCommand = "open ";
+  sysCommand += hName;
+  system(sysCommand.c_str());
+
+  hWave->Delete();
+
   return;
 }
 
@@ -258,7 +280,7 @@ TH1F * PMTAnalyser::Get_hFFT(Long64_t entry){
   TH1F * hWave = Get_hWave(entry); 
 
   hWave->FFT(hFFT ,"MAG");
-
+ 
   hWave->Delete();
     
   Float_t dx = nsPerSample * 1.E-9;
@@ -275,15 +297,112 @@ TH1F * PMTAnalyser::Get_hWave(Long64_t entry){
   hWave = new TH1F("hWave","Waveform;Time (ns); Voltage (ADC counts)",
 		   NSamples, 0., waveformDuration);
   
-  float aoff = 8700.;  
-  
   LoadTree(entry);
   rawRootTree->GetEntry(entry);  
   
   for( int iSample = 0 ; iSample < NSamples; iSample++)
-    hWave->SetBinContent(iSample+1,(aoff - waveform[iSample]));
+    hWave->SetBinContent(iSample+1,(waveform[iSample]));
+
+  //hWave->SetBinContent(iSample+1,(aoff - waveform[iSample]));
  
   return hWave;
+}
+
+// Short_t * PMTAnalyser::Get_waveform(Long64_t entry){
+  
+//   rawRootTree->GetEntry(entry);
+  
+//   return waveform;
+// }
+
+Short_t PMTAnalyser::Get_baseline_ADC(Long64_t entry){
+  
+  rawRootTree->GetEntry(entry);
+  
+  Int_t baseline_ADC = 0;
+  Float_t time_ns = 0.;
+  Int_t   samplesInBaseline = 0;  
+
+  for( int iSample = 0 ; iSample < NSamples; iSample++){
+    
+    time_ns = (Float_t)iSample * nsPerSample;
+    
+    if ( time_ns  < 35.){
+      baseline_ADC += waveform[iSample];
+      samplesInBaseline++;
+    }
+    
+  }
+  baseline_ADC = baseline_ADC/samplesInBaseline;
+  
+  return (Short_t)baseline_ADC;
+}
+
+Float_t PMTAnalyser::Get_baseline_mV(Short_t waveform[],
+ 				     Float_t peakT_ns){
+  int   samplesInBaseline = 0;  
+  
+  Float_t baseline_mV = 0.0;
+  Float_t time_ns     = 0.;
+  Float_t voltage_mV = 0.;
+  
+  for( int iSample = 0 ; iSample < NSamples; iSample++){
+    time_ns    = iSample * nsPerSample;
+    voltage_mV = waveform[iSample] * mVPerBin;
+
+    if( peakT_ns >= 50.0 ) {
+      
+      // leave at least 15 ns for rise 
+      if( time_ns < 35.0 ){
+	baseline_mV += voltage_mV;
+	samplesInBaseline++;
+      }
+      
+    }
+    else { 
+      // if peak before signal region
+      if( time_ns >= 150.0 && 
+	  time_ns <  185.0 ){
+	baseline_mV += voltage_mV;
+	samplesInBaseline++;
+      }
+      
+    }
+    
+  } // end of: for( int iSample = 0 ; iSample < N......
+  
+  baseline_mV = baseline_mV / samplesInBaseline; 
+  
+  return baseline_mV;
+}
+
+Short_t PMTAnalyser::Select_peakSample(Short_t waveform[],
+				       Short_t peakVDC){
+  
+
+  int nPeaks = 0; // number of repeats
+  int peakSampleArray[NSamples]; 
+  int peakNumberChoice = 0; 
+  int peakSample = -1;
+  
+  for( int iSample = 0 ; iSample < NSamples; iSample++){
+    peakSampleArray[iSample] = 0;
+    
+    if( waveform[iSample] == peakVDC ){
+      peakSampleArray[nPeaks] = iSample;
+      nPeaks++;
+    }
+  } // end of: for( int iSample = 0 ; iSample < N......
+  
+  if(nPeaks == 0)
+    cerr << " no peaks found is...... impossible " << endl;
+  
+  // randomly assign integer from [0,(nPeaks-1)]
+  peakNumberChoice = (Int_t)rand3->Uniform(nPeaks);
+  
+  peakSample = peakSampleArray[peakNumberChoice];
+  
+  return peakSample;
 }
 
 Float_t PMTAnalyser::TimeOfPeak()
@@ -301,25 +420,13 @@ Float_t PMTAnalyser::TimeOfPeak()
   cout << endl;
   cout << " Running: Time of Peak " << endl;
   cout << " " << nentries << " entries " << endl;
-
-  float voltage_mV = 0.;
-  float time_ns = 0.;
-
-  // Count peaks
-  int   nPeaks = 0;
-  int   peakSampleArray[NSamples]; 
-  int   peakSample = -1; // minT (take 2)
-  int   peakNumberChoice = -1;
-  int   samplesInBaseline = 0;
-  float baseline_mV = 0.0;
   
   TCanvas * canvas = new TCanvas();
   
-  float rangeT = waveformDuration;
+  Float_t rangeT = waveformDuration;
   int   binsT  = NSamples;
   
-
-  float rangeV[2];
+  Float_t rangeV[2];
   rangeV[0] = -12.;
   rangeV[1] = 110.;
 
@@ -352,9 +459,13 @@ Float_t PMTAnalyser::TimeOfPeak()
 				 binsT,0.,rangeT,
 				 binsV,rangeV[0],rangeV[1]);
 				 
+ 
+  binsT = binsT * 2;
+  binsV = binsV * 2;
+ 
+  Float_t baseline_mV = 0.0;
+  Short_t peakSample = -1;
   
-  TRandom3 * random = new TRandom3(); 
-      
   for (Long64_t jentry = 0; jentry < nentries; jentry++) {
     
     ientry = LoadTree(jentry);
@@ -368,137 +479,42 @@ Float_t PMTAnalyser::TimeOfPeak()
     
     //------------------------------------
     // event-by-event baseline
-    
-    samplesInBaseline = 0;
-    baseline_mV = 0.0;
-    
-    if( verbosity > 1 ){
-      cout << " peakT_ns = " << peakT_ns << endl;
-    }
-    
-    for( int iSample = 0 ; iSample < NSamples; iSample++){
-      
-      time_ns    = iSample * nsPerSample;
-      voltage_mV = waveform[iSample] * mVPerBin;
-      
-      // Which of two regions was peak in?
-      // use other region for baseline
-      if( peakT_ns >= 50.0 ) {
-	
-	// exclude 35 - 50 ns 
-	// in case peak is at 50 ns
-	// ~ 10 ns rise time
-	if( time_ns < 35.0 ){
-	  baseline_mV += voltage_mV;
-	  samplesInBaseline++;
-	}
-	
-      }
-      else { 
-	// peak < 50 ns 
-	// leave at least 100 ns 
-	// after peak 
-	if( time_ns >= 150.0 && 
-	    time_ns <  185.0 ){
-	  baseline_mV += voltage_mV;
-	  samplesInBaseline++;
-	}
-	
-      }
-      
-      if( verbosity > 2 ){
-	cout << endl;
-	cout << " samplesInBaseline = " << samplesInBaseline << endl;
-	cout << " voltage_mV        = " << voltage_mV        << endl;
-	cout << " baseline_mV       = " << baseline_mV       << endl;
-      }
-      
-    } // end of: for( int iSample = 0 ; iSample < N......
-    
-    baseline_mV = baseline_mV / samplesInBaseline; 
-    
-    if( verbosity > 1 ){
-      cout << endl;
-      cout << " baseline_mV       = " << baseline_mV       << endl;
-    }
-    
-    // event-by-event baseline
-    //------------------------------------
-    
-    //------------------------------------
-    // Find peaks
-    nPeaks = 0;
-    peakNumberChoice = -1;
-    peakSample = -1;
 
-    for( int iSample = 0 ; iSample < NSamples; iSample++){
-      peakSampleArray[iSample] = 0;
-      
-      time_ns    = iSample * nsPerSample;
-      voltage_mV = waveform[iSample] * mVPerBin;
-      voltage_mV = voltage_mV - baseline_mV;
-      
-      // count peaks
-      if( waveform[iSample] == minVDC ){
-	peakSampleArray[nPeaks] = iSample;
-	nPeaks++;
-      }
-      
-      if( verbosity > 2){
-	cout << endl;
-	cout << " waveform[" << iSample << "] = " << waveform[iSample] << endl; 
-	cout << " voltage = " << voltage_mV << " mV " << endl;
-      }
+    baseline_mV = Get_baseline_mV(waveform,
+				  peakT_ns);
     
-    } // end of: for( int iSample = 0 ; iSample < N......
-    
-    // Find peaks
     //------------------------------------
     
-    if( verbosity > 1 ){
-      if( nPeaks > 1 ){
-	cout << endl;
-	cout << " " <<  nPeaks << " peaks " <<  endl;
-	for ( int i = 0 ; i < nPeaks ; i++ )
-	cout << " peakSampleArray[" << i << "] = " 
-	     << peakSampleArray[i] << endl;
-      }
-    }
     // BinToRoot method
     hPeakT_ns_1->Fill(peakT_ns);
     
-    // New Method
+    //------------------------------------
+    // Randomise peak time from peak
+    // voltage duplicates 
     
-    // randomly assign integer from [0,(nPeaks-1)]
-    peakNumberChoice = (Int_t)random->Uniform(nPeaks);
-      
-    peakSample = peakSampleArray[peakNumberChoice];
+    // WARNING only implemented for negative pulses
+    peakSample = Select_peakSample(waveform,
+				   minVDC);
     
-    peakT_ns = peakSample * nsPerSample;
-    
-    peakV_mV = waveform[peakSample] * mVPerBin;
-    peakV_mV = baseline_mV - peakV_mV; 
+    peakT_ns   = peakSample * nsPerSample;
+
+    //--------------------------------------
+    //--------------------------------------
     
     hPeakT_ns_2->Fill(peakT_ns);
     
-    if(nPeaks == 0)
-      cerr << " no peaks found is...... impossible " << endl;
-   
+    peakV_mV = waveform[peakSample] * mVPerBin;
+    peakV_mV = baseline_mV - peakV_mV; 
+  
     hPeakT_PeakV->Fill(peakT_ns,peakV_mV);
     hPeakV_mV->Fill(peakV_mV);
 
     if(verbosity > 1){    
-      cout << endl;
-      cout << " nPeaks            = " << nPeaks           << endl;
-      
-      if(nPeaks > 1 ){
-	cout << " peakNumberChoice  = " << peakNumberChoice << endl;
-	cout << " Peak Sample       = " << peakSample       << endl;;
-      }
-      cout << " peakT_ns          = " << peakT_ns         << endl;;
-      cout << " peakV_mV          = " << peakV_mV         << endl;;
-      cout << " minVDC            = " << minVDC           << endl;
-      cout << " minT              = " << minT             << endl;
+      cout << endl; 
+      cout << " peakT_ns          = " << peakT_ns          << endl;;
+      cout << " peakV_mV          = " << peakV_mV          << endl;;
+      cout << " minVDC in mV      = " << minVDC*mVPerBin   << endl;
+      cout << " minT in ns        = " << minT*nsPerSample  << endl;
     }
     
   }
@@ -516,13 +532,14 @@ Float_t PMTAnalyser::TimeOfPeak()
   TF1 * fPeakTimeGaus = new TF1("fPeakTimeGaus","gaus(0)",0.,220.);
   
   Float_t peakMean = -1.;
+
+  double rangeFit = 8.5;
+
+  double maxBin = hPeakT_ns_2->GetMaximumBin();
+  
+  double maxPeakT_ns = hPeakT_ns_2->GetXaxis()->GetBinCenter(maxBin);
   
   if(Test!='D'){
-    
-    double maxPeakT_ns = hPeakT_ns_2->GetXaxis()->GetBinCenter(hPeakT_ns_2->GetMaximumBin());
-  
-    double rangeFit = 8.5;
-    
     hPeakT_ns_2->Fit("gaus","Q","", 
 		     maxPeakT_ns - rangeFit, 
 		     maxPeakT_ns + rangeFit );
@@ -544,11 +561,22 @@ Float_t PMTAnalyser::TimeOfPeak()
     hPeakT_ns_2->GetFunction("gaus")->SetLineColor(kBlue);
     
     peakMean = fPeakTimeGaus->GetParameter(1);
-  
+    
   }
   
   hPeakT_ns_1->SetMinimum(0);
+    
   hPeakT_ns_1->Draw();
+
+  hPeakT_ns_2->SetMinimum(0);
+  
+  hPeakT_ns_1->SetLineColor(kBlue);
+  
+  Int_t lowBin = maxBin*rangeT/binsT - rangeFit*3;
+  Int_t highBin = maxBin*rangeT/binsT + rangeFit*3;
+
+  hPeakT_ns_2->GetXaxis()->SetRange(lowBin, highBin);
+  hPeakT_ns_2->Draw();
   
   TLatex * latex = new TLatex();
   latex->SetNDC();
@@ -560,18 +588,14 @@ Float_t PMTAnalyser::TimeOfPeak()
   tStr.Form("Gaus Mean = %.2f  ",
 	    fPeakTimeGaus->GetParameter(1));
    
-  latex->SetTextColor(kBlue);  
+  //latex->SetTextColor(kBlue);  
 
-  latex->DrawLatex(0.6,0.8,tStr);
+  latex->DrawLatex(0.7,0.8,tStr);
   
   tStr.Form("Gaus Sigma = %.2f  ",
 	    fPeakTimeGaus->GetParameter(2));
   
-  latex->DrawLatex(0.6,0.75,tStr);
-
-  hPeakT_ns_2->SetMinimum(0);
-  hPeakT_ns_2->SetLineColor(kBlue);
-  hPeakT_ns_2->Draw("same");
+  latex->DrawLatex(0.7,0.75,tStr);
   
   TString hName = "./Plots/PeakTime_";
   hName += FileID;
