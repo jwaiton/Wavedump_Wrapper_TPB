@@ -117,7 +117,6 @@ float GetVoltageRange(char digitiser){
     return 0;
   }
 
-
 }
 
 int GetSampleRateInMHz(char digitiser,
