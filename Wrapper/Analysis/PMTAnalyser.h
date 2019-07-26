@@ -81,12 +81,15 @@ class PMTAnalyser {
   TH1F *   Get_hWave(Long64_t entry);
   TH1F *   Get_hFFT(Long64_t entry);
   Int_t    DarkRate(Float_t);
-  Short_t  Get_baseline_ADC(Long64_t);
-  Float_t  Get_baseline_mV(Short_t waveform[],
-			   Float_t peakT_ns);
+  Bool_t   IsSampleInBaseline(int,Short_t);
+  Short_t  Get_baseline_ADC(Long64_t,
+			    Short_t option = 0);
+  Float_t  Get_baseline_mV(Long64_t,
+			   Short_t option = 0);
+  //  Short_t  GetNPeaks(Int_t, Float_t);    
   Short_t  Select_peakSample(Short_t waveform[],
 			     Short_t peakVDC);
-  Float_t  TimeOfPeak();
+  Float_t  TimeOfPeak(Float_t);
   TH1F*    FFTShift(TH1F *, Float_t);
   TCanvas* Make_FFT_Canvas();
   Int_t    FFT_Filter();
