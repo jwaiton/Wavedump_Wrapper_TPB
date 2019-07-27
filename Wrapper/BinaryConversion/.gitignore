@@ -6,5 +6,5 @@ nohup.out
 CodeSnippet.txt
 input_*
 *.root
-DatToRoot
+dat_to_root
 *.dat
