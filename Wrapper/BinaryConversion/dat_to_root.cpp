@@ -36,6 +36,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <vector>
 
 #include "TFile.h"
 #include "TTree.h"
@@ -46,7 +47,7 @@ using namespace std;
 
 int main(int argc, char **argv){
   
-  printf("\n DatToRoot \n" );
+  printf("\n dat_to_root \n" );
   
   ifstream inFile(argv[1]);
   
@@ -65,8 +66,7 @@ int main(int argc, char **argv){
 			      "RECREATE",
 			      outName.c_str());
    
-  TTree * outTree = new TTree(outName.c_str(),
-			      outName.c_str());
+  TTree * outTree = new TTree("T","T");
 
   int HEAD[6];
   int NS = 0;
@@ -86,13 +86,18 @@ int main(int argc, char **argv){
   // (header plus samples)
   NS = (HEAD[0] - 24)/2;
   printf("\n %d Samples \n",NS);
-
+  
+  for (int i = 0 ; i < 6 ; i++ )
+    printf("\n HEAD[%d] %d \n",i,HEAD[i]);
+  
   short ADC[NS];
+  
   char name[50],type[50];
   sprintf(name,"ADC[%d]",NS);
   sprintf(type,"ADC[%d]/S",NS);
+  
   outTree->Branch(name,ADC,type);
-
+  
   inFile.seekg(0, ios::beg);
   while ( inFile.is_open() && 
  	  inFile.good()    && 
@@ -102,12 +107,8 @@ int main(int argc, char **argv){
     // header is six lots 32 bits    
     for (int i = 0 ; i < 6 ; i++ )
       inFile.read((char*)&HEAD[i],sizeof(int)); 
-
-    if(ID==-1)
-      for (int i = 0 ; i < 6 ; i++ ) 
-	printf("\n HEAD[%d] %d \n",i,HEAD[i]);
-    
-    // HEAD[0] is event size
+      
+    // HEAD[0] is event size in bytes
     // (header plus samples)
     NS = (HEAD[0] - 24)/2; 
     
@@ -116,16 +117,21 @@ int main(int argc, char **argv){
     for (short i = 0; i < NS ; i++)
       inFile.read((char*)&ADC[i],sizeof(short)); 
     
+    if(ID==-1)
+      for (int i = 0 ; i < NS ; i++){
+	printf("\n ADC[%d] = %d \n",i,ADC[i]);
+      }
+    
     ID = HEAD[1];
     PN = HEAD[2];
     CL = HEAD[3];
     EC = HEAD[4];
     TT = HEAD[5];
     
-    outTree->Fill();
-    
     if( EC%100000 == 0 )
       printf("\n Event %d \n", EC);
+
+    outTree->Fill();
     
   } // end: while loop
   
@@ -134,7 +140,7 @@ int main(int argc, char **argv){
   
   outFile->Write();
   outFile->Close();
-
+  
   inFile.close();	
   
   return 1;
