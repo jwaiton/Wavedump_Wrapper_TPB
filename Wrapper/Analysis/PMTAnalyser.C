@@ -1004,3 +1004,74 @@ void PMTAnalyser::SetStyle(){
   gROOT->SetStyle("wmStyle");
   gROOT->ForceStyle();
 }
+
+//Author: Ben Wade
+//s1520134@ed.ac.uk
+//
+//Designed to take in the waveform of an event (and 2 floats for the values)
+//and fit a Gaussian peak with an exponential 
+//tailoff (ie: Crystalball fit), then use this 
+//to calculate the rise and fall time of the 
+//signals and assign them to the variables taken in
+
+void PMTAnalyser::RiseFallTime(TH1F * EventWave, Double_t PeakT, Double_t* Rise, Double_t* Fall){
+	//Will need changing for specific parameters ie: Event windows, etc.
+	//May need adjustment for background fitting to reduce effects on results
+
+	TF1* SignalPulse = new TF1("SignalPulse", "CrystalBall", 0, 220);
+	
+	SignalPulse->SetParameters(-10, 10, 10, PeakT); //Layed out as Alpha, n, Sigma, Mu
+	SignalPulse->SetParLimits(1, 0, -1000);					//Numbers chosen at random, Needs fetling
+	
+	EventWave->Fit("SignalPulse", "R");
+	
+	//Finding the peak coordinates
+	Double_t FullHeight = SignalPulse->GetMaximum();
+	Double_t FitPeakT = SignalPulse->GetMaximumX();
+	
+	//Setting up the coordinates for rise and fall times
+	Double_t Rise90 = 0.0;
+	Double_t Rise10 = 0.0;
+	
+	Double_t Fall90 = 0.0;
+	Double_t Fall10 = 0.0;
+
+	//To check if the peaks have been assigned
+	int Ticker = 0;
+
+	//90 and 10 percent of the waveforms	
+	Double_t Ninty = FullHeight*0.9;
+	Double_t Tenty = FullHeight*0.1;
+
+	//Loop over the function 
+	for(double i = 0.0; i < 220.0 ; i = i + 0.1 ){
+		
+		if (SignalPulse->Eval(FitPeakT - i) <= Ninty && Rise90 < 0.1){ //Not sure this is great?
+			Rise90 = FitPeakT - i; 
+			Ticker ++;			
+			}
+		
+		if (SignalPulse->Eval(FitPeakT + i) <= Ninty && Fall90 < 0.1){
+			Fall90 = FitPeakT + i;
+			Ticker++;
+			}
+		if (SignalPulse->Eval(FitPeakT - i) >= Tenty && Rise10 < 0.1){
+			Rise10 = FitPeakT - i;
+			Ticker++;
+			}
+		if (SignalPulse->Eval(FitPeakT + i) >= Tenty && Fall10 < 0.1){
+			Fall10 = FitPeakT - i;
+			Ticker++;
+			}
+		
+		//a statment to jump out of the loop
+		if (Ticker > 3)
+			i = 300;
+	}
+	*Rise = Rise90 - Rise10;
+	*Fall = Fall10 - Fall90;
+	
+}
+
+	
+
