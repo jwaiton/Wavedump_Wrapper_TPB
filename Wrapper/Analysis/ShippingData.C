@@ -9,6 +9,16 @@
 
 using namespace std;
 
+void ShippingData::PrintAll(){
+  
+  cout <<  endl; 
+  cout << " Shipping Data " << endl; 
+  cout << " Nominal Voltage  = " << GetEBB() << endl;
+  cout << " Peak To Valley   = " << GetPTV() << endl;
+  cout << " Dark Rate        = " << GetDR()  << endl;
+  
+}
+
 void ShippingData::SetAll(int userPMT)
 {
    if (fTree == 0) return;
@@ -31,6 +41,9 @@ void ShippingData::SetAll(int userPMT)
        userDR  = DR;
        userTTS = TTS;
        userPTV = PTV;
+       
+       isAllSet = kTRUE;
+       
        return;
      }
      

@@ -7,5 +7,6 @@
 #pragma link C++ class PMTAnalyser;
 #pragma link C++ class DataInfo;
 #pragma link C++ class ShippingData;
+#pragma link C++ class FileNameParser;
 
 #endif

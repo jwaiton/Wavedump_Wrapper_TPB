@@ -4,7 +4,6 @@
 int DataInfo::GetNSamples(char test,
 			  char digitiser
 			  ){
-  
   switch(digitiser){     
   case ('V'):
     if (test=='A')

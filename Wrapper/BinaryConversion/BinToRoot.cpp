@@ -71,6 +71,8 @@
 
 #include "TLatex.h"
 
+#include "wmStyle.C"
+
 using namespace std;
 
 int  GetNSamples(char digitiser,
@@ -194,16 +196,48 @@ float GetWaveformLength(char digitiser,
 
 float GetDelay(int run = 0){
   
-  if      ( run == 0 ) // 12th October
+  if      ( run ==  0 ) // 12th October
     return 60.; 
-  else if ( run < 10 ) // 16th October
+  else if ( run <  10 ) // 16th October
     return 50.;
-  else if ( run < 20 ) // Underground
+  else if ( run <  20 ) // Underground
     return 90.;
-  else if ( run > 999) // Bine
-    return 100.;
-  else                 // Surface
+  else if ( run >= 20 &&
+	    run <  30  ) // Post-underground at surface
     return 60.;
+  else if ( run >= 30 && 
+	    run <  40 )  // Noise investigation
+    return 70.;
+  else if ( run == 40 )
+    return 120.;
+  else if ( run == 41 ) // Cable Test
+    return 95.; 
+  else if ( run ==  50 )
+    return 100.;
+  else if ( run ==  51 )
+    return 105.; // Best choice 105: the delay moves around from 95 - 120: N, G, S
+  else if ( run ==  52 )
+    return 80.; // Best choice 80:  delay moves, very noticable in HV steps 
+  else if ( run ==  53 )
+    return 90.; // Best choice 90: note that SPE delay is 80
+  else if ( run ==  54 )
+    return 90.;    
+  else if ( run ==  55 )
+    return 75.;  // Best choice 75: note that Nominal delay is 90
+  else if ( run ==  56 )
+    return 85.; // Best choice 75, note that Nominal delay is 85
+  else if ( run ==  57 )
+    return 90.;
+  else if ( run ==  58 )
+    return 90.;
+  else if ( run ==  59 )
+    return 90.;
+  else if ( run ==  60 )
+    return 90.;
+  else if ( run ==  61 )
+    return 90.;
+  else                  // Default
+    return  60.;
 }
 
 float GetmVPerBin(char digitiser){
@@ -267,7 +301,7 @@ bool IsPeakInRange(float peakT_ns, char digitiser,
 }
 
 float GetGateWidth(){
-  return 50;
+  return 50.;
 }
 
 // integration windows fixed wrt trigger
@@ -280,8 +314,8 @@ int Accumulate_Fixed(short VDC, float time){
   // And signal in 50 ns window
   if      ( time >= -GetGateWidth()  && 
 	    time <    0 )
-    return((int)-VDC);
-  else if ( time >= 0 &&
+    return((int)-1*VDC);
+  else if ( time >= 0 && 
 	    time <  GetGateWidth() ){
     return((int)VDC);
   }
@@ -300,8 +334,6 @@ int Accumulate_Baseline(short VDC, float time){
     return 0;
 }
 
-
-
 // Integration windows wrt waveform peak
 // -10 ns before to 30 ns after
 // timeRel is time relative to minT (in ns)
@@ -318,9 +350,6 @@ int Accumulate_Peak(short VDC, float timeRel){
   else
     return 0.;
 }
-
-
-
 
 TString GetRunFolderName(int run){
 
@@ -455,8 +484,7 @@ TString GetRawRootFilePath(TString filePath = "./",
 
 void SetStyle(){
   
-  TStyle     *binToRootStyle  = new TStyle("binToRootStyle",
-					   "My Root Styles");
+  TStyle * wmStyle = GetwmStyle();
   
   const Int_t NCont = 255;
   const Int_t NRGBs = 5;
@@ -468,85 +496,51 @@ void SetStyle(){
   Double_t blue[NRGBs]  = { 0.51, 1.00, 0.12, 0.00, 0.00 };          
   TColor::CreateGradientColorTable(NRGBs, stops, red, green, blue, NCont);
   
-  binToRootStyle->SetNumberContours(NCont);
+  wmStyle->SetNumberContours(NCont);
   
-  // General
-  // OPTIONS - FILL LINE TEXT MARKER
+  //-----------
   
-  binToRootStyle->SetFillColor(0);
-  binToRootStyle->SetTextSize(0.05);
-  
-  //-----------  Canvas
-  
-  binToRootStyle->SetCanvasBorderMode(0);
-  binToRootStyle->SetCanvasColor(kWhite);
-  
-  //------------- Pad
-  
-  binToRootStyle->SetPadBorderMode(0); 
-  binToRootStyle->SetPadColor(kWhite);
-  
-  // Make more room for X and Y titles
-  // one pad
-  // binToRootStyle->SetPadRightMargin(0.05);  //percentage
-  // binToRootStyle->SetPadLeftMargin(0.1);    //percentage
-  // binToRootStyle->SetPadBottomMargin(0.12); //percentage
   
   // six sub-pads
-  binToRootStyle->SetPadRightMargin(0.16);  //percentage
-  binToRootStyle->SetPadLeftMargin(0.2);    //percentage
-  binToRootStyle->SetPadBottomMargin(0.14); //percentage
+  wmStyle->SetPadRightMargin(0.16);  //percentage
+  wmStyle->SetPadLeftMargin(0.2);    //percentage
+  wmStyle->SetPadBottomMargin(0.14); //percentage
   
   //----------- Histogram
   
-  //Histos
-  binToRootStyle->SetHistLineWidth(1);
-  binToRootStyle->SetMarkerStyle(20);
-  
-  //  FILL CONTOURS LINE BAR 
-  //  Frames
-  binToRootStyle->SetFrameBorderMode(0);
-  
-  //  FILL BORDER LINE
-  //  Graphs
-  //  LINE ERRORS
-  
+  wmStyle->SetHistLineWidth(1);
+
   //---------  Axis 
-  
-  binToRootStyle->SetLabelFont(132,"XYZ"); 
-  binToRootStyle->SetLabelSize(0.04,"XYZ");
-  binToRootStyle->SetLabelOffset(0.01 ,"Y");
+
+  wmStyle->SetLabelSize(0.04,"XYZ");
+  wmStyle->SetLabelOffset(0.01 ,"Y");
   
   //---------  Title
-  binToRootStyle->SetOptTitle(1);
-  binToRootStyle->SetTitleStyle(0);
-  binToRootStyle->SetTitleBorderSize(0);
+  wmStyle->SetOptTitle(1);
+  wmStyle->SetTitleStyle(0);
+  wmStyle->SetTitleBorderSize(0);
 
-
-  binToRootStyle->SetTitleSize(0.03,"t");
-  binToRootStyle->SetTitleFont(132,"t"); 
-
-  binToRootStyle->SetTitleFont(132,"XYZ"); 
-
-  binToRootStyle->SetTitleSize(0.05,"XYZ");
-  
-  binToRootStyle->SetTitleOffset(1.0,"XYZ");
+  wmStyle->SetTitleSize(0.03,"t");
+  wmStyle->SetTitleFont(132,"t"); 
+  wmStyle->SetTitleFont(132,"XYZ"); 
+  wmStyle->SetTitleSize(0.05,"XYZ");
+  wmStyle->SetTitleOffset(1.0,"XYZ");
   
   // 6 sub-pads
-  binToRootStyle->SetTitleOffset(1.6,"Y");
+  wmStyle->SetTitleOffset(1.6,"Y");
   
   //----------  Stats
-  binToRootStyle->SetOptStat(0);
-  binToRootStyle->SetStatStyle(0);
-
-  binToRootStyle->SetOptFit(1);
+  
+  // wmStyle->SetStatStyle(0);
+  // wmStyle->SetOptFit(1);
   
   //----------  Legend
-  binToRootStyle->SetLegendBorderSize(0);
-  //binToRootStyle->SetLegendFont(132);
+  wmStyle->SetLegendBorderSize(0);
+  wmStyle->SetLegendFont(132);
   
-  gROOT->SetStyle("binToRootStyle");
+  gROOT->SetStyle("wmStyle");
   gROOT->ForceStyle();
+  
 }
 
 // Read in binary file and 
@@ -572,10 +566,13 @@ int ProcessBinaryFile(TString inFilePath,
   // Variables for testing
   bool  testMode  = false;
   bool  keepGoing = true;
-  int   maxEvents = 10000;
+  int   maxEvents = 100000;
   
   bool makeFilteredHisto = true;
   
+  if( run > 40 ) 
+    makeFilteredHisto = false;
+
   if ( test == 'A' )
     maxEvents = 2;
   
@@ -663,10 +660,10 @@ int ProcessBinaryFile(TString inFilePath,
     hQ_PeakNameTemp = "hQ_Peak_Run_%d_PMT_%d_Loc_%d_HV_%d";
     hQ_PeakName.Form(hQ_PeakNameTemp,run,pmt,loc,hvStep);
 
-    hPeakTimeNameTemp = "hPeakTime_Run_%d_PMT_%d_Loc_%d_HV_%D";
+    hPeakTimeNameTemp = "hPeakTime_Run_%d_PMT_%d_Loc_%d_HV_%d";
     hPeakTimeName.Form(hPeakTimeNameTemp,run,pmt,loc,hvStep);
 
-    hPeakVoltNameTemp = "hPeakVolt_Run_%d_PMT_%d_Loc_%d_HV_%D";
+    hPeakVoltNameTemp = "hPeakVolt_Run_%d_PMT_%d_Loc_%d_HV_%d";
     hPeakVoltName.Form(hPeakVoltNameTemp,run,pmt,loc,hvStep);
 
   }
@@ -686,7 +683,9 @@ int ProcessBinaryFile(TString inFilePath,
   
   Int_t nBinsX  = 512;
   Float_t rangeQ[2] = {-500.,1500.};
-  
+  Float_t rangeT[2] = {0.,220.};
+  Int_t  binsT = 110;
+
   TH1F * hQ_Fixed = new TH1F(hQ_FixedName,
 			     "Gate around delay;Charge (mV ns);Counts",
 			     nBinsX,rangeQ[0],rangeQ[1]);
@@ -716,7 +715,7 @@ int ProcessBinaryFile(TString inFilePath,
 			      GetWaveformLength(digitiser,
 						test,
 						samplingSetting));
-
+  
 
   TH1D* hMaxADC = new TH1D("hMaxADC","Waveform ADC Maximum;maxADC;counts",
 			   1000, 200.,1200.); 
@@ -747,11 +746,29 @@ int ProcessBinaryFile(TString inFilePath,
   rangeQ[1] = rangeQ[1] * GetnsPerSample(digitiser,
 					 samplingSetting);
   
+  rangeT[0] = 0.;
+  rangeT[1] = GetWaveformLength(digitiser,test,samplingSetting);
+  binsT = GetNSamples(digitiser,test);
+
+//   cout << endl;
+//   cout << " binsT     = " << binsT << endl;
+//   cout << " rangeT[0] = " << rangeT[0] << endl;
+//   cout << " rangeT[1] = " << rangeT[1] << endl;
+    
+  if( rangeT[1] > 220.){
+    
+    binsT = binsT / (Int_t)rangeT[1];
+    
+    rangeT[1] = GetDelay(run) + (GetGateWidth()*1.5);
+    
+    binsT = binsT*(Int_t)rangeT[1];
+    
+  }
+  
+
   TH2F * hTV = new TH2F("hTV",label,
-			GetNSamples(digitiser,test),
-			0.,GetWaveformLength(digitiser,
-					     test,
-					     samplingSetting),
+			binsT,
+			rangeT[0],rangeT[1],
 			GetNVDCBins(digitiser),
 			0.,GetVoltageRange(digitiser)*1.0e3);
 
@@ -777,11 +794,13 @@ int ProcessBinaryFile(TString inFilePath,
   // Note that the sign is preserved for VDC, therefore 
   // minima (maxima) will be where the signal peaked 
   // for negative (positive) signal pulses
-  short minVDC = 32767, maxVDC = -32768;  
+  short minVDC = 32767, maxVDC = -32768;
+  Long64_t meanVDC = 0;  
   // sample numbers (indices) corresponding to minVDC and maxVDC
   short minT   = -1, maxT   = -1;  
   
   float peakT_ns = -1., peakV_mV = 0., baselineV_mV =0.;
+  Double_t mean_baselineV_mV = 0.;
   
   // accumulators for integrating the sample values
   int   intVDCfixed = 0, intVDCpeak = 0, intVDCbaseline = 0;
@@ -810,8 +829,8 @@ int ProcessBinaryFile(TString inFilePath,
   short VDC = 0, sample = 0;
   int   fileHeader = 0;
   float floatVDC   = 0.;
-  
-  // waveform time in ns
+ 
+  //t waveform time in ns
   float waveTime = 0.;
   
   // waveform time with delay subtracted
@@ -845,7 +864,10 @@ int ProcessBinaryFile(TString inFilePath,
     // VDC range
     minVDC =  32767;
     maxVDC = -32768;  
+    meanVDC = 0;  
 
+    baselineV_mV = 0.;
+    
     // time walk?
     minT   =  32767;
     // random?
@@ -916,6 +938,7 @@ int ProcessBinaryFile(TString inFilePath,
       // read 4 bits
       else if( digitiser == 'D' ){
 	fileStream.read((char*)&floatVDC,sizeof(float));
+	// To Do: check for bias here
 	VDC = (short)floatVDC;
       }
       else {
@@ -938,6 +961,8 @@ int ProcessBinaryFile(TString inFilePath,
 	maxT   = sample;
       }
       
+      meanVDC += VDC;
+
       hWave->SetBinContent(iSample+1,
 			   (double)(8700 - waveform[iSample]));
 
@@ -957,6 +982,7 @@ int ProcessBinaryFile(TString inFilePath,
       
       if(verbosity > 1){
 	cout << " VDC(" << iSample << ") = " << VDC << endl;
+	cout << " intVDCfixed    = " << intVDCfixed << endl;
 	cout << " waveTime       = " << waveTime << endl;
 	cout << " time           = " << time << endl;
       }
@@ -974,7 +1000,11 @@ int ProcessBinaryFile(TString inFilePath,
       
       hWaveFFT->SetBinContent(1,0.) ;
       
-      if(hWaveFFT->GetMaximumBin() == 2 ){
+      //if(hWaveFFT->GetMaximumBin() == 2 ){
+      if( (hWaveFFT->GetMaximumBin() > 1  && hWaveFFT->GetMaximumBin() < 8 ) || 
+	  (hWaveFFT->GetMaximumBin() > 13 && hWaveFFT->GetMaximumBin() < 23) || 
+	  (hWaveFFT->GetMaximumBin() > 23 && hWaveFFT->GetMaximumBin() < 33) || 
+	  (hWaveFFT->GetMaximumBin() > 44 && hWaveFFT->GetMaximumBin() < 55)){ //(hWaveFFT->GetMaximumBin() != 2 && hWave->GetMaximum() < -100) ){
 	
 	hMaxADC_Filtered->Fill( hWave->GetMaximum());
 	
@@ -998,9 +1028,6 @@ int ProcessBinaryFile(TString inFilePath,
     // necessary for when event-level variables are used
     // such as waveform minimum
     for (short iSample = 0; iSample < GetNSamples(digitiser,test); iSample++){
-
-
-
       
       waveTime = iSample*GetnsPerSample(digitiser,
 					samplingSetting);
@@ -1038,10 +1065,10 @@ int ProcessBinaryFile(TString inFilePath,
       
       // sample vs VDC and time vs voltage plots
       // for checking signals (delay etc) 
-      // plot pulses for 1000 events
-      // from first 100,000
-      if( ( event < 100000    )  &&
-	  ( event % 100  == 0 )
+      // plot pulses for 10000 events
+      // from first 1,000,000
+      if( ( event < 1000000    )  &&
+	  ( event % 1000  == 0 )
 	  ){
 	
 	hWaveforms->Fill(iSample,waveform[iSample]);
@@ -1069,6 +1096,8 @@ int ProcessBinaryFile(TString inFilePath,
     peakV_mV     = peakV_mV * GetmVPerBin(digitiser);
     baselineV_mV = baselineV_mV * GetmVPerBin(digitiser);
     
+    mean_baselineV_mV += baselineV_mV;
+
     if(verbosity > 1){
       cout << " peakV_mV       = " <<  peakV_mV      << endl;
       cout << " baselineV_mV   = " << baselineV_mV   << endl;
@@ -1099,6 +1128,8 @@ int ProcessBinaryFile(TString inFilePath,
     if(verbosity > 0){
       cout << endl;
       cout << " Event " << event << endl;
+      cout << " intVDCfixed " << intVDCfixed << endl;
+      cout << " Charge " << GetCharge(intVDCfixed,digitiser,samplingSetting,negPulsePol) << endl;
       cout << " minVDC(" << minT << ") = " << minVDC << endl;
       cout << " maxVDC(" << maxT << ") = " << maxVDC << endl;
       cout << " peakV_mV               = " << peakV_mV << endl;
@@ -1127,7 +1158,10 @@ int ProcessBinaryFile(TString inFilePath,
     minY = GetVoltageRange(digitiser)*(16 - 1)/32*1.0e3;
     maxY = GetVoltageRange(digitiser)*(16 + 2)/32*1.0e3;
   }
-  
+  else if( run > 40 ){
+    minY = GetVoltageRange(digitiser)*(16 - 5)/32*1.0e3;
+    maxY = GetVoltageRange(digitiser)*(16    )/32*1.0e3;
+  }
   hTV->SetAxisRange(minY,maxY,"Y");
 
   float minX = 0.;
@@ -1142,7 +1176,13 @@ int ProcessBinaryFile(TString inFilePath,
   float lineYMin = minY * (16 - 1)/(16 - 2); 
   float lineYMax = maxY * (16 + 0.25)/(16 + 1); 
   
+  // if( run > 39 && run < 50 ){
+  //   lineYMin = minY * (16 - 1)/(16 - 2); 
+  //   lineYMax = maxY * (16 + 0.25)/(16 + 1); 
+  // }
+
   float lineXMin = GetDelay(run) - GetGateWidth();
+  
   float lineXMax = GetDelay(run) + GetGateWidth();
   
   TLine *lPedMin = new TLine(lineXMin,lineYMin,
@@ -1269,8 +1309,6 @@ bool GetNegPulsePol(char digitiser, int run){
     return false;
   else 
     return GetNegPulsePolUser();
-      
- 
 }
 
 char GetSamplingSettingUser(){
@@ -1291,7 +1329,7 @@ char GetSamplingSetting(char digitiser,
 
   if  (digitiser == 'V')
     return 'S'; 
-  if  (run > 9999)
+  if  ( run >= 40 )
     return 'L';
   else 
     return GetSamplingSettingUser();
@@ -1541,6 +1579,11 @@ int GetPMT(int run, int iPMT){
 			96, 97, 98, 99};
     return pmtList[iPMT];
   }
+  else if(run == 30 ){
+    int  pmtList[8] = { 130,131,132,133,
+			1, 84, 90, 96};
+    return pmtList[iPMT];
+  }
   else if(run == 1001){
     return 16;
   }
@@ -1555,7 +1598,7 @@ int GetLoc(int run, int iPMT){
       return (iPMT%4);
     else
       return (iPMT%4 + 4);
-  else if(run > 1 && run < 30)
+  else if(run > 1 && run < 100)
     return iPMT;
   else
     return 0;
@@ -1570,8 +1613,9 @@ int GetNPMTs(int run){
 	  run == 12  || run == 21 || 
 	  run == 22  || run == 23)
     return 4;
-  else if(run == 2  || run == 3 || 
-	  run == 4  || run == 20 )
+  else if(run == 2  || run == 3  || 
+	  run == 4  || run == 20 ||
+	  run == 30 )
     return 8;
   else
     return 1;

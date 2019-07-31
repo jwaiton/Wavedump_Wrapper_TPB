@@ -1,7 +1,19 @@
-( sleep 10 ; echo .q  ) | root -l 'GetPeakToValley.C++("Run_200_PMT_15_Loc_0_Test_S")';
+#!/bin/bash
 
-# mac command to open plot 
-# open ./Plots/*.pdf;
+THIS_DIR=$pwd
 
-# linux try:
-# okular ./Plots/*.pdf
+RUN=$1
+
+PMT=$2
+
+LOC=0
+
+TEST=N
+
+ROOT_ARG='"Run_'$RUN'_PMT_'$PMT'_Loc_'$LOC'_Test_'$TEST'"'
+
+COMMAND='./Fitting/GetPeakToValley.C++('$ROOT_ARG')'
+
+
+( sleep 10 ; echo .q  ) | root -lb 'GetPeakToValley.C++("Run_30_PMT_133_Loc_3_Test_S")';
+
