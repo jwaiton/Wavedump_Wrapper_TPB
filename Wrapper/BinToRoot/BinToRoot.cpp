@@ -80,8 +80,10 @@ int  GetNSamples(char digitiser,
   
   switch(digitiser){     
   case ('V'):
-    if (test=='A')
+    if     (test=='A')
       return 5100;
+    else if(test=='R')
+      return 300;
     else
       return 110;
   case ('D'):
@@ -235,6 +237,8 @@ float GetDelay(int run = 0){
     return 90.;
   else if ( run ==  61 )
     return 90.;
+  else if ( run ==  70 ) //  New setting TBD
+    return 90.;
   else                  // Default
     return  60.;
 }
@@ -275,6 +279,8 @@ bool IsCorrectDigitiser(int header,
       cerr << " Error: digitiser choice does not match header info " << endl;
       return false;
     }
+  case ('R'):
+    return true; //  no catch at present
   default:
     if( ( header == 244  &&  digitiser == 'V' ) || 
 	( header == 4120 &&  digitiser == 'D' ) )
@@ -391,6 +397,8 @@ TString GetTestFolderName(char test){
     return "APTest/";
   case('G'):
     return "GainTest/";
+  case('R'): 
+    return "DarkRateTest/";
   default:
     cerr << " Error: invalid test type " << endl;
     return "";
@@ -755,12 +763,9 @@ int ProcessBinaryFile(TString inFilePath,
 //   cout << " rangeT[1] = " << rangeT[1] << endl;
     
   if( rangeT[1] > 220.){
-    
-    binsT = binsT / (Int_t)rangeT[1];
-    
+
     rangeT[1] = GetDelay(run) + (GetGateWidth()*1.5);
-    
-    binsT = binsT*(Int_t)rangeT[1];
+    binsT = binsT * (int)rangeT[1]/GetWaveformLength(digitiser,test,samplingSetting);
     
   }
   
@@ -1157,10 +1162,16 @@ int ProcessBinaryFile(TString inFilePath,
     minY = GetVoltageRange(digitiser)*(16 - 1)/32*1.0e3;
     maxY = GetVoltageRange(digitiser)*(16 + 2)/32*1.0e3;
   }
-  else if( run > 40 ){
+  else if( run > 40  && run < 70){
     minY = GetVoltageRange(digitiser)*(16 - 5)/32*1.0e3;
     maxY = GetVoltageRange(digitiser)*(16    )/32*1.0e3;
   }
+  else {
+    minY = 0.;
+    maxY = GetVoltageRange(digitiser)*(16 - 8 )/32*1.0e3;
+  }
+
+
   hTV->SetAxisRange(minY,maxY,"Y");
 
   float minX = 0.;
