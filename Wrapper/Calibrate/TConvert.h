@@ -5,6 +5,7 @@
 #include <TChain.h>
 #include <TFile.h>
 #include <TH2.h>
+#include <TCanvas.h>
 
 class TConvert {
 public :
@@ -22,10 +23,14 @@ public :
    int   EC = 0; 
    float trigTimeTag = 0; // Trigger Time Tag (8 ns for V1730)
 
-   TH2F * h2 = new TH2F("h2","h2;trig time tag (ns);peak time (ns)",
-			128,0,8.,
-			110,-1.0,219.); 
+   TCanvas * c1 = new TCanvas("c1");
    
+   int   nBinsTTT, nBinsPeakT;
+   float minTTT,   maxTTT;
+   float minPeakT, maxPeakT;
+   float rangeTTT, rangePeakT;
+      
+   TH2F * h2;   
 
    TConvert(TTree *tree=0,
 	    char digitiser='V', // Program default is VME 1730
@@ -160,13 +165,13 @@ void TConvert::Init(TTree *tree)
   
   // convertion factors
   SetConstants();
-  PrintConstants();
+  //PrintConstants();
   
-   char name[50];
-   sprintf(name,"ADC[%d]",fNSamples);
-   fChain->SetBranchAddress(name,ADC, &b_ADC);
-
-   Notify();
+  char name[50];
+  sprintf(name,"ADC[%d]",fNSamples);
+  fChain->SetBranchAddress(name,ADC, &b_ADC);
+  
+  Notify();
 
 }
 

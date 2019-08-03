@@ -6,9 +6,9 @@
 
 void TConvert::PreLoop(){
   
-  nBinsTTT = 80., nBinsPeakT = 110;
-  minTTT   = 0.,  maxTTT     = 8.0;
-  minPeakT = 0.0, maxPeakT   = 220.;
+  nBinsTTT = 170,  nBinsPeakT = 110;
+  minTTT   = 0.,   maxTTT     = 17.0;
+  minPeakT = 0.0,  maxPeakT   = 220.;
    
   rangeTTT   = maxTTT   - minTTT;
   rangePeakT = maxPeakT - minPeakT;
@@ -20,7 +20,7 @@ void TConvert::PreLoop(){
   minPeakT -= rangePeakT/nBinsPeakT;
   maxPeakT += rangePeakT/nBinsPeakT;
   
-  h2 = new TH2F("h2","h2;trig time tag;peak time (ns)",
+  h2 = new TH2F("h2","h2;trig time tag (s);peak time (ns)",
 		nBinsTTT,  minTTT,  maxTTT,
 		nBinsPeakT,minPeakT,maxPeakT);
   
@@ -58,7 +58,8 @@ void TConvert::Loop()
     if (ientry < 0) break;
     nb = fChain->GetEntry(jentry);   nbytes += nb;    
     
-    trigTimeTag = 8.0*(HEAD[5]/((float)INT_MAX-INT_MIN) + 1.0);
+    //trigTimeTag = 8.0*(HEAD[5]/((float)INT_MAX-INT_MIN) + 1.0);
+    trigTimeTag = 17.0*(HEAD[5]/((float)INT_MAX-INT_MIN) + 1.0);
 
     //printf("\n trigTimeTag = %f \n", trigTimeTag);
 //     printf("\n peak time   = %f \n", Get_peakT_ns(ADC));
