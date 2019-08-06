@@ -1027,8 +1027,38 @@ void PMTAnalyser::RiseFallTime(){
 	TH1F * Rise = new TH1F("Rise", "Rise Time of All Waveforms; Rise Time (ns); Number of PMTs", 100, 0.0, 100.0);
 	TH1F * Fall = new TH1F("FAll", "Fall Time of All Waveforms; Fall Time (ns); NUmber of PMTs", 100, 0.0, 100.0);
 
-	Long64_t nentries = rawRootTree->GetEntriesFast();
+	Long64_t entries = rawRootTree->GetEntriesFast();
+	Long64_t nentries;	
+	int Sample;
 
+	//To reduce the number or entries being fit for speed
+	if(entries > 1000000){
+		nentries = round(entries/10000);
+		Sample = 10000;
+		}
+
+	else if(entries > 100000){
+		nentries = round(entries/1000);
+		Sample = 1000;
+		}	
+
+	else if(entries > 10000){
+		nentries = round(entries/100);
+		Sample = 100;
+		}		
+
+	else if(entries > 1000){
+		nentries = round(entries/10);
+		Sample = 10;
+		}
+
+	else{
+		nentries = entries;
+		Sample = 1;
+		}	
+	//may need a better method to do this	
+
+	
 	Float_t time_ns = 0.;
 	
 	//retrieving the event, making the waveform, and fitting a crystalball to this
@@ -1037,7 +1067,7 @@ void PMTAnalyser::RiseFallTime(){
 		TH1F * hWave;
 		TString hName;
 		hName = "hName";
-		hWave = Get_hWave(jEntry);
+		hWave = Get_hWave(round(jEntry*Sample));
 		//Will need changing for specific parameters ie: Event windows, etc.
 		//May need adjustment for background fitting to reduce effects on results
 
@@ -1067,7 +1097,7 @@ void PMTAnalyser::RiseFallTime(){
 		//90 and 10 percent of the waveforms	
 		Double_t Ninty = FullHeight*0.9;
 		Double_t Tenty = FullHeight*0.1;
-		//cout<<jEntry<<endl;
+		cout<<jEntry<<endl;
 		//Loop over the function 
 		for(double i = 0.0; i < 220.0 ; i = i + 0.1 ){
 		
