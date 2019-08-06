@@ -209,8 +209,14 @@ int main(Int_t argc, Char_t *argv[]){
        peakMeans[iFile-1] = PMT->TimeOfPeak();
        cout << endl;
        cout << " mean of gaussian fit to peak " << 
-	 peakMeans[iFile-1] << endl;
+	 		 peakMeans[iFile-1] << endl;
      }
+
+     //------------
+     //Rise/Fall Time Study
+     PMT->RiseFallTime();
+
+
      //------------
      //  Dark Rate
      Bool_t investigateDarkRate = kTRUE;
