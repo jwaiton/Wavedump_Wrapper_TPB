@@ -482,7 +482,7 @@ TString GetRawRootFilePath(TString filePath = "./",
   
   // default option
   if( run == 0 )
-    return "outputFile.root";
+    return "outputFile";
   
   // Use same folder structure as
   // binary files ( folder creation
