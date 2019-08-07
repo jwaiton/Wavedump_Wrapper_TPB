@@ -8,6 +8,8 @@ int DataInfo::GetNSamples(char test,
   case ('V'):
     if (test=='A')
       return 5100;
+    if (test=='R')
+      return 300;
     else
       return 110;
   case ('D'):

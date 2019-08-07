@@ -17,6 +17,7 @@ class DataInfo {
   float GetnsPerSample(char digitiser = 'V');
   float GetmVPerBin(char digitiser = 'V');
   int   GetSampleRateInMHz(char digitiser = 'V');
+  bool  GetNegPulsePol(char test = 'G');
   
 };
 
@@ -76,6 +77,13 @@ int DataInfo::GetSampleRateInMHz(char digitiser){
 float DataInfo::GetmVPerBin(char digitiser){
   return ( 1.0e3 * GetVoltageRange(digitiser) / 
 	   GetNVDCBins(digitiser) );
+}
+
+bool DataInfo::GetNegPulsePol(char test){
+  if( test=='R')
+    return false;
+  else
+    return true;
 }
 
 #endif 
