@@ -337,6 +337,7 @@ int Accumulate_Fixed(short VDC, float time){
     return 0.;
 }
 
+// for use in cable test
 int Accumulate_Fixed_2(short VDC, float time){
 
   // Integrate baseline using 
@@ -382,6 +383,7 @@ int Accumulate_Peak(short VDC, float timeRel){
     return 0.;
 }
 
+// for use in cable test
 int Accumulate_Peak_2(short VDC, float timeRel){
   
   if      ( timeRel >= -40 && 
