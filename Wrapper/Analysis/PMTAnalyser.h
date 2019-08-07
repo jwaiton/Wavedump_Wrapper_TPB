@@ -39,6 +39,7 @@ class PMTAnalyser {
   Float_t        VoltageRange;
   Float_t        mVPerBin;
   Float_t        nsPerSample;
+  bool           negPulsePol;
   
   Float_t        waveformDuration;
 
@@ -169,9 +170,20 @@ void PMTAnalyser::Init(TTree *tree,
   NVDCBins     = dataInfo->GetNVDCBins(digitiser);
   mVPerBin     = dataInfo->GetmVPerBin(digitiser);  
   nsPerSample  = dataInfo->GetnsPerSample(digitiser);  
+  negPulsePol  = dataInfo->GetNegPulsePol(Test);  
   
   waveformDuration = (float)NSamples * nsPerSample;
   
+  cout << endl;
+  cout << " NSamples         = " << NSamples         << endl;
+  cout << " VoltageRange     = " << VoltageRange     << endl;
+  cout << " NVDCBins         = " << NVDCBins         << endl;
+  cout << " mVPerBin         = " << mVPerBin         << endl;
+  cout << " nsPerSample      = " << nsPerSample      << endl;
+  cout << " negPulsePol      = " << negPulsePol      << endl;
+  cout << " waveformDuration = " << waveformDuration << endl;
+  cout << endl;
+
   // initalise to 0 to guarantee uniqueness
   rand3 = new TRandom3(0); 
 

@@ -53,14 +53,16 @@ bool IsValidDigitiser(Char_t digitiser,
   
   TString strDigi = "Desktop";
 
-
-  if( digitiser=='V' && run > 39 ){
-    cerr << " \n Error: Invalid digitiser setting \n" << endl;
+  if( digitiser=='V' && 
+      ( run > 39 && run < 70  )){
+    
+    cerr << " \n Error: Invalid digitiser setting 'V' \n" << endl;
     return false;
+    
   }
-  else if( digitiser=='D'&& 
+  else if( digitiser=='D' && 
 	   run < 40 ){
-    cerr << " \n Error: Invalid digitiser setting \n" << endl;
+    cerr << " \n Error: Invalid digitiser setting 'D' \n" << endl;
     return false;
   }
   else if(digitiser=='D' ||
@@ -117,10 +119,10 @@ Bool_t IsValidArgc(int argc){
 int main(Int_t argc, Char_t *argv[]){
   
   // 'V' for VME, 'D' for desktop
-  Char_t  digitiser = 'D';
+  Char_t  digitiser = 'V';
   
   Bool_t investigateTiming   = kTRUE;
-  Bool_t investigatePulses   = kFALSE;
+  Bool_t investigatePulses   = kTRUE;
   Bool_t investigateDarkRate = kFALSE;
   Bool_t investigateFFT      = kFALSE;
   Bool_t investigateAP       = kFALSE;
@@ -132,11 +134,11 @@ int main(Int_t argc, Char_t *argv[]){
   PMTAnalyser    * PMT = nullptr;
   ShippingData   * shipData = nullptr;
   FileNameParser * testInfo = new FileNameParser();
-  
+
   if( !IsValidDigitiser(digitiser,testInfo->run(argv[1])) ||
-      !IsValidArgc(argc) )
+      !IsValidArgc(argc) ){
     return -1;
-    
+  }
 
   // signal threshold for dark rate
   // and pulse analysis

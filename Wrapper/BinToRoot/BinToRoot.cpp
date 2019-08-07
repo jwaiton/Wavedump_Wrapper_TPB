@@ -237,8 +237,10 @@ float GetDelay(int run = 0){
     return 90.;
   else if ( run ==  61 )
     return 90.;
-  else if ( run ==  70 ) //  New setting TBD
-    return 90.;
+  else if ( run ==  70 )
+    return 16.;
+  else if ( run ==  71 ) //  
+    return 420.;
   else                  // Default
     return  60.;
 }
@@ -305,10 +307,17 @@ bool IsPeakInRange(float peakT_ns, char digitiser,
     return false;
 }
 
-float GetGateWidth(){
-  return 50.;
+float GetGateWidth(char option = 'N'){
+  
+  if     (option == 'N')
+    return 50.;
+  else if(option == 'B') 
+    return 16.;
+  else if(option == 'P')
+    return 112.;
+  else
+    return 50.;
 }
-
 // integration windows fixed wrt trigger
 // baseline window before signal window only
 int Accumulate_Fixed(short VDC, float time){
@@ -322,6 +331,23 @@ int Accumulate_Fixed(short VDC, float time){
     return((int)-1*VDC);
   else if ( time >= 0 && 
 	    time <  GetGateWidth() ){
+    return((int)VDC);
+  }
+  else
+    return 0.;
+}
+
+int Accumulate_Fixed_2(short VDC, float time){
+
+  // Integrate baseline using 
+  // 50 ns window before signal
+  // (max size given run 1 delay)
+  // And signal in 50 ns window
+  if      ( time >= -GetGateWidth('B')  && 
+	    time <  0  )
+    return(-7*(int)VDC);
+  else if ( time >= 0 && 
+	    time <  GetGateWidth('P') ){
     return((int)VDC);
   }
   else
@@ -350,6 +376,19 @@ int Accumulate_Peak(short VDC, float timeRel){
     return((int)-VDC);
   else if ( timeRel >= -10 &&
 	    timeRel <   30 ){
+    return((int)VDC);
+  }
+  else
+    return 0.;
+}
+
+int Accumulate_Peak_2(short VDC, float timeRel){
+  
+  if      ( timeRel >= -40 && 
+	    timeRel <  -24 )
+    return(-7*(int)VDC);
+  else if ( timeRel >= -24 &&
+	    timeRel <   88){
     return((int)VDC);
   }
   else
@@ -693,6 +732,11 @@ int ProcessBinaryFile(TString inFilePath,
   Float_t rangeT[2] = {0.,220.};
   Int_t  binsT = 110;
 
+  if( run > 69 && run < 80 ){
+    rangeQ[0] = -5000.;
+    rangeQ[1] = 25000.;
+  }
+
   TH1F * hQ_Fixed = new TH1F(hQ_FixedName,
 			     "Gate around delay;Charge (mV ns);Counts",
 			     nBinsX,rangeQ[0],rangeQ[1]);
@@ -762,11 +806,16 @@ int ProcessBinaryFile(TString inFilePath,
 //   cout << " rangeT[0] = " << rangeT[0] << endl;
 //   cout << " rangeT[1] = " << rangeT[1] << endl;
     
-  if( rangeT[1] > 220.){
+  if( rangeT[1] > 220. && test == 'A'){
 
     rangeT[1] = GetDelay(run) + (GetGateWidth()*1.5);
     binsT = binsT * (int)rangeT[1]/GetWaveformLength(digitiser,test,samplingSetting);
     
+  }
+  else if( run == 70 || run == 71  ){
+    rangeT[0] = GetDelay(run) - GetGateWidth('B')*1.1;
+    rangeT[1] = GetDelay(run) + GetGateWidth('P')*1.5;
+    binsT = binsT * ((int)rangeT[1]-rangeT[0])/GetWaveformLength(digitiser,test,samplingSetting);
   }
   
 
@@ -977,13 +1026,20 @@ int ProcessBinaryFile(TString inFilePath,
       // to allow common fixed time windows per run
       time = waveTime - GetDelay(run);
       
-      // Fixed window accumulations
-      // add / subtract / skip sample VDC value
-      // Note: no test to ensure delay >= 50 ns
-      // which it must be (currently 50 is hard-
-      // coded minimum so safe as of now)
-      intVDCfixed    += Accumulate_Fixed(VDC,time);
-      
+      if(test=='R'){
+	intVDCfixed += Accumulate_Fixed_2(VDC,time);
+	
+      }
+      else{
+	// Fixed window accumulations
+	// add / subtract / skip sample VDC value
+	// Note: no test to ensure delay >= 50 ns
+	// which it must be (currently 50 is hard-
+	// coded minimum so safe as of now)
+	intVDCfixed    += Accumulate_Fixed(VDC,time);
+      }
+
+
       if(verbosity > 1){
 	cout << " VDC(" << iSample << ") = " << VDC << endl;
 	cout << " intVDCfixed    = " << intVDCfixed << endl;
@@ -1061,19 +1117,22 @@ int ProcessBinaryFile(TString inFilePath,
       }
       
       // accumulations wrt waveform peak (minimum)      
-      if( IsPeakInRange(peakT_ns,digitiser,test,samplingSetting) )
-	intVDCpeak += Accumulate_Peak(waveform[iSample],
-				      timeRelPeak);
-      
-
-      
+      if( IsPeakInRange(peakT_ns,digitiser,test,samplingSetting) ){
+	
+	if(test=='R')
+	  intVDCpeak += Accumulate_Peak_2(waveform[iSample],
+					  timeRelPeak);
+	else
+	  intVDCpeak += Accumulate_Peak(waveform[iSample],
+					timeRelPeak);
+	
+      }
       // sample vs VDC and time vs voltage plots
       // for checking signals (delay etc) 
       // plot pulses for 10000 events
       // from first 1,000,000
       if( ( event < 1000000    )  &&
-	  ( event % 1000  == 0 )
-	  ){
+	  ( event % 1000  == 0 ) ){
 	
 	hWaveforms->Fill(iSample,waveform[iSample]);
 	
@@ -1081,10 +1140,9 @@ int ProcessBinaryFile(TString inFilePath,
 		  waveform[iSample]*GetmVPerBin(digitiser));
 	
       }
-      
+
       
     } // end: for (short iSample = 0; iS...
-    
 
     // recalculate peakV_mV to accommodate standard baseline region 
     baselineV_mV = (float)intVDCbaseline / nSamplesPerGate;
@@ -1158,7 +1216,8 @@ int ProcessBinaryFile(TString inFilePath,
   float minY = GetVoltageRange(digitiser)*(16 - 2)/32*1.0e3;
   float maxY = GetVoltageRange(digitiser)*(16 + 1)/32*1.0e3 ;
 
-  if(!negPulsePol){
+  if( !negPulsePol &&
+      (run < 70 || run > 100) ){
     minY = GetVoltageRange(digitiser)*(16 - 1)/32*1.0e3;
     maxY = GetVoltageRange(digitiser)*(16 + 2)/32*1.0e3;
   }
@@ -1167,10 +1226,9 @@ int ProcessBinaryFile(TString inFilePath,
     maxY = GetVoltageRange(digitiser)*(16    )/32*1.0e3;
   }
   else {
-    minY = 0.;
-    maxY = GetVoltageRange(digitiser)*(16 - 8 )/32*1.0e3;
+    minY = GetVoltageRange(digitiser)*(16 - 12 )/32*1.0e3;;
+    maxY = GetVoltageRange(digitiser)*(16 + 8  )/32*1.0e3;
   }
-
 
   hTV->SetAxisRange(minY,maxY,"Y");
 
@@ -1192,22 +1250,28 @@ int ProcessBinaryFile(TString inFilePath,
   // }
 
   float lineXMin = GetDelay(run) - GetGateWidth();
-  
   float lineXMax = GetDelay(run) + GetGateWidth();
+  
+  if(test=='R'){
+    lineXMin = GetDelay(run) - GetGateWidth('B');
+    lineXMax = GetDelay(run) + GetGateWidth('P');
+  }
   
   TLine *lPedMin = new TLine(lineXMin,lineYMin,
 			     lineXMin,lineYMax); 
+  
   lPedMin->SetLineColor(kRed);
   
   TLine *lSigMin = new TLine(GetDelay(run),lineYMin,
 			     GetDelay(run),lineYMax); 
+  
   lSigMin->SetLineColor(kBlue);
   
   TLine *lSigMax = new TLine(lineXMax,lineYMin,
 			     lineXMax,lineYMax); 
   lSigMax->SetLineColor(kBlue);
   
-  if(negPulsePol){
+  if(negPulsePol || run < 1000){
     lPedMin->Draw("same");
     lSigMin->Draw("same");
     lSigMax->Draw("same");
@@ -1218,7 +1282,10 @@ int ProcessBinaryFile(TString inFilePath,
   gPad->SetTicks();
   //=================================
   //  Gate around Delay
-  hQ_Fixed->SetAxisRange(-500., 2500.,"X");
+  
+  if( run < 70 || run > 80)
+    hQ_Fixed->SetAxisRange(-500., 2500.,"X");
+  
   hQ_Filter->SetLineColor(kBlue);
 
   gPad->SetLogy(1);
@@ -1235,7 +1302,9 @@ int ProcessBinaryFile(TString inFilePath,
   //  Gate around Peak
   gPad->SetLogy(1);
   
-  hQ_Peak->SetAxisRange(-500., 2500.,"X");
+  if( run < 70 || run > 80)
+    hQ_Peak->SetAxisRange(-500., 2500.,"X");
+  
   hQ_Peak->Draw();
   
   //=================================
@@ -1313,7 +1382,10 @@ bool GetNegPulsePolUser(){
 
 bool GetNegPulsePol(char digitiser, int run){
   
-  if(digitiser == 'V')
+  if ( run > 69 &&
+       run < 72)
+    return false;
+  else if(digitiser == 'V')
     return true;
   else if( run > 9999)
     return false;

@@ -9,7 +9,7 @@
 
 #include <stdlib.h>
 
-#include "../BinaryConversion/wmStyle.C"
+#include "../BinToRoot/wmStyle.C"
 
 Int_t PMTAnalyser::GetNEntriesTest(Int_t verbosity,
 				   Int_t nentries){
@@ -205,9 +205,8 @@ void PMTAnalyser::PlotWaveform(Long64_t entry){
   hWave->SetNameTitle(hName,
 		      "Waveform;Time (ns); Voltage (ADC counts)");
     
-  
   Float_t lineXMin = 0.;
-  Float_t lineXMax = 35.;
+  Float_t lineXMax = 15.;
 
   // Set pointers to desired event in tree to
   // access correct waveform in Get_baseline_ADC()
@@ -314,7 +313,7 @@ Bool_t PMTAnalyser::IsSampleInBaseline(int iSample,
   
   switch (option){
   case(0):
-    if (time_ns < 35.)
+    if (time_ns < 15.)
       return kTRUE;
     else
       return kFALSE;
@@ -422,6 +421,10 @@ Float_t PMTAnalyser::TimeOfPeak(Float_t threshold = 0.0)
   rangeV[0] = -12.;
   rangeV[1] = 110.;
 
+  if(Test == 'R'){
+    rangeV[0] = -100.;
+    rangeV[1] = 1400.;
+  }
   int binsV = (int)NVDCBins/4;
     
   binsV = binsV * (int)(rangeV[1] - rangeV[0])/1000/VoltageRange;
@@ -487,9 +490,10 @@ Float_t PMTAnalyser::TimeOfPeak(Float_t threshold = 0.0)
     // Randomise peak time from peak
     // voltage duplicates 
     
-    // WARNING only implemented for negative pulses
-    peakSample = Select_peakSample(waveform,
-				   minVDC);
+    if(negPulsePol)
+      peakSample = Select_peakSample(waveform,minVDC);
+    else
+      peakSample = Select_peakSample(waveform,maxVDC);
     
     peakT_ns   = peakSample * nsPerSample;
 
@@ -497,7 +501,11 @@ Float_t PMTAnalyser::TimeOfPeak(Float_t threshold = 0.0)
     //--------------------------------------
 
     peakV_mV = waveform[peakSample] * mVPerBin;
-    peakV_mV = baseline_mV - peakV_mV; 
+    
+    if(negPulsePol)
+      peakV_mV = baseline_mV - peakV_mV; 
+    else
+      peakV_mV = peakV_mV - baseline_mV; 
 
     hPeakT_PeakV->Fill(peakT_ns,peakV_mV);
     hPeakV_mV->Fill(peakV_mV);
@@ -571,11 +579,21 @@ Float_t PMTAnalyser::TimeOfPeak(Float_t threshold = 0.0)
   hPeakT_ns[1]->SetMinimum(100);
   
   hPeakT_ns[0]->SetLineColor(kBlue);
-  
-  Int_t lowBin = maxBin*rangeT/binsT - rangeFit*3;
-  Int_t highBin = maxBin*rangeT/binsT + rangeFit*10;
+
+  Int_t lowBin  = 0;
+  Int_t highBin = waveformDuration;
+
+  if( Test !='R' ){
+    lowBin  = maxBin*rangeT/binsT - rangeFit*3;
+    highBin = maxBin*rangeT/binsT + rangeFit*10;
+  }
+  else if( Test=='R'){
+    lowBin  = maxBin - 20;
+    highBin = maxBin + 20;
+  }
 
   hPeakT_ns[1]->GetXaxis()->SetRange(lowBin, highBin);
+  
   hPeakT_ns[1]->Draw();
   //gPad->SetLogy();
   hPeakT_ns[2]->Draw("same");
