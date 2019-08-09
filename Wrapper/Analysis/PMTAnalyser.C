@@ -197,14 +197,11 @@ void PMTAnalyser::PlotWaveform(Long64_t entry){
   Float_t w = 600., h = 500.;
   canvas->SetWindowSize(w,h);
 
-  TH1F *  hWave;
-  TString hName;
-  hWave = Get_hWave(entry);
-  hName = "hWave";
+  TH1F * hWave = new TH1F("hWave","Waveform;Time (ns); Voltage (ADC counts)",
+			  NSamples, 0., waveformDuration);
+
+  Get_hWave(entry,hWave);
   
-  hWave->SetNameTitle(hName,
-		      "Waveform;Time (ns); Voltage (ADC counts)");
-    
   Float_t lineXMin = 0.;
   Float_t lineXMax = 15.;
 
@@ -256,6 +253,7 @@ void PMTAnalyser::PlotWaveform(Long64_t entry){
   cout << endl;
   cout << " Plotting Waveform" << endl;
   
+  TString hName;
   hName = "./Waveforms/";
   hName += FileID;
   hName += "_Wave_C";
@@ -272,11 +270,14 @@ void PMTAnalyser::PlotWaveform(Long64_t entry){
 }
 
 TH1F * PMTAnalyser::Get_hFFT(Long64_t entry){
-
+  
   TH1F *  hFFT = new TH1F("hFFT","hFFT",
 			  NSamples, 0, NSamples);
   
-  TH1F * hWave = Get_hWave(entry); 
+  TH1F * hWave = new TH1F("hWave","Waveform;Time (ns); Voltage (ADC counts)",
+			  NSamples, 0., waveformDuration);
+
+  Get_hWave(entry,hWave); 
 
   hWave->FFT(hFFT ,"MAG");
  
@@ -290,21 +291,13 @@ TH1F * PMTAnalyser::Get_hFFT(Long64_t entry){
   return hFFT;
 }
 
-TH1F * PMTAnalyser::Get_hWave(Long64_t entry){
-  
-  TH1F *  hWave = nullptr;
-  hWave = new TH1F("hWave","Waveform;Time (ns); Voltage (ADC counts)",
-		   NSamples, 0., waveformDuration);
+void PMTAnalyser::Get_hWave(Long64_t entry, TH1F * hWave){
   
   LoadTree(entry);
   rawRootTree->GetEntry(entry);  
   
   for( int iSample = 0 ; iSample < NSamples; iSample++)
     hWave->SetBinContent(iSample+1,(waveform[iSample]));
-
-  //hWave->SetBinContent(iSample+1,(aoff - waveform[iSample]));
- 
-  return hWave;
 }
 
 Bool_t PMTAnalyser::IsSampleInBaseline(int iSample,
@@ -327,7 +320,9 @@ Short_t PMTAnalyser::Get_baseline_ADC(Long64_t entry,
 				      Short_t  option){
   Int_t baseline_ADC = 0;
   Int_t samplesInBaseline = 0;  
-
+  
+  rawRootTree->GetEntry(entry);   
+  
   for( int iSample = 0 ; iSample < NSamples; iSample++){
     
     if ( IsSampleInBaseline(iSample,option)){
@@ -665,8 +660,7 @@ Float_t PMTAnalyser::TimeOfPeak(Float_t threshold = 0.0)
 
   for (Long64_t jentry=0; jentry < nentries; jentry++) {
     
-    ientry = LoadTree(jentry);
-    
+    ientry = LoadTree(jentry);    
     if (ientry < 0) break;
     rawRootTree->GetEntry(jentry);   
     
@@ -1023,4 +1017,189 @@ void PMTAnalyser::SetStyle(){
   
   gROOT->SetStyle("wmStyle");
   gROOT->ForceStyle();
+}
+
+//Author: Ben Wade
+//s1520134@ed.ac.uk
+//
+//Designed to take in the waveform of an event (and 2 floats for the values)
+//and fit a Gaussian peak with an exponential 
+//tailoff (ie: Crystalball fit), then use this 
+//to calculate the rise and fall time of the 
+//signals and assign them to the variables taken in
+
+////////////////////////////////////////////////
+//Can not discriminate between signal and noise
+///////////////////////////////////////////////
+
+//Get all entries and loop over them, fit specific waveform and get the Rise and fall
+//Then plot this in a Histogram
+void PMTAnalyser::RiseFallTime(){
+  
+  //Making the canvas for the plots
+  TCanvas * canvas = new TCanvas;
+  Float_t w = 1000., h = 500.;
+  canvas->SetWindowSize(w,h);
+
+  TH1F * Rise = new TH1F("Rise",
+			 "Pulse Rise Time;Rise Time (ns);Counts",
+			 100, 0.0, 20.0);
+  TH1F * Fall = new TH1F("Fall", 
+			 "Pulse Fall Time;Fall Time (ns);Counts",
+			 100, 0.0, 30.0);
+
+  Long64_t nentries  = rawRootTree->GetEntriesFast();
+  Long64_t entry     = 0;
+  int      totPulses = 100; // how many to analyse
+  int      nPulses   = 0;   // count
+
+  TH1F * hWave = new TH1F("hWave","Waveform;Time (ns); Voltage (ADC counts)",
+			  NSamples, 0., waveformDuration);
+  
+  int maxADC  = -100000, minADC  = 100000;
+  int peakT    = -1000;
+  
+  // fit waveforms with crystal ball fit
+  while ( nPulses < totPulses ){ 
+    
+    entry = (Long64_t)round(rand()*nentries/RAND_MAX); 
+    
+    Get_hWave(entry,hWave);
+    
+    maxADC = hWave->GetMaximum();
+    minADC = hWave->GetMinimum();
+  
+    // threshold cut
+    if( (maxADC - minADC)*mVPerBin < 10 )
+      continue;
+    
+    nPulses++;    
+    
+    TF1* fWave = new TF1("fWave",
+			 "[0]-crystalball(1)",
+			 0, waveformDuration);
+    
+    if(negPulsePol)
+      peakT = hWave->GetBinCenter(hWave->GetMinimumBin());
+    else
+      peakT = hWave->GetBinCenter(hWave->GetMaximumBin());
+    
+    // Base, Const, Mean, Sigma, Alpha, N
+    fWave->SetParameters(maxADC,10,peakT,10,-10,10);
+    fWave->SetParLimits(1, 0, 1000);
+    fWave->SetParLimits(2, 0, 220);
+    fWave->SetParLimits(4, -50, 0);
+    
+    hWave->Fit("fWave", "QR"); 
+
+    //Finding the peak coordinates
+    Double_t FullHeight = fWave->GetMaximum()-fWave->GetMinimum();
+    Double_t FitPeakT   = fWave->GetParameter(2);
+    
+    bool doPlot = false; 
+    if(nPulses%10 == 0 && doPlot){
+      char OutFile[17];
+      sprintf(OutFile, "Waveform_%lld.png", entry);
+      canvas->SaveAs(OutFile);
+    }
+    
+    //Setting up the time coordinates for rise and fall times
+    Double_t Rise90 = 0.0;
+    Double_t Rise10 = 0.0;
+    
+    Double_t Fall90 = 0.0;
+    Double_t Fall10 = 0.0;
+
+    //To check if the peaks have been assigned
+    int Ticker = 0;
+
+    //90 and 10 percent of the waveforms
+    Double_t Ninty = FullHeight*0.9;
+    Double_t Tenty = FullHeight*0.1;
+    
+//     cout << endl;
+//     cout << " FullHeight " << FullHeight << endl;
+//     cout << " Ninty      " << Ninty      << endl;
+//     cout << " Tenty      " << Tenty      << endl;
+
+    Double_t fMin     = fWave->GetMinimum();
+    Double_t fMinX    = fWave->GetX(fWave->GetMinimum(),0,waveformDuration);
+    Double_t fPreMin  = fMinX - 10.; 
+    Double_t fPostMin = fMinX + 25;
+
+//     cout << endl;
+//     cout << " fMinX    = " << fMinX    << endl;
+//     cout << " fPreMin  = " << fPreMin << endl;
+//     cout << " fPostMin = " << fPostMin << endl;
+    
+    //Double_t GetX(Double_t y, Double_t xmin=0, Double_t xmax=0) const;
+
+    Tenty = fMin + Tenty;
+    Ninty = fMin + Ninty;
+    
+//     cout << endl;
+//     cout << " Tenty = " << Tenty << endl;
+//     cout << " Ninty = " << Ninty << endl;
+    
+    Rise90 = fWave->GetX(Tenty,fPreMin,fMinX);
+    Rise10 = fWave->GetX(Ninty,fPreMin,fMinX);
+
+    Fall10 = fWave->GetX(Ninty,fMinX,fPostMin);
+    Fall90 = fWave->GetX(Tenty,fMinX,fPostMin);
+
+//     cout << endl;
+//     cout << " Rise10 = " << Rise10    << endl;
+//     cout << " Rise90 = " << Rise90    << endl;
+//     cout << " Fall10 = " << Fall10    << endl;
+//     cout << " Fall90 = " << Fall90    << endl;
+
+    
+    //   //Loop over the function 
+//     for(float i = 0.0; i < 220.0 ; i = i + 0.1 ){
+
+//       max = fWave->GetMaximum();
+
+//       if (max - fWave->Eval(FitPeakT - i) <= Ninty && Rise90 < 0.1){ //Not sure this is great?
+// 	Rise90 = FitPeakT - i; 
+// 	Ticker++;
+//       }
+      
+//       if (max - fWave->Eval(FitPeakT + i) <= Ninty && Fall90 < 0.1){
+// 	Fall90 = FitPeakT + i;
+// 	Ticker++;
+//       }
+      
+//       if (max - fWave->Eval(FitPeakT - i) >= Tenty && Rise10 < 0.1){
+// 	Rise10 = FitPeakT - i;
+// 	Ticker++;
+//       }
+      
+//       if (max - fWave->Eval(FitPeakT + i) >= Tenty && Fall10 < 0.1){
+// 	Fall10 = FitPeakT - i;
+// 	Ticker++;
+//       }
+      
+//       //a statment to jump out of the loop
+//       if (Ticker > 3)
+// 	i = 300;
+      
+//     }
+    
+//     cout << endl;
+//     cout << " nPulses         = " << nPulses           << endl;
+//     cout << " Rise90 - Rise10 = " << (Rise90 - Rise10) << endl;
+//     cout << " Fall10 - Fall90 = " << (Fall10 - Fall90) << endl;
+    
+    Rise->Fill(Rise90 - Rise10);
+    Fall->Fill(Fall10 - Fall90);
+  }
+  Rise->Draw();
+  Rise->Fit("gaus");
+  canvas->Print("Rise.png");
+  
+  Fall->Draw();
+  Fall->Fit("gaus");
+  canvas->Print("Fall.png");
+  
+  hWave->Delete();   
 }

@@ -79,7 +79,7 @@ class PMTAnalyser {
   void     PlotFFT(Long64_t entry);
   void     PlotWaveform(Long64_t entry);
   void     PlotAccumulatedFFT();
-  TH1F *   Get_hWave(Long64_t entry);
+  void     Get_hWave(Long64_t entry, TH1F * hWave);
   TH1F *   Get_hFFT(Long64_t entry);
   Int_t    DarkRate(Float_t);
   Bool_t   IsSampleInBaseline(int,Short_t);
@@ -100,7 +100,8 @@ class PMTAnalyser {
   void     Show(Long64_t entry = -1);
   void     SetStyle();
   void     SetTestMode(Bool_t userTestMode = kTRUE);
-
+  void     RiseFallTime();
+  
  private:
 
   Bool_t testMode;

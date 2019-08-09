@@ -121,8 +121,8 @@ int main(Int_t argc, Char_t *argv[]){
   // 'V' for VME, 'D' for desktop
   Char_t  digitiser = 'V';
   
-  Bool_t investigateTiming   = kTRUE;
-  Bool_t investigatePulses   = kTRUE;
+  Bool_t investigateTiming   = kFALSE;
+  Bool_t investigatePulses   = kFALSE;
   Bool_t investigateDarkRate = kFALSE;
   Bool_t investigateFFT      = kFALSE;
   Bool_t investigateAP       = kFALSE;
@@ -189,6 +189,10 @@ int main(Int_t argc, Char_t *argv[]){
     // FFT study
     // PMT->PlotAccumulatedFFT();
     
+    //------------
+    //Rise/Fall Time Study
+    PMT->RiseFallTime();
+
     int event = 0;
     if(!investigatePulses) 
       event = -1;

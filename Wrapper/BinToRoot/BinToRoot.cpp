@@ -1142,7 +1142,6 @@ int ProcessBinaryFile(TString inFilePath,
 		  waveform[iSample]*GetmVPerBin(digitiser));
 	
       }
-
       
     } // end: for (short iSample = 0; iS...
 
@@ -1167,6 +1166,9 @@ int ProcessBinaryFile(TString inFilePath,
       cout << " baselineV_mV   = " << baselineV_mV   << endl;
     }
     
+    if( test == 'R' && 
+	GetCharge(intVDCfixed,digitiser,samplingSetting,negPulsePol) < 2000)
+      continue;
 
     hQ_Fixed->Fill(GetCharge(intVDCfixed,digitiser,
 			     samplingSetting,negPulsePol));
