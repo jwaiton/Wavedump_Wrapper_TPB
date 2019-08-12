@@ -1051,10 +1051,16 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
 			 "Pulse Rise Time;Rise Time (ns);Counts",
 			 100, 0.0, 10.);
   
+
   TH1F * Fall = new TH1F("Fall", 
 			 "Pulse Fall Time;Fall Time (ns);Counts",
-			 100, 7.5, 27.5);
+			 200, 7.5, 27.5);
 
+  if(Run >= 70 ){
+    Rise->SetBins(64,11.5,21.5);
+    Fall->SetBins(64,11.5,21.5);
+  }
+  
   Long64_t nentries  = rawRootTree->GetEntriesFast();
   Long64_t entry     = 0;
   int      nPulses   = 0;    // counter
@@ -1065,6 +1071,10 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
     thresh_mV_low += 5.0*(HVStep-3.);
   
   float    thresh_mV_high = thresh_mV_low + 20.;
+  
+  if(Run >= 70 )
+    thresh_mV_high = 2000;
+  
   float    range_mV = 0.;
   
   int      baseline = 0;
@@ -1080,14 +1090,15 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
   int peakADC = 0, floorADC  = 0;
   float peakT    = -1000;
 
-  TF1* fWave = new TF1("fWave",
-		       "[0]-crystalball(1)",
+  TString fName = "";
+
+  if(negPulsePol)
+    fName = "[0]-crystalball(1)";
+  else 
+    fName = "[0]+crystalball(1)";
+
+  TF1* fWave = new TF1("fWave",fName,
 		       0, waveformDuration);
-
-
-  if(peakMean < 30. ||
-     peakMean > 100.)
-    peakMean = 65.;
   
   cout << endl;
   cout << " peakMean = " << peakMean << endl;
@@ -1097,6 +1108,8 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
   
     // find random entry number within event sample
     entry = (Long64_t)round(rand()*nentries/RAND_MAX); 
+
+    //hWave->GetXaxis()->SetRange(0,waveformDuration);
     
     // get histogram of waveform
     Get_hWave(entry,hWave);
@@ -1105,7 +1118,10 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
     minADC = hWave->GetMinimum();
 
     // use full waveform to calculate baseline
-    baseline = Get_baseline_ADC(1,entry);
+    if( Run >= 70 )
+      baseline = Get_baseline_ADC(0,entry);
+    else
+      baseline = Get_baseline_ADC(1,entry);
     
     if(negPulsePol){      
       peakADC  = hWave->GetMinimum();
@@ -1117,7 +1133,7 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
     }
     
     // vito pulses with ringing above threshold 
-    if( TMath::Abs( floorADC - baseline )*mVPerBin  > thresh_mV_low )
+    if( TMath::Abs( floorADC - baseline )*mVPerBin > thresh_mV_low )
       continue;
     
 //     cout << endl;
@@ -1130,9 +1146,9 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
        range_mV  > thresh_mV_high )
       continue;
     
-    //     cout << endl;
-    //     cout << " Passes range vito " <<  endl;
-
+//     cout << endl;
+//     cout << " Passes range vito " <<  endl;
+    
     if(negPulsePol)
       peakT = hWave->GetBinCenter(hWave->GetMinimumBin());
     else 
@@ -1140,122 +1156,163 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
     
     // insist on pulse being synched with LED trigger
     // +/- one sigma acceptance
-    if( TMath::Abs(peakT - peakMean) > 8. )
+    // Not Applied to Dark Count data
+    if( TMath::Abs(peakT - peakMean) > 8. &&
+	Test !='D' )
       continue;
     
-    nPulses++;    
+//     cout << endl;
+//     cout << " Passes timing vito " << endl;
 
+    // end of vitos
+    // pulse has been selected
+
+    nPulses++;    
+    
     cout << endl;
     cout << " Fitting pulse number " << nPulses <<  endl;
 	
     // Base, Const, Mean, Sigma, Alpha, N
-    fWave->SetParameters(maxADC,10,peakT,10,-10,10);
-    fWave->SetParLimits(1, 0, 1000);
-    fWave->SetParLimits(2, 0, 220);
+    fWave->SetParameters(floorADC,10,peakT,10,-10,10);
+    
+    if(Run >= 70)
+      fWave->SetParLimits(1, 0, 10000);
+    else
+      fWave->SetParLimits(1, 0, 1000);
+    
+    fWave->SetParLimits(2, 0, waveformDuration);
     fWave->SetParLimits(4, -50, 0);
     
+    hWave->Draw();
     hWave->Fit("fWave", "QR"); 
 
-    //Finding the peak coordinates
-    Double_t FullHeight = fWave->GetMaximum()-fWave->GetMinimum();
-    Double_t FitPeakT   = fWave->GetParameter(2);
+//     if(Run == 70 )
+//       hWave->GetXaxis()->SetRange(0,waveformDuration*1./3);
+//     if(Run == 71 )
+//       hWave->GetXaxis()->SetRange(waveformDuration*2/3,waveformDuration);
+
+    // Determine rise and fall times
+    // from function fit
+    float fPeak = 0., fFloor = 0.;
     
+    if(negPulsePol){
+      fPeak  = fWave->GetMinimum(0,waveformDuration);
+      fFloor = fWave->GetMaximum(0,waveformDuration);
+
+    }
+    else{
+      fPeak  = fWave->GetMaximum(0,waveformDuration);
+      fFloor = fWave->GetMinimum(0,waveformDuration);
+    }
+    
+    float fPeakT = fWave->GetX(fPeak,0,waveformDuration);    
+
+    float fBase = fWave->GetParameter(0);
+    
+    float fFull = fBase;
+    float f090  = fBase;
+    float f010  = fBase;
+          
+    if(negPulsePol){
+      fFull = fBase - fPeak;
+      f090  -= 0.9*fFull;
+      f010  -= 0.1*fFull;
+    }
+    else{
+      fFull  = fPeak - fBase;
+      f090  += 0.9*fFull;
+      f010  += 0.1*fFull;
+    }
+    
+    // range in X to search for y values 
+    float fXAtPeak = fWave->GetX(fPeak,0,waveformDuration);
+    float fPreMin  = fXAtPeak - 10.; 
+    
+    if(Run >= 70)
+      fPreMin = fXAtPeak - 25.;
+
+    float fPostMin = fXAtPeak + 25;
+    
+    float timeRise10 = fWave->GetX(f010,fPreMin,fXAtPeak);
+    float timeRise90 = fWave->GetX(f090,fPreMin,fXAtPeak);
+    
+    float timeFall10 = fWave->GetX(f010,fXAtPeak,fPostMin);
+    float timeFall90 = fWave->GetX(f090,fXAtPeak,fPostMin);
+    
+    float riseTime   = timeRise90 - timeRise10;
+    float fallTime   = timeFall10 - timeFall90;
+    
+//     cout << endl;
+//     cout << " fPeak      = " << fPeak      << endl;
+//     cout << " fBase      = " << fBase      << endl;
+//     cout << " fFull      = " << fFull      << endl;
+//     cout << " f090       = " << f090       << endl;
+//     cout << " f010       = " << f010       << endl;
+//     cout << " fXAtPeak   = " << fXAtPeak   << endl;
+//     cout << " fPreMin    = " << fPreMin    << endl;
+//     cout << " fPostMin   = " << fPostMin   << endl;
+//     cout << " timeRise10 = " << timeRise10 << endl;
+//     cout << " timeRise90 = " << timeRise90 << endl;
+//     cout << " timeFall10 = " << timeFall10 << endl;
+//     cout << " timeFall90 = " << timeFall90 << endl;
+//     cout << " fallTime   = " << fallTime   << endl;
+//     cout << " riseTime   = " << riseTime   << endl;
+
+    // save waveform fits
     bool doPlot = false; 
-    if(nPulses%10 == 0 && doPlot){
+    int  oneIn = 10; // of waveforms saved 
+    if(nPulses%(oneIn) == 0 && doPlot){
+
+      // Horizontal lines
+      TLine * lBase = new TLine(0,fBase,waveformDuration,fBase);
+      lBase->SetLineColor(kBlue);
+      lBase->Draw();
+
+      TLine * l10 = new TLine(0,f010,waveformDuration,f010);
+      l10->SetLineColor(kGreen);
+      l10->Draw();
+      
+      TLine * l90 = new TLine(0,f090,waveformDuration,f090);
+      l90->SetLineColor(kOrange);
+      l90->Draw();
+      
+      TLine * lPeak = new TLine(0,fPeak,waveformDuration,fPeak);
+      lPeak->SetLineColor(kMagenta);
+      lPeak->Draw();
+      
+      // Vertical lines
+      TLine * lRise10 = new TLine(timeRise10,fFloor,timeRise10,fPeak);
+      lRise10->SetLineColor(kRed);
+      lRise10->Draw();
+      
+      TLine * lRise90 = new TLine(timeRise90,fFloor,timeRise90,fPeak);
+      lRise90->SetLineColor(kRed);
+      lRise90->Draw();
+      
+      if( Run >= 70 ){
+	TLine * l100 = new TLine(fPeakT,fPeak,fPeakT,fPeak);
+	lRise90->SetLineColor(kMagenta);
+	lRise90->Draw();
+      }
+      
+      TLine * lFall90 = new TLine(timeFall90,fFloor,timeFall90,fPeak);
+      lFall90->SetLineColor(kBlue);
+      lFall90->Draw();
+
+      TLine * lFall10 = new TLine(timeFall10,fFloor,timeFall10,fPeak);
+      lFall10->SetLineColor(kBlue);
+      lFall10->Draw();
+      
       char OutFile[128];
-      sprintf(OutFile, "Waveform_%lld_HV_%d.png", entry,HVStep);
+      if(Test=='G')
+	sprintf(OutFile, "./WaveformFits/Waveform_Run_%d_entry_%lld_HV_%d.png",Run,entry,HVStep);
+      else
+	sprintf(OutFile, "./WaveformFits/Waveform_Run_%d_entry_%lld_Test_%c.png",Run,entry,Test);
       can->SaveAs(OutFile);
     }
     
-    //Setting up the time coordinates for rise and fall times
-    Double_t Rise90 = 0.0;
-    Double_t Rise10 = 0.0;
-    
-    Double_t Fall90 = 0.0;
-    Double_t Fall10 = 0.0;
-
-    //To check if the peaks have been assigned
-    int Ticker = 0;
-
-    //90 and 10 percent of the waveforms
-    Double_t Ninty = FullHeight*0.9;
-    Double_t Tenty = FullHeight*0.1;
-    
-//     cout << endl;
-//     cout << " FullHeight " << FullHeight << endl;
-//     cout << " Ninty      " << Ninty      << endl;
-//     cout << " Tenty      " << Tenty      << endl;
-
-    Double_t fMin     = fWave->GetMinimum();
-    Double_t fMinX    = fWave->GetX(fWave->GetMinimum(),0,waveformDuration);
-    Double_t fPreMin  = fMinX - 10.; 
-    Double_t fPostMin = fMinX + 25;
-
-//     cout << endl;
-//     cout << " fMinX    = " << fMinX    << endl;
-//     cout << " fPreMin  = " << fPreMin << endl;
-//     cout << " fPostMin = " << fPostMin << endl;
-    
-    //Double_t GetX(Double_t y, Double_t xmin=0, Double_t xmax=0) const;
-
-    Tenty = fMin + Tenty;
-    Ninty = fMin + Ninty;
-    
-//     cout << endl;
-//     cout << " Tenty = " << Tenty << endl;
-//     cout << " Ninty = " << Ninty << endl;
-    
-    Rise90 = fWave->GetX(Tenty,fPreMin,fMinX);
-    Rise10 = fWave->GetX(Ninty,fPreMin,fMinX);
-
-    Fall10 = fWave->GetX(Ninty,fMinX,fPostMin);
-    Fall90 = fWave->GetX(Tenty,fMinX,fPostMin);
-
-//     cout << endl;
-//     cout << " Rise10 = " << Rise10    << endl;
-//     cout << " Rise90 = " << Rise90    << endl;
-//     cout << " Fall10 = " << Fall10    << endl;
-//     cout << " Fall90 = " << Fall90    << endl;
-
-    
-    //   //Loop over the function 
-//     for(float i = 0.0; i < 220.0 ; i = i + 0.1 ){
-
-//       max = fWave->GetMaximum();
-
-//       if (max - fWave->Eval(FitPeakT - i) <= Ninty && Rise90 < 0.1){ //Not sure this is great?
-// 	Rise90 = FitPeakT - i; 
-// 	Ticker++;
-//       }
-      
-//       if (max - fWave->Eval(FitPeakT + i) <= Ninty && Fall90 < 0.1){
-// 	Fall90 = FitPeakT + i;
-// 	Ticker++;
-//       }
-      
-//       if (max - fWave->Eval(FitPeakT - i) >= Tenty && Rise10 < 0.1){
-// 	Rise10 = FitPeakT - i;
-// 	Ticker++;
-//       }
-      
-//       if (max - fWave->Eval(FitPeakT + i) >= Tenty && Fall10 < 0.1){
-// 	Fall10 = FitPeakT - i;
-// 	Ticker++;
-//       }
-      
-//       //a statment to jump out of the loop
-//       if (Ticker > 3)
-// 	i = 300;
-      
-//     }
-    
-//     cout << endl;
-//     cout << " nPulses         = " << nPulses           << endl;
-//     cout << " Rise90 - Rise10 = " << (Rise90 - Rise10) << endl;
-//     cout << " Fall10 - Fall90 = " << (Fall10 - Fall90) << endl;
-    
-    Rise->Fill(Rise90 - Rise10);
-    Fall->Fill(Fall10 - Fall90);
+    Rise->Fill(riseTime);
+    Fall->Fill(fallTime);
   }
   
   hWave->Delete();   
