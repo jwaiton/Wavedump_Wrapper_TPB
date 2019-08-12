@@ -1075,7 +1075,7 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
   if(Run >= 70 )
     thresh_mV_high = 2000;
   
-  float    range_mV = 0.;
+  float    pulseRange_mV = 0.;
   
   int      baseline = 0;
   
@@ -1103,14 +1103,12 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
   cout << endl;
   cout << " peakMean = " << peakMean << endl;
 
-  // fit waveforms with crystal ball fit
+  // fit waveforms with crystal ball function
   while ( nPulses < totPulses ){ 
   
     // find random entry number within event sample
     entry = (Long64_t)round(rand()*nentries/RAND_MAX); 
 
-    //hWave->GetXaxis()->SetRange(0,waveformDuration);
-    
     // get histogram of waveform
     Get_hWave(entry,hWave);
     
@@ -1138,12 +1136,12 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
     
 //     cout << endl;
 //     cout << " Passes pulse vito " <<  endl;
-
-    range_mV = (maxADC - minADC)*mVPerBin;
+    
+    pulseRange_mV = TMath::Abs(peakADC - baseline)*mVPerBin;
     
     // pulse amplitude range
-    if(range_mV  < thresh_mV_low ||
-       range_mV  > thresh_mV_high )
+    if(pulseRange_mV  < thresh_mV_low ||
+       pulseRange_mV  > thresh_mV_high )
       continue;
     
 //     cout << endl;
@@ -1259,10 +1257,10 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
 //     cout << " riseTime   = " << riseTime   << endl;
 
     // save waveform fits
-    bool doPlot = false; 
-    int  oneIn = 10; // of waveforms saved 
-    if(nPulses%(oneIn) == 0 && doPlot){
-
+    bool doPlot = true; 
+    int  oneIn = 1000; // one in #{oneIn} waveforms saved 
+    if( (nPulses==1 || nPulses%(oneIn) == 0) && doPlot){
+      
       // Horizontal lines
       TLine * lBase = new TLine(0,fBase,waveformDuration,fBase);
       lBase->SetLineColor(kBlue);

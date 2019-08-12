@@ -207,7 +207,7 @@ int main(Int_t argc, Char_t *argv[]){
     //Rise/Fall Time Study
     
     // number of pulses to fit 
-    int nPulses = 100000;
+    int nPulses = 100;
     PMT->RiseFallTime(nPulses,peakMean);
 
     int event = 0;
