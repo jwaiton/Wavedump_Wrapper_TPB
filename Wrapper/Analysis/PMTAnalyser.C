@@ -1182,6 +1182,7 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
     fWave->SetParLimits(4, -50, 0);
     
     hWave->Draw();
+    fWave->SetLineWidth(2);
     hWave->Fit("fWave", "QR"); 
 
 //     if(Run == 70 )
@@ -1259,6 +1260,7 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
     // save waveform fits
     bool doPlot = true; 
     int  oneIn = 1000; // one in #{oneIn} waveforms saved 
+    // plus always save the first one
     if( (nPulses==1 || nPulses%(oneIn) == 0) && doPlot){
       
       // Horizontal lines
