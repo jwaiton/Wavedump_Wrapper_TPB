@@ -209,7 +209,7 @@ void PMTAnalyser::PlotWaveform(Long64_t entry){
   // access correct waveform in Get_baseline_ADC()
   rawRootTree->GetEntry(entry);
  
-  Float_t lineYMin = Get_baseline_ADC(entry);
+  Float_t lineYMin = Get_baseline_ADC();
   Float_t lineYMax = lineYMin;
 
   TLine *baseline_0 = new TLine(lineXMin,lineYMin,
@@ -221,7 +221,7 @@ void PMTAnalyser::PlotWaveform(Long64_t entry){
 				     lineXLimit,lineYMax); 
   
   // alternative method using full waveform
-  lineYMin = Get_baseline_ADC(entry,1);
+  lineYMin = Get_baseline_ADC(1);
   lineYMax = lineYMin;
   
   TLine *baseline_1  = new TLine(lineXMin,lineYMin,
@@ -300,6 +300,7 @@ void PMTAnalyser::Get_hWave(Long64_t entry, TH1F * hWave){
     hWave->SetBinContent(iSample+1,(waveform[iSample]));
 }
 
+// !!! Temporary settings to be investigated
 Bool_t PMTAnalyser::IsSampleInBaseline(int iSample,
 				       Short_t option){
   Float_t time_ns = (Float_t)iSample * nsPerSample;
@@ -316,12 +317,18 @@ Bool_t PMTAnalyser::IsSampleInBaseline(int iSample,
   return kTRUE;
 }
 
-Short_t PMTAnalyser::Get_baseline_ADC(Long64_t entry,
-				      Short_t  option){
+// This method requires to set the tree 
+// entry in the parent function
+Short_t PMTAnalyser::Get_baseline_ADC(Short_t  option,
+				      Long64_t entry){
+  
   Int_t baseline_ADC = 0;
   Int_t samplesInBaseline = 0;  
-  
-  rawRootTree->GetEntry(entry);   
+
+  if( entry > -1){
+    LoadTree(entry);
+    rawRootTree->GetEntry(entry);  
+  }
   
   for( int iSample = 0 ; iSample < NSamples; iSample++){
     
@@ -336,9 +343,9 @@ Short_t PMTAnalyser::Get_baseline_ADC(Long64_t entry,
   return (Short_t)baseline_ADC;
 }
 
-Float_t PMTAnalyser::Get_baseline_mV(Long64_t entry,
-				     Short_t option){
-  return (Float_t)Get_baseline_ADC(entry,option) * mVPerBin;
+Float_t PMTAnalyser::Get_baseline_mV(Short_t option,
+				     Long64_t entry){
+  return (Float_t)Get_baseline_ADC(option,entry) * mVPerBin;
 }
 
 Short_t PMTAnalyser::Select_peakSample(Short_t waveform[],
@@ -375,7 +382,7 @@ Short_t PMTAnalyser::Select_peakSample(Short_t waveform[],
 //   Int_t nPeaks = 0;
 //   rawRootTree->GetEntry(entry);
   
-//   Float_t baseline_mV = Get_baseline_mV(event,threshold);
+//   Float_t baseline_mV = Get_baseline_mV(threshold);
   
 //   for( int iSample = 0 ; iSample < NSamples; iSample++){
 //     if( voltage_mV(waveform[iSample]  
@@ -461,7 +468,9 @@ Float_t PMTAnalyser::TimeOfPeak(Float_t threshold = 0.0)
  
   Float_t baseline_mV = 0.0;
   Short_t peakSample = -1;
-
+  
+  int peakADC = 0;
+  
   for (Long64_t jentry = 0; jentry < nentries; jentry++) {
     
     ientry = LoadTree(jentry);
@@ -474,7 +483,7 @@ Float_t PMTAnalyser::TimeOfPeak(Float_t threshold = 0.0)
     }
   
     // event-by-event baseline    
-    baseline_mV = Get_baseline_mV(jentry);
+    baseline_mV = Get_baseline_mV();
 
     //------------------------------------
     
@@ -486,10 +495,11 @@ Float_t PMTAnalyser::TimeOfPeak(Float_t threshold = 0.0)
     // voltage duplicates 
     
     if(negPulsePol)
-      peakSample = Select_peakSample(waveform,minVDC);
+      peakADC = minVDC;
     else
-      peakSample = Select_peakSample(waveform,maxVDC);
-    
+      peakADC = maxVDC;
+
+    peakSample = Select_peakSample(waveform,peakADC);
     peakT_ns   = peakSample * nsPerSample;
 
     //--------------------------------------
@@ -638,7 +648,7 @@ Float_t PMTAnalyser::TimeOfPeak(Float_t threshold = 0.0)
   canvas->SaveAs(hName);
   
   return peakMean;
-  }
+}
 
   Int_t PMTAnalyser::DarkRate(Float_t threshold = 10)
 {
@@ -980,7 +990,7 @@ void PMTAnalyser::SetStyle(){
 //   //  FILL BORDER LINE
 //   //  Graphs
 //   //  LINE ERRORS
-  
+ 
 //   //---------  Axis 
   
 //   wmStyle->SetLabelFont(132,"XYZ"); 
@@ -994,7 +1004,7 @@ void PMTAnalyser::SetStyle(){
 
 
 //   wmStyle->SetTitleSize(0.03,"t");
-//   wmStyle->SetTitleFont(132,"t"); 
+//   wmStyle->SetRTitleFont(132,"t"); 
 
 //   wmStyle->SetTitleFont(132,"XYZ"); 
 
@@ -1019,71 +1029,125 @@ void PMTAnalyser::SetStyle(){
   gROOT->ForceStyle();
 }
 
-//Author: Ben Wade
-//s1520134@ed.ac.uk
+// Author: Ben Wade
+// s1520134@ed.ac.uk
 //
-//Designed to take in the waveform of an event (and 2 floats for the values)
-//and fit a Gaussian peak with an exponential 
-//tailoff (ie: Crystalball fit), then use this 
-//to calculate the rise and fall time of the 
-//signals and assign them to the variables taken in
+// Designed to take in the waveform of an event 
+// (and 2 floats for the values)
+// and fit a Gaussian peak with an exponential 
+// tailoff (ie: Crystalball fit), then use this 
+// to calculate the rise and fall time of the 
+// signals and assign them to the variables taken in
 
-////////////////////////////////////////////////
-//Can not discriminate between signal and noise
-///////////////////////////////////////////////
-
-//Get all entries and loop over them, fit specific waveform and get the Rise and fall
-//Then plot this in a Histogram
-void PMTAnalyser::RiseFallTime(){
+void PMTAnalyser::RiseFallTime(int totPulses = 10,
+			       float peakMean = 65.){
   
   //Making the canvas for the plots
-  TCanvas * canvas = new TCanvas;
+  TCanvas * can = new TCanvas;
   Float_t w = 1000., h = 500.;
-  canvas->SetWindowSize(w,h);
+  can->SetWindowSize(w,h);
 
   TH1F * Rise = new TH1F("Rise",
 			 "Pulse Rise Time;Rise Time (ns);Counts",
-			 100, 0.0, 20.0);
+			 100, 0.0, 10.);
+  
   TH1F * Fall = new TH1F("Fall", 
 			 "Pulse Fall Time;Fall Time (ns);Counts",
-			 100, 0.0, 30.0);
+			 100, 7.5, 27.5);
 
   Long64_t nentries  = rawRootTree->GetEntriesFast();
   Long64_t entry     = 0;
-  int      totPulses = 100; // how many to analyse
-  int      nPulses   = 0;   // count
+  int      nPulses   = 0;    // counter
+  
+  float    thresh_mV_low  = 15. ;
+  
+  if( Test == 'G' )
+    thresh_mV_low += 5.0*(HVStep-3.);
+  
+  float    thresh_mV_high = thresh_mV_low + 20.;
+  float    range_mV = 0.;
+  
+  int      baseline = 0;
+  
+  cout << endl;
+  cout << " Rise and Fall time analysis " << endl;
+  cout << " Analysing " << totPulses << " pulses " << endl;
 
   TH1F * hWave = new TH1F("hWave","Waveform;Time (ns); Voltage (ADC counts)",
 			  NSamples, 0., waveformDuration);
   
   int maxADC  = -100000, minADC  = 100000;
-  int peakT    = -1000;
+  int peakADC = 0, floorADC  = 0;
+  float peakT    = -1000;
+
+  TF1* fWave = new TF1("fWave",
+		       "[0]-crystalball(1)",
+		       0, waveformDuration);
+
+
+  if(peakMean < 30. ||
+     peakMean > 100.)
+    peakMean = 65.;
   
+  cout << endl;
+  cout << " peakMean = " << peakMean << endl;
+
   // fit waveforms with crystal ball fit
   while ( nPulses < totPulses ){ 
-    
+  
+    // find random entry number within event sample
     entry = (Long64_t)round(rand()*nentries/RAND_MAX); 
     
+    // get histogram of waveform
     Get_hWave(entry,hWave);
     
     maxADC = hWave->GetMaximum();
     minADC = hWave->GetMinimum();
-  
-    // threshold cut
-    if( (maxADC - minADC)*mVPerBin < 10 )
+
+    // use full waveform to calculate baseline
+    baseline = Get_baseline_ADC(1,entry);
+    
+    if(negPulsePol){      
+      peakADC  = hWave->GetMinimum();
+      floorADC = hWave->GetMaximum();
+    }
+    else{
+      peakADC  = hWave->GetMaximum();
+      floorADC = hWave->GetMinimum();
+    }
+    
+    // vito pulses with ringing above threshold 
+    if( TMath::Abs( floorADC - baseline )*mVPerBin  > thresh_mV_low )
+      continue;
+    
+//     cout << endl;
+//     cout << " Passes pulse vito " <<  endl;
+
+    range_mV = (maxADC - minADC)*mVPerBin;
+    
+    // pulse amplitude range
+    if(range_mV  < thresh_mV_low ||
+       range_mV  > thresh_mV_high )
+      continue;
+    
+    //     cout << endl;
+    //     cout << " Passes range vito " <<  endl;
+
+    if(negPulsePol)
+      peakT = hWave->GetBinCenter(hWave->GetMinimumBin());
+    else 
+      peakT = hWave->GetBinCenter(hWave->GetMaximumBin());
+    
+    // insist on pulse being synched with LED trigger
+    // +/- one sigma acceptance
+    if( TMath::Abs(peakT - peakMean) > 8. )
       continue;
     
     nPulses++;    
-    
-    TF1* fWave = new TF1("fWave",
-			 "[0]-crystalball(1)",
-			 0, waveformDuration);
-    
-    if(negPulsePol)
-      peakT = hWave->GetBinCenter(hWave->GetMinimumBin());
-    else
-      peakT = hWave->GetBinCenter(hWave->GetMaximumBin());
-    
+
+    cout << endl;
+    cout << " Fitting pulse number " << nPulses <<  endl;
+	
     // Base, Const, Mean, Sigma, Alpha, N
     fWave->SetParameters(maxADC,10,peakT,10,-10,10);
     fWave->SetParLimits(1, 0, 1000);
@@ -1098,9 +1162,9 @@ void PMTAnalyser::RiseFallTime(){
     
     bool doPlot = false; 
     if(nPulses%10 == 0 && doPlot){
-      char OutFile[17];
-      sprintf(OutFile, "Waveform_%lld.png", entry);
-      canvas->SaveAs(OutFile);
+      char OutFile[128];
+      sprintf(OutFile, "Waveform_%lld_HV_%d.png", entry,HVStep);
+      can->SaveAs(OutFile);
     }
     
     //Setting up the time coordinates for rise and fall times
@@ -1193,13 +1257,19 @@ void PMTAnalyser::RiseFallTime(){
     Rise->Fill(Rise90 - Rise10);
     Fall->Fill(Fall10 - Fall90);
   }
-  Rise->Draw();
-  Rise->Fit("gaus");
-  canvas->Print("Rise.png");
-  
-  Fall->Draw();
-  Fall->Fit("gaus");
-  canvas->Print("Fall.png");
   
   hWave->Delete();   
+  
+  Rise->Draw();
+  
+  TString hName = FileID;
+  hName = hName + ".png";
+ 
+  //Rise->Fit("gaus");
+  can->SaveAs("./RiseFall/Rise_" + hName);
+  
+  Fall->Draw();
+  //Fall->Fit("gaus");
+  can->SaveAs("./RiseFall/Fall_" + hName);
+  
 }

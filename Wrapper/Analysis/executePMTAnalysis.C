@@ -108,7 +108,7 @@ Bool_t IsYes(string usrInput){
 
 Bool_t IsValidArgc(int argc){
 
-  if (argc == 2)
+  if (argc >= 2)
     return true;
   else{
     cerr << " Error, argument needed " << endl; 
@@ -121,12 +121,14 @@ int main(Int_t argc, Char_t *argv[]){
   // 'V' for VME, 'D' for desktop
   Char_t  digitiser = 'V';
   
-  Bool_t investigateTiming   = kFALSE;
+  Bool_t investigateTiming   = kTRUE;
   Bool_t investigatePulses   = kFALSE;
   Bool_t investigateDarkRate = kFALSE;
   Bool_t investigateFFT      = kFALSE;
   Bool_t investigateAP       = kFALSE;
-  
+
+  Bool_t writeOutput         = kFALSE;
+
   TFile * outFile = nullptr;  
   TFile * inFile  = nullptr;
   
@@ -151,7 +153,7 @@ int main(Int_t argc, Char_t *argv[]){
   TH1F  * hQ   = nullptr;
   
   // Timing peaks
-  Float_t peakMeans[argc-1];
+  Float_t peakMeans[argc-1], peakMean;
   for (Int_t i = 0 ; i < (argc-1) ; i++)
     peakMeans[i] = 0.;
   
@@ -179,7 +181,8 @@ int main(Int_t argc, Char_t *argv[]){
     PMT->SetStyle();
     
     // Limit to subset of entries for quicker testing
-    PMT->SetTestMode(kFALSE);
+    //PMT->SetTestMode(kFALSE);
+    PMT->SetTestMode();
      
     // Testing output 
     //PMT->MakeCalibratedTree();
@@ -190,15 +193,29 @@ int main(Int_t argc, Char_t *argv[]){
     // PMT->PlotAccumulatedFFT();
     
     //------------
+    // Timing Study
+    
+    if(iFile < argc && investigateTiming){
+      peakMean = PMT->TimeOfPeak(thresh_mV);
+      peakMeans[iFile-1] = peakMean;
+      cout << endl;
+      cout << " mean of gaussian fit to peak " << 
+	peakMeans[iFile-1] << endl;
+    }
+    
+    //------------
     //Rise/Fall Time Study
-    PMT->RiseFallTime();
+    
+    // number of pulses to fit 
+    int nPulses = 2500;
+    PMT->RiseFallTime(nPulses,peakMean);
 
     int event = 0;
     if(!investigatePulses) 
       event = -1;
     
     // plot waveforms and 
-    // optionally in addition FFT
+    // optionall1y in addition FFT
     
     Bool_t plotFFTs = true;
     string usrInFFT = "n";
@@ -240,17 +257,7 @@ int main(Int_t argc, Char_t *argv[]){
        else
 	 plotFFTs = false;
     }
-    
-     //------------
-     // Timing Study
-     
-     if(iFile < argc && investigateTiming){
-       peakMeans[iFile-1] = PMT->TimeOfPeak(thresh_mV);
-       cout << endl;
-       cout << " mean of gaussian fit to peak " << 
-	 peakMeans[iFile-1] << endl;
-     }
-     //------------
+    //------------
      //  Dark Rate
      if( investigateDarkRate && 
 	 testInfo->test(argv[iFile])=='D'){
@@ -287,8 +294,16 @@ int main(Int_t argc, Char_t *argv[]){
        }
      }
      
+     cout << endl;
+     cout << " Analysis Complete " << endl;
+
+     cout << endl;
+     cout << " Deleting input file pointer" << endl;
      inFile->Delete();
 
+     if(!writeOutput)
+       continue;
+     
      TString hName = testInfo->Get_hQ_Fixed_Name(argv[iFile]); 
      hQ = (TH1F*)inFile->Get(hName);
      
@@ -297,13 +312,17 @@ int main(Int_t argc, Char_t *argv[]){
      TString fileID = (TString)testInfo->GetFileID(argv[iFile]);
      
      outputName = fileID + outputName;
-     
+
+     cout << endl;
+     cout << " Recreating output file " << endl;
      outFile = new TFile(outputName,"RECREATE");
      
      // Writing to file
      // put file in same directory as objects
      outFile->cd();
      
+     cout << endl;
+     cout << " Writing histogram " << endl;
      // Write specific histogram
      hQ->Write();
      
@@ -311,7 +330,9 @@ int main(Int_t argc, Char_t *argv[]){
      
      // Write objects in directory 
      // outFile->Write();
-     
+
+     cout << endl;
+     cout << " Closing Output file " << endl;
      outFile->Close();
      
    }
