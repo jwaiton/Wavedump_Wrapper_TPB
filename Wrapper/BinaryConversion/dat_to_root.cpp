@@ -47,7 +47,14 @@ using namespace std;
 
 int main(int argc, char **argv){
   
-  printf("\n dat_to_root \n" );
+  printf("\n ---------------------------------- \n" );
+  
+  printf("\n           dat_to_root              \n" );
+  
+  printf("\n ---------------------------------- \n" );
+  
+  printf("\n wavedump binary to root conversion \n" );
+  printf("          ( VME version )             \n" );
   
   ifstream inFile(argv[1]);
   
@@ -56,25 +63,33 @@ int main(int argc, char **argv){
     return -1;
   }
   
+  string inName  = argv[1];
   string outName = argv[1];
-  string outPath = argv[1];
-  outPath += ".root";
+  outName += ".root";
   
-  printf("\n %s \n",outName.c_str());
-  
-  TFile * outFile = new TFile(outPath.c_str(),
+  printf("\n ---------------------------------- \n" );
+  printf("\n input file: %s                     \n",inName.c_str());
+
+  printf("\n output file: %s                    \n",outName.c_str());
+  printf("\n ---------------------------------- \n" );
+    
+  TFile * outFile = new TFile(outName.c_str(),
 			      "RECREATE",
-			      outName.c_str());
+			      inName.c_str());
    
   TTree * outTree = new TTree("T","T");
 
   int HEAD[6];
-  int NS = 0;
-  int ID = -1; // Board ID
+  int NS = 0; 
+  int ID = 0; // Board ID
   int PN = 0; // Pattern (VME)
   int CL = 0; // Channel
   int EC = 0; // Event Counter
   int TT = 0; // Trigger Time Tag
+  
+  int nEntries = 0;
+  int firstEntry = 0;
+  int lastEntry = 0;
   
   outTree->Branch("HEAD[6]",HEAD,"HEAD[6]/I");
   
@@ -85,10 +100,13 @@ int main(int argc, char **argv){
   // HEAD[0] is event size in bytes 
   // (header plus samples)
   NS = (HEAD[0] - 24)/2;
-  printf("\n %d Samples \n",NS);
+  printf("\n  %d Samples per waveform           \n",NS);
+  printf("\n ---------------------------------- \n" );
+
+  printf("\n  Processing ...                     \n");
   
-  for (int i = 0 ; i < 6 ; i++ )
-    printf("\n HEAD[%d] %d \n",i,HEAD[i]);
+//   for (int i = 0 ; i < 6 ; i++ )
+//     printf("\n HEAD[%d] %d \n",i,HEAD[i]);
   
   short ADC[NS];
   
@@ -111,16 +129,16 @@ int main(int argc, char **argv){
     // HEAD[0] is event size in bytes
     // (header plus samples)
     NS = (HEAD[0] - 24)/2; 
-    
+
     //------------------
     // waveform is N lots of 16 bits    
     for (short i = 0; i < NS ; i++)
       inFile.read((char*)&ADC[i],sizeof(short)); 
     
-    if(ID==-1)
-      for (int i = 0 ; i < NS ; i++){
-	printf("\n ADC[%d] = %d \n",i,ADC[i]);
-      }
+//     if(nEntries==0)
+//       for (int i = 0 ; i < NS ; i++){
+// 	printf("\n ADC[%d] = %d \n",i,ADC[i]);
+//      }
     
     ID = HEAD[1];
     PN = HEAD[2];
@@ -128,12 +146,25 @@ int main(int argc, char **argv){
     EC = HEAD[4];
     TT = HEAD[5];
     
-    if( EC%100000 == 0 )
-      printf("\n Event %d \n", EC);
-
+    if( nEntries==0 ){
+      firstEntry = EC;
+      printf("\n  First Entry   %d \n", firstEntry);
+    }
+    else if (EC%500000 == 0 ){
+      printf("\n  .....         %d \n", EC);
+    }
+    
+    lastEntry = EC;
+    
+    nEntries++;
+    
     outTree->Fill();
     
   } // end: while loop
+  
+  printf("\n  Last Entry    %d \n", lastEntry);
+  printf("\n  Total Entries %d \n", nEntries);
+  printf("\n ---------------------------------- \n" );
   
   outTree->Write();
   outTree->Delete();
