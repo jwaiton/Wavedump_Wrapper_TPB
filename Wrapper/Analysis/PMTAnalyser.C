@@ -1107,7 +1107,10 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
   while ( nPulses < totPulses ){ 
   
     // find random entry number within event sample
-    entry = (Long64_t)round(rand()*nentries/RAND_MAX); 
+    //!!!
+    //!!!entry = (Long64_t)round(rand()*nentries/RAND_MAX); 
+    entry = 100000;
+    //
 
     // get histogram of waveform
     Get_hWave(entry,hWave);
@@ -1205,6 +1208,8 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
     }
     
     float fPeakT = fWave->GetX(fPeak,0,waveformDuration);    
+    cout << endl;
+    cout << " fPeakT = " << fPeakT << endl;
 
     float fBase = fWave->GetParameter(0);
     
@@ -1310,10 +1315,13 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
 	sprintf(OutFile, "./WaveformFits/Waveform_Run_%d_entry_%lld_Test_%c.png",Run,entry,Test);
       can->SaveAs(OutFile);
     }
-    
+  
     Rise->Fill(riseTime);
     Fall->Fill(fallTime);
+    break;
   }
+  
+  return;
   
   hWave->Delete();   
   

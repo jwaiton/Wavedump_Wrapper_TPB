@@ -47,19 +47,26 @@ using namespace std;
 
 int main(int argc, char **argv){
   
-  printf("\n ---------------------------------- \n" );
+  // 0 - no printing
+  // 1 - standard printing
+  // 2 - print HEAD and ADC values for first entry
+  int verbosity = 1;
   
-  printf("\n           dat_to_root              \n" );
-  
-  printf("\n ---------------------------------- \n" );
-  
-  printf("\n wavedump binary to root conversion \n" );
-  printf("          ( VME version )             \n" );
+  if( verbosity > 0 ){
+    printf("\n ---------------------------------- \n" );
+    
+    printf("\n           dat_to_root              \n" );
+    
+    printf("\n ---------------------------------- \n" );
+    
+    printf("\n wavedump binary to root conversion \n" );
+    printf("          ( VME version )             \n" );
+  }
   
   ifstream inFile(argv[1]);
   
   if(!inFile.good()){
-    printf("\n Error: check filename\n");
+    fprintf( stderr, "\n Error: check filename \n ");    
     return -1;
   }
   
@@ -67,31 +74,33 @@ int main(int argc, char **argv){
   string outName = argv[1];
   outName += ".root";
   
-  printf("\n ---------------------------------- \n" );
-  printf("\n input file: %s                     \n",inName.c_str());
-
-  printf("\n output file: %s                    \n",outName.c_str());
-  printf("\n ---------------------------------- \n" );
+  if( verbosity > 0 ){
+    printf("\n ---------------------------------- \n" );
+    printf("\n input file:  %s      \n",inName.c_str());
     
+    printf("\n output file: %s     \n",outName.c_str());
+    printf("\n ---------------------------------- \n" );
+  }
+  
   TFile * outFile = new TFile(outName.c_str(),
 			      "RECREATE",
 			      inName.c_str());
    
   TTree * outTree = new TTree("T","T");
 
-  int HEAD[6];
-  int NS = 0; 
-  int ID = 0; // Board ID
-  int PN = 0; // Pattern (VME)
-  int CL = 0; // Channel
-  int EC = 0; // Event Counter
-  int TT = 0; // Trigger Time Tag
+  unsigned int HEAD[6];
+  unsigned int NS = 0; 
+  unsigned int ID = 0; // Board ID
+  unsigned int PN = 0; // Pattern (VME)
+  unsigned int CL = 0; // Channel
+  unsigned int EC = 0; // Event Counter
+  unsigned int TT = 0; // Trigger Time Tag
   
-  int nEntries = 0;
+  int nEntries   = 0;
   int firstEntry = 0;
-  int lastEntry = 0;
+  int lastEntry  = 0;
   
-  outTree->Branch("HEAD[6]",HEAD,"HEAD[6]/I");
+  outTree->Branch("HEAD",HEAD,"HEAD[6]/i");
   
   inFile.seekg(0, ios::beg);
   for (int i = 0 ; i < 6 ; i++ ) 
@@ -100,21 +109,17 @@ int main(int argc, char **argv){
   // HEAD[0] is event size in bytes 
   // (header plus samples)
   NS = (HEAD[0] - 24)/2;
-  printf("\n  %d Samples per waveform           \n",NS);
-  printf("\n ---------------------------------- \n" );
-
-  printf("\n  Processing ...                     \n");
   
-//   for (int i = 0 ; i < 6 ; i++ )
-//     printf("\n HEAD[%d] %d \n",i,HEAD[i]);
+  if( verbosity > 1)
+    for (int i = 0 ; i < 6 ; i++ )
+      printf("\n HEAD[%d] %u \n",i,HEAD[i]);
   
   short ADC[NS];
   
-  char name[50],type[50];
-  sprintf(name,"ADC[%d]",NS);
+  char type[50];
   sprintf(type,"ADC[%d]/S",NS);
   
-  outTree->Branch(name,ADC,type);
+  outTree->Branch("ADC",ADC,type);
   
   inFile.seekg(0, ios::beg);
   while ( inFile.is_open() && 
@@ -128,36 +133,52 @@ int main(int argc, char **argv){
       
     // HEAD[0] is event size in bytes
     // (header plus samples)
-    NS = (HEAD[0] - 24)/2; 
+    if( ( (HEAD[0] - 24)/2 ) != NS )
+      fprintf( stderr, "\n Error: Number of Samples has changed \n ");    
 
     //------------------
     // waveform is N lots of 16 bits    
-    for (short i = 0; i < NS ; i++)
+    for (int i = 0; i < (int)NS ; i++)
       inFile.read((char*)&ADC[i],sizeof(short)); 
     
-//     if(nEntries==0)
-//       for (int i = 0 ; i < NS ; i++){
-// 	printf("\n ADC[%d] = %d \n",i,ADC[i]);
-//      }
-    
-    ID = HEAD[1];
-    PN = HEAD[2];
-    CL = HEAD[3];
-    EC = HEAD[4];
-    TT = HEAD[5];
+    ID = HEAD[1]; // Board ID
+    PN = HEAD[2]; // Pattern (VME)
+    CL = HEAD[3]; // Channel
+    EC = HEAD[4]; // Event Counter
+    TT = HEAD[5]; // Trigger Time Tag
     
     if( nEntries==0 ){
       firstEntry = EC;
-      printf("\n  First Entry   %d \n", firstEntry);
+
+      if( verbosity > 0 ){
+	printf("\n  Board ID      %u \n", ID);
+	printf("\n  Pattern       %u \n", PN);
+	printf("\n  Channel       %u \n", CL);
+	printf("\n  %u Samples per waveform           \n",NS);
+	printf("\n ---------------------------------- \n" );
+	
+	printf("\n  First Entry   %d \n", firstEntry);
+      }
+      
+      if( verbosity > 1 )
+	for (int i = 0 ; i < NS ; i++)
+	  printf("\n ADC[%d] = %d \n",i,ADC[i]);
     }
-    else if (EC%500000 == 0 ){
-      printf("\n  .....         %d \n", EC);
+    else if ( (NS <= 1000  && EC%500000 == 0) ||
+	      (NS >  1000  && EC%50000  == 0) ){
+      printf("\n  Entry         %d \n", EC);
     }
-    
+
+    // skip last iteration as it  
+    // takes previous event values
+    if( EC == lastEntry){
+      break;
+    }
+      
     lastEntry = EC;
     
     nEntries++;
-    
+  
     outTree->Fill();
     
   } // end: while loop

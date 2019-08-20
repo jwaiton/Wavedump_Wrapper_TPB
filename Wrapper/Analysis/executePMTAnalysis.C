@@ -121,8 +121,8 @@ int main(Int_t argc, Char_t *argv[]){
   // 'V' for VME, 'D' for desktop
   Char_t  digitiser = 'V';
   
-  Bool_t investigateTiming   = kTRUE;
-  Bool_t investigatePulses   = kFALSE;
+  Bool_t investigateTiming   = kFALSE;
+  Bool_t investigatePulses   = kTRUE;
   Bool_t investigateDarkRate = kFALSE;
   Bool_t investigateFFT      = kFALSE;
   Bool_t investigateAP       = kFALSE;
@@ -208,7 +208,7 @@ int main(Int_t argc, Char_t *argv[]){
     
     // number of pulses to fit 
     int nPulses = 100;
-    PMT->RiseFallTime(nPulses,peakMean);
+    //PMT->RiseFallTime(nPulses,peakMean);
 
     int event = 0;
     if(!investigatePulses) 

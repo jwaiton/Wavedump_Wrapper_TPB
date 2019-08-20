@@ -6,43 +6,35 @@
 #include <TFile.h>
 #include <TH2.h>
 #include <TCanvas.h>
+#include <TStyle.h>
 
 class TConvert {
 public :
    TTree *fChain;
    Int_t  fCurrent;
 
+   // maximum number of samples
    const static short maxNS = 5100;
    
-   int   HEAD[6];
+   unsigned int HEAD[6];
    short ADC[maxNS];
 
    TBranch *b_HEAD;  
    TBranch *b_ADC;   
 
+   // event counter
    int   EC = 0; 
-   float trigTimeTag = 0; // Trigger Time Tag (8 ns for V1730)
-
-   TCanvas * c1 = new TCanvas("c1");
-   
-   int   nBinsTTT, nBinsPeakT;
-   float minTTT,   maxTTT;
-   float minPeakT, maxPeakT;
-   float rangeTTT, rangePeakT;
-      
-   TH2F * h2;   
+   float trigTimeTag = 0; //  (16 ns resolution)
 
    TConvert(TTree *tree=0,
 	    char digitiser='V', // Program default is VME 1730
 	    char sampSet='3',   // variable only used for digitiser='D'
 	    char pulsePol='N'); // Neg or Pos
    virtual ~TConvert();
-   virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
    virtual void     Init(TTree *tree);
    virtual void     Loop();
-   virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
    
    void  PreLoop();
@@ -94,6 +86,8 @@ public :
    float Set_mVPerBin();
    float Set_nsPerSamp();
 
+   void  SetStyle();
+
 };
 
 #endif
@@ -107,6 +101,9 @@ TConvert::TConvert(TTree *tree,
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
+
+     printf(" Tree is zero ");
+
       TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("wave_0.dat.root");
       if (!f || !f->IsOpen()) {
          f = new TFile("wave_0.dat.root");
@@ -122,6 +119,7 @@ TConvert::TConvert(TTree *tree,
    SetPulsePol(pulsePol); 
 
    Init(tree);
+
 }
 
 TConvert::~TConvert()
@@ -144,14 +142,13 @@ Long64_t TConvert::LoadTree(Long64_t entry)
    if (centry < 0) return centry;
    if (fChain->GetTreeNumber() != fCurrent) {
       fCurrent = fChain->GetTreeNumber();
-      Notify();
    }
    return centry;
 }
 
 void TConvert::Init(TTree *tree)
 {
-  
+  printf("\n --------------------  \n");
   printf("\n Initialising  \n");
   
   if (!tree){
@@ -161,24 +158,16 @@ void TConvert::Init(TTree *tree)
   fChain = tree;
   fCurrent = -1;
   fChain->SetMakeClass(1);
-  fChain->SetBranchAddress("HEAD[6]", HEAD, &b_HEAD);
+  fChain->SetBranchAddress("HEAD",HEAD, &b_HEAD);
+  fChain->SetBranchAddress("ADC",ADC, &b_ADC);
   
-  // convertion factors
+  // conversion factors
   SetConstants();
-  //PrintConstants();
-  
-  char name[50];
-  sprintf(name,"ADC[%d]",fNSamples);
-  fChain->SetBranchAddress(name,ADC, &b_ADC);
-  
-  Notify();
+  PrintConstants();
 
-}
+  SetStyle();
 
-
-Bool_t TConvert::Notify()
-{
-   return kTRUE;
+  printf("\n --------------------  \n");
 }
 
 void TConvert::Show(Long64_t entry)
@@ -187,11 +176,5 @@ void TConvert::Show(Long64_t entry)
    fChain->Show(entry);
 }
 
-Int_t TConvert::Cut(Long64_t entry)
-{
-// This function may be called from Loop.
-// returns  1 if entry is accepted.
-// returns -1 otherwise.
-   return 1;
-}
+
 #endif // #ifdef TConvert_cxx

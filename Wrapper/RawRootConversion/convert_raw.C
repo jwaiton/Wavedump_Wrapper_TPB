@@ -34,9 +34,10 @@
 bool IsValidFile(TFile *, char *);
   
 int main(int argc, char * argv[]){
-
-  printf("\n convert_raw \n");
   
+  printf("\n --------------------  \n");
+  printf("\n    convert_raw        \n");
+  printf("\n --------------------  \n");
   TFile * inFile = nullptr;
   TTree * tree = nullptr;
   TConvert * t = nullptr;
@@ -48,19 +49,15 @@ int main(int argc, char * argv[]){
     if( !IsValidFile(inFile,argv[iFile]) )
       continue;
 
-    tree = new TTree("T","T");
-    
-    t = new TConvert();
-    t->PrintConstants();
+    inFile->GetObject("T",tree); 
+
+    t = new TConvert(tree);
     
     // SET OUTPUT: conversion options, plots
     
-    // CONVERT ADC to wave  
+    // Loop over events
     t->Loop();
     
-    // WRITE output
-    t->PostLoop();
-
     //tree->Delete();
     //inFile->Close();
     //inFile->Delete();

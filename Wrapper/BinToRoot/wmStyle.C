@@ -98,11 +98,11 @@
 
 #include "TStyle.h"
 #include "TPaveText.h"
+#include "TLatex.h"
 
 TStyle * GetwmStyle(){
   
   TStyle *wmStyle= new TStyle("wmStyle","plots style");
-  
   
   // use helvetica-bold-r-normal, precision 2 (rotatable)
   Int_t wmFont = 132;
