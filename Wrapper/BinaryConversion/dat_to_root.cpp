@@ -13,11 +13,11 @@
  *  a root file containing a TTree 
  *
  * How to build
- *  $ make DatToRoot
+ *  $ make dat_to_root
  *
  * How to run
  *  Option 1: 
- *  $ ./Dat2Root inputFile
+ *  $ ./dat_to_root inputFile
  * 
  * Input - 
  *  binary file written by CAEN's 
@@ -25,11 +25,11 @@
  * 
  * Output - a root file containing
  *  HEAD[6]  6 * 32 bits = 24  bytes 
- *  ADC[N]  N * 16 bits = 16N bytes (N = No. samples) 
+ *  ADC[N]   N * 16 bits = 16N bytes (N = No. samples) 
  * 
  * Dependencies
  *  The cern developed root framework
- *  Makefile (included) uses g++ compiler
+ *  Makefile (included) which uses g++ compiler
  *
  */ 
 
@@ -146,7 +146,7 @@ int main(int argc, char **argv){
     CL = HEAD[3]; // Channel
     EC = HEAD[4]; // Event Counter
     TT = HEAD[5]; // Trigger Time Tag
-    
+	
     if( nEntries==0 ){
       firstEntry = EC;
 
