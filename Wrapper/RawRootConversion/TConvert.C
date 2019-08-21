@@ -22,15 +22,9 @@ void TConvert::Loop()
 
   Long64_t nentries = fChain->GetEntriesFast();
 
-  float minClock   = 0.0;
-  float rangeClock = 34.0; // seconds
-  float maxClock   = minClock + rangeClock;
-  int   nClockBins = UINT_MAX/1000000 + 1; 
-
-  float secsPerClockBin = rangeClock/nClockBins;
-  minClock -= 0.5*secsPerClockBin;
-  maxClock += 0.5*secsPerClockBin;
-
+  //----------
+  // hNEventsTime & hEventRate
+  
   float minTime    = 0.0;
   float maxTime    = 16.0; // minutes
   float timeRange  = maxTime - minTime;
@@ -39,6 +33,41 @@ void TConvert::Loop()
   minTime -= 0.5*timePerBin;
   maxTime += 0.5*timePerBin;
 
+  TH1D * hNEventsTime = new TH1D("hNEventsTime",
+				 "hNEventsTime;Time (mins);Event",
+				 nTimeBins,minTime,maxTime);
+  
+  TH1D * hEventRate = new TH1D("hEventRate",
+			       "hEventRate;Time (mins);Mean Rate (kHz)",
+			       nTimeBins,minTime,maxTime);
+
+  //-----------
+  // hTrigFreq
+  
+  float minFreq = 0.0; 
+  float maxFreq = 20.0; // kHz
+  float freqRange = maxFreq - minFreq;
+  float freqPerBin = 1./100; // 10 Hz
+  int   nFreqBins = (int)roundf(freqRange/freqPerBin);
+  minFreq -= 0.5*freqPerBin;
+  maxFreq += 0.5*freqPerBin;
+  
+  TH1D * hTrigFreq = new TH1D("hTrigFreq",
+			      "hTrigFreq; Rate (kHz); Counts",
+			      nFreqBins,minFreq,maxFreq);
+  //-----------
+  
+  //-----------
+  // hTT_EC
+  float minClock   = 0.0;
+  float rangeClock = 34.0; // seconds
+  float maxClock   = minClock + rangeClock;
+  int   nClockBins = UINT_MAX/1000000 + 1; 
+
+  float secsPerClockBin = rangeClock/nClockBins;
+  minClock -= 0.5*secsPerClockBin;
+  maxClock += 0.5*secsPerClockBin;
+  
   fChain->GetEntry(0);
   float firstEntry  = (float)HEAD[4];
   
@@ -51,66 +80,66 @@ void TConvert::Loop()
   firstEntry -= (0.5/binsPerEntry);
   lastEntry  += (0.5/binsPerEntry);
   
+  
+  TH2F * hTT_EC = new TH2F("hTT_EC","hTT_EC;Trigger Time Tag (secs);Entry",
+			   nClockBins,minClock,maxClock,
+			   nEntryBins,firstEntry,lastEntry);
+  //--------
+  
+  
   TCanvas * canvas = new TCanvas();
   float w = 1000., h = 500.;
   canvas->SetWindowSize(w,h);
   
-  TH2F * hTT_EC = new TH2F("hTT_EC","hTT_EC;Trigger Time (seconds);Entry",
-			   nClockBins,minClock,maxClock,
-			   nEntryBins,firstEntry,lastEntry);
-  
-  TH1D * hTime = new TH1D("hTime","hTime;Time (mins);Events Recorded",
-			  nTimeBins,minTime,maxTime);
-
-  TH1D * hRate = new TH1D("hRate","hRate;Time (mins); Record Rate ",
-			  nTimeBins,minTime,maxTime);
-  
   double trigTime     = 0;
   double startTime    = 0;
   double elapsedTime  = 0;
-  double previousTime = 0;
+  double prevElapsedTime = 0;
   
   int cycles = 0;
   int recordEntry = 0;
   int prevRecordEntry = 0;
   int dRecordEntry = 0;
-  int missRate = 0;
+
+  int missedEvents = 0;
   
-  int    eventRate  = 0;
-  double clockHand = 0.;
+  Long64_t nRateEvents = nentries/100;
+  double timePerNRateEvents = 0.;
   double timeSinceLastEvent = 0.;
 
   printf("\n --------------------  \n");
   printf("\n Looping over events \n");
 
   Long64_t nbytes = 0, nb = 0;
+  
   for (Long64_t jentry = 0; jentry < nentries;jentry++) {
     Long64_t ientry = LoadTree(jentry);
     if (ientry < 0) break;
     nb = fChain->GetEntry(jentry);   nbytes += nb;    
 
-    trigTime =  8.E-9*(double)HEAD[5]; 
+    trigTime =  8.E-9*(double)HEAD[5]; // it cycles
     
     if(jentry==0)
       startTime = trigTime;
-    
-    elapsedTime = trigTime + 8.E-9*(double)UINT_MAX/2*cycles; 
-    
-    if(elapsedTime < previousTime){
-      cycles++;
-      elapsedTime = trigTime + 8.E-9*(double)UINT_MAX/2*cycles; 
-    }
+
+    elapsedTime = 8.E-9*((double)HEAD[5] + (double)UINT_MAX/2*cycles); 
     
     elapsedTime -= startTime;
     
-    timeSinceLastEvent += elapsedTime;
+    if(elapsedTime < prevElapsedTime){
+      elapsedTime += 8.E-9*(double)UINT_MAX/2; // add 17 seconds 
+      cycles++;
+      //printf("\n elapsedTime = %f \n",elapsedTime);
+    }
     
+    timeSinceLastEvent = elapsedTime - prevElapsedTime;
+
     recordEntry = HEAD[4];
     
     dRecordEntry = recordEntry - prevRecordEntry;
     
     if( dRecordEntry != 1 && jentry !=0){
-      missRate++;
+      missedEvents += (dRecordEntry-1);
       printf("\n Record   Entry = %d \n",recordEntry);
       printf("\n Previous Entry = %d \n",prevRecordEntry);
       printf("\n Missed Events  = %d \n",dRecordEntry);
@@ -118,41 +147,60 @@ void TConvert::Loop()
     
     hTT_EC->Fill(trigTime,recordEntry);
     
-    clockHand += timeSinceLastEvent;
-    eventRate++; 
-      
-    if(clockHand >= 1.0){
-      
-//       printf("\n clockHand = %f   \n",clockHand);
-//       printf("\n jentry    = %lld \n",jentry);
-//       printf("\n eventRate = %d   \n",eventRate);
-      
-      hTime->Fill(elapsedTime/60.,jentry);
-      hRate->Fill(elapsedTime/60.,eventRate);  
-      
-      clockHand = 0.;
-      eventRate = 0;
-      missRate = 0;
+    if(jentry!=0){
+      hTrigFreq->Fill(1./1000/timeSinceLastEvent);  
     }
-
-    previousTime       = elapsedTime;
+    
+    timePerNRateEvents += timeSinceLastEvent;
+  
+    // plot event rate per nRateEvents
+    if( jentry!=0 &&
+	jentry%nRateEvents == 0 ){
+      
+      double eventRate = (double)jentry/timePerNRateEvents/1000.;
+      
+      hNEventsTime->Fill(elapsedTime/60.,jentry);
+      hEventRate->Fill(elapsedTime/60.,eventRate);  
+    }
+    
+    prevElapsedTime    = elapsedTime;
     prevRecordEntry    = recordEntry;
     timeSinceLastEvent = -elapsedTime;
-    
-    // if(jentry == 12000)
-//       break;
     
   }
 
   printf("\n --------------------  \n");
+
+  int maxBin = hNEventsTime->GetMaximumBin();
+  int minBin = 0;
+
+  maxTime = hNEventsTime->GetXaxis()->GetBinCenter(maxBin);
+  maxBin++;
   
-  hTime->GetXaxis()->SetRange(minTime,hTime->GetMaximumBin());
-  hTime->Draw("hist");
-  canvas->SaveAs("./hTime.pdf");
+  hNEventsTime->GetXaxis()->SetRange(minBin,maxBin);
+  hEventRate->GetXaxis()->SetRange(minBin,maxBin);
+
+  hNEventsTime->Draw("HIST P");
+  canvas->SaveAs("./hNEventsTime.pdf");
   
-  hRate->GetXaxis()->SetRange(minTime,hTime->GetMaximumBin());
-  hRate->Draw("hist");
-  canvas->SaveAs("./hRate.pdf");
+  maxBin = hTrigFreq->GetMaximumBin();
+  double freqAtMax = hTrigFreq->GetXaxis()->GetBinCenter(maxBin);
+  minFreq = freqAtMax - 0.1;
+  maxFreq = freqAtMax + 0.1;
+  
+  minBin = hTrigFreq->GetXaxis()->FindBin(minFreq);
+  maxBin = hTrigFreq->GetXaxis()->FindBin(maxFreq);
+
+  hTrigFreq->GetXaxis()->SetRange(minBin,maxBin);
+
+  hTrigFreq->Draw("hist");
+  canvas->SaveAs("./hTrigFreq.pdf");
+
+  hEventRate->SetMinimum(minFreq);
+  hEventRate->SetMaximum(maxFreq);
+  
+  hEventRate->Draw("HIST P");
+  canvas->SaveAs("./hEventRate.pdf");
   
   hTT_EC->Draw("colz");
   canvas->SaveAs("./hTT_EC.pdf");
