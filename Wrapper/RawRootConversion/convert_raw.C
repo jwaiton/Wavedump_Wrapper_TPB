@@ -50,7 +50,7 @@ int main(int argc, char * argv[]){
       continue;
 
     inFile->GetObject("T",tree); 
-
+    
     t = new TConvert(tree);
     
     // SET OUTPUT: conversion options, plots

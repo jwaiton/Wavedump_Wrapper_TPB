@@ -2,6 +2,7 @@
 #include "TConvert.h"
 #include <TH2.h>
 #include <math.h>
+#include <limits.h>
 
 #include "../BinToRoot/wmStyle.C"
 
@@ -28,7 +29,7 @@ void TConvert::Loop()
   float minTime    = 0.0;
   float maxTime    = 16.0; // minutes
   float timeRange  = maxTime - minTime;
-  float timePerBin = 1./60.; // one second per bin
+  float timePerBin = 1./6000.; // 100th of a second per bin
   int   nTimeBins  = (int)roundf(timeRange/timePerBin);
   minTime -= 0.5*timePerBin;
   maxTime += 0.5*timePerBin;
@@ -45,9 +46,9 @@ void TConvert::Loop()
   // hTrigFreq
   
   float minFreq = 0.0; 
-  float maxFreq = 20.0; // kHz
+  float maxFreq = 100.0; // kHz
   float freqRange = maxFreq - minFreq;
-  float freqPerBin = 1./100; // 10 Hz
+  float freqPerBin = 1./10000; // 1/10 Hz
   int   nFreqBins = (int)roundf(freqRange/freqPerBin);
   minFreq -= 0.5*freqPerBin;
   maxFreq += 0.5*freqPerBin;
@@ -60,7 +61,7 @@ void TConvert::Loop()
   //-----------
   // hTT_EC
   float minClock   = 0.0;
-  float rangeClock = 34.0; // seconds
+  float rangeClock = 35.0; // seconds
   float maxClock   = minClock + rangeClock;
   int   nClockBins = UINT_MAX/1000000 + 1; 
 
@@ -371,7 +372,6 @@ void TConvert::SetStyle(){
 
   TStyle *wmStyle = GetwmStyle();
  
-
   const Int_t NCont = 255;
   const Int_t NRGBs = 5;
   
