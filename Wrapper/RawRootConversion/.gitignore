@@ -3,7 +3,5 @@
 *.root
 *.png
 *.pdf
-ConRaw_LinkDef.h
-Makefile
 convert_raw
 convert_rawDict.C
