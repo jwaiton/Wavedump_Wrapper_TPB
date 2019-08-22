@@ -98,7 +98,7 @@ int main(int argc, char **argv){
   
   int nEntries   = 0;
   int firstEntry = 0;
-  int lastEntry  = 0;
+  int lastEntry  = -1;
   
   outTree->Branch("HEAD",HEAD,"HEAD[6]/i");
   
