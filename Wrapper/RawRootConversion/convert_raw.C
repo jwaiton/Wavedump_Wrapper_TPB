@@ -48,7 +48,7 @@ int main(int argc, char * argv[]){
     
     if( !IsValidFile(inFile,argv[iFile]) )
       continue;
-
+    
     inFile->GetObject("T",tree); 
     
     t = new TConvert(tree);
@@ -56,7 +56,7 @@ int main(int argc, char * argv[]){
     // SET OUTPUT: conversion options, plots
     
     // Loop over events
-    t->Loop();
+    t->ProcessEntries();
     
     //tree->Delete();
     //inFile->Close();

@@ -6,176 +6,192 @@
 
 #include "../BinToRoot/wmStyle.C"
 
-void TConvert::PreLoop(){
-
-}
-
-void TConvert::PostLoop(){
-  
-}
-
-void TConvert::Loop()
-{
-
+void TConvert::ADC_Loop(){
   if (fChain == 0) return;
   
-  PreLoop();
-
-  Long64_t nentries = fChain->GetEntriesFast();
-
-  //----------
-  // hNEventsTime & hEventRate
-  
-  float minTime    = 0.0;
-  float maxTime    = 16.0; // minutes
-  float timeRange  = maxTime - minTime;
-  float timePerBin = 1./6000.; // 100th of a second per bin
-  int   nTimeBins  = (int)roundf(timeRange/timePerBin);
-  minTime -= 0.5*timePerBin;
-  maxTime += 0.5*timePerBin;
-
-  TH1D * hNEventsTime = new TH1D("hNEventsTime",
-				 "hNEventsTime;Time (mins);Event",
-				 nTimeBins,minTime,maxTime);
-  
-  TH1D * hEventRate = new TH1D("hEventRate",
-			       "hEventRate;Time (mins);Mean Rate (kHz)",
-			       nTimeBins,minTime,maxTime);
-
-  //-----------
-  // hTrigFreq
-  
-  float minFreq = 0.0; 
-  float maxFreq = 100.0; // kHz
-  float freqRange = maxFreq - minFreq;
-  float freqPerBin = 1./10000; // 1/10 Hz
-  int   nFreqBins = (int)roundf(freqRange/freqPerBin);
-  minFreq -= 0.5*freqPerBin;
-  maxFreq += 0.5*freqPerBin;
-  
-  TH1D * hTrigFreq = new TH1D("hTrigFreq",
-			      "hTrigFreq; Rate (kHz); Counts",
-			      nFreqBins,minFreq,maxFreq);
-  //-----------
-  
-  //-----------
-  // hTT_EC
-  float minClock   = 0.0;
-  float rangeClock = 35.0; // seconds
-  float maxClock   = minClock + rangeClock;
-  int   nClockBins = UINT_MAX/1000000 + 1; 
-
-  float secsPerClockBin = rangeClock/nClockBins;
-  minClock -= 0.5*secsPerClockBin;
-  maxClock += 0.5*secsPerClockBin;
-  
-  fChain->GetEntry(0);
-  float firstEntry  = (float)HEAD[4];
-  
-  fChain->GetEntry(nentries-1);
-  float lastEntry    = (float)HEAD[4];
-  float binsPerEntry = 1./1000.;
-  
-  float entriesRange  = lastEntry - firstEntry;
-  int   nEntryBins   = (int)roundf(entriesRange * binsPerEntry) + 1; 
-  firstEntry -= (0.5/binsPerEntry);
-  lastEntry  += (0.5/binsPerEntry);
-  
-  
-  TH2F * hTT_EC = new TH2F("hTT_EC","hTT_EC;Trigger Time Tag (secs);Entry",
-			   nClockBins,minClock,maxClock,
-			   nEntryBins,firstEntry,lastEntry);
-  //--------
-  
-  
-  TCanvas * canvas = new TCanvas();
-  float w = 1000., h = 500.;
-  canvas->SetWindowSize(w,h);
-  
-  double trigTime     = 0;
-  double startTime    = 0;
-  double elapsedTime  = 0;
-  double prevElapsedTime = 0;
-  
-  int cycles = 0;
-  int recordEntry = 0;
-  int prevRecordEntry = 0;
-  int dRecordEntry = 0;
-
-  int missedEvents = 0;
-  
-  Long64_t nRateEvents = nentries/100;
-  double timePerNRateEvents = 0.;
-  double timeSinceLastEvent = 0.;
-
-  printf("\n --------------------  \n");
-  printf("\n Looping over events \n");
-
-  Long64_t nbytes = 0, nb = 0;
-  
-  for (Long64_t jentry = 0; jentry < nentries;jentry++) {
-    Long64_t ientry = LoadTree(jentry);
-    if (ientry < 0) break;
-    nb = fChain->GetEntry(jentry);   nbytes += nb;    
-
-    trigTime =  8.E-9*(double)HEAD[5]; // it cycles
+  for (Long64_t iEntry = 0; iEntry < nentries; iEntry++) {
+    fChain->GetEntry(iEntry);
     
-    if(jentry==0)
-      startTime = trigTime;
-
-    elapsedTime = 8.E-9*((double)HEAD[5] + (double)UINT_MAX/2*cycles); 
+    printf("\n ------- \n iEntry %lld  \n", iEntry);
+    PrintVec(*ADC);
     
-    elapsedTime -= startTime;
-    
-    if(elapsedTime < prevElapsedTime){
-      elapsedTime += 8.E-9*(double)UINT_MAX/2; // add 17 seconds 
-      cycles++;
-      //printf("\n elapsedTime = %f \n",elapsedTime);
-    }
-    
-    timeSinceLastEvent = elapsedTime - prevElapsedTime;
-
-    recordEntry = HEAD[4];
-    
-    dRecordEntry = recordEntry - prevRecordEntry;
-    
-    if( dRecordEntry != 1 && jentry !=0){
-      missedEvents += (dRecordEntry-1);
-      printf("\n Record   Entry = %d \n",recordEntry);
-      printf("\n Previous Entry = %d \n",prevRecordEntry);
-      printf("\n Missed Events  = %d \n",dRecordEntry);
-    }
-    
-    hTT_EC->Fill(trigTime,recordEntry);
-    
-    if(jentry!=0){
-      hTrigFreq->Fill(1./1000/timeSinceLastEvent);  
-    }
-    
-    timePerNRateEvents += timeSinceLastEvent;
-  
-    // plot event rate per nRateEvents
-    if( jentry!=0 &&
-	jentry%nRateEvents == 0 ){
-      
-      double eventRate = (double)jentry/timePerNRateEvents/1000.;
-      
-      hNEventsTime->Fill(elapsedTime/60.,jentry);
-      hEventRate->Fill(elapsedTime/60.,eventRate);  
-    }
-    
-    prevElapsedTime    = elapsedTime;
-    prevRecordEntry    = recordEntry;
-    timeSinceLastEvent = -elapsedTime;
+    if(iEntry == 10)
+      break;
     
   }
+}
+
+void TConvert::Header_Loop()
+{
+  if (fChain == 0) return;
+  
+  double time     = 0;
+  double prevTime = 0;
+  
+  int trigCycles    = 0;
+  int trigEntry     = 0;
+  int prevTrigEntry = 0;
+  int dTrigEntry    = 0;
+  
+  Long64_t nRateEvents = nentries/100;
+
+  Long64_t deltaEvents = 0;
+  double   deltaT      = 0.;
+  double   dTime       = 0.; // time between events
+  double   eventRate;
+
+  printf("\n ---------------------------- \n");
+  printf("\n Looping over Header entries \n");
+
+  Long64_t nbytes = 0, nb = 0;
+
+  for (Long64_t iEntry = 0; iEntry < nentries; iEntry++) {
+    nb = fChain->GetEntry(iEntry);   nbytes += nb;    
+    
+    //-----------------------------
+    // Process Header Information
+    time     = GetElapsedTime(iEntry,&trigCycles,prevTime);
+    dTime    = time - prevTime; 
+    prevTime = time; // set for next entry
+    
+    deltaT   += dTime;   // integrated time
+    trigEntry = HEAD[4]; // absolute entry number
+    
+    hTT_EC->Fill(GetTrigTimeTag(iEntry),trigEntry);
+
+    deltaEvents++; // integrated event count
+    dTrigEntry    = trigEntry - prevTrigEntry;
+    prevTrigEntry = trigEntry;
+    
+    // skip first entry for intergrated
+    // and differential variable plots
+    if( iEntry==0 ) 
+      continue;
+    
+    hTrigFreq->Fill(1./dTime/1000.);  
+    
+    CountMissedEvents(dTrigEntry); // any unwritten events?
+
+    // process after event integration period
+    if(iEntry%nRateEvents == 0 ){
+      
+      hNEventsTime->Fill(time/60.,iEntry);
+      
+      eventRate = deltaEvents/deltaT;
+      hEventRate->Fill(time/60.,eventRate/1000.);  
+      
+      // reset integrated variables
+      deltaEvents = 0;
+      deltaT = 0.;
+      
+    } // end of: if(iEntry%nRateEvents
+    
+    // Process Header Information
+    //-----------------------------
+    
+  } // end of: for (Long64_t iEntry = 0...
 
   printf("\n --------------------  \n");
 
+}
+
+void TConvert::Set_THF_Params(float * minX, 
+			      float * maxX,
+			      float * binWidth,
+			      Long64_t * nBins){
+  
+  if     (*nBins==0)
+    *nBins = (Long64_t)roundf((*maxX - *minX)/(*binWidth));
+  else if(*nBins > 0 && *binWidth < 1.0E-10)
+    *binWidth = (*maxX - *minX)/(float)*nBins;
+  else
+    fprintf(stderr,"\n Error in Set_THF_Params \n");
+  
+  *nBins += 1;
+  *minX -= 0.5*(*binWidth);
+  *maxX += 0.5*(*binWidth);
+
+};
+
+void TConvert::InitCanvas(){
+
+  canvas = new TCanvas();
+  float w = 1000., h = 500.;
+  canvas->SetWindowSize(w,h);
+
+}
+
+void TConvert::InitHistos(){
+  
+  //----
+  float    minTime    = 0.0;
+  float    maxTime    = 16.0; // minutes
+  float    timePerBin = 1./6000.; // 100th of a second per bin
+  Long64_t nTimeBins  = 0;
+    
+  Set_THF_Params(&minTime,&maxTime,&timePerBin,&nTimeBins);
+  
+  hNEventsTime = new TH1F("hNEventsTime",
+			  "hNEventsTime;Time (mins);Event",
+			  nTimeBins,minTime,maxTime);
+  
+  hEventRate = new TH1F("hEventRate",
+			"hEventRate;Time (mins);Mean Rate (kHz)",
+			nTimeBins,minTime,maxTime);
+
+  //----
+  float    minFreq    = 0.0; 
+  float    maxFreq    = 100.0;    // kHz
+  float    freqPerBin = 1./10000; // 1/10 Hz
+  Long64_t nFreqBins  = 0;
+  
+  Set_THF_Params(&minFreq,&maxFreq,&freqPerBin,&nFreqBins);
+  
+  hTrigFreq = new TH1F("hTrigFreq",
+		       "hTrigFreq; Rate (kHz); Counts",
+		       nFreqBins,minFreq,maxFreq);
+
+  //----
+  // hTT_EC
+  float    minClock   = 0.0;
+  float    maxClock   = 35.0;
+  Long64_t nClockBins = (Long64_t)UINT_MAX/1000000 + 1; 
+  float    secsPerClockBin = 0.;
+  
+  Set_THF_Params(&minClock,&maxClock,&secsPerClockBin,&nClockBins);
+  
+  fChain->GetEntry(0);
+  float    firstEntry = (float)HEAD[4];
+  
+  fChain->GetEntry(nentries-1);
+  float    lastEntry  = (float)HEAD[4];
+
+  float    entriesPerBin = 1000.;
+  Long64_t nEntryBins    = 0;
+
+  Set_THF_Params(&firstEntry,&lastEntry,&entriesPerBin,&nEntryBins);
+
+  hTT_EC = new TH2F("hTT_EC","hTT_EC;Trigger Time Tag (secs);Entry",
+		    nClockBins,minClock,maxClock,
+		    nEntryBins,firstEntry,lastEntry);
+
+}
+
+void TConvert::PreLoop(){
+    
+  nMissedEvents = 0;
+
+  InitCanvas();
+  InitHistos();
+
+}
+
+void TConvert::SaveHistos(){
+  
   int maxBin = hNEventsTime->GetMaximumBin();
   int minBin = 0;
 
-  maxTime = hNEventsTime->GetXaxis()->GetBinCenter(maxBin);
+  //maxTime = hNEventsTime->GetXaxis()->GetBinCenter(maxBin);
   maxBin++;
   
   hNEventsTime->GetXaxis()->SetRange(minBin,maxBin);
@@ -185,9 +201,9 @@ void TConvert::Loop()
   canvas->SaveAs("./hNEventsTime.pdf");
   
   maxBin = hTrigFreq->GetMaximumBin();
-  double freqAtMax = hTrigFreq->GetXaxis()->GetBinCenter(maxBin);
-  minFreq = freqAtMax - 0.1;
-  maxFreq = freqAtMax + 0.1;
+  float freqAtMax = hTrigFreq->GetXaxis()->GetBinCenter(maxBin);
+  float minFreq = freqAtMax - 0.1;
+  float maxFreq = freqAtMax + 0.1;
   
   minBin = hTrigFreq->GetXaxis()->FindBin(minFreq);
   maxBin = hTrigFreq->GetXaxis()->FindBin(maxFreq);
@@ -208,28 +224,82 @@ void TConvert::Loop()
 
 }
 
-int TConvert::Get_peakSample(short ADC[]){
+void TConvert::PostLoop(){
   
-  int   peakSample = 0;
-  short peakADC    = 32767;
-    
-  for ( int i = 0 ; i < fNSamples ; i++) {
-    if(ADC[i] < peakADC){
-      peakADC = ADC[i];
-      peakSample = i;
-    }
-  }
-  
-  //printf("\n peakSample = %d \n ",peakSample);
-  
-  return peakSample;
+  SaveHistos();
 
+  //DeleteCanvas();
+  
 }
 
-float TConvert::Get_peakT_ns(short ADC[]){
-  
-  return 2.0*Get_peakSample(ADC);
 
+double TConvert::GetTrigTimeTag(Long64_t entry) {
+
+  b_HEAD->GetEntry(entry);
+
+  return (8.E-9*(double)HEAD[5]);
+}
+
+double TConvert::GetElapsedTime(const Long64_t entry, 
+			      int  * cycles,
+			      double prevTime) {
+
+  b_HEAD->GetEntry(entry);
+  
+  double time = GetTrigTimeTag(entry);
+  time += 8.E-9*(double)UINT_MAX/2*(*cycles); 
+
+  if(time < prevTime){
+    time += 8.E-9*(double)UINT_MAX/2; // add 17 seconds 
+    (*cycles)+= 1;
+  }
+  
+  time -= startTime;
+
+  //printf("\n time = %f \n",time);
+
+  return time;
+}
+
+void TConvert::CountMissedEvents(int dTrigEntry){
+
+  if( dTrigEntry != 1 ){
+    nMissedEvents += (dTrigEntry-1);
+    printf("\n %d missed events \n",nMissedEvents);
+  }
+  
+}
+
+void TConvert::PrintVec(std::vector<short> & v) {
+
+  for (const auto& i : v) 
+    printf("\n %u \n", i);
+  
+}
+
+int TConvert::Get_peakSample(Long64_t entry){
+  
+  b_ADC->GetEntry(entry);
+  
+  int   peakSample = -1;
+  short peakADC    = SHRT_MAX;
+  
+  for (unsigned int iSample = 0; iSample < ADC->size(); ++iSample) 
+  
+    if(ADC->at(iSample) < peakADC){
+      peakADC = ADC->at(iSample);
+      peakSample = (int)iSample;
+    }
+  printf("\n peakSample = %d \n ",peakSample);
+  
+  return peakSample;
+  
+}
+
+float TConvert::Get_peakT_ns(Long64_t entry){
+  
+  return f_nsPerSamp*(float)Get_peakSample(entry);
+  
 } 
 
 // private
@@ -243,6 +313,8 @@ void TConvert::SetDigitiser(char digitiser){
     fprintf( stderr, "\n Setting to default ('V')  \n ");
     fDigitiser = 'V';
   }
+  
+  printf("\n fDigitiser = %c", fDigitiser);
   
   return;
 }
@@ -272,18 +344,19 @@ void TConvert::SetPulsePol(char pulsePol){
 }
 
 void TConvert::SetConstants(){
-
+  
   printf("\n Setting Constants \n");
   
   fSampFreq = SetSampleFreq();
   fNSamples = SetNSamples();
   fNADCBins = SetNADCBins();
   fRange_mV = SetRange_mV();
-  
+
   // dependent on above
   f_nsPerSamp = Set_nsPerSamp();
   f_mvPerBin  = Set_mVPerBin();
   fLength_ns  = SetLength_ns();
+
 }
 
 void TConvert::PrintConstants(){ 
@@ -340,7 +413,7 @@ short TConvert::SetNSamples(){
 }
 
 float TConvert::SetLength_ns(){
-  return f_nsPerSamp*fNSamples;
+  return f_nsPerSamp*(float)fNSamples;
 }
 
 int TConvert::SetNADCBins(){
@@ -365,6 +438,7 @@ float TConvert::Set_mVPerBin(){
   return (float)fRange_mV/fNADCBins;
   
 }
+
 
 void TConvert::SetStyle(){
   
