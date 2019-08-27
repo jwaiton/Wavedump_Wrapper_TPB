@@ -24,8 +24,8 @@
  *  wavedump software
  * 
  * Output - a root file containing
- *  HEAD[6]  6 * 32 bits = 24  bytes 
- *  ADC[N]   N * 16 bits = 16N bytes (N = No. samples) 
+ *  unsigned int HEAD[6]  6 * 32 bits = 24  bytes 
+ *  std::vector<short> ADC(N)  N * 16 bits = 16N bytes (N = No. samples) 
  * 
  * Dependencies
  *  The cern developed root framework
@@ -96,7 +96,7 @@ int main(int argc, char **argv){
   unsigned int EC = 0; // Event Counter
   unsigned int TT = 0; // Trigger Time Tag
   
-  short buffer = 0;
+  short buffer   = 0;
 
   int nEntries   = 0;
   int firstEntry = 0;
