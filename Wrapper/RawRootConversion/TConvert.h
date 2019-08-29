@@ -15,9 +15,10 @@ public :
    TTree *fChain;
    Int_t  fCurrent;
    
-   unsigned int HEAD[6];
+   uint HEAD[6];
    
    std::vector<short> * ADC = 0;
+   std::vector<float> * wave = 0;
 
    TBranch *b_HEAD = 0;  
    TBranch *b_ADC  = 0;   
@@ -38,11 +39,15 @@ public :
    
    void  ProcessEntries();
    void  ADC_Loop();
-   void  Header_Loop();
    
-   void  PreLoop();
-   void  PostLoop();
-
+   void  GetDAQInfo();
+   
+   void  BeforeDAQ();
+   void  AfterDAQ();
+   
+   void  InitHistosDAQ();
+   void  SaveHistosDAQ(std::string outFolder = "./Plots/DAQ/");
+   
    void  PrintConstants();
 
    double GetTrigTimeTag(Long64_t entry);
@@ -107,7 +112,7 @@ public :
    float SetLength_ns();
    
    int   SetNADCBins();
-   short SetRange_mV();
+   short SetRange_V();
    float Set_mVPerBin();
    float Set_nsPerSamp();
 
@@ -179,20 +184,13 @@ Long64_t TConvert::LoadTree(Long64_t entry)
 
 void TConvert::ProcessEntries(){
   
-  PreLoop();
-  
-  //Header_Loop();
-  
   ADC_Loop();
-  
-  PostLoop();
-
 }
 
 void TConvert::Init(TTree *tree)
 {
-  printf("\n --------------------  \n");
-  printf("\n Initialising  \n");
+  printf("\n ------------------------------ \n");
+  printf("\n Initialising Data \n");
   
   if (!tree){
     fprintf( stderr, "\n Error: tree not loaded \n ");
@@ -213,11 +211,11 @@ void TConvert::Init(TTree *tree)
   // conversion factors
   SetConstants();
 
-  PrintConstants();
-
   SetStyle();
 
-  printf("\n --------------------  \n");
+  InitCanvas();
+
+  printf("\n ------------------------------ \n");
 }
 
 void TConvert::Show(Long64_t entry)

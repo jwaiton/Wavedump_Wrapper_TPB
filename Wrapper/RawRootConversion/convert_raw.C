@@ -31,32 +31,42 @@
 #include "TTree.h"
 #include "TConvert.h"
 
-bool IsValidFile(TFile *, char *);
-  
+
+bool Welcome(int argc);
+bool IsFileReady(TFile *, char *);
+
 int main(int argc, char * argv[]){
   
-  printf("\n --------------------  \n");
-  printf("\n    convert_raw        \n");
-  printf("\n --------------------  \n");
+  if( !Welcome(argc) )
+    return -1;
+     
   TFile * inFile = nullptr;
   TTree * tree = nullptr;
-  TConvert * t = nullptr;
+  
+  TConvert * convert = nullptr;
   
   for( int iFile = 1 ; iFile < argc ; iFile++){
     
     inFile = new TFile(argv[iFile],"READ");
-    
-    if( !IsValidFile(inFile,argv[iFile]) )
+
+    if( !IsFileReady(inFile,argv[iFile]) )
       continue;
+    
+    printf("\n  Input File:       \n");
+    printf("\n    %s  \n",argv[iFile]);
     
     inFile->GetObject("T",tree); 
     
-    t = new TConvert(tree);
+    convert = new TConvert(tree);
     
-    // SET OUTPUT: conversion options, plots
+    convert->GetDAQInfo();
+
+    // Noise    
     
-    // Loop over events
-    t->ProcessEntries();
+    // Create Converted ata
+    
+    // Loop 
+    //convert->ProcessEntries();
     
     //tree->Delete();
     //inFile->Close();
@@ -66,7 +76,31 @@ int main(int argc, char * argv[]){
   return 1;
 }
 
-bool IsValidFile(TFile * inFile, char * arg){
+bool Welcome(int argc){
+  
+  printf("\n      --------------------  \n");
+  printf("\n          convert_raw       \n");
+  printf("\n      --------------------  \n");
+
+  if(argc == 2){
+    printf("\n  processing single file \n");
+    return true;
+  }
+  else if  (argc > 2){
+    printf("\n  processing %d files \n",argc-1);
+    return true;
+  }
+  else{
+    printf("\n  enter file as argument \n");
+    printf("\n  e.g. \n");
+    printf("\n  ./convert_raw ./wave_0.dat.root \n");
+    return false;
+  }
+  
+}
+
+
+bool IsFileReady(TFile * inFile, char * arg){
   
   if ( !inFile || !inFile->IsOpen()) {
     fprintf(stderr,"\n Error, Check File: %s \n",arg);
