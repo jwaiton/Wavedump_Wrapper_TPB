@@ -33,13 +33,10 @@ float Period_ns(float freq_MHz){
   return 1.E3/freq_MHz;
 }
 
-void CableParameters(){
-  
-  float D  = 4.0;
-  float d  = 1.0;
-  
-  float cableLength = 80.0;
-  float propTime_ns = 400.0;
+void CableParameters(float d  = 1.02,
+		     float D  = 3.67,
+		     float cableLength = 80.0,
+		     float propTime_ns = 410.0){
   
   float vR = Velocity(propTime_ns,
 		      cableLength);
@@ -48,15 +45,20 @@ void CableParameters(){
 
   float impedance = Impedance(epsilon,D,d);
 
-  printf("\n Velocity Factor          = %f \n",vR);
-  printf("\n Epsilon                  = %f \n",epsilon);
-  printf("\n Characteristic Impedance = %f \n",impedance);
-  //printf("\n Velocity Factor          = %f \n",Velocity(epsilon));  
+  printf("\n Velocity Factor = %.2f \n",vR);
+  printf("\n Epsilon         = %.2f \n",epsilon);
 
-  printf("\n Frequency @ %.0f m = %.2f MHz \n",2.,Wavelength(2.));
-  printf("\n Frequency @ %.0f m = %.2f MHz \n",80.,Wavelength(80.));
+  printf("\n Inner conductor outer diameter  = %.2f \n",d);
+  printf("\n Outer conductor inner diameter  = %.2f \n",D);
+  
+  printf("\n Characteristic Impedance = %.2f \n",impedance);
 
-  printf("\n Wavelength @ %.2f MHz = %.2f m \n",100.,Wavelength(100.));
-  printf("\n Wavelength @ %.2f GHz = %.2f cm \n",1.,Wavelength(1000.)*100. );
+  // printf("\n Velocity Factor          = %f \n",Velocity(epsilon));  
+
+  // printf("\n Frequency @ %.0f m = %.2f MHz \n",2.,Wavelength(2.));
+  // printf("\n Frequency @ %.0f m = %.2f MHz \n",80.,Wavelength(80.));
+  
+  // printf("\n Wavelength @ %.2f MHz = %.2f m \n",100.,Wavelength(100.));
+  // printf("\n Wavelength @ %.2f GHz = %.2f cm \n",1.,Wavelength(1000.)*100. );
   
 }
