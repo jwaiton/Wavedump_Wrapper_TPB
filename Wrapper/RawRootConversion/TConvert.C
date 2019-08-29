@@ -2,6 +2,7 @@
 #include "TConvert.h"
 #include <TH2.h>
 #include <math.h>
+#include <climits>
 
 #include "../BinToRoot/wmStyle.C"
 
