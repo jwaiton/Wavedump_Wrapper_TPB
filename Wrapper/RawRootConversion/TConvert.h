@@ -8,19 +8,19 @@
 #include <TCanvas.h>
 #include <TStyle.h>
 
+#include <vector>
+
 class TConvert {
 public :
    TTree *fChain;
    Int_t  fCurrent;
-
-   // maximum number of samples
-   const static short maxNS = 5100;
    
    unsigned int HEAD[6];
-   short ADC[maxNS];
+   
+   std::vector<short> * ADC = 0;
 
-   TBranch *b_HEAD;  
-   TBranch *b_ADC;   
+   TBranch *b_HEAD = 0;  
+   TBranch *b_ADC  = 0;   
 
    // event counter
    int   EC = 0; 
@@ -34,16 +34,31 @@ public :
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
    virtual void     Init(TTree *tree);
-   virtual void     Loop();
    virtual void     Show(Long64_t entry = -1);
+   
+   void  ProcessEntries();
+   void  ADC_Loop();
+   void  Header_Loop();
    
    void  PreLoop();
    void  PostLoop();
 
    void  PrintConstants();
 
-   int   Get_peakSample(short[]);
-   float Get_peakT_ns(short[]);
+   double GetTrigTimeTag(Long64_t entry);
+   
+   double GetElapsedTime(const Long64_t entry, 
+			 int  * cycles,
+			 double prevElapsedTime);
+
+   void CountMissedEvents(int dTrigEntry);
+
+   int   Get_peakSample(Long64_t entry); 
+   float Get_peakT_ns(Long64_t entry); 
+
+   void  PrintVec(std::vector<short> & myVec);
+
+   int   nMissedEvents;
 
  private:
 
@@ -71,6 +86,16 @@ public :
    
    float  fLength_ns;
 
+   Long64_t nentries;
+   double   startTime;
+
+   TH1F * hNEventsTime = nullptr;
+   TH1F * hEventRate   = nullptr;
+   TH1F * hTrigFreq    = nullptr;
+   TH2F * hTT_EC       = nullptr;
+
+   TCanvas * canvas    = nullptr;
+
    void  SetDigitiser(char);
    void  SetSampSet(char);
    void  SetPulsePol(char);
@@ -85,6 +110,13 @@ public :
    short SetRange_mV();
    float Set_mVPerBin();
    float Set_nsPerSamp();
+
+   void  Set_THF_Params(float *,float *,float *, Long64_t *);
+   
+   void  InitCanvas();
+   void  InitHistos();
+
+   void  SaveHistos();
 
    void  SetStyle();
 
@@ -111,13 +143,12 @@ TConvert::TConvert(TTree *tree,
       f->GetObject("T",tree);
 
    }
-
+   
    SetDigitiser(digitiser); 
-   
    SetSampSet(sampSet); // for desktop digitiser
-   
-   SetPulsePol(pulsePol); 
 
+   SetPulsePol(pulsePol); 
+   
    Init(tree);
 
 }
@@ -146,6 +177,18 @@ Long64_t TConvert::LoadTree(Long64_t entry)
    return centry;
 }
 
+void TConvert::ProcessEntries(){
+  
+  PreLoop();
+  
+  //Header_Loop();
+  
+  ADC_Loop();
+  
+  PostLoop();
+
+}
+
 void TConvert::Init(TTree *tree)
 {
   printf("\n --------------------  \n");
@@ -156,13 +199,20 @@ void TConvert::Init(TTree *tree)
     return;
   }
   fChain = tree;
+
   fCurrent = -1;
   fChain->SetMakeClass(1);
   fChain->SetBranchAddress("HEAD",HEAD, &b_HEAD);
-  fChain->SetBranchAddress("ADC",ADC, &b_ADC);
+  fChain->SetBranchAddress("ADC",&ADC, &b_ADC);
   
+  LoadTree(0);
+  
+  nentries = fChain->GetEntriesFast();
+  startTime = GetTrigTimeTag(0);
+
   // conversion factors
   SetConstants();
+
   PrintConstants();
 
   SetStyle();

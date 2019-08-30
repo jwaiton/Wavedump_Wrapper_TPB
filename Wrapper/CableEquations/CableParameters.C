@@ -29,6 +29,10 @@ float Freq_MHz(float wavelength){
   return Wavelength(wavelength);
 }
 
+float Period_ns(float freq_MHz){
+  return 1.E3/freq_MHz;
+}
+
 void CableParameters(){
   
   float D  = 4.0;

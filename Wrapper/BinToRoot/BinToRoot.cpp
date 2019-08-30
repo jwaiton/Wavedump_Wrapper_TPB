@@ -241,6 +241,10 @@ float GetDelay(int run = 0){
     return 16.;
   else if ( run ==  71 ) //  
     return 420.;
+  else if ( run ==  80 )
+    return 16.;
+  else if ( run ==  81 ) //  
+    return 420.;
   else                  // Default
     return  60.;
 }
@@ -628,6 +632,10 @@ int ProcessBinaryFile(TString inFilePath,
     maxEvents = 10;
   else if( verbosity == 2 )
     maxEvents = 3;
+
+  cout << endl;
+  cout << " maxEvents = " << maxEvents << endl;
+  
   //----------------------
 
   // Read from here
@@ -734,9 +742,13 @@ int ProcessBinaryFile(TString inFilePath,
   Float_t rangeT[2] = {0.,220.};
   Int_t  binsT = 110;
 
-  if( run > 69 && run < 80 ){
+  if( run > 69 && run < 75 ){
     rangeQ[0] = -5000.;
     rangeQ[1] = 25000.;
+  }
+  else if( run > 79 && run < 90 ){
+    rangeQ[0] = -500.;
+    rangeQ[1] = 2500.;
   }
 
   TH1F * hQ_Fixed = new TH1F(hQ_FixedName,
@@ -819,6 +831,11 @@ int ProcessBinaryFile(TString inFilePath,
     rangeT[1] = GetDelay(run) + GetGateWidth('P')*1.5;
     binsT = binsT * ((int)rangeT[1]-rangeT[0])/GetWaveformLength(digitiser,test,samplingSetting);
   }
+  else if( run == 80 || run == 81  ){
+    rangeT[0] = GetDelay(run) - GetGateWidth('B')*1.1;
+    rangeT[1] = GetDelay(run) + GetGateWidth('P')*1.5;
+    binsT = binsT * ((int)rangeT[1]-rangeT[0])/GetWaveformLength(digitiser,test,samplingSetting);
+  }
   
 
   TH2F * hTV = new TH2F("hTV",label,
@@ -896,8 +913,7 @@ int ProcessBinaryFile(TString inFilePath,
   while ( fileStream.is_open() && 
 	  fileStream.good()    && 
 	  !fileStream.eof()    &&
-	  keepGoing 
-	  ){
+	  keepGoing ){
     
     //-------------------
     // file-level data
@@ -1166,10 +1182,6 @@ int ProcessBinaryFile(TString inFilePath,
       cout << " baselineV_mV   = " << baselineV_mV   << endl;
     }
     
-    if( test == 'R' && 
-	GetCharge(intVDCfixed,digitiser,samplingSetting,negPulsePol) < 2000)
-      continue;
-
     hQ_Fixed->Fill(GetCharge(intVDCfixed,digitiser,
 			     samplingSetting,negPulsePol));
     
@@ -1287,7 +1299,7 @@ int ProcessBinaryFile(TString inFilePath,
   //=================================
   //  Gate around Delay
   
-  if( run < 70 || run > 80)
+  if( run < 70 || run > 90)
     hQ_Fixed->SetAxisRange(-500., 2500.,"X");
   
   hQ_Filter->SetLineColor(kBlue);
@@ -1306,7 +1318,7 @@ int ProcessBinaryFile(TString inFilePath,
   //  Gate around Peak
   gPad->SetLogy(1);
   
-  if( run < 70 || run > 80)
+  if( run < 70 || run > 90)
     hQ_Peak->SetAxisRange(-500., 2500.,"X");
   
   hQ_Peak->Draw();
@@ -1387,7 +1399,7 @@ bool GetNegPulsePolUser(){
 bool GetNegPulsePol(char digitiser, int run){
   
   if ( run > 69 &&
-       run < 72)
+       run < 82)
     return false;
   else if(digitiser == 'V')
     return true;
@@ -1574,7 +1586,7 @@ void ExecuteProcessing(int run = 0, int pmt = 0,
 		       TString inDir = "./", 
 		       TString outDir = "./",
 		       char digitiser = 'V',
-		       char verbosity = -1
+		       int verbosity = -1
 		       ){
 
   bool negPulsePol = GetNegPulsePol(digitiser,run);
@@ -1585,7 +1597,7 @@ void ExecuteProcessing(int run = 0, int pmt = 0,
   cout << " pmt  = " << pmt  << endl; 
   cout << " loc  = " << loc  << endl; 
   cout << " test = " << test << endl; 
-    
+  
   int  nEvents = -1;
 
   for (int hvStep = GetHVStep(test) ; 

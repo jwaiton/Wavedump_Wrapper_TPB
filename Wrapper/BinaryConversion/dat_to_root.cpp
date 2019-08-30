@@ -24,8 +24,8 @@
  *  wavedump software
  * 
  * Output - a root file containing
- *  HEAD[6]  6 * 32 bits = 24  bytes 
- *  ADC[N]   N * 16 bits = 16N bytes (N = No. samples) 
+ *  unsigned int HEAD[6]  6 * 32 bits = 24  bytes 
+ *  std::vector<short> ADC(N)  N * 16 bits = 16N bytes (N = No. samples) 
  * 
  * Dependencies
  *  The cern developed root framework
@@ -96,9 +96,11 @@ int main(int argc, char **argv){
   unsigned int EC = 0; // Event Counter
   unsigned int TT = 0; // Trigger Time Tag
   
+  short buffer   = 0;
+
   int nEntries   = 0;
   int firstEntry = 0;
-  int lastEntry  = 0;
+  int lastEntry  = -1;
   
   outTree->Branch("HEAD",HEAD,"HEAD[6]/i");
   
@@ -114,12 +116,9 @@ int main(int argc, char **argv){
     for (int i = 0 ; i < 6 ; i++ )
       printf("\n HEAD[%d] %u \n",i,HEAD[i]);
   
-  short ADC[NS];
+  std::vector<short> ADC;
   
-  char type[50];
-  sprintf(type,"ADC[%d]/S",NS);
-  
-  outTree->Branch("ADC",ADC,type);
+  outTree->Branch("ADC",&ADC);
   
   inFile.seekg(0, ios::beg);
   while ( inFile.is_open() && 
@@ -136,10 +135,14 @@ int main(int argc, char **argv){
     if( ( (HEAD[0] - 24)/2 ) != NS )
       fprintf( stderr, "\n Error: Number of Samples has changed \n ");    
 
+    ADC.clear();
+
     //------------------
     // waveform is N lots of 16 bits    
-    for (int i = 0; i < (int)NS ; i++)
-      inFile.read((char*)&ADC[i],sizeof(short)); 
+    for (int i = 0; i < (int)NS ; i++){
+      inFile.read((char*)&buffer,sizeof(short));     
+      ADC.push_back(buffer);
+    }
     
     ID = HEAD[1]; // Board ID
     PN = HEAD[2]; // Pattern (VME)
@@ -162,7 +165,7 @@ int main(int argc, char **argv){
       
       if( verbosity > 1 )
 	for (int i = 0 ; i < NS ; i++)
-	  printf("\n ADC[%d] = %d \n",i,ADC[i]);
+	  printf("\n ADC[%d] = %d \n",i,ADC.at(i));
     }
     else if ( (NS <= 1000  && EC%500000 == 0) ||
 	      (NS >  1000  && EC%50000  == 0) ){
@@ -174,7 +177,7 @@ int main(int argc, char **argv){
     if( EC == lastEntry){
       break;
     }
-      
+    
     lastEntry = EC;
     
     nEntries++;
