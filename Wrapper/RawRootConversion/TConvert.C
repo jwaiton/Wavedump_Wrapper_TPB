@@ -22,11 +22,11 @@ void TConvert::Noise(){
   
   float min_mV = -(float)fRange_V/0.002;
   float max_mV = (float)fRange_V/0.002;
-  float mVperBin = f_mvPerBin;
+  float mVPerBin = f_mVPerBin;
   int   nBins = 0;
   
   // fix binning and set number of bins
-  Set_THF_Params(&min_mV,&max_mV,&mVperBin,&nBins);
+  Set_THF_Params(&min_mV,&max_mV,&mVPerBin,&nBins);
   
   TH1F * hMean_mV =  new TH1F("hMean_mV",
 			      "; mean voltage (mV); Counts",
@@ -34,15 +34,16 @@ void TConvert::Noise(){
 
   // prepare for range starting at zero
   min_mV = 0.0;
+  max_mV = (float)fRange_V/0.002;
   nBins  = 0;
-  Set_THF_Params(&min_mV,&max_mV,&mVperBin,&nBins);
+  Set_THF_Params(&min_mV,&max_mV,&mVPerBin,&nBins);
 
   TH1F * hPPV =  new TH1F("hPPV",
-			  "; peak to peak voltage (mV); Counts",
+			  ";peak to peak voltage (mV);Counts",
 			  nBins,min_mV,max_mV);
 
   TH1F * hPeak =  new TH1F("hPeak",
-			  "; peak voltage (mV); Counts",
+			  ";peak voltage (mV);Counts",
 			   nBins,min_mV,max_mV);
   
   
@@ -50,13 +51,20 @@ void TConvert::Noise(){
   // and 2D plotting
   
   // reduce resolution
-  mVperBin = f_mvPerBin/4.;
+  mVPerBin = f_mVPerBin;
   min_mV = 0.0;
+  max_mV = (float)fRange_V/0.002;
   nBins  = 0;
-  Set_THF_Params(&min_mV,&max_mV,&mVperBin,&nBins);
+  Set_THF_Params(&min_mV,&max_mV,&mVPerBin,&nBins);
   
+//   printf("\n nBins    = %d \n",nBins);
+//   printf("\n min_mV   = %f \n",min_mV);
+//   printf("\n max_mV   = %f \n",max_mV);
+//   printf("\n mVPerBin = %f \n",mVPerBin);
+//   printf("\n f_mVPerBin = %f \n",f_mVPerBin);
+
   TH2F * hPPV_Peak =  new TH2F("hPPV_Peak",
-			       "; peak to peak voltage (mV); peak voltage",
+			       ";peak to peak voltage (mV);peak voltage (mV)",
 			       nBins,min_mV,max_mV,
 			       nBins,min_mV,max_mV);
 
@@ -75,7 +83,7 @@ void TConvert::Noise(){
     
     for (short i = 0; i < fNSamples; ++i){
       wave_mV  = (float)ADC->at(i);
-      wave_mV *= f_mvPerBin;
+      wave_mV *= f_mVPerBin;
       wave_mV -= 1000.;
 
       if(fPulsePol=='N')
@@ -529,7 +537,7 @@ void TConvert::SetConstants(){
 
   // dependent on above
   f_nsPerSamp = Set_nsPerSamp();
-  f_mvPerBin  = Set_mVPerBin();
+  f_mVPerBin  = Set_mVPerBin();
   fLength_ns  = SetLength_ns();
 
 }
@@ -543,13 +551,13 @@ void TConvert::PrintConstants(){
     printf("\n  sampling setting     = %c     ",fSampSet);
   }
 
-  printf("\n  sampling frequency   = %d MHz   \n",fSampFreq);
-  printf("   period per sample   = %.1f ns \n",f_nsPerSamp);
-  printf("\n  samples per waveform = %d   \n",fNSamples);
-  printf("   waveform duration   = %.1f ns \n",fLength_ns);
-  printf("\n  number of ADC Bins   = %d   \n",fNADCBins);
-  printf("  ADC range            = %d V  \n",fRange_V);
-  printf("   ADC bin width       = %.2f mV \n",f_mvPerBin);
+  printf("\n  sampling frequency   = %d MHz \n",fSampFreq);
+  printf("   period per sample   = %.1f ns  \n",f_nsPerSamp);
+  printf("\n  samples per waveform = %d     \n",fNSamples);
+  printf("   waveform duration   = %.1f ns  \n",fLength_ns);
+  printf("\n  number of ADC Bins   = %d     \n",fNADCBins);
+  printf("  ADC range            = %d V     \n",fRange_V);
+  printf("   ADC bin width       = %.2f mV  \n",f_mVPerBin);
 
   if(fPulsePol!='N')
     printf("\n \t pulse polarity       = %c   \n",fPulsePol);

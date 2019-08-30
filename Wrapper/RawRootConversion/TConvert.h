@@ -91,7 +91,7 @@ public :
    // calculate
    float  f_nsPerSamp;
    
-   float  f_mvPerBin;
+   float  f_mVPerBin;
    
    float  fLength_ns;
 
