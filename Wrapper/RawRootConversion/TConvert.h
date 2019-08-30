@@ -13,11 +13,11 @@
 class TConvert {
 public :
    TTree *fChain;
-   Int_t  fCurrent;
+   int   fCurrent;
    
    uint HEAD[6];
    
-   std::vector<short> * ADC = 0;
+   std::vector<short> * ADC  = 0;
    std::vector<float> * wave = 0;
 
    TBranch *b_HEAD = 0;  
@@ -32,14 +32,15 @@ public :
 	    char sampSet='3',   // variable only used for digitiser='D'
 	    char pulsePol='N'); // Neg or Pos
    virtual ~TConvert();
-   virtual Int_t    GetEntry(Long64_t entry);
-   virtual Long64_t LoadTree(Long64_t entry);
-   virtual void     Init(TTree *tree);
-   virtual void     Show(Long64_t entry = -1);
+   virtual int  GetEntry(int entry);
+   virtual int  LoadTree(int entry);
+   virtual bool Init(TTree *tree);
+   virtual void Show(int entry = -1);
    
    void  ProcessEntries();
    void  ADC_Loop();
-   
+
+   //---   
    void  GetDAQInfo();
    
    void  BeforeDAQ();
@@ -47,19 +48,22 @@ public :
    
    void  InitHistosDAQ();
    void  SaveHistosDAQ(std::string outFolder = "./Plots/DAQ/");
-   
+   //---
+
+   void  Noise();
+
    void  PrintConstants();
 
-   double GetTrigTimeTag(Long64_t entry);
+   double GetTrigTimeTag(int entry);
    
-   double GetElapsedTime(const Long64_t entry, 
+   double GetElapsedTime(const int entry, 
 			 int  * cycles,
 			 double prevElapsedTime);
 
    void CountMissedEvents(int dTrigEntry);
 
-   int   Get_peakSample(Long64_t entry); 
-   float Get_peakT_ns(Long64_t entry); 
+   int   Get_peakSample(int entry); 
+   float Get_peakT_ns(int entry); 
 
    void  PrintVec(std::vector<short> & myVec);
 
@@ -82,7 +86,7 @@ public :
    int    fNADCBins;
 
    // set using digitiser
-   short  fRange_mV;
+   short  fRange_V;
    
    // calculate
    float  f_nsPerSamp;
@@ -91,8 +95,9 @@ public :
    
    float  fLength_ns;
 
-   Long64_t nentries;
-   double   startTime;
+   Long64_t nentries64_t;
+   int    nentries;
+   double startTime;
 
    TH1F * hNEventsTime = nullptr;
    TH1F * hEventRate   = nullptr;
@@ -106,7 +111,7 @@ public :
    void  SetPulsePol(char);
    
    void  SetConstants();
-
+   
    short SetSampleFreq();
    short SetNSamples();
    float SetLength_ns();
@@ -116,7 +121,9 @@ public :
    float Set_mVPerBin();
    float Set_nsPerSamp();
 
-   void  Set_THF_Params(float *,float *,float *, Long64_t *);
+   //void  MakeWaves();
+
+   void  Set_THF_Params(float *,float *,float *, int *);
    
    void  InitCanvas();
    void  InitHistos();
@@ -154,8 +161,11 @@ TConvert::TConvert(TTree *tree,
 
    SetPulsePol(pulsePol); 
    
-   Init(tree);
-
+   bool success = Init(tree);
+   
+   if(!success)
+     fprintf( stderr, "\n Error: Init failed with this file \n");
+   
 }
 
 TConvert::~TConvert()
@@ -164,17 +174,17 @@ TConvert::~TConvert()
    delete fChain->GetCurrentFile();
 }
 
-Int_t TConvert::GetEntry(Long64_t entry)
+int TConvert::GetEntry(int entry)
 {
 // Read contents of entry.
    if (!fChain) return 0;
    return fChain->GetEntry(entry);
 }
-Long64_t TConvert::LoadTree(Long64_t entry)
+int TConvert::LoadTree(int entry)
 {
 // Set the environment to read one entry
    if (!fChain) return -5;
-   Long64_t centry = fChain->LoadTree(entry);
+   int centry = fChain->LoadTree(entry);
    if (centry < 0) return centry;
    if (fChain->GetTreeNumber() != fCurrent) {
       fCurrent = fChain->GetTreeNumber();
@@ -187,14 +197,14 @@ void TConvert::ProcessEntries(){
   ADC_Loop();
 }
 
-void TConvert::Init(TTree *tree)
+bool TConvert::Init(TTree *tree)
 {
   printf("\n ------------------------------ \n");
   printf("\n Initialising Data \n");
   
   if (!tree){
     fprintf( stderr, "\n Error: tree not loaded \n ");
-    return;
+    return false;
   }
   fChain = tree;
 
@@ -205,7 +215,17 @@ void TConvert::Init(TTree *tree)
   
   LoadTree(0);
   
-  nentries = fChain->GetEntriesFast();
+  nentries64_t = fChain->GetEntriesFast();
+  
+  if( nentries64_t > INT_MAX ){
+    fprintf(stderr,
+	    "\n Error, nentries = (%lld) > INT_MAX unsupported \n ",
+	    nentries64_t);
+    return false;
+  }
+  else
+    nentries = (int)nentries64_t;
+  
   startTime = GetTrigTimeTag(0);
 
   // conversion factors
@@ -215,10 +235,14 @@ void TConvert::Init(TTree *tree)
 
   InitCanvas();
 
+  //MakeWaves();
+
   printf("\n ------------------------------ \n");
+
+  return true;
 }
 
-void TConvert::Show(Long64_t entry)
+void TConvert::Show(int entry)
 {
    if (!fChain) return;
    fChain->Show(entry);

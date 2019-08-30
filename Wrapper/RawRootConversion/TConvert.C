@@ -6,6 +6,137 @@
 
 #include "../BinToRoot/wmStyle.C"
 
+// void TConvert::GetWave(){
+
+//   if (fChain == 0) return;
+
+//   b_ADC->GetEntry(iEntry);
+
+//     for (short iSample = 0; iSample < ; ++iSample){
+//       wave
+// }
+
+void TConvert::Noise(){
+  
+  if (fChain == 0) return;
+  
+  float min_mV = -(float)fRange_V/0.002;
+  float max_mV = (float)fRange_V/0.002;
+  float mVperBin = f_mvPerBin;
+  int   nBins = 0;
+  
+  // fix binning and set number of bins
+  Set_THF_Params(&min_mV,&max_mV,&mVperBin,&nBins);
+  
+  TH1F * hMean_mV =  new TH1F("hMean_mV",
+			      "; mean voltage (mV); Counts",
+			      nBins,min_mV,max_mV);
+
+  // prepare for range starting at zero
+  min_mV = 0.0;
+  nBins  = 0;
+  Set_THF_Params(&min_mV,&max_mV,&mVperBin,&nBins);
+
+  TH1F * hPPV =  new TH1F("hPPV",
+			  "; peak to peak voltage (mV); Counts",
+			  nBins,min_mV,max_mV);
+
+  TH1F * hPeak =  new TH1F("hPeak",
+			  "; peak voltage (mV); Counts",
+			   nBins,min_mV,max_mV);
+  
+  
+  // prepare for range starting at zero
+  // and 2D plotting
+  
+  // reduce resolution
+  mVperBin = f_mvPerBin/4.;
+  min_mV = 0.0;
+  nBins  = 0;
+  Set_THF_Params(&min_mV,&max_mV,&mVperBin,&nBins);
+  
+  TH2F * hPPV_Peak =  new TH2F("hPPV_Peak",
+			       "; peak to peak voltage (mV); peak voltage",
+			       nBins,min_mV,max_mV,
+			       nBins,min_mV,max_mV);
+
+
+  double mean_mV = 0.;
+  float  wave_mV = 0.;
+  float  ppV     = 0.;
+  
+  for (int iEntry = 0; iEntry < nentries; iEntry++) {
+    fChain->GetEntry(iEntry);
+
+    min_mV = 1000.; 
+    max_mV = -1000.;
+    
+    //wave->clear();
+    
+    for (short i = 0; i < fNSamples; ++i){
+      wave_mV  = (float)ADC->at(i);
+      wave_mV *= f_mvPerBin;
+      wave_mV -= 1000.;
+
+      if(fPulsePol=='N')
+	wave_mV = -wave_mV;
+	  
+      if(wave_mV > max_mV)
+	max_mV = wave_mV;
+
+      if(wave_mV < min_mV)
+	min_mV = wave_mV;
+
+      mean_mV += (double)wave_mV;
+      //wave->push_back(wave_mV);
+    
+    }
+
+    ppV = max_mV - min_mV;
+    
+    mean_mV = mean_mV/fNSamples;
+    
+    //printf(" \n mean_mV = %f \n", mean_mV);
+    
+    hMean_mV->Fill(mean_mV);
+    hPPV->Fill(ppV);
+    
+    hPeak->Fill(max_mV);
+    
+    hPPV_Peak->Fill(ppV,max_mV);
+    // if(iEntry >= 10000)
+//       break;
+    
+  }
+  
+  gPad->SetLogy();
+  
+  hMean_mV->SetAxisRange(-100., 100.,"X");
+  hMean_mV->SetMinimum(0.1);
+  hMean_mV->Draw();
+  canvas->SaveAs("hMean_mV.pdf");
+  
+  hPPV->SetAxisRange(-0., 250.,"X");
+  hPPV->SetMinimum(0.1);
+  hPPV->Draw();
+  canvas->SaveAs("hPPV.pdf");
+
+  hPeak->SetAxisRange(-0., 250.,"X");
+  hPeak->SetMinimum(0.1);
+  hPeak->Draw();
+  canvas->SaveAs("hPeak.pdf");
+  
+  gPad->SetLogy(false);
+  gPad->SetLogz();
+  
+  hPPV_Peak->SetAxisRange(-0., 50.,"X");
+  hPPV_Peak->SetAxisRange(-0., 50.,"Y");
+  
+  hPPV_Peak->Draw("colz");
+  canvas->SaveAs("hPPV_Peak.pdf");
+
+}
+
 void TConvert::ADC_Loop(){
   if (fChain == 0) return;
   
@@ -15,10 +146,10 @@ void TConvert::ADC_Loop(){
   
   float baseline = 0;
 
-  for (Long64_t iEntry = 0; iEntry < nentries; iEntry++) {
+  for (int iEntry = 0; iEntry < nentries; iEntry++) {
     fChain->GetEntry(iEntry);
 
-    printf("\n ------- \n iEntry %lld  \n", iEntry);
+    printf("\n ------- \n iEntry %d \n", iEntry);
     
     nBaseSamps = 0;
     baseline = 0;
@@ -66,23 +197,25 @@ void TConvert::GetDAQInfo()
   int prevTrigEntry = 0;
   int dTrigEntry    = 0;
   
-  Long64_t nRateEvents = nentries/100;
+  int nRateEvents = nentries/100;
 
-  Long64_t deltaEvents = 0;
+  int deltaEvents = 0;
   double   deltaT      = 0.;
   double   dTime       = 0.; // time between events
   double   eventRate;
 
-  Long64_t nbytes = 0, nb = 0;
+  double   meanRate = 0;
 
-  for (Long64_t iEntry = 0; iEntry < nentries; iEntry++) {
+  int nbytes = 0, nb = 0;
+
+  for (int iEntry = 0; iEntry < nentries; iEntry++) {
     nb = fChain->GetEntry(iEntry);   nbytes += nb;    
     
     //-----------------------------
     // Process Header Information
     time     = GetElapsedTime(iEntry,&trigCycles,prevTime);
     dTime    = time - prevTime; 
-    prevTime = time; // set for next entry
+    prevTime = time; // now set for next entry
     
     deltaT   += dTime;   // integrated time
     trigEntry = HEAD[4]; // absolute entry number
@@ -99,6 +232,8 @@ void TConvert::GetDAQInfo()
       continue;
     
     hTrigFreq->Fill(1./dTime/1000.);  
+
+    meanRate += 1./dTime/1000.;
     
     CountMissedEvents(dTrigEntry); // any unwritten events?
 
@@ -109,7 +244,7 @@ void TConvert::GetDAQInfo()
       
       eventRate = deltaEvents/deltaT;
       hEventRate->Fill(time/60.,eventRate/1000.);  
-      
+    
       // reset integrated variables
       deltaEvents = 0;
       deltaT = 0.;
@@ -119,7 +254,11 @@ void TConvert::GetDAQInfo()
     // Process Header Information
     //-----------------------------
     
-  } // end of: for (Long64_t iEntry = 0...
+  } // end of: for (int iEntry = 0...
+
+  meanRate = meanRate/nentries;
+
+  printf("\n mean event rate = %.2f kHz \n\n",meanRate);
 
   AfterDAQ();
 
@@ -129,10 +268,10 @@ void TConvert::GetDAQInfo()
 void TConvert::Set_THF_Params(float * minX, 
 			      float * maxX,
 			      float * binWidth,
-			      Long64_t * nBins){
+			      int   * nBins){
   
   if     (*nBins==0)
-    *nBins = (Long64_t)roundf((*maxX - *minX)/(*binWidth));
+    *nBins = (int)roundf((*maxX - *minX)/(*binWidth));
   else if(*nBins > 0 && *binWidth < 1.0E-10)
     *binWidth = (*maxX - *minX)/(float)*nBins;
   else
@@ -172,7 +311,7 @@ void TConvert::InitHistosDAQ(){
   float    minTime    = 0.0;
   float    maxTime    = 16.0; // minutes
   float    timePerBin = 1./6000.; // 100th of a second per bin
-  Long64_t nTimeBins  = 0;
+  int nTimeBins  = 0;
     
   Set_THF_Params(&minTime,&maxTime,&timePerBin,&nTimeBins);
   
@@ -188,7 +327,7 @@ void TConvert::InitHistosDAQ(){
   float    minFreq    = 0.0; 
   float    maxFreq    = 100.0;    // kHz
   float    freqPerBin = 1./10000; // 1/10 Hz
-  Long64_t nFreqBins  = 0;
+  int nFreqBins  = 0;
   
   Set_THF_Params(&minFreq,&maxFreq,&freqPerBin,&nFreqBins);
   
@@ -198,21 +337,21 @@ void TConvert::InitHistosDAQ(){
 
   //----
   // hTT_EC
-  float    minClock   = 0.0;
-  float    maxClock   = 35.0;
-  Long64_t nClockBins = (Long64_t)UINT_MAX/1000000 + 1; 
-  float    secsPerClockBin = 0.;
+  float minClock   = 0.0;
+  float maxClock   = 35.0;
+  int   nClockBins = (int)round(UINT_MAX/1000000) + 1; 
+  float secsPerClockBin = 0.;
   
   Set_THF_Params(&minClock,&maxClock,&secsPerClockBin,&nClockBins);
   
   fChain->GetEntry(0);
-  float    firstEntry = (float)HEAD[4];
+  float firstEntry = (float)HEAD[4];
   
   fChain->GetEntry(nentries-1);
-  float    lastEntry  = (float)HEAD[4];
+  float lastEntry  = (float)HEAD[4];
 
-  float    entriesPerBin = 1000.;
-  Long64_t nEntryBins    = 0;
+  float entriesPerBin = 1000.;
+  int   nEntryBins    = 0;
 
   Set_THF_Params(&firstEntry,&lastEntry,&entriesPerBin,&nEntryBins);
 
@@ -271,14 +410,14 @@ void TConvert::SaveHistosDAQ(std::string outFolder){
 }
 
 
-double TConvert::GetTrigTimeTag(Long64_t entry) {
+double TConvert::GetTrigTimeTag(int entry) {
 
   b_HEAD->GetEntry(entry);
 
   return (8.E-9*(double)HEAD[5]);
 }
 
-double TConvert::GetElapsedTime(const Long64_t entry, 
+double TConvert::GetElapsedTime(const int entry, 
 			      int  * cycles,
 			      double prevTime) {
 
@@ -315,7 +454,7 @@ void TConvert::PrintVec(std::vector<short> & v) {
   
 }
 
-int TConvert::Get_peakSample(Long64_t entry){
+int TConvert::Get_peakSample(int entry){
   
   b_ADC->GetEntry(entry);
   
@@ -334,7 +473,7 @@ int TConvert::Get_peakSample(Long64_t entry){
   
 }
 
-float TConvert::Get_peakT_ns(Long64_t entry){
+float TConvert::Get_peakT_ns(int entry){
   
   return f_nsPerSamp*(float)Get_peakSample(entry);
   
@@ -410,7 +549,7 @@ void TConvert::PrintConstants(){
   printf("   waveform duration   = %.1f ns \n",fLength_ns);
   printf("\n  number of ADC Bins   = %d   \n",fNADCBins);
   printf("  ADC range            = %d V  \n",fRange_V);
-  printf("   ADC bin width       = %.4f mV \n",f_mvPerBin);
+  printf("   ADC bin width       = %.2f mV \n",f_mvPerBin);
 
   if(fPulsePol!='N')
     printf("\n \t pulse polarity       = %c   \n",fPulsePol);
@@ -468,18 +607,18 @@ int TConvert::SetNADCBins(){
     return 16384;
 }
 
-short TConvert::SetRange_mV(){
+short TConvert::SetRange_V(){
 
   if(fDigitiser=='V')
-    return 2000;
+    return 2;
   else
-    return 1000;
+    return 1;
   
 }
 
 float TConvert::Set_mVPerBin(){
   
-  return (float)fRange_V/fNADCBins/1000;
+  return (float)fRange_V/fNADCBins*1000.;
   
 }
 

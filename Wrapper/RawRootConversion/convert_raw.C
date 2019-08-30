@@ -41,27 +41,39 @@ int main(int argc, char * argv[]){
     return -1;
      
   TFile * inFile = nullptr;
-  TTree * tree = nullptr;
+  TTree * tree   = nullptr;
   
+  // object used to convert 
+  // raw (root) data
   TConvert * convert = nullptr;
   
+  // Loop over files
   for( int iFile = 1 ; iFile < argc ; iFile++){
-    
-    inFile = new TFile(argv[iFile],"READ");
 
+    // Check file
+    inFile = new TFile(argv[iFile],"READ");
     if( !IsFileReady(inFile,argv[iFile]) )
       continue;
     
     printf("\n  Input File:       \n");
     printf("\n    %s  \n",argv[iFile]);
     
+    // connect to tree called 'T'
     inFile->GetObject("T",tree); 
     
+    // initalise object using tree
+    // from input file
     convert = new TConvert(tree);
     
-    convert->GetDAQInfo();
+    // print calibration constants
+    // calculate mean trigger rate
+    // rate,timing and event plots
+    //convert->GetDAQInfo();
 
-    // Noise    
+    // plot: mean, ppV,
+    // peakV 
+    convert->Noise();
+    
     
     // Create Converted ata
     
@@ -82,20 +94,26 @@ bool Welcome(int argc){
   printf("\n          convert_raw       \n");
   printf("\n      --------------------  \n");
 
+  printf("\n ------------------------------ \n");
+  
   if(argc == 2){
-    printf("\n  processing single file \n");
+    printf("\n  Processing single file \n");
+    printf("\n ------------------------------ \n");
     return true;
   }
   else if  (argc > 2){
-    printf("\n  processing %d files \n",argc-1);
+    printf("\n  Processing %d files \n",argc-1);
+    printf("\n ------------------------------ \n");
     return true;
   }
   else{
     printf("\n  enter file as argument \n");
     printf("\n  e.g. \n");
-    printf("\n  ./convert_raw ./wave_0.dat.root \n");
+    printf("\n  ./convert_raw ./wave_0.dat.root \n\n");
+    printf("\n ------------------------------ \n");
     return false;
   }
+  
   
 }
 
