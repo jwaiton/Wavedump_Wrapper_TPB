@@ -21,9 +21,11 @@
  * Known issues
  *   Under linux you will likely be required to add 
  *   the shared (.so) file location to your library path 
- *   ie add the path to this directory 
- *
+ *   ie add the path to this directory  
+ *  e.g. add the following line to your .bashrc file:
+ *   export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/insert/the/path/here/
  */ 
+
 #include <iostream>
 
 #include <string>
@@ -58,26 +60,25 @@ int main(int argc, char * argv[]){
     printf("\n  Input File:       \n");
     printf("\n    %s  \n",argv[iFile]);
     
-    // connect to tree called 'T'
+    // Get tree called 'T'
     inFile->GetObject("T",tree); 
     
     // initalise object using tree
     // from input file
     convert = new TConvert(tree);
     
+    // DAQ info
     // print calibration constants
     // calculate mean trigger rate
     // rate,timing and event plots
-    //convert->GetDAQInfo();
+    //convert->DAQInfo();
 
+    // Noise
     // plot: mean, ppV,
     // peakV 
     convert->Noise();
     
-    
-    // Create Converted ata
-    
-    // Loop 
+    // Create Converted data
     //convert->ProcessEntries();
     
     //tree->Delete();
