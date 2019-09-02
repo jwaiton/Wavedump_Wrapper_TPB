@@ -33,7 +33,7 @@ void TConvert::Noise(){
 			      nBins,min_mV,max_mV);
 
   // prepare for range starting at zero
-  min_mV = 0.0;
+  min_mV = -(float)fRange_V/0.002;
   max_mV = (float)fRange_V/0.002;
   nBins  = 0;
   Set_THF_Params(&min_mV,&max_mV,&mVPerBin,&nBins);
