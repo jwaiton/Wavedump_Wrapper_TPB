@@ -68,7 +68,7 @@ int main(int argc, char * argv[]){
     // print calibration constants
     // calculate mean trigger rate
     // rate,timing and event plots
-    //convert->GetDAQInfo();
+    convert->GetDAQInfo();
 
     // plot: mean, ppV,
     // peakV 

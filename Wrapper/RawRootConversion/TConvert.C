@@ -2,23 +2,10 @@
 #include "TConvert.h"
 #include <TH2.h>
 #include <math.h>
-<<<<<<< HEAD
-#include <climits>
-=======
+//#include <climits>
 #include <limits.h>
->>>>>>> b247e3606901967da626c534896bba033b35ff23
 
 #include "../BinToRoot/wmStyle.C"
-
-// void TConvert::GetWave(){
-
-//   if (fChain == 0) return;
-
-//   b_ADC->GetEntry(iEntry);
-
-//     for (short iSample = 0; iSample < ; ++iSample){
-//       wave
-// }
 
 void TConvert::Noise(){
   
@@ -113,22 +100,29 @@ void TConvert::Noise(){
     
   }
   
+  std::string outFolder = "./Plots/Noise/";
+  std::string outName = outFolder + "hMean_mV.pdf";
+  
   gPad->SetLogy();
   
   hMean_mV->SetAxisRange(-100., 100.,"X");
   hMean_mV->SetMinimum(0.1);
   hMean_mV->Draw();
-  canvas->SaveAs("hMean_mV.pdf");
   
+  canvas->SaveAs(outName.c_str());
+
   hPPV->SetAxisRange(-0., 250.,"X");
   hPPV->SetMinimum(0.1);
   hPPV->Draw();
-  canvas->SaveAs("hPPV.pdf");
+  
+  outName = outFolder + "hPPV.pdf";
+  canvas->SaveAs(outName.c_str());
 
   hPeak->SetAxisRange(-0., 250.,"X");
   hPeak->SetMinimum(0.1);
   hPeak->Draw();
-  canvas->SaveAs("hPeak.pdf");
+  outName = outFolder + "hPeak.pdf";
+  canvas->SaveAs(outName.c_str());
   
   gPad->SetLogy(false);
   gPad->SetLogz();
@@ -137,7 +131,9 @@ void TConvert::Noise(){
   hPPV_Peak->SetAxisRange(-0., 50.,"Y");
   
   hPPV_Peak->Draw("colz");
-  canvas->SaveAs("hPPV_Peak.pdf");
+  
+  outName = outFolder + "hPPV_Peak.pdf";
+  canvas->SaveAs(outName.c_str());
 
 }
 

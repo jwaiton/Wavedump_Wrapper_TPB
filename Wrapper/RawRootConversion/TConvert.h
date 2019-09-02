@@ -9,6 +9,7 @@
 #include <TStyle.h>
 
 #include <vector>
+#include <limits.h>
 
 class TConvert {
 public :
