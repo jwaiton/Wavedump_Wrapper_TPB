@@ -48,84 +48,24 @@
 
 using namespace std;
 
-bool IsValidDigitiser(Char_t digitiser,
-		      Int_t  run){
-  
-  TString strDigi = "Desktop";
+bool IsValidDigitiser(Char_t, Int_t);
 
-  if( digitiser=='V' && 
-      ( run > 39 && run < 70  )){
-    
-    cerr << " \n Error: Invalid digitiser setting 'V' \n" << endl;
-    return false;
-    
-  }
-  else if( digitiser=='D' && 
-	   run < 40 ){
-    cerr << " \n Error: Invalid digitiser setting 'D' \n" << endl;
-    return false;
-  }
-  else if(digitiser=='D' ||
-	  digitiser=='V'){ 
-    
-    if(digitiser=='V')
-      strDigi = "VME";
-    
-    cout << endl;
-    cout << " Using " << strDigi << " digitiser settings " << endl;
-    
-    return true;
-  }
-  else
-    return false;
-  
-}
+Bool_t IsInteger(string); 
 
-Bool_t IsInteger(string usrInput){
-  
-  try {
-    stoi(usrInput);
-  }
-  catch (...) {
-    cout << "Invalid input. Please try again!\n";
-    return kFALSE;
-  }
-  
-  return kTRUE;
-}
+Bool_t IsYes(string); 
 
-Bool_t IsYes(string usrInput){
-  
-  Char_t buff[usrInput.length()+1];
-  strcpy(buff,usrInput.c_str());
-  
-  if( ( usrInput.length() == 1      ) && 
-      ( buff[0]=='y' || buff[0]=='Y') )
-    return kTRUE;
-  else
-    return kFALSE;
-}
-
-Bool_t IsValidArgc(int argc){
-
-  if (argc >= 2)
-    return true;
-  else{
-    cerr << " Error, argument needed " << endl; 
-    return false;
-  }
-}
+Bool_t IsValidArgc(int); 
   
 int main(Int_t argc, Char_t *argv[]){
   
   // 'V' for VME, 'D' for desktop
-  Char_t  digitiser = 'V';
+  Char_t  digitiser = 'D';
   
-  Bool_t investigateTiming   = kFALSE;
-  Bool_t investigatePulses   = kTRUE;
+  Bool_t investigateTiming   = kTRUE;
+  Bool_t investigatePulses   = kFALSE;
   Bool_t investigateDarkRate = kFALSE;
   Bool_t investigateFFT      = kFALSE;
-  Bool_t investigateAP       = kFALSE;
+  //Bool_t investigateAP       = kFALSE;
 
   Bool_t writeOutput         = kFALSE;
 
@@ -207,8 +147,9 @@ int main(Int_t argc, Char_t *argv[]){
     //Rise/Fall Time Study
     
     // number of pulses to fit 
-    int nPulses = 100;
-    //PMT->RiseFallTime(nPulses,peakMean);
+    int nPulses = 500;
+    
+    PMT->RiseFallTime(nPulses,peakMean);
 
     int event = 0;
     if(!investigatePulses) 
@@ -344,4 +285,73 @@ int main(Int_t argc, Char_t *argv[]){
    }
    
   return 1;
+}
+
+
+bool IsValidDigitiser(Char_t digitiser,
+		      Int_t  run){
+  
+  TString strDigi = "Desktop";
+
+  if( digitiser=='V' && 
+      ( run > 39 && run < 70  )){
+    
+    cerr << " \n Error: Invalid digitiser setting 'V' \n" << endl;
+    return false;
+    
+  }
+  else if( digitiser=='D' && 
+	   run < 40 ){
+    cerr << " \n Error: Invalid digitiser setting 'D' \n" << endl;
+    return false;
+  }
+  else if(digitiser=='D' ||
+	  digitiser=='V'){ 
+    
+    if(digitiser=='V')
+      strDigi = "VME";
+    
+    cout << endl;
+    cout << " Using " << strDigi << " digitiser settings " << endl;
+    
+    return true;
+  }
+  else
+    return false;
+  
+}
+
+Bool_t IsInteger(string usrInput){
+  
+  try {
+    stoi(usrInput);
+  }
+  catch (...) {
+    cout << "Invalid input. Please try again!\n";
+    return kFALSE;
+  }
+  
+  return kTRUE;
+}
+
+Bool_t IsYes(string usrInput){
+  
+  Char_t buff[usrInput.length()+1];
+  strcpy(buff,usrInput.c_str());
+  
+  if( ( usrInput.length() == 1      ) && 
+      ( buff[0]=='y' || buff[0]=='Y') )
+    return kTRUE;
+  else
+    return kFALSE;
+}
+
+Bool_t IsValidArgc(int argc){
+
+  if (argc >= 2)
+    return true;
+  else{
+    cerr << " Error, argument needed " << endl; 
+    return false;
+  }
 }
