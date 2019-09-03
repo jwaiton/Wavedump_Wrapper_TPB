@@ -57,6 +57,8 @@ public :
    void  InitNoise();
    void  SaveNoise(std::string outFolder = "./Plots/Noise/");
 
+   bool  IsSampleInBaseline(short i,short option);
+
    //---
 
    float GetTrigTimeTag(int entry);
@@ -110,9 +112,11 @@ public :
    TH2F * hTT_EC       = nullptr;
 
    // Noise
-   TH1F * hMean_mV  = nullptr;
-   TH1F * hPPV      = nullptr;
-   TH1F * hPeak     = nullptr;
+   TH1F * hMean = nullptr;
+   TH1F * hPPV  = nullptr;
+   TH1F * hPeak = nullptr;
+   TH1F * hBase = nullptr;
+   
    TH2F * hMin_Max  = nullptr;
 
    TCanvas * canvas    = nullptr;
@@ -142,6 +146,8 @@ public :
    void  SaveHistos();
 
    void  SetStyle();
+
+   void  SetTestMode();
 
 };
 
@@ -203,6 +209,13 @@ int TConvert::LoadTree(int entry)
    return centry;
 }
 
+void TConvert::SetTestMode(){
+
+  nentries = 2000000;  
+  printf("\n Warning: nentries set to %d for testing \n",nentries);
+  
+}
+
 void TConvert::ProcessEntries(){
   
   ADC_Loop();
@@ -245,6 +258,9 @@ bool TConvert::Init(TTree *tree)
   SetStyle();
 
   InitCanvas();
+
+  // set nentries to 1000;
+  //SetTestMode();
 
   //MakeWaves();
 
