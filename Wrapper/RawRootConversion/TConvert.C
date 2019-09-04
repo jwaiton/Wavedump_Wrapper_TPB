@@ -22,10 +22,16 @@ void TConvert::InitNoise(){
 		   ";mean voltage (mV);Counts",
 		   nBins,min_mV,max_mV);
   
-  hBase = new TH1F("hBase",
-		   ";baseline voltage (mV);Counts",
-		   nBins,min_mV,max_mV);
-  
+  for( int i = 0 ; i < nBases ; ++i){
+    
+    char hTitle[128] = "";
+    sprintf(hTitle,"hBase_%d",i);
+      
+    hBase[i] = new TH1F(hTitle,
+			";baseline voltage (mV);Counts",
+			nBins,min_mV,max_mV);
+  }
+
   // prepare for range starting at zero
   min_mV = 0.0;
   max_mV = range_mV/2.;
@@ -78,10 +84,17 @@ void TConvert::SaveNoise(std::string outFolder){
   std::string outName = outFolder + "hMean.pdf";
   canvas->SaveAs(outName.c_str());
   
-  hBase->SetAxisRange(-25., 25.,"X");
-  hBase->SetMinimum(0.1);
-  hBase->Draw();
-
+  for( int i = 0 ; i < nBases ; ++i){
+    hBase[i]->SetAxisRange(-25., 25.,"X");
+    hBase[i]->SetMinimum(0.1);
+    hBase[i]->SetLineColor(i+2);
+    
+    if( i == 0 )
+      hBase[i]->Draw();
+    else
+      hBase[i]->Draw("same");
+  }
+  
   outName = outFolder + "hBase.pdf";
   canvas->SaveAs(outName.c_str());
 
@@ -126,14 +139,26 @@ float TConvert::ADC_To_Wave(short ADC){
 bool TConvert::IsSampleInBaseline(short i,
 				  short option = 0){
   
+  float time = (float)i * SampleToTime();
+  
   switch(option){
   case(0):
-    if( (i*f_nsPerSamp) < 50 )
+    if( time >= 0  && time < 50 )
       return true;
     else
       return false;
   case(1):
-    if( (i*f_nsPerSamp) < 25 )
+    if( time >= 25 && time < 75 )
+      return true;
+    else
+      return false;
+  case(2):
+    if( time >= 50 && time < 100 )
+      return true;
+    else
+      return false;
+  case(3):
+    if( time >= 75 && time < 125 )
       return true;
     else
       return false;
@@ -153,8 +178,9 @@ void TConvert::Noise(){
   float mean_mV = 0.;
   float wave_mV = 0.;
   float ppV_mV  = 0.;
-  float base_mV = 0.;
-  short nBaseSamps = 0;
+  
+  float base_mV[nBases] = {0.};
+  short nBaseSamps[nBases] = {0};
 
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     fChain->GetEntry(iEntry);
@@ -164,17 +190,22 @@ void TConvert::Noise(){
     mean_mV = 0.;
     wave_mV = 0.;
     ppV_mV  = 0.;
-    base_mV = 0.;
-    nBaseSamps = 0;
+    
+    for( int i = 0 ; i < nBases ; ++i){
+      base_mV[i] = 0.;
+      nBaseSamps[i] = 0;
+    }
+    
     
     for (short i = 0; i < fNSamples; ++i){
       
       // map ADC to [-1000,1000] mV
       wave_mV = ADC_To_Wave(ADC->at(i));
       
-      if(IsSampleInBaseline(i,0)){
-	base_mV += wave_mV;
-	nBaseSamps++;
+      for( int i = 0 ; i < nBases ; ++i)
+	if(IsSampleInBaseline(i,i)){
+	  base_mV[i] += wave_mV;
+	  nBaseSamps[i]++;
       }
       
       if(wave_mV > max_mV)
@@ -191,56 +222,21 @@ void TConvert::Noise(){
     ppV_mV = max_mV - min_mV;
     mean_mV = mean_mV/fNSamples;
     
-    base_mV /= (float)nBaseSamps;
+
 
     hMean->Fill(mean_mV);
-    hBase->Fill(base_mV);
     hPPV->Fill(ppV_mV);
     hPeak->Fill(max_mV);
     hMin_Max->Fill(min_mV,max_mV);
-  }
+
+    for( int i = 0 ; i < nBases ; ++i){
+      base_mV[i] /= (float)nBaseSamps[i];
+      hBase[i]->Fill(base_mV[i]);
+    }
+  
+  }// end: for (int iEntry = 0;
 
   SaveNoise();
-}
-
-void TConvert::ADC_Loop(){
-  if (fChain == 0) return;
-  
-  short nBaseSamps   = 0;
-  short baseLowSamp  = 0; 
-  short baseHighSamp = 50/(short)f_nsPerSamp;
-  
-  float baseline = 0;
-
-  for (int iEntry = 0; iEntry < nentries; iEntry++) {
-    fChain->GetEntry(iEntry);
-
-    printf("\n ------- \n iEntry %d \n", iEntry);
-    
-    nBaseSamps = 0;
-    baseline = 0;
-    // baseline
-    for (short i = baseLowSamp; i < baseHighSamp; ++i){
-      baseline += ADC->at(i);
-      nBaseSamps++;
-    }
-    
-    baseline = baseline/nBaseSamps;
-    
-    // Peak-to-peak voltage
-    // peak voltage
-    
-    // for (uint i = 0; i < ADC.size(); ++i){
-//       //ADC->at(i) = 
-//     }
-
-
-    //PrintVec(*ADC);
-    
-    if(iEntry == 10)
-      break;
-    
-  }
 }
 
 void TConvert::DAQInfo()
@@ -534,7 +530,7 @@ int TConvert::Get_peakSample(int entry){
 
 float TConvert::Get_peakT_ns(int entry){
   
-  return f_nsPerSamp*Get_peakSample(entry);
+  return SampleToTime()*Get_peakSample(entry);
   
 } 
 
@@ -639,6 +635,10 @@ short TConvert::SetSampleFreq(){
 
 float TConvert::Set_nsPerSamp(){
   return 1000./fSampFreq;
+}
+
+float TConvert::SampleToTime(){
+  return f_nsPerSamp;
 }
 
 short TConvert::SetNSamples(){

@@ -38,16 +38,13 @@ public :
    virtual bool Init(TTree *tree);
    virtual void Show(int entry = -1);
    
-   void  ProcessEntries();
-   void  ADC_Loop();
-
    float ADC_To_Wave(short ADC);
 
    //---   
    void  DAQInfo();
    
    void  PrintConstants();
-   
+
    void  InitDAQ();
    void  SaveDAQ(std::string outFolder = "./Plots/DAQ/");
    
@@ -115,7 +112,9 @@ public :
    TH1F * hMean = nullptr;
    TH1F * hPPV  = nullptr;
    TH1F * hPeak = nullptr;
-   TH1F * hBase = nullptr;
+   
+   static const int nBases = 4;
+   TH1F * hBase[nBases] = {nullptr};
    
    TH2F * hMin_Max  = nullptr;
 
@@ -134,8 +133,10 @@ public :
    int   SetNADCBins();
    short SetRange_V();
    float Set_mVPerBin();
+   
    float Set_nsPerSamp();
-
+   float SampleToTime();
+     
    //void  MakeWaves();
 
    void  Set_THF_Params(float *,float *,float *, int *);
@@ -214,11 +215,6 @@ void TConvert::SetTestMode(){
   nentries = 2000000;  
   printf("\n Warning: nentries set to %d for testing \n",nentries);
   
-}
-
-void TConvert::ProcessEntries(){
-  
-  ADC_Loop();
 }
 
 bool TConvert::Init(TTree *tree)
