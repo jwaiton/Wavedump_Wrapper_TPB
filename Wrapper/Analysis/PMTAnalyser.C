@@ -414,7 +414,7 @@ Float_t PMTAnalyser::TimeOfPeak(Float_t threshold = 0.0)
 {
   if (rawRootTree == 0) return -1.;
   
-  int verbosity = 0;
+  int verbosity = 1;
   
   Long64_t ientry;
   Long64_t nentries = rawRootTree->GetEntriesFast();
@@ -1066,6 +1066,11 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
 			 "Pulse Fall Time;Fall Time (ns);Counts",
 			 200, 5.0, 30.0);
 
+  TH1F * Fall5 = new TH1F("Fall5", 
+			  "Pulse Fall Time to 5 pct;Fall Time 90 to 5 pct (ns);Counts",
+			  200, 5.0, 100.0);
+  
+  
   if(Run >= 70 ){
     Rise->SetBins(64,11.5,21.5);
     Fall->SetBins(64,11.5,21.5);
@@ -1219,16 +1224,19 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
     float fFull = fBase;
     float f090  = fBase;
     float f010  = fBase;
+    float f005  = fBase;
           
     if(negPulsePol){
       fFull = fBase - fPeak;
-      f090  -= 0.9*fFull;
-      f010  -= 0.1*fFull;
+      f090  -= 0.90*fFull;
+      f010  -= 0.10*fFull;
+      f005  -= 0.05*fFull;
     }
     else{
       fFull  = fPeak - fBase;
-      f090  += 0.9*fFull;
-      f010  += 0.1*fFull;
+      f090  += 0.90*fFull;
+      f010  += 0.10*fFull;
+      f005  += 0.05*fFull;
     }
     
     // range in X to search for y values 
@@ -1240,16 +1248,19 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
     else if(Run >= 50 && Run < 60)
       fPreMin = fXAtPeak - 10.;
 
-    float fPostMin = fXAtPeak + 50;
+    float fPostMin = fXAtPeak + 150;
     
     float timeRise10 = fWave->GetX(f010,fPreMin,fXAtPeak);
     float timeRise90 = fWave->GetX(f090,fPreMin,fXAtPeak);
     
-    float timeFall10 = fWave->GetX(f010,fXAtPeak,fPostMin);
+
     float timeFall90 = fWave->GetX(f090,fXAtPeak,fPostMin);
-    
+    float timeFall10 = fWave->GetX(f010,fXAtPeak,fPostMin);
+    float timeFall05 = fWave->GetX(f005,fXAtPeak,fPostMin);    
+
     float riseTime   = timeRise90 - timeRise10;
     float fallTime   = timeFall10 - timeFall90;
+    float fallTime5  = timeFall05 - timeFall90;
     
 //     cout << endl;
 //     cout << " fPeak      = " << fPeak      << endl;
@@ -1262,9 +1273,11 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
 //     cout << " fPostMin   = " << fPostMin   << endl;
 //     cout << " timeRise10 = " << timeRise10 << endl;
 //     cout << " timeRise90 = " << timeRise90 << endl;
-//     cout << " timeFall10 = " << timeFall10 << endl;
 //     cout << " timeFall90 = " << timeFall90 << endl;
+//     cout << " timeFall10 = " << timeFall10 << endl;
+//     cout << " timeFall05 = " << timeFall05 << endl;
 //     cout << " fallTime   = " << fallTime   << endl;
+//     cout << " fallTime5  = " << fallTime5  << endl;
 //     cout << " riseTime   = " << riseTime   << endl;
 
     // save waveform fits
@@ -1323,14 +1336,14 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
   
     Rise->Fill(riseTime);
     Fall->Fill(fallTime);
-    //break;
+    Fall5->Fill(fallTime5);
   }
 
   hWave->Delete();   
 
   TLatex * latex = new TLatex();
   latex->SetNDC();
-  latex->SetTextSize(0.025);
+  latex->SetTextSize(0.05);
   latex->SetTextAlign(12);  //align at top
   
   TString tStr = "";
@@ -1349,6 +1362,10 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
   
   latex->DrawLatex(0.7,0.75,tStr);
 
+  tStr.Form("MeanErr = %.2f",
+	    Rise->GetMeanError());
+  
+  latex->DrawLatex(0.7,0.7,tStr);
   
   TString hName = FileID;
   hName = hName + ".png";
@@ -1356,23 +1373,35 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
   //Rise->Fit("gaus");
   can->SaveAs("./RiseFall/Rise_" + hName);
   
-  Fall->Draw();
+  Fall5->Draw();
+  
+  //Fall->Draw("same");
+
+//   tStr.Form("Mean = %.2f ",
+// 	    Fall->GetMean());
 
   tStr.Form("Mean = %.2f ",
-	    Fall->GetMean());
-   
-  //latex->SetTextColor(kBlue);  
+	    Fall5->GetMean());
 
   latex->DrawLatex(0.7,0.8,tStr);
 
+//   tStr.Form("StdDev = %.2f",
+// 	    Fall->GetStdDev());
   tStr.Form("StdDev = %.2f",
-	    Fall->GetStdDev());
+	    Fall5->GetStdDev());
   
   latex->DrawLatex(0.7,0.75,tStr);
 
-
-
+  // tStr.Form("MeanErr = %.2f",
+  // 	    Fall->GetMeanError());
+  
+  tStr.Form("MeanErr = %.2f",
+	    Fall5->GetMeanError());
+  
+  latex->DrawLatex(0.7,0.7,tStr);
+  
   //Fall->Fit("gaus");
-  can->SaveAs("./RiseFall/Fall_" + hName);
+  //can->SaveAs("./RiseFall/Fall_" + hName);
+  can->SaveAs("./RiseFall/Fall5_" + hName);
   
 }
