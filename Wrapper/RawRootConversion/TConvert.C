@@ -112,6 +112,7 @@ void TConvert::SaveBaseline(std::string outFolder){
   hFloor_Peak->SetAxisRange(-25.,25.,"X");
   hFloor_Peak->SetAxisRange(-5., 45.,"Y");
   
+  gPad->SetGrid(1, 1);
   hFloor_Peak->Draw("col");
   
   gPad->SetLogz();
@@ -119,13 +120,14 @@ void TConvert::SaveBaseline(std::string outFolder){
   outName = outFolder + "hFloor_Peak.pdf";
   canvas->SaveAs(outName.c_str());
 
+  gPad->SetGrid(0,0);
   
   gPad->SetLogz(false);
 
   float w = 10000., h = 100.;
   canvas->SetWindowSize(w,h);
   
-  gPad->SetGrid(1, 1);// gPad->Update();
+  gPad->SetGrid(1, 1);
   gPad->SetLogz();
   
   float baseMean_mV = 0.0;
@@ -265,18 +267,19 @@ float TConvert::ADC_To_Wave(short ADC){
 bool TConvert::IsSampleInBaseline(short iSample,
 				  short option = 1){
   
-  float time = (float)iSample * SampleToTime();
-  
+  float time  = (float)iSample * SampleToTime();
+  float width = 50.;
+
   switch(option){
   case(0):
-    time = time + 10; // exclude peak pulse
-  case(1):
-    break;
+    width = width + 10; // pulse at beginning of waveform 
+  case(1): 
+    break; // beginning of waveform
   case(2):
-    time = time - fLength_ns + 50.; // use end of waveform
+    time = time - fLength_ns + 50.; // end of waveform
   }
   
-  if( time >= 0  && time < 50 )
+  if( time >= 0 && time < width )
     return true;
   else
     return false;
@@ -296,13 +299,13 @@ void TConvert::Baseline(){
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     fChain->GetEntry(iEntry);
     
-    base_mV  = 0.;
+    base_mV    = 0.;
     nBaseSamps = 0;
     
-    peak_mV = 0.;
-    peakSamp = 0;  
+    peak_mV  = -1000.;
+    peakSamp =  0;  
     
-    floor_mV = 0.;
+    floor_mV =  1000.;
 
     for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
       wave_mV = ADC_To_Wave(ADC->at(iSamp));
@@ -315,8 +318,7 @@ void TConvert::Baseline(){
       if(wave_mV < floor_mV){
 	floor_mV = wave_mV;
       }
-      
-      
+            
       if(IsSampleInBaseline(peakSamp,1)){
 	base_mV += wave_mV;
 	nBaseSamps++;
