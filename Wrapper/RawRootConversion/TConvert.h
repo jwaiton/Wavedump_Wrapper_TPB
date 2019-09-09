@@ -7,6 +7,7 @@
 #include <TH2.h>
 #include <TCanvas.h>
 #include <TStyle.h>
+#include <TLegend.h>
 
 #include <vector>
 #include <limits.h>
@@ -19,10 +20,13 @@ public :
    uint HEAD[6];
    
    std::vector<short> * ADC  = 0;
-   std::vector<float> * wave = 0;
    
-   TBranch *b_HEAD = 0;  
-   TBranch *b_ADC  = 0;   
+   // event-by-event variables to write
+   std::vector<float> * wave = 0;
+   float time;
+   
+   TBranch * b_HEAD = 0;  
+   TBranch * b_ADC  = 0;   
    
    // event counter
    int   EC = 0; 
@@ -54,7 +58,13 @@ public :
    void  InitNoise();
    void  SaveNoise(std::string outFolder = "./Plots/Noise/");
 
-   bool  IsSampleInBaseline(short i,short option);
+   //----
+   void  Baseline();
+
+   void  InitBaseline();
+   void  SaveBaseline(std::string outFolder = "./Plots/Baseline/");
+
+   bool  IsSampleInBaseline(short i, short option);
 
    //---
 
@@ -70,7 +80,9 @@ public :
    float Get_peakT_ns(int entry); 
 
    void  PrintVec(std::vector<short> & myVec);
-
+   
+   void  SetTestMode(int);
+   
  private:
 
    // default or user input
@@ -111,14 +123,26 @@ public :
    // Noise
    TH1F * hMean = nullptr;
    TH1F * hPPV  = nullptr;
-   TH1F * hPeak = nullptr;
-   
-   static const int nBases = 4;
-   TH1F * hBase[nBases] = {nullptr};
-   
-   TH2F * hMin_Max  = nullptr;
 
-   TCanvas * canvas    = nullptr;
+   TH1F * hMin = nullptr;
+   TH1F * hMax = nullptr;
+
+   TH2F * hMin_Max  = nullptr;
+   
+   // Baseline
+   
+   TH1F * hBase = nullptr;
+
+   int  nEvents_Base = 10000;
+   TH2F * hEvent_Base = nullptr;
+
+   TH1F * hPeak = nullptr;
+   TH2F * hBase_Peak = nullptr;
+   TH2F * hFloor_Peak = nullptr;
+
+   // Dark Counts
+
+   TCanvas * canvas = nullptr;
 
    void  SetDigitiser(char);
    void  SetSampSet(char);
@@ -133,12 +157,11 @@ public :
    int   SetNADCBins();
    short SetRange_V();
    float Set_mVPerBin();
-   
+   float ADC_To_mV();
+
    float Set_nsPerSamp();
    float SampleToTime();
-     
-   //void  MakeWaves();
-
+   
    void  Set_THF_Params(float *,float *,float *, int *);
    
    void  InitCanvas();
@@ -147,8 +170,6 @@ public :
    void  SaveHistos();
 
    void  SetStyle();
-
-   void  SetTestMode();
 
 };
 
@@ -184,6 +205,8 @@ TConvert::TConvert(TTree *tree,
    if(!success)
      fprintf( stderr, "\n Error: Init failed with this file \n");
    
+   PrintConstants();
+
 }
 
 TConvert::~TConvert()
@@ -210,9 +233,9 @@ int TConvert::LoadTree(int entry)
    return centry;
 }
 
-void TConvert::SetTestMode(){
+void TConvert::SetTestMode(int user_nentries = 1000000){
 
-  nentries = 2000000;  
+  nentries = user_nentries;  
   printf("\n Warning: nentries set to %d for testing \n",nentries);
   
 }
@@ -235,6 +258,11 @@ bool TConvert::Init(TTree *tree)
   
   LoadTree(0);
   
+  if (fChain == 0){
+    fprintf(stderr,"\n Error, fChain == 0 \n ");
+    return false;
+  }
+  
   nentries64_t = fChain->GetEntriesFast();
   
   if( nentries64_t > INT_MAX ){
@@ -254,9 +282,6 @@ bool TConvert::Init(TTree *tree)
   SetStyle();
 
   InitCanvas();
-
-  // set nentries to 1000;
-  //SetTestMode();
 
   //MakeWaves();
 

@@ -6,13 +6,157 @@
 
 #include "../BinToRoot/wmStyle.C"
 
+void TConvert::InitBaseline(){
+  
+  printf("\n ------------------------------ \n");
+  printf("\n Getting Baseline Info          \n");
+  
+  float range_mV = fRange_V*1000.;
+  
+  float mVPerBin = f_mVPerBin;
+  float min_mV   = -range_mV/2.;
+  float max_mV   =  range_mV/2.;
+  int   nBins    = 0;
+  
+  // fix binning and set number of bins
+  Set_THF_Params(&min_mV,&max_mV,&mVPerBin,&nBins);
+  
+  hBase = new TH1F("hBase",
+		   "hBase;baseline voltage (mV);Counts",
+		   nBins,min_mV,max_mV);
+  
+  hPeak = new TH1F("hPeak",
+		   "hPeak;peak voltage (mV);Counts",
+		   nBins,min_mV,max_mV);
+  
+  hBase_Peak = new TH2F("hBase_Peak",
+			"hBase_Peak;baseline voltage (mV);peak voltage (mV)",
+			nBins,min_mV,max_mV,
+			nBins,min_mV,max_mV);
+  
+  hFloor_Peak = new TH2F("hFloor_Peak",
+		       "hFloor_Peak;floor voltage (mV);peak voltage (mV)",
+		       nBins,min_mV,max_mV,
+		       nBins,min_mV,max_mV);
+  
+
+  float minEvent = 0;
+  float maxEvent = float(nEvents_Base-1);
+  float eventsPerBin = 0.; // dummy
+  int   nEvents;
+
+  minEvent = 0.;
+  maxEvent = 0. + (float)nEvents_Base - 1.;
+  eventsPerBin = 0.;
+  nEvents = nEvents_Base;
+    
+  Set_THF_Params(&minEvent,&maxEvent,&eventsPerBin,&nEvents);
+
+  hEvent_Base = new TH2F("hEvent_Base",
+			 ";Event;baseline voltage (mV)",
+			 nEvents,minEvent,maxEvent,
+			 nBins,min_mV,max_mV);
+ 
+}
+
+void TConvert::SaveBaseline(std::string outFolder){
+  
+  TLegend *leg = new TLegend(0.21,0.2,0.31,0.9);
+    
+  //  char title[128] = "";
+  leg->SetTextSize(0.025);
+  leg->SetHeader("Baseline start","C");
+  
+//   Int_t colors[] = {kRed-7,kRed,kRed+2,
+// 		    kRed-5,kOrange,kOrange+2,
+// 		    kOrange+4,kYellow+1,kGreen+1,
+// 		    kGreen+3,kGreen-5,kCyan+1,
+// 		    kCyan+3,kBlue-7,kBlue,
+// 		    kBlue+3,kViolet,kMagenta+1};
+  
+  leg->SetMargin(0.4); 
+
+
+  hBase->SetAxisRange(-25., 25.,"X");
+  hBase->SetMinimum(0.1);
+
+  hBase->Draw();
+  
+  //  sprintf(title,"%.0f ns",iBase*10.);
+  //  leg->AddEntry(hBase[iBase],title,"L");  
+  //  leg->Draw();
+  
+  gPad->SetLogy();
+  std::string outName = outFolder + "hBase.pdf";
+  canvas->SaveAs(outName.c_str());
+  
+  hPeak->SetAxisRange(-5., 75.,"X");
+  hPeak->Draw();
+
+  outName = outFolder + "hPeak.pdf";
+  canvas->SaveAs(outName.c_str());
+  
+  gPad->SetLogy(false);
+
+  hBase_Peak->SetAxisRange(-25.,25.,"X");
+  hBase_Peak->SetAxisRange(-5., 45.,"Y");
+  
+  hBase_Peak->Draw("col");
+  
+  gPad->SetLogz();
+  
+  outName = outFolder + "hBase_Peak.pdf";
+  canvas->SaveAs(outName.c_str());
+
+  //
+  hFloor_Peak->SetAxisRange(-25.,25.,"X");
+  hFloor_Peak->SetAxisRange(-5., 45.,"Y");
+  
+  hFloor_Peak->Draw("col");
+  
+  gPad->SetLogz();
+  
+  outName = outFolder + "hFloor_Peak.pdf";
+  canvas->SaveAs(outName.c_str());
+
+  
+  gPad->SetLogz(false);
+
+  float w = 10000., h = 100.;
+  canvas->SetWindowSize(w,h);
+  
+  gPad->SetGrid(1, 1);// gPad->Update();
+  gPad->SetLogz();
+  
+  float baseMean_mV = 0.0;
+  float min_mV = -1.5, max_mV = 1.5;
+  baseMean_mV = hBase->GetMean(); 
+  min_mV = baseMean_mV - 1.5;
+  max_mV = baseMean_mV + 1.5;
+  
+  hEvent_Base->SetAxisRange(min_mV,max_mV,"Y");
+  hEvent_Base->Draw("col");
+
+  outName = outFolder + "hEvent_Base.pdf";
+  canvas->SaveAs(outName.c_str());
+  
+  
+  w = 1000., h = 800.;
+  canvas->SetWindowSize(w,h);
+  gPad->SetGrid(0, 0);
+  gPad->SetLogz(false);
+}
+
 void TConvert::InitNoise(){
+  
+  printf("\n ------------------------------ \n");
+  printf("\n Getting Noise Info             \n");
 
   float range_mV = fRange_V*1000.;
   
+  float mVPerBin = f_mVPerBin;
   float min_mV   = -range_mV/2.;
   float max_mV   =  range_mV/2.;
-  float mVPerBin = f_mVPerBin;
   int   nBins    = 0;
   
   // fix binning and set number of bins
@@ -21,43 +165,14 @@ void TConvert::InitNoise(){
   hMean = new TH1F("hMean",
 		   ";mean voltage (mV);Counts",
 		   nBins,min_mV,max_mV);
-  
-  for( int i = 0 ; i < nBases ; ++i){
-    
-    char hTitle[128] = "";
-    sprintf(hTitle,"hBase_%d",i);
-      
-    hBase[i] = new TH1F(hTitle,
-			";baseline voltage (mV);Counts",
-			nBins,min_mV,max_mV);
-  }
 
-  // prepare for range starting at zero
-  min_mV = 0.0;
-  max_mV = range_mV/2.;
-  nBins  = 0;
-  
-  Set_THF_Params(&min_mV,&max_mV,&mVPerBin,&nBins);
-
-  hPPV =  new TH1F("hPPV",
-		   ";peak to peak voltage (mV);Counts",
+  hMax =  new TH1F("hMax",
+		   ";max voltage (mV);Counts",
 		   nBins,min_mV,max_mV);
   
-  hPeak =  new TH1F("hPeak",
-		    ";peak voltage (mV);Counts",
-		    nBins,min_mV,max_mV);
-  
-  
-  // prepare for
-  // and 2D plotting
-  
-  // reduce resolution
-  mVPerBin = f_mVPerBin;
-  min_mV = -range_mV/2.;
-  max_mV =  range_mV/2.;
-  nBins  = 0;
-  
-  Set_THF_Params(&min_mV,&max_mV,&mVPerBin,&nBins);
+  hMin =  new TH1F("hMin",
+		   ";min voltage (mV);Counts",
+		   nBins,min_mV,max_mV);
   
 //   printf("\n nBins    = %d \n",nBins);
 //   printf("\n min_mV   = %f \n",min_mV);
@@ -69,9 +184,22 @@ void TConvert::InitNoise(){
 		       ";minimum voltage (mV);maximum voltage (mV)",
 		       nBins,min_mV,max_mV,
 		       nBins,min_mV,max_mV);
+
+  // prepare for range starting at zero
+  min_mV = 0.0;
+  max_mV = range_mV/2.;
+  nBins  = 0;
+  
+  Set_THF_Params(&min_mV,&max_mV,&mVPerBin,&nBins);
+
+  hPPV =  new TH1F("hPPV",
+		   ";peak to peak voltage (mV);Counts",
+		   nBins,min_mV,max_mV);
+ 
   
 
 }
+
 
 void TConvert::SaveNoise(std::string outFolder){
 
@@ -82,53 +210,51 @@ void TConvert::SaveNoise(std::string outFolder){
   hMean->Draw();
 
   std::string outName = outFolder + "hMean.pdf";
-  canvas->SaveAs(outName.c_str());
+  canvas->SaveAs(outName.c_str());  
   
-  for( int i = 0 ; i < nBases ; ++i){
-    hBase[i]->SetAxisRange(-25., 25.,"X");
-    hBase[i]->SetMinimum(0.1);
-    hBase[i]->SetLineColor(i+2);
-    
-    if( i == 0 )
-      hBase[i]->Draw();
-    else
-      hBase[i]->Draw("same");
-  }
-  
-  outName = outFolder + "hBase.pdf";
-  canvas->SaveAs(outName.c_str());
-
   hPPV->SetAxisRange(-50.0, 250.,"X");
   hPPV->SetMinimum(0.1);
   hPPV->Draw();
   
   outName = outFolder + "hPPV.pdf";
   canvas->SaveAs(outName.c_str());
-
-  hPeak->SetAxisRange(-50., 250.,"X");
-  hPeak->SetMinimum(0.1);
-  hPeak->Draw();
-  outName = outFolder + "hPeak.pdf";
+  
+  hMax->SetAxisRange(-50., 100.,"X");
+  hMax->SetMinimum(0.1);
+  hMax->Draw();
+  outName = outFolder + "hMax.pdf";
+  canvas->SaveAs(outName.c_str());
+  
+  hMin->SetAxisRange(-100., 50.,"X");
+  hMin->SetMinimum(0.1);
+  hMin->Draw();
+  outName = outFolder + "hMin.pdf";
   canvas->SaveAs(outName.c_str());
   
   gPad->SetLogy(false);
   gPad->SetLogz();
   
-  hMin_Max->SetAxisRange(-15., 5.,"X");
-  hMin_Max->SetAxisRange(-5.0, 200.,"Y");
+  hMin_Max->SetAxisRange(-15., 15.,"X");
+  hMin_Max->SetAxisRange(-15., 50.,"Y");
   
   hMin_Max->Draw("colz");
 
   outName = outFolder + "hMin_Max.pdf";
   canvas->SaveAs(outName.c_str());
 
+  gPad->SetLogz(false);
+
+}
+
+float TConvert::ADC_To_mV(){
+
+  return f_mVPerBin;
 }
 
 float TConvert::ADC_To_Wave(short ADC){
 
-  float wave_mV = ADC;
-  wave_mV *= f_mVPerBin;
-  wave_mV -= 1000.;
+  float wave_mV = ADC * ADC_To_mV();
+  wave_mV -= 1000;
   
   if(fPulsePol=='N')
     wave_mV = -wave_mV;
@@ -136,52 +262,113 @@ float TConvert::ADC_To_Wave(short ADC){
   return wave_mV;
 }
 
-bool TConvert::IsSampleInBaseline(short i,
-				  short option = 0){
+bool TConvert::IsSampleInBaseline(short iSample,
+				  short option = 1){
   
-  float time = (float)i * SampleToTime();
+  float time = (float)iSample * SampleToTime();
   
   switch(option){
   case(0):
-    if( time >= 0  && time < 50 )
-      return true;
-    else
-      return false;
+    time = time + 10; // exclude peak pulse
   case(1):
-    if( time >= 25 && time < 75 )
-      return true;
-    else
-      return false;
+    break;
   case(2):
-    if( time >= 50 && time < 100 )
-      return true;
-    else
-      return false;
-  case(3):
-    if( time >= 75 && time < 125 )
-      return true;
-    else
-      return false;
-  default:
-    return false;
+    time = time - fLength_ns + 50.; // use end of waveform
   }
+  
+  if( time >= 0  && time < 50 )
+    return true;
+  else
+    return false;
+}
+
+void TConvert::Baseline(){
+    
+  InitBaseline();
+
+  float base_mV = 0.;
+  short nBaseSamps = 0;
+  float wave_mV = 0.;  
+  float peak_mV = -1000.;  
+  float floor_mV = 1000.;  
+  short peakSamp = 0;
+  
+  for (int iEntry = 0; iEntry < nentries; iEntry++) {
+    fChain->GetEntry(iEntry);
+    
+    base_mV  = 0.;
+    nBaseSamps = 0;
+    
+    peak_mV = 0.;
+    peakSamp = 0;  
+    
+    floor_mV = 0.;
+
+    for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
+      wave_mV = ADC_To_Wave(ADC->at(iSamp));
+      
+      if(wave_mV >= peak_mV){
+	peak_mV  = wave_mV;
+	peakSamp = iSamp;
+      }
+      
+      if(wave_mV < floor_mV){
+	floor_mV = wave_mV;
+      }
+      
+      
+      if(IsSampleInBaseline(peakSamp,1)){
+	base_mV += wave_mV;
+	nBaseSamps++;
+      }
+    }//end: for (short iSamp =
+    
+    // recalculate baseline if peak was in 
+    // standard baseline region
+    if( IsSampleInBaseline(peakSamp,0) ){
+      base_mV  = 0.;
+      nBaseSamps = 0;
+      for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
+	wave_mV = ADC_To_Wave(ADC->at(iSamp));
+	
+	if(IsSampleInBaseline(peakSamp,2)){
+	  base_mV += wave_mV;
+	  nBaseSamps++;
+	}
+	
+      }
+    }
+    
+    base_mV /= (float)nBaseSamps;
+    hBase->Fill(base_mV);
+
+    peak_mV  -= base_mV;
+    floor_mV -= base_mV;
+    
+    hPeak->Fill(peak_mV);
+       
+    hBase_Peak->Fill(base_mV,peak_mV);
+    hFloor_Peak->Fill(floor_mV,peak_mV);
+  
+    if( iEntry > 0 && iEntry < 10000 )
+      hEvent_Base->Fill(iEntry,base_mV);
+    
+  }// end: for (int iEntry 
+  
+  SaveBaseline();
+  
 }
 
 void TConvert::Noise(){
   
-  if (fChain == 0) return;
-
   InitNoise();
-
+  
   float min_mV  = 1000.; 
   float max_mV  = -1000.;
   float mean_mV = 0.;
   float wave_mV = 0.;
   float ppV_mV  = 0.;
   
-  float base_mV[nBases] = {0.};
-  short nBaseSamps[nBases] = {0};
-
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     fChain->GetEntry(iEntry);
 
@@ -191,22 +378,11 @@ void TConvert::Noise(){
     wave_mV = 0.;
     ppV_mV  = 0.;
     
-    for( int i = 0 ; i < nBases ; ++i){
-      base_mV[i] = 0.;
-      nBaseSamps[i] = 0;
-    }
     
-    
-    for (short i = 0; i < fNSamples; ++i){
+    for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
       
       // map ADC to [-1000,1000] mV
-      wave_mV = ADC_To_Wave(ADC->at(i));
-      
-      for( int i = 0 ; i < nBases ; ++i)
-	if(IsSampleInBaseline(i,i)){
-	  base_mV[i] += wave_mV;
-	  nBaseSamps[i]++;
-      }
+      wave_mV = ADC_To_Wave(ADC->at(iSamp));
       
       if(wave_mV > max_mV)
 	max_mV = wave_mV;
@@ -221,19 +397,14 @@ void TConvert::Noise(){
     
     ppV_mV = max_mV - min_mV;
     mean_mV = mean_mV/fNSamples;
-    
-
 
     hMean->Fill(mean_mV);
     hPPV->Fill(ppV_mV);
-    hPeak->Fill(max_mV);
+    hMax->Fill(max_mV);
+    hMin->Fill(min_mV);
     hMin_Max->Fill(min_mV,max_mV);
 
-    for( int i = 0 ; i < nBases ; ++i){
-      base_mV[i] /= (float)nBaseSamps[i];
-      hBase[i]->Fill(base_mV[i]);
-    }
-  
+    
   }// end: for (int iEntry = 0;
 
   SaveNoise();
@@ -241,13 +412,6 @@ void TConvert::Noise(){
 
 void TConvert::DAQInfo()
 {
-  
-  printf("\n ------------------------------ \n");
-  printf("\n Getting DAQ Info               \n");
-  
-  PrintConstants();
-
-  if (fChain == 0) return;
   
   nMissedEvents = 0;
 
@@ -362,6 +526,9 @@ void TConvert::InitCanvas(){
 
 void TConvert::InitDAQ(){
   
+  printf("\n ------------------------------ \n");
+  printf("\n Getting DAQ Info               \n");
+
   //----
   float    minTime    = 0.0;
   float    maxTime    = 16.0; // minutes
@@ -590,7 +757,8 @@ void TConvert::SetConstants(){
 }
 
 void TConvert::PrintConstants(){ 
-
+  
+  printf("\n ------------------------------ \n");
   printf("\n \n Calibration Constants \n");
 
   if(fDigitiser=='D'){

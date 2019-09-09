@@ -71,12 +71,18 @@ int main(int argc, char * argv[]){
     // print calibration constants
     // calculate mean trigger rate
     // rate,timing and event plots
-    convert->DAQInfo();
+    //convert->DAQInfo();
 
     // Noise
-    // plot: mean, ppV,
-    // peakV 
-    convert->Noise();
+    // plot: min, max, PPV, mean
+    //convert->Noise();
+    
+    int user_nentries = 1000000;
+    //convert->SetTestMode(user_nentries);
+    
+    // Baseline
+    // plot: baseline, vs event
+    convert->Baseline();
     
     // Create Converted data
     //convert->ProcessEntries();
