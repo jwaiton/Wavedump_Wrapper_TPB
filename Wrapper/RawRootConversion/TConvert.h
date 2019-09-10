@@ -12,61 +12,125 @@
 #include <vector>
 #include <limits.h>
 
+using namespace std;
+
 class TConvert {
 public :
+
+  // Input variables
    TTree *fChain;
    int   fCurrent;
-   
+
    uint HEAD[6];
    
-   std::vector<short> * ADC  = 0;
-   
-   // event-by-event variables to write
-   std::vector<float> * wave = 0;
-   float time;
-   
+   vector<short> * ADC  = 0;
+
    TBranch * b_HEAD = 0;  
    TBranch * b_ADC  = 0;   
    
-   // event counter
-   int   EC = 0; 
-   float trigTimeTag = 0; //  (16 ns resolution)
+   
+   TFile * outFile;
 
+   // Intermediate processing variables 
+   // not written 
+   
+   TTree * rawTree;
+   
+   float min_raw_mV;
+   float max_raw_mV;
+   float ppV_raw_mV;
+   float mean_raw_mV;
+
+   TBranch * b_min_raw_mV = 0;  
+   TBranch * b_max_raw_mV = 0;  
+   TBranch * b_ppV_raw_mV = 0;  
+   TBranch * b_mean_raw_mV = 0;  
+
+   // Output (to save)
+   TTree * outTree;
+
+   // event-by-event calibrated 
+   // variables to write
+
+   float min_mV;
+   float peak_mV;
+   float base_mV;
+   
+   float peak_time_ns;
+   short peak_samp;
+   
+   float event_time_ns;
+   
+   vector<float> * wave = 0;
+   
+   TBranch * b_min_mV = 0;  
+   TBranch * b_peak_mV = 0;  
+   TBranch * b_base_mV = 0;  
+   TBranch * b_peak_time_ns = 0;  
+   TBranch * b_peak_samp = 0;  
+   TBranch * b_event_time_ns = 0;  
+   
    TConvert(TTree *tree=0,
 	    char digitiser='V', // Program default is VME 1730
 	    char sampSet='3',   // variable only used for digitiser='D'
-	    char pulsePol='N'); // Neg or Pos
+	    char pulsePol='N'); // 'N' Neg or 'P' Pos
    virtual ~TConvert();
    virtual int  GetEntry(int entry);
    virtual int  LoadTree(int entry);
    virtual bool Init(TTree *tree);
    virtual void Show(int entry = -1);
+
+   bool InitRawTree();
    
+   void InitCanvas(float w = 1000.,
+		   float h = 800.);
+   void DeleteCanvas();
+   
+   void  InitCalibration();
+   void  Calibrate();
+   
+   void   SetFileID();
+   string GetFileID();
+
+   void  CalibrateRaw();
+   void  SubtractBaseline();
+
+   float GetRange_mV();
+   float Get_mVPerBin();
+      
    float ADC_To_Wave(short ADC);
 
-   //---   
-   void  DAQInfo();
-   
    void  PrintConstants();
 
-   void  InitDAQ();
-   void  SaveDAQ(std::string outFolder = "./Plots/DAQ/");
+   //---   
+   // Study of DAQ
+   void  DAQ();
    
+   void  InitDAQ();
+   void  SaveDAQ(string outFolder = "./Plots/DAQ/");
+  
    //---
+   // Study of Noise
    void  Noise();
 
    void  InitNoise();
-   void  SaveNoise(std::string outFolder = "./Plots/Noise/");
-
+   void  SaveNoise(string outFolder = "./Plots/Noise/");
+   
    //----
+   // Study of Baseline
    void  Baseline();
 
    void  InitBaseline();
-   void  SaveBaseline(std::string outFolder = "./Plots/Baseline/");
+   void  SaveBaseline(string outFolder = "./Plots/Baseline/");
 
    bool  IsSampleInBaseline(short i, short option);
 
    //---
+   void  Dark();
+   
+   void  InitDark();
+   void  SaveDark(string outFolder = "./Plots/Dark/");
+   //
 
    float GetTrigTimeTag(int entry);
    
@@ -79,12 +143,14 @@ public :
    int   Get_peakSample(int entry); 
    float Get_peakT_ns(int entry); 
 
-   void  PrintVec(std::vector<short> & myVec);
+   void  PrintVec(vector<short> & myVec);
    
    void  SetTestMode(int);
    
  private:
 
+   string f_fileID;
+   
    // default or user input
    char   fDigitiser;        
    char   fSampSet;
@@ -121,27 +187,28 @@ public :
    TH2F * hTT_EC       = nullptr;
 
    // Noise
-   TH1F * hMean = nullptr;
-   TH1F * hPPV  = nullptr;
+   TH1F * hMean_Raw = nullptr;
+   TH1F * hPPV_Raw  = nullptr;
 
-   TH1F * hMin = nullptr;
-   TH1F * hMax = nullptr;
+   TH1F * hMinRaw = nullptr;
+   TH1F * hMaxRaw = nullptr;
 
-   TH2F * hMin_Max  = nullptr;
+   TH2F * hMin_Max_Raw = nullptr;
    
    // Baseline
-   
    TH1F * hBase = nullptr;
-
+   
    int  nEvents_Base = 10000;
    TH2F * hEvent_Base = nullptr;
 
    TH1F * hPeak = nullptr;
    TH2F * hBase_Peak = nullptr;
-   TH2F * hFloor_Peak = nullptr;
+   TH2F * hMin_Peak = nullptr;
 
    // Dark Counts
-
+   TH1F * hD_Peak = nullptr;
+   TH2F * hD_Min_Peak = nullptr;
+   
    TCanvas * canvas = nullptr;
 
    void  SetDigitiser(char);
@@ -157,14 +224,12 @@ public :
    int   SetNADCBins();
    short SetRange_V();
    float Set_mVPerBin();
-   float ADC_To_mV();
 
    float Set_nsPerSamp();
    float SampleToTime();
    
    void  Set_THF_Params(float *,float *,float *, int *);
    
-   void  InitCanvas();
    void  InitHistos();
 
    void  SaveHistos();
@@ -256,8 +321,6 @@ bool TConvert::Init(TTree *tree)
   fChain->SetBranchAddress("HEAD",HEAD, &b_HEAD);
   fChain->SetBranchAddress("ADC",&ADC, &b_ADC);
   
-  LoadTree(0);
-  
   if (fChain == 0){
     fprintf(stderr,"\n Error, fChain == 0 \n ");
     return false;
@@ -287,6 +350,28 @@ bool TConvert::Init(TTree *tree)
 
   printf("\n ------------------------------ \n");
 
+  return true;
+}
+
+bool TConvert::InitRawTree()
+{
+  printf("\n ------------------------------ \n");
+  printf("\n  Initialising Raw Tree \n");
+  
+  if (!rawTree){
+    fprintf( stderr, "\n Error: no raw tree  \n ");
+    return false;
+  }
+
+  rawTree->SetBranchAddress("min_raw_mV",&min_raw_mV, &b_min_raw_mV);
+  rawTree->SetBranchAddress("max_raw_mV",&max_raw_mV, &b_max_raw_mV);
+  rawTree->SetBranchAddress("ppV_raw_mV",&ppV_raw_mV, &b_ppV_raw_mV);
+  rawTree->SetBranchAddress("mean_raw_mV",&mean_raw_mV, &b_mean_raw_mV);
+  
+  rawTree->SetBranchAddress("peak_samp",&peak_samp, &b_peak_samp);
+
+  fChain->AddFriend(rawTree);
+  
   return true;
 }
 
