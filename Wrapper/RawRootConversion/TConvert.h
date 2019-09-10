@@ -126,7 +126,7 @@ public :
    bool  IsSampleInBaseline(short i, short option);
 
    //---
-   void  Dark();
+   void  Dark(float thresh_mV = 10.);
    
    void  InitDark();
    void  SaveDark(string outFolder = "./Plots/Dark/");

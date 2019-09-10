@@ -184,28 +184,30 @@ void TConvert::SubtractBaseline(){
   } 
 }
 
-void TConvert::Dark(){
+void TConvert::Dark(float thresh_mV){
   
   InitDark();
   
-//   TLine * lVert = new TLine(-5,0,-5,10);
-//   TLine * lDiag = new TLine(-5,10,-20,40);
-  
   int nDark = 0;
+  int nDark_noise = 0;
   
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     outTree->GetEntry(iEntry);
      
-    if( min_mV < -2.5 && peak_mV < 10)
+    if(peak_mV < thresh_mV)
+      nDark_noise++;
+
+    // Noise Rejection 
+    if( min_mV < -2.5 && peak_mV < thresh_mV)
       continue;
     
-    if( peak_mV < -2*min_mV )
+    if( peak_mV < -2*min_mV && peak_mV > thresh_mV )
       continue;
     
     hD_Peak->Fill(peak_mV);
     hD_Min_Peak->Fill(min_mV,peak_mV);
     
-    if( peak_mV < 10.)
+    if( peak_mV < thresh_mV)
       continue;
     
     nDark++;
@@ -215,10 +217,16 @@ void TConvert::Dark(){
   float darkRate = (float)nDark/nentries;
   darkRate = darkRate/fLength_ns * 1.0e9;
   
-  printf("\n \n nentries     = %d \n",nentries);
-  printf("\n dark counts     = %d \n",nDark);
-  printf("\n dark count rate = %.0f \n\n",darkRate);
+  printf("\n \n nentries = %d \n",nentries);
+  printf("\n dark counts (noise rejected) = %d \n",nDark);
+  printf("\n dark rate   (noise rejected) = %.0f \n\n",darkRate);
   
+  darkRate = (float)nDark_noise/nentries;
+  darkRate = darkRate/fLength_ns * 1.0e9;
+  
+  printf("\n dark counts (with noise)     = %d \n",nDark_noise);
+  printf("\n dark rate   (with noise)     = %.0f \n\n",darkRate);
+
   SaveDark();
   
 }
@@ -282,6 +290,12 @@ void TConvert::SaveDark(string outFolder){
   hD_Peak->SetMinimum(0.1);
   hD_Peak->Draw();
   
+  TLine * lVert = new TLine(10,0,10,20);
+  lVert->SetLineColor(kBlue);
+  lVert->SetLineWidth(2);
+  lVert->SetLineStyle(2);
+  lVert->Draw();
+
   string outName = outFolder + "hD_Peak.pdf";
   canvas->SaveAs(outName.c_str());
   
@@ -314,6 +328,121 @@ void TConvert::SaveDark(string outFolder){
   gPad->SetLogz(false);
 
   DeleteCanvas();
+}
+
+
+
+
+
+float TConvert::ADC_To_Wave(short ADC){
+
+  float wave_mV = ADC * Get_mVPerBin();
+  wave_mV -= 1000;
+  
+  if(fPulsePol=='N')
+    wave_mV = -wave_mV;
+  
+  return wave_mV;
+}
+
+bool TConvert::IsSampleInBaseline(short iSample,
+				  short option = 1){
+  
+  float time  = (float)iSample * SampleToTime();
+  float width = 30.;
+
+  switch(option){
+  case(0):
+    width = width + 20; // pulse at beginning of waveform 
+  case(2):
+    time = time - fLength_ns + width; // end of waveform
+  }
+  
+  if( time >= 0 && time < width )
+    return true;
+  else
+    return false;
+}
+
+void TConvert::Baseline(){
+    
+  InitBaseline();
+  
+  // duplicates so be careful of scope:
+  // use local_ prefix
+  float base_mV_local = 0.;
+  float peak_mV_local = -1000.;  
+  float min_mV_local  = 1000.;  
+  short peak_samp_local = 0;
+
+  short nBaseSamps = 0;
+  float wave_mV = 0.;  
+  
+  for (int iEntry = 0; iEntry < nentries; iEntry++) {
+    fChain->GetEntry(iEntry);
+    
+    min_mV_local  =  1000.;
+    peak_mV_local = -1000.;
+    peak_samp_local = 0;  
+
+    base_mV_local = 0.;
+    nBaseSamps   = 0;
+
+    for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
+      wave_mV = ADC_To_Wave(ADC->at(iSamp));
+      
+      if(wave_mV >= peak_mV_local){
+	peak_mV_local  = wave_mV;
+	peak_samp_local = iSamp;
+      }
+      
+      if(wave_mV < min_mV_local){
+	min_mV_local = wave_mV;
+      }
+            
+      if(IsSampleInBaseline(iSamp,1)){
+	base_mV_local += wave_mV;
+	nBaseSamps++;
+      }
+    }//end: for (short iSamp =
+    
+    // recalculate baseline if peak was in 
+    // standard baseline region
+    if( IsSampleInBaseline(peak_samp_local,0) ){
+      base_mV_local = 0.;
+      nBaseSamps = 0;
+      for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
+	wave_mV = ADC_To_Wave(ADC->at(iSamp));
+	
+	if(IsSampleInBaseline(iSamp,2)){
+	  base_mV_local += wave_mV;
+	  nBaseSamps++;
+	}
+	
+      }
+    }
+    
+    base_mV_local /= (float)nBaseSamps;
+    hBase->Fill(base_mV_local);
+
+    peak_mV_local -= base_mV_local;
+    min_mV_local  -= base_mV_local;
+    
+    hPeak->Fill(peak_mV_local);
+       
+    hBase_Peak->Fill(base_mV_local,peak_mV_local);
+    hMin_Peak->Fill(min_mV_local,peak_mV_local);
+  
+    if( iEntry > 0 && iEntry < 10000 )
+      hEvent_Base->Fill(iEntry,base_mV_local);
+    
+    // printf("\n event  = %d  \n ",iEntry);
+    // printf("\n min_mV_local = %f  \n ",min_mV_local);
+    
+  }// end: for (int iEntry 
+  
+  SaveBaseline();
+  
 }
 
 void TConvert::InitBaseline(){
@@ -415,18 +544,31 @@ void TConvert::SaveBaseline(string outFolder){
   hBase_Peak->Draw("col");
   
   gPad->SetLogz();
-  
+ 
   outName = outFolder + "hBase_Peak.pdf";
   canvas->SaveAs(outName.c_str());
-
-  //
+  
   hMin_Peak->SetAxisRange(-25.,25.,"X");
   hMin_Peak->SetAxisRange(-5., 45.,"Y");
   
   gPad->SetGrid(1, 1);
   hMin_Peak->Draw("col");
   
+  TLine * lVert = new TLine(-2.5,0,-2.5,10.);
+  TLine * lDiag = new TLine(-5,10,-20,40.);
+  
+  lVert->SetLineStyle(2);
+  lVert->SetLineColor(kBlue);
+  lVert->SetLineWidth(2);
+
+  lDiag->SetLineStyle(2);
+  lDiag->SetLineColor(kBlue);
+  lDiag->SetLineWidth(2);
+
   gPad->SetLogz();
+    
+  lVert->Draw();
+  lDiag->Draw();
   
   outName = outFolder + "hMin_Peak.pdf";
   canvas->SaveAs(outName.c_str());
@@ -461,121 +603,6 @@ void TConvert::SaveBaseline(string outFolder){
 
   DeleteCanvas();
 }
-
-
-
-float TConvert::ADC_To_Wave(short ADC){
-
-  float wave_mV = ADC * Get_mVPerBin();
-  wave_mV -= 1000;
-  
-  if(fPulsePol=='N')
-    wave_mV = -wave_mV;
-  
-  return wave_mV;
-}
-
-bool TConvert::IsSampleInBaseline(short iSample,
-				  short option = 1){
-  
-  float time  = (float)iSample * SampleToTime();
-  float width = 50.;
-
-  switch(option){
-  case(0):
-    width = width + 50; // pulse at beginning of waveform 
-  case(2):
-    time = time - fLength_ns + 50.; // end of waveform
-  }
-  
-  if( time >= 0 && time < width )
-    return true;
-  else
-    return false;
-}
-
-void TConvert::Baseline(){
-    
-  InitBaseline();
-  
-  // duplicates so be careful of scope:
-  // use base_ prefix
-  float base_base_mV = 0.;
-  float base_peak_mV = -1000.;  
-  float base_min_mV = 1000.;  
-  short base_peakSamp = 0;
-
-  short nBaseSamps = 0;
-  float wave_mV = 0.;  
-  
-  for (int iEntry = 0; iEntry < nentries; iEntry++) {
-    fChain->GetEntry(iEntry);
-    
-    base_base_mV = 0.;
-    nBaseSamps = 0;
-    
-    base_peak_mV  = -1000.;
-    base_peakSamp =  0;  
-    
-    base_min_mV =  1000.;
-
-    for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
-      wave_mV = ADC_To_Wave(ADC->at(iSamp));
-      
-      if(wave_mV >= base_peak_mV){
-	base_peak_mV  = wave_mV;
-	base_peakSamp = iSamp;
-      }
-      
-      if(wave_mV < base_min_mV){
-	base_min_mV = wave_mV;
-      }
-            
-      if(IsSampleInBaseline(iSamp,1)){
-	base_base_mV += wave_mV;
-	nBaseSamps++;
-      }
-    }//end: for (short iSamp =
-    
-    // recalculate baseline if peak was in 
-    // standard baseline region
-    if( IsSampleInBaseline(base_peakSamp,0) ){
-      base_base_mV  = 0.;
-      nBaseSamps = 0;
-      for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
-	wave_mV = ADC_To_Wave(ADC->at(iSamp));
-	
-	if(IsSampleInBaseline(iSamp,2)){
-	  base_base_mV += wave_mV;
-	  nBaseSamps++;
-	}
-	
-      }
-    }
-    
-    base_base_mV /= (float)nBaseSamps;
-    hBase->Fill(base_base_mV);
-
-    base_peak_mV  -= base_base_mV;
-    base_min_mV -= base_base_mV;
-    
-    hPeak->Fill(base_peak_mV);
-       
-    hBase_Peak->Fill(base_base_mV,base_peak_mV);
-    hMin_Peak->Fill(base_min_mV,base_peak_mV);
-  
-    if( iEntry > 0 && iEntry < 10000 )
-      hEvent_Base->Fill(iEntry,base_base_mV);
-    
-    // printf("\n event  = %d  \n ",iEntry);
-    // printf("\n base_min_mV = %f  \n ",base_min_mV);
-    
-  }// end: for (int iEntry 
-  
-  SaveBaseline();
-  
-}
-
 
 // Fix histogram binning
 void TConvert::Set_THF_Params(float * minX, 

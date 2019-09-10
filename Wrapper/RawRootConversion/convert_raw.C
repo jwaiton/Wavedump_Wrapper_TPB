@@ -67,7 +67,7 @@ int main(int argc, char * argv[]){
     convert = new TConvert(tree);
     
     int user_nentries = 1000000;
-    //convert->SetTestMode(user_nentries);
+    convert->SetTestMode(user_nentries);
 
     // DAQ info
     // calculate mean trigger rate
