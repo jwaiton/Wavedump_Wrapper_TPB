@@ -67,12 +67,12 @@ int main(int argc, char * argv[]){
     convert = new TConvert(tree);
     
     int user_nentries = 1000000;
-    convert->SetTestMode(user_nentries);
+    //convert->SetTestMode(user_nentries);
 
     // DAQ info
     // calculate mean trigger rate
     // rate,timing and event plots
-    convert->DAQ();
+    //convert->DAQ();
 
     // calibrate to mV and ns
     // subract baseline
@@ -82,11 +82,11 @@ int main(int argc, char * argv[]){
     
     // Noise
     // plot raw variables: min, max, PPV, mean
-    convert->Noise();
+    //convert->Noise();
     
     // Baseline
     // plot: baseline, vs event, peak vs baseline
-    convert->Baseline();
+    //convert->Baseline();
 
     // Dark Count Analysis
     // calculate dark rate
