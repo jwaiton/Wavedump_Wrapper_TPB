@@ -194,7 +194,7 @@ void TConvert::Dark(float thresh_mV){
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     outTree->GetEntry(iEntry);
      
-    if(peak_mV < thresh_mV)
+    if(peak_mV > thresh_mV)
       nDark_noise++;
 
     // Noise Rejection 
