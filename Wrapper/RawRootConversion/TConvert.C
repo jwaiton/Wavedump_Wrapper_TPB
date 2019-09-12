@@ -6,21 +6,38 @@
 
 #include "../BinToRoot/wmStyle.C"
 
-void TConvert::Calibrate(){
+void TConvert::Cook(){
   
-  InitCalibration();
-  CalibrateRaw();
-  InitRawTree();
-  SubtractBaseline();
+  // initialise trees
+  InitCooking();
+
+  // create variables in standard units
+  // and find waveform peak
+  DoCooking();
+
+  SaveCookedData();
+
+}
+
+void TConvert::InitCooking(){
+
+  printf("\n ------------------------------ \n");
+  printf("\n Initialising Cooking \n");
+
+  InitCookedDataFile();
+  InitCookedDataTree();
+
+}
+
+void TConvert::InitCookedData(){
+  
+//   InitCookedDataFile();
+   ConnectToCookedTree();
   
 }
 
-void TConvert::InitCalibration(){
-  
-  printf("\n ------------------------------ \n");
-  printf("\n Initialising Calibration \n");
 
-  SetFileID();
+void TConvert::InitCookedDataFile(){
   
   string fileName = GetFileID();
   fileName += ".root";
@@ -29,22 +46,128 @@ void TConvert::InitCalibration(){
 		      "RECREATE",
 		      fileName.c_str());
   
+
+}
+
+void TConvert::SaveCookedData(){
+
+  cookedTree->Write();
+}
+
+void TConvert::InitCookedDataTree(){
+  
   // ----------
   // Temporary tree for calibrating
-  string treeName = "Raw";
+  string treeName = "Cooked_";
   treeName += GetFileID();
 
-  rawTree = new TTree(treeName.c_str(),treeName.c_str());
+  cookedTree = new TTree(treeName.c_str(),treeName.c_str());
 
-  rawTree->Branch("min_raw_mV",&min_raw_mV,"min_raw_mV/F");
-  rawTree->Branch("max_raw_mV",&max_raw_mV,"max_raw_mV/F");
-  rawTree->Branch("ppV_raw_mV",&ppV_raw_mV,"ppV_raw_mV/F");
-  rawTree->Branch("mean_raw_mV",&mean_raw_mV,"mean_raw_mV/F");
-  rawTree->Branch("peak_samp",&peak_samp,"peak_samp/S");
+  cookedTree->Branch("min_cook_mV",&min_cook_mV,"min_cook_mV/F");
+  cookedTree->Branch("max_cook_mV",&max_cook_mV,"max_cook_mV/F");
+  cookedTree->Branch("ppV_cook_mV",&ppV_cook_mV,"ppV_cook_mV/F");
+  cookedTree->Branch("mean_cook_mV",&mean_cook_mV,"mean_cook_mV/F");
+  cookedTree->Branch("peak_samp",&peak_samp,"peak_samp/S");
+  
+}
+
+void TConvert::DoCooking(){
+  
+  printf("\n ------------------------------ \n");
+  printf("\n Cook Variables                 \n");
+  
+  float wave_cook_mV = 0;
+
+  for (int iEntry = 0; iEntry < nentries; iEntry++) {
+    rawTree->GetEntry(iEntry);
+  
+    min_cook_mV  =  1000.;
+    max_cook_mV  = -1000.;
+    ppV_cook_mV  =  0.;
+    mean_cook_mV =  0.;
+    peak_samp   =  0;
+    
+    for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
+      wave_cook_mV = ADC_To_Wave(ADC->at(iSamp));
+    
+      //printf("\n iSamp       = %d  \n ",iSamp);
+      //printf("\n wave_cook_mV = %f  \n ",wave_cook_mV);
+  
+      // min
+      if( wave_cook_mV < min_cook_mV)
+	min_cook_mV = wave_cook_mV;
+      
+      // max, peak_samp
+      if( wave_cook_mV >= max_cook_mV ){
+	max_cook_mV = wave_cook_mV;
+	peak_samp  = iSamp;
+      }
+      // mean
+      mean_cook_mV += wave_cook_mV;
+    }
+    
+    ppV_cook_mV  = max_cook_mV - min_cook_mV;
+    mean_cook_mV = mean_cook_mV/(float)fNSamples;
+    
+    //printf("\n event       = %d  \n ",iEntry);
+    //printf("\n peak_samp   = %d  \n ",peak_samp);
+    //printf("\n max_cook_mV  = %f  \n ",max_cook_mV);
+    //printf("\n min_cook_mV  = %f  \n ",min_cook_mV);
+
+    cookedTree->Fill();
+  }
+  
+  
+}
+
+
+
+
+//------------------------------
+void TConvert::Calibrate(){
+
+  InitCalibration();
+  
+  DoCalibration();
+  
+  SaveCalibratedData();
+  
+}
+
+void TConvert::InitCalibration(){
+
+  printf("\n ------------------------------ \n");
+  printf("\n Initialising Calibration \n");
+
+  //InitCalibratedDataFile();
+  InitCalibratedDataTree();
+  //ConnectToCookedTree();
+
+}
+
+void TConvert::DoCalibration(){
+  
+  SubtractBaseline();
+  
+}
+
+
+void TConvert::InitCalibratedDataFile(){
+
+  string fileName = GetFileID();
+  fileName += ".root";
+  
+  outFile = new TFile(fileName.c_str(),
+		      "RECREATE",
+		      fileName.c_str());
+  
+}
+
+void TConvert::InitCalibratedDataTree(){
   
   // ----------
   // Output event tree for saving calibrated data
-  treeName = "Events_";
+  string treeName = "Events_";
   treeName += GetFileID();
   treeName += ".root";
   
@@ -52,7 +175,7 @@ void TConvert::InitCalibration(){
 
   outTree = new TTree(treeName.c_str(),treeName.c_str());
 
-  outTree->Branch("min_mV",&min_mV,"min_raw_mV/F");
+  outTree->Branch("min_mV",&min_mV,"min_mV/F");
   outTree->Branch("peak_mV",&peak_mV,"peak_mV/F");
   outTree->Branch("base_mV",&base_mV,"base_mV/F");
   outTree->Branch("peak_time_ns",&peak_time_ns,"peak_time_ns/F");
@@ -64,6 +187,14 @@ void TConvert::InitCalibration(){
   // To Do
 }
 
+void TConvert::SaveCalibratedData(){
+  
+  outTree->Write();
+  //outFile->Delete();  
+}
+
+
+////
 void TConvert::SetFileID(){
 
   //!!! Temporary
@@ -77,55 +208,14 @@ string TConvert::GetFileID(){
   
 }
 
-void TConvert::CalibrateRaw(){
-  
-  printf("\n ------------------------------ \n");
-  printf("\n  Raw Calibration               \n");
-  
-  float wave_raw_mV = 0;
-
-  for (int iEntry = 0; iEntry < nentries; iEntry++) {
-    fChain->GetEntry(iEntry);
-  
-    min_raw_mV  =  1000.;
-    max_raw_mV  = -1000.;
-    ppV_raw_mV  =  0.;
-    mean_raw_mV =  0.;
-    peak_samp   =  0;
-    
-    for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
-      wave_raw_mV = ADC_To_Wave(ADC->at(iSamp));
-    
-      //printf("\n iSamp       = %d  \n ",iSamp);
-      //printf("\n wave_raw_mV = %f  \n ",wave_raw_mV);
-  
-      // min
-      if( wave_raw_mV < min_raw_mV)
-	min_raw_mV = wave_raw_mV;
-      
-      // max, peak_samp
-      if( wave_raw_mV >= max_raw_mV ){
-	max_raw_mV = wave_raw_mV;
-	peak_samp  = iSamp;
-      }
-      // mean
-      mean_raw_mV += wave_raw_mV;
-    }
-    
-    ppV_raw_mV  = max_raw_mV - min_raw_mV;
-    mean_raw_mV = mean_raw_mV/(float)fNSamples;
-    
-    //printf("\n event       = %d  \n ",iEntry);
-    //printf("\n peak_samp   = %d  \n ",peak_samp);
-    //printf("\n max_raw_mV  = %f  \n ",max_raw_mV);
-    //printf("\n min_raw_mV  = %f  \n ",min_raw_mV);
-
-    rawTree->Fill();
-  }
-  
-  rawTree->Write();
-  
+string TConvert::GetCookedTreeID(){
+  return "Cooked_" + GetFileID();  
 }
+
+string TConvert::GetCalibratedTreeID(){
+  return "Calibrated_" + GetFileID();  
+}
+
 
 void TConvert::SubtractBaseline(){
 
@@ -137,7 +227,7 @@ void TConvert::SubtractBaseline(){
 
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     
-    fChain->GetEntry(iEntry);
+    rawTree->GetEntry(iEntry);
     
     nBaseSamps = 0;
     base_mV    = 0.;
@@ -168,14 +258,14 @@ void TConvert::SubtractBaseline(){
 
     base_mV /= (float)nBaseSamps;
     
-    min_mV  = min_raw_mV - base_mV;
-    peak_mV = max_raw_mV - base_mV;
+    min_mV  = min_cook_mV - base_mV;
+    peak_mV = max_cook_mV - base_mV;
     
     peak_time_ns = peak_samp * f_nsPerSamp;
 
     outTree->Fill();
 
-    // printf("\n min_raw_mV = %f  \n ",min_raw_mV);
+    // printf("\n min_cook_mV = %f  \n ",min_cook_mV);
     // printf("\n event     = %d  \n ",iEntry);
     // printf("\n peak_samp = %d  \n ",peak_samp);
     // printf("\n base_mV   = %f  \n ",base_mV);
@@ -219,7 +309,7 @@ void TConvert::Dark(float thresh_mV){
   
   printf("\n \n nentries = %d \n",nentries);
   printf("\n dark counts (noise rejected) = %d \n",nDark);
-  printf("\n dark rate   (noise rejected) = %.0f \n\n",darkRate);
+  printf("\n dark rate   (noise rejected) = %.0f \n",darkRate);
   
   darkRate = (float)nDark_noise/nentries;
   darkRate = darkRate/fLength_ns * 1.0e9;
@@ -331,9 +421,6 @@ void TConvert::SaveDark(string outFolder){
 }
 
 
-
-
-
 float TConvert::ADC_To_Wave(short ADC){
 
   float wave_mV = ADC * Get_mVPerBin();
@@ -379,7 +466,7 @@ void TConvert::Baseline(){
   float wave_mV = 0.;  
   
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
-    fChain->GetEntry(iEntry);
+    rawTree->GetEntry(iEntry);
     
     min_mV_local  =  1000.;
     peak_mV_local = -1000.;
@@ -634,32 +721,46 @@ void TConvert::DeleteCanvas(){
   delete canvas;
 }
 
+double TConvert::GetTrigTimeTag() {
 
-float TConvert::GetTrigTimeTag(int entry) {
-
-  b_HEAD->GetEntry(entry);
-
-  return (float)8.E-9*HEAD[5];
+  unsigned int TTT;
+   
+  // limit to 31 bits 
+  if( HEAD[5] > (unsigned int)INT_MAX )
+    TTT = HEAD[5] - INT_MAX;
+  else
+    TTT = HEAD[5];
+  
+  return (double)TTT*8.E-9;
 }
 
-float TConvert::GetElapsedTime(const int entry, 
-			       int  * cycles,
-			       float prevTime) {
-  
-  b_HEAD->GetEntry(entry);
-  
-  float time = GetTrigTimeTag(entry);
-  time += 8.E-9*UINT_MAX/2*(*cycles); 
+double TConvert::GetTrigTimeTag(int entry) {
 
+  b_HEAD->GetEntry(entry);
+
+  return GetTrigTimeTag();
+}
+
+double TConvert::GetElapsedTime(int * cycles,
+				double prevTime) {
+
+  double time = GetTrigTimeTag();
+  
+  // range is 31 bit with 8 ns LSB = 17.18 seconds 
+  // using half range of INT here
+  double range = ((double)(INT_MAX)+1.0)*8.E-9;
+  
+  time += range*(double)(*cycles); 
+  
   if(time < prevTime){
-    time += 8.E-9*UINT_MAX/2; // add 17 seconds 
+    time += range; 
     (*cycles)+= 1;
   }
   
   time -= startTime;
-
+  
   //printf("\n time = %f \n",time);
-
+  
   return time;
 }
 
@@ -822,7 +923,7 @@ float TConvert::SampleToTime(){
 
 short TConvert::SetNSamples(){
   
-  fChain->GetEntry(0);   
+  rawTree->GetEntry(0);   
   
   uint hdrByts = 24;
   uint smpByts = HEAD[0] - hdrByts;
@@ -885,26 +986,25 @@ void TConvert::SetStyle(){
 }
 
 
-
 void TConvert::Noise(){
-  
+
   InitNoise();
   
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
-    rawTree->GetEntry(iEntry);
+    cookedTree->GetEntry(iEntry);
 
-    //printf(" \n mean_raw_mV = %f \n", mean_raw_mV);
+    //printf(" \n mean_cook_mV = %f \n", mean_cook_mV);
     
-    hMean_Raw->Fill(mean_raw_mV);
-    hPPV_Raw->Fill(ppV_raw_mV);
-    hMaxRaw->Fill(max_raw_mV);
-    hMinRaw->Fill(min_raw_mV);
-    hMin_Max_Raw->Fill(min_raw_mV,max_raw_mV);
-
+    hMean_Cooked->Fill(mean_cook_mV);
+    hPPV_Cooked->Fill(ppV_cook_mV);
+    hMax_Cooked->Fill(max_cook_mV);
+    hMin_Cooked->Fill(min_cook_mV);
+    hMin_Max_Cooked->Fill(min_cook_mV,max_cook_mV);
     
-  }// end: for (int iEntry = 0;
+   }// end: for (int iEntry = 0;
 
   SaveNoise();
+
 }
 
 void TConvert::InitNoise(){
@@ -920,28 +1020,28 @@ void TConvert::InitNoise(){
   // fix binning and set number of bins
   Set_THF_Params(&minX,&maxX,&mVPerBin,&nBins);
   
-  hMean_Raw = new TH1F("hMean_Raw",
-		   ";raw mean voltage (mV);Counts",
+  hMean_Cooked = new TH1F("hMean_Cooked",
+		   ";mean voltage (mV) [cooked];Counts",
 		   nBins,minX,maxX);
 
-  hMaxRaw =  new TH1F("hMaxRaw",
-		   ";raw max voltage (mV);Counts",
+  hMax_Cooked =  new TH1F("hMax_Cooked",
+		   ";raw max voltage (mV) [cooked];Counts",
 		   nBins,minX,maxX);
   
-  hMinRaw =  new TH1F("hMinRaw",
-		   ";raw min voltage (mV);Counts",
+  hMin_Cooked =  new TH1F("hMin_Cooked",
+		   ";raw min voltage (mV) [cooked];Counts",
 		   nBins,minX,maxX);
   
-//   printf("\n nBins    = %d \n",nBins);
+  //   printf("\n nBins    = %d \n",nBins);
 //   printf("\n minX   = %f \n",minX);
 //   printf("\n maxX   = %f \n",maxX);
 //   printf("\n mVPerBin = %f \n",mVPerBin);
 //   printf("\n Get_mVPerBin() = %f \n",Get_mVPerBin());
 
-  hMin_Max_Raw =  new TH2F("hMin_Max_Raw",
-		       "max vs min before baseline sub.;raw min voltage (mV);raw max voltage (mV)",
-		       nBins,minX,maxX,
-		       nBins,minX,maxX);
+  hMin_Max_Cooked =  new TH2F("hMin_Max_Cooked",
+			      "max vs min before baseline sub.; min voltage (mV) [cooked];max voltage (mV) [cooked]",
+			      nBins,minX,maxX,
+			      nBins,minX,maxX);
 
   // prepare for range starting at zero
   minX = 0.0;
@@ -950,11 +1050,9 @@ void TConvert::InitNoise(){
   
   Set_THF_Params(&minX,&maxX,&mVPerBin,&nBins);
 
-  hPPV_Raw =  new TH1F("hPPV_Raw",
-		   ";raw peak to peak voltage (mV);Counts",
+  hPPV_Cooked =  new TH1F("hPPV_Cooked",
+		   ";peak to peak voltage (mV) [cooked];Counts",
 		   nBins,minX,maxX);
- 
-  
 
 }
 
@@ -965,41 +1063,41 @@ void TConvert::SaveNoise(string outFolder){
   
   gPad->SetLogy();
   
-  hMean_Raw->SetAxisRange(-100., 100.,"X");
-  hMean_Raw->SetMinimum(0.1);
-  hMean_Raw->Draw();
+  hMean_Cooked->SetAxisRange(-100., 100.,"X");
+  hMean_Cooked->SetMinimum(0.1);
+  hMean_Cooked->Draw();
 
-  string outName = outFolder + "hMean_Raw.pdf";
+  string outName = outFolder + "hMean_Cooked.pdf";
   canvas->SaveAs(outName.c_str());  
   
-  hPPV_Raw->SetAxisRange(-50.0, 250.,"X");
-  hPPV_Raw->SetMinimum(0.1);
-  hPPV_Raw->Draw();
+  hPPV_Cooked->SetAxisRange(-50.0, 250.,"X");
+  hPPV_Cooked->SetMinimum(0.1);
+  hPPV_Cooked->Draw();
   
-  outName = outFolder + "hPPV_Raw.pdf";
+  outName = outFolder + "hPPV_Cooked.pdf";
   canvas->SaveAs(outName.c_str());
   
-  hMaxRaw->SetAxisRange(-50., 100.,"X");
-  hMaxRaw->SetMinimum(0.1);
-  hMaxRaw->Draw();
-  outName = outFolder + "hMaxRaw.pdf";
+  hMax_Cooked->SetAxisRange(-50., 100.,"X");
+  hMax_Cooked->SetMinimum(0.1);
+  hMax_Cooked->Draw();
+  outName = outFolder + "hMax_Cooked.pdf";
   canvas->SaveAs(outName.c_str());
   
-  hMinRaw->SetAxisRange(-100., 50.,"X");
-  hMinRaw->SetMinimum(0.1);
-  hMinRaw->Draw();
-  outName = outFolder + "hMinRaw.pdf";
+  hMin_Cooked->SetAxisRange(-100., 50.,"X");
+  hMin_Cooked->SetMinimum(0.1);
+  hMin_Cooked->Draw();
+  outName = outFolder + "hMin_Cooked.pdf";
   canvas->SaveAs(outName.c_str());
   
   gPad->SetLogy(false);
   gPad->SetLogz();
   
-  hMin_Max_Raw->SetAxisRange(-15., 15.,"X");
-  hMin_Max_Raw->SetAxisRange(-15., 50.,"Y");
+  hMin_Max_Cooked->SetAxisRange(-15., 15.,"X");
+  hMin_Max_Cooked->SetAxisRange(-15., 50.,"Y");
   
-  hMin_Max_Raw->Draw("colz");
+  hMin_Max_Cooked->Draw("colz");
 
-  outName = outFolder + "hMin_Max_Raw.pdf";
+  outName = outFolder + "hMin_Max_Cooked.pdf";
   canvas->SaveAs(outName.c_str());
 
   gPad->SetLogz(false);
@@ -1015,8 +1113,8 @@ void TConvert::SaveNoise(string outFolder){
 
   InitDAQ();
   
-  float time     = 0;
-  float prevTime = 0;
+  double time     = 0;
+  double prevTime = 0;
   
   int trigCycles    = 0;
   int trigEntry     = 0;
@@ -1026,20 +1124,20 @@ void TConvert::SaveNoise(string outFolder){
   int nRateEvents = (int)round(nentries/100); // how many to average
 
   int    deltaEvents = 0;
-  float  deltaT      = 0.;
+  double  deltaT      = 0.;
   double dTime       = 0.; // time between events
 
-  float  eventRate = 0.;
+  double  eventRate = 0.;
   double meanRate  = 0.;
 
   int nbytes = 0, nb = 0;
 
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
-    nb = fChain->GetEntry(iEntry);   nbytes += nb;    
+    nb = rawTree->GetEntry(iEntry);   nbytes += nb;    
     
     //-----------------------------
     // Process Header Information
-    time = GetElapsedTime(iEntry,&trigCycles,prevTime);
+    time = GetElapsedTime(&trigCycles,prevTime);
     
 //     printf("\n prevTime = %f \n\n",prevTime);
 //     printf("\n time     = %f \n\n",time);
@@ -1051,7 +1149,7 @@ void TConvert::SaveNoise(string outFolder){
     deltaT   += dTime;   // integrated time
     trigEntry = HEAD[4]; // absolute entry number
     
-    hTT_EC->Fill(GetTrigTimeTag(iEntry),trigEntry);
+    hTT_EC->Fill(GetTrigTimeTag(),trigEntry);
 
     deltaEvents++; // integrated event count
     dTrigEntry    = trigEntry - prevTrigEntry;
@@ -1090,7 +1188,7 @@ void TConvert::SaveNoise(string outFolder){
   meanRate = meanRate/nentries;
   
   //printf("\n mean event rate = %.2f kHz \n",meanRate);
-  printf("\n mean trig freq  = %.2f kHz \n\n",hTrigFreq->GetMean());
+  printf("\n Mean trigger frequency is %.2f kHz \n\n",hTrigFreq->GetMean());
   
   SaveDAQ();
 
@@ -1133,16 +1231,16 @@ void TConvert::InitDAQ(){
   //----
   // hTT_EC
   float minClock   = 0.0;
-  float maxClock   = 35.0;
+  float maxClock   = ((float)(INT_MAX)+1.0)*8.E-9;
   int   nClockBins = (int)round(UINT_MAX/1000000) + 1; 
   float secsPerClockBin = 0.;
   
   Set_THF_Params(&minClock,&maxClock,&secsPerClockBin,&nClockBins);
   
-  fChain->GetEntry(0);
+  rawTree->GetEntry(0);
   float firstEntry = HEAD[4];
   
-  fChain->GetEntry(nentries-1);
+  rawTree->GetEntry(nentries-1);
   float lastEntry  = HEAD[4];
 
   float entriesPerBin = 1000.;

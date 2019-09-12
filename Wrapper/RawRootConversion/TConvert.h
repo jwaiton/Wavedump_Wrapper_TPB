@@ -2,7 +2,7 @@
 #define TConvert_h
 
 #include <TROOT.h>
-#include <TChain.h>
+#include <TTree.h>
 #include <TFile.h>
 #include <TH2.h>
 #include <TCanvas.h>
@@ -18,8 +18,8 @@ class TConvert {
 public :
 
   // Input variables
-   TTree *fChain;
-   int   fCurrent;
+   TTree *rawTree;
+   int   treeNumber;
 
    uint HEAD[6];
    
@@ -28,23 +28,22 @@ public :
    TBranch * b_HEAD = 0;  
    TBranch * b_ADC  = 0;   
    
-   
    TFile * outFile;
 
    // Intermediate processing variables 
    // not written 
    
-   TTree * rawTree;
+   TTree * cookedTree;
    
-   float min_raw_mV;
-   float max_raw_mV;
-   float ppV_raw_mV;
-   float mean_raw_mV;
+   float min_cook_mV;
+   float max_cook_mV;
+   float ppV_cook_mV;
+   float mean_cook_mV;
 
-   TBranch * b_min_raw_mV = 0;  
-   TBranch * b_max_raw_mV = 0;  
-   TBranch * b_ppV_raw_mV = 0;  
-   TBranch * b_mean_raw_mV = 0;  
+   TBranch * b_min_cook_mV = 0;  
+   TBranch * b_max_cook_mV = 0;  
+   TBranch * b_ppV_cook_mV = 0;  
+   TBranch * b_mean_cook_mV = 0;  
 
    // Output (to save)
    TTree * outTree;
@@ -79,28 +78,44 @@ public :
    virtual int  LoadTree(int entry);
    virtual bool Init(TTree *tree);
    virtual void Show(int entry = -1);
-
-   bool InitRawTree();
    
    void InitCanvas(float w = 1000.,
 		   float h = 800.);
    void DeleteCanvas();
-   
-   void  InitCalibration();
-   void  Calibrate();
-   
+
    void   SetFileID();
    string GetFileID();
-
-   void  CalibrateRaw();
-   void  SubtractBaseline();
-
-   float GetRange_mV();
-   float Get_mVPerBin();
-      
-   float ADC_To_Wave(short ADC);
+   
+   string GetCookedTreeID();
+   string GetCalibratedTreeID();
 
    void  PrintConstants();
+   
+   // limit entries for faster testing
+   void  SetTestMode(int);
+
+   //--------------------------
+   // Cooking 
+   void  Cook();
+   
+   void  InitCooking();
+   void  InitCookedDataFile();
+   void  InitCookedDataTree();
+
+   // init file and connect to tree
+   void  InitCookedData();
+   void  CloseCookedData();
+   
+   void  DoCooking();
+   void  SaveCookedData();
+   
+   float ADC_To_Wave(short ADC);
+   float GetRange_mV();
+   float Get_mVPerBin();
+   int   Get_peakSample(int entry); 
+   float Get_peakT_ns(int entry); 
+
+
 
    //---   
    // Study of DAQ
@@ -108,7 +123,15 @@ public :
    
    void  InitDAQ();
    void  SaveDAQ(string outFolder = "./Plots/DAQ/");
-  
+
+   double GetTrigTimeTag();
+   double GetTrigTimeTag(int entry);
+   
+   double GetElapsedTime(int * cycles,
+			 double prevTime);
+   
+   void  CountMissedEvents(int dTrigEntry);
+
    //---
    // Study of Noise
    void  Noise();
@@ -125,27 +148,32 @@ public :
 
    bool  IsSampleInBaseline(short i, short option);
 
-   //---
+   //--------------------------
+   // Calibration
+   void  Calibrate();
+   
+   void  InitCalibration();
+   void  InitCalibratedDataFile();
+   void  InitCalibratedDataTree();
+   bool  ConnectToCookedTree();
+   
+   void  DoCalibration();
+   void  SubtractBaseline();
+   
+   void  SaveCalibratedData();
+   
+
+   //----
+   // Study of Dark Counts
    void  Dark(float thresh_mV = 10.);
    
    void  InitDark();
    void  SaveDark(string outFolder = "./Plots/Dark/");
+
    //
-
-   float GetTrigTimeTag(int entry);
-   
-   float GetElapsedTime(const int entry, 
-			 int  * cycles,
-			 float prevElapsedTime);
-
-   void CountMissedEvents(int dTrigEntry);
-
-   int   Get_peakSample(int entry); 
-   float Get_peakT_ns(int entry); 
-
    void  PrintVec(vector<short> & myVec);
    
-   void  SetTestMode(int);
+
    
  private:
 
@@ -187,13 +215,13 @@ public :
    TH2F * hTT_EC       = nullptr;
 
    // Noise
-   TH1F * hMean_Raw = nullptr;
-   TH1F * hPPV_Raw  = nullptr;
+   TH1F * hMean_Cooked = nullptr;
+   TH1F * hPPV_Cooked  = nullptr;
 
-   TH1F * hMinRaw = nullptr;
-   TH1F * hMaxRaw = nullptr;
+   TH1F * hMin_Cooked = nullptr;
+   TH1F * hMax_Cooked = nullptr;
 
-   TH2F * hMin_Max_Raw = nullptr;
+   TH2F * hMin_Max_Cooked = nullptr;
    
    // Baseline
    TH1F * hBase = nullptr;
@@ -244,56 +272,46 @@ public :
 TConvert::TConvert(TTree *tree,
 		   char digitiser,
 		   char sampSet,
-		   char pulsePol) : fChain(0) 
+		   char pulsePol) : rawTree(0) 
 {
-// if parameter tree is not specified (or zero), connect the file
-// used to generate this class and read the Tree.
-   if (tree == 0) {
-
-     printf(" Tree is zero ");
-
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("wave_0.dat.root");
-      if (!f || !f->IsOpen()) {
-         f = new TFile("wave_0.dat.root");
-      }
-      f->GetObject("T",tree);
-
-   }
-   
-   SetDigitiser(digitiser); 
-   SetSampSet(sampSet); // for desktop digitiser
-
-   SetPulsePol(pulsePol); 
-   
-   bool success = Init(tree);
-   
-   if(!success)
-     fprintf( stderr, "\n Error: Init failed with this file \n");
-   
-   PrintConstants();
-
+  
+  if (tree == 0)
+    fprintf( stderr, "\n Error: No Tree");
+  
+  SetDigitiser(digitiser); 
+  SetSampSet(sampSet); // for desktop digitiser
+  
+  SetPulsePol(pulsePol); 
+  
+  bool success = Init(tree);
+  
+  if(!success)
+    fprintf( stderr, "\n Error: Init failed with this file \n");
+  
+  //PrintConstants();
+  
 }
 
 TConvert::~TConvert()
 {
-   if (!fChain) return;
-   delete fChain->GetCurrentFile();
+   if (!rawTree) return;
+   delete rawTree->GetCurrentFile();
 }
 
 int TConvert::GetEntry(int entry)
 {
 // Read contents of entry.
-   if (!fChain) return 0;
-   return fChain->GetEntry(entry);
+   if (!rawTree) return 0;
+   return rawTree->GetEntry(entry);
 }
 int TConvert::LoadTree(int entry)
 {
 // Set the environment to read one entry
-   if (!fChain) return -5;
-   int centry = fChain->LoadTree(entry);
+   if (!rawTree) return -5;
+   int centry = rawTree->LoadTree(entry);
    if (centry < 0) return centry;
-   if (fChain->GetTreeNumber() != fCurrent) {
-      fCurrent = fChain->GetTreeNumber();
+   if (rawTree->GetTreeNumber() != treeNumber) {
+      treeNumber = rawTree->GetTreeNumber();
    }
    return centry;
 }
@@ -314,19 +332,19 @@ bool TConvert::Init(TTree *tree)
     fprintf( stderr, "\n Error: tree not loaded \n ");
     return false;
   }
-  fChain = tree;
+  rawTree = tree;
 
-  fCurrent = -1;
-  fChain->SetMakeClass(1);
-  fChain->SetBranchAddress("HEAD",HEAD, &b_HEAD);
-  fChain->SetBranchAddress("ADC",&ADC, &b_ADC);
+  treeNumber = -1;
+  rawTree->SetMakeClass(1);
+  rawTree->SetBranchAddress("HEAD",HEAD, &b_HEAD);
+  rawTree->SetBranchAddress("ADC",&ADC, &b_ADC);
   
-  if (fChain == 0){
-    fprintf(stderr,"\n Error, fChain == 0 \n ");
+  if (rawTree == 0){
+    fprintf(stderr,"\n Error, rawTree == 0 \n ");
     return false;
   }
   
-  nentries64_t = fChain->GetEntriesFast();
+  nentries64_t = rawTree->GetEntriesFast();
   
   if( nentries64_t > INT_MAX ){
     fprintf(stderr,
@@ -342,6 +360,8 @@ bool TConvert::Init(TTree *tree)
   // conversion factors
   SetConstants();
 
+  SetFileID();
+
   SetStyle();
 
   InitCanvas();
@@ -353,32 +373,34 @@ bool TConvert::Init(TTree *tree)
   return true;
 }
 
-bool TConvert::InitRawTree()
+bool TConvert::ConnectToCookedTree()
 {
   printf("\n ------------------------------ \n");
-  printf("\n  Initialising Raw Tree \n");
+  printf("\n Initialising Cooked Tree \n");
+
+  //outFile->GetObject(GetCookedTreeID().c_str(),cookedTree);
   
-  if (!rawTree){
-    fprintf( stderr, "\n Error: no raw tree  \n ");
+  if (!cookedTree){
+    fprintf( stderr, "\n Error: no cooked tree  \n ");
     return false;
   }
 
-  rawTree->SetBranchAddress("min_raw_mV",&min_raw_mV, &b_min_raw_mV);
-  rawTree->SetBranchAddress("max_raw_mV",&max_raw_mV, &b_max_raw_mV);
-  rawTree->SetBranchAddress("ppV_raw_mV",&ppV_raw_mV, &b_ppV_raw_mV);
-  rawTree->SetBranchAddress("mean_raw_mV",&mean_raw_mV, &b_mean_raw_mV);
+  cookedTree->SetBranchAddress("min_cook_mV",&min_cook_mV, &b_min_cook_mV);
+  cookedTree->SetBranchAddress("max_cook_mV",&max_cook_mV, &b_max_cook_mV);
+  cookedTree->SetBranchAddress("ppV_cook_mV",&ppV_cook_mV, &b_ppV_cook_mV);
+  cookedTree->SetBranchAddress("mean_cook_mV",&mean_cook_mV, &b_mean_cook_mV);
   
-  rawTree->SetBranchAddress("peak_samp",&peak_samp, &b_peak_samp);
+  cookedTree->SetBranchAddress("peak_samp",&peak_samp, &b_peak_samp);
 
-  fChain->AddFriend(rawTree);
+  rawTree->AddFriend(cookedTree);
   
   return true;
 }
 
 void TConvert::Show(int entry)
 {
-   if (!fChain) return;
-   fChain->Show(entry);
+   if (!rawTree) return;
+   rawTree->Show(entry);
 }
 
 

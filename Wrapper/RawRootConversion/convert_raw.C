@@ -66,27 +66,39 @@ int main(int argc, char * argv[]){
     // from input file
     convert = new TConvert(tree);
     
-    int user_nentries = 1000000;
+    int user_nentries = 100000;
     convert->SetTestMode(user_nentries);
-
+    
     // DAQ info
     // calculate mean trigger rate
     // rate,timing and event plots
     convert->DAQ();
-
-    // calibrate to mV and ns
-    // subract baseline
+    
+    //-------------------
+    // Cooking
+    
+    // cook to mV and ns
     // find peak voltage
     // and peak sample
-    convert->Calibrate();
+    convert->Cook();
+
+    //-------------------
     
-    // Noise
+    convert->InitCookedData();
+    
+    // Noise study
     // plot raw variables: min, max, PPV, mean
     convert->Noise();
     
-    // Baseline
+    // Baseline study
     // plot: baseline, vs event, peak vs baseline
     convert->Baseline();
+    
+    //-------------------
+    // Calibration
+    
+    // subtract baseline
+    convert->Calibrate();
 
     // Dark Count Analysis
     // calculate dark rate
@@ -94,9 +106,7 @@ int main(int argc, char * argv[]){
     // plot peak, peak vs min after noise rejection
     convert->Dark();
     
-    //tree->Delete();
-    //inFile->Close();
-    //inFile->Delete();
+    inFile->Delete();
   }
   
   return 1;
