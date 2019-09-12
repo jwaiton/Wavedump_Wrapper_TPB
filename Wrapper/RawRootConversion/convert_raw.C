@@ -80,10 +80,14 @@ int main(int argc, char * argv[]){
     // cook to mV and ns
     // find peak voltage
     // and peak sample
+    //
+    // write tree to file
+    // (which remains open)
     convert->Cook();
-
+    
     //-------------------
     
+    // (connect to tree)
     convert->InitCookedData();
     
     // Noise study
@@ -98,6 +102,9 @@ int main(int argc, char * argv[]){
     // Calibration
     
     // subtract baseline
+    // write tree to same
+    // file as cookedTree
+    // (which remains open)
     convert->Calibrate();
 
     // Dark Count Analysis
@@ -105,6 +112,9 @@ int main(int argc, char * argv[]){
     // reject noise 
     // plot peak, peak vs min after noise rejection
     convert->Dark();
+    
+    // Delete outFile pointer
+    convert->End();
     
     inFile->Delete();
   }

@@ -193,6 +193,10 @@ void TConvert::SaveCalibratedData(){
   //outFile->Delete();  
 }
 
+void TConvert::End(){
+  
+  outFile->Delete();  
+}
 
 ////
 void TConvert::SetFileID(){

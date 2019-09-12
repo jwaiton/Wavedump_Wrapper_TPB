@@ -161,6 +161,10 @@ public :
    void  SubtractBaseline();
    
    void  SaveCalibratedData();
+
+
+   ///
+   void  End();
    
 
    //----
