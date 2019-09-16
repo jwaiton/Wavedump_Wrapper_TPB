@@ -180,8 +180,9 @@ void PMTAnalyser::PlotFFT(Long64_t entry){
   hName += ".png";
   canvas->SaveAs(hName);
   
-  string sysCommand = "open ";
+  string sysCommand = "okular ";
   sysCommand += hName;
+  sysCommand += " &";
   system(sysCommand.c_str());
   
   hFFT->Delete();
@@ -260,8 +261,9 @@ void PMTAnalyser::PlotWaveform(Long64_t entry){
   hName += ".png";
   canvas->SaveAs(hName);
 
-  string sysCommand = "open ";
+  string sysCommand = "okular ";
   sysCommand += hName;
+  sysCommand += " &";
   system(sysCommand.c_str());
 
   hWave->Delete();

@@ -10,6 +10,7 @@
 #include <limits.h>
 
 #include <vector>
+#include <limits.h>
 
 class TConvert {
 public :
@@ -20,10 +21,10 @@ public :
    
    std::vector<short> * ADC  = 0;
    std::vector<float> * wave = 0;
-
+   
    TBranch *b_HEAD = 0;  
    TBranch *b_ADC  = 0;   
-
+   
    // event counter
    int   EC = 0; 
    float trigTimeTag = 0; //  (16 ns resolution)
@@ -41,25 +42,29 @@ public :
    void  ProcessEntries();
    void  ADC_Loop();
 
-   //---   
-   void  GetDAQInfo();
-   
-   void  BeforeDAQ();
-   void  AfterDAQ();
-   
-   void  InitHistosDAQ();
-   void  SaveHistosDAQ(std::string outFolder = "./Plots/DAQ/");
-   //---
+   float ADC_To_Wave(short ADC);
 
+   //---   
+   void  DAQInfo();
+   
+   void  PrintConstants();
+   
+   void  InitDAQ();
+   void  SaveDAQ(std::string outFolder = "./Plots/DAQ/");
+   
+   //---
    void  Noise();
 
-   void  PrintConstants();
+   void  InitNoise();
+   void  SaveNoise(std::string outFolder = "./Plots/Noise/");
 
-   double GetTrigTimeTag(int entry);
+   //---
+
+   float GetTrigTimeTag(int entry);
    
-   double GetElapsedTime(const int entry, 
+   float GetElapsedTime(const int entry, 
 			 int  * cycles,
-			 double prevElapsedTime);
+			 float prevElapsedTime);
 
    void CountMissedEvents(int dTrigEntry);
 
@@ -68,8 +73,6 @@ public :
 
    void  PrintVec(std::vector<short> & myVec);
 
-   int   nMissedEvents;
-
  private:
 
    // default or user input
@@ -77,7 +80,7 @@ public :
    char   fSampSet;
    char   fPulsePol;
    
-   // set using above
+   // default or set using above
    short  fSampFreq;
 
    // set using header info
@@ -91,19 +94,27 @@ public :
    
    // calculate
    float  f_nsPerSamp;
-   
    float  f_mVPerBin;
-   
    float  fLength_ns;
 
-   Long64_t nentries64_t;
-   int    nentries;
-   double startTime;
+   // only accommodating int size here
+   Long64_t nentries64_t; // dummy
+   int      nentries;
 
+   // DAQ
+   float  startTime;
+   int    nMissedEvents;
+   
    TH1F * hNEventsTime = nullptr;
    TH1F * hEventRate   = nullptr;
    TH1F * hTrigFreq    = nullptr;
    TH2F * hTT_EC       = nullptr;
+
+   // Noise
+   TH1F * hMean_mV  = nullptr;
+   TH1F * hPPV      = nullptr;
+   TH1F * hPeak     = nullptr;
+   TH2F * hMin_Max  = nullptr;
 
    TCanvas * canvas    = nullptr;
 

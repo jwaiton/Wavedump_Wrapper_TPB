@@ -94,7 +94,7 @@ int main(int argc, char **argv){
   unsigned int PN = 0; // Pattern (VME)
   unsigned int CL = 0; // Channel
   unsigned int EC = 0; // Event Counter
-  unsigned int TT = 0; // Trigger Time Tag
+  //unsigned int TT = 0; // Trigger Time Tag
   
   short buffer   = 0;
 
@@ -148,7 +148,7 @@ int main(int argc, char **argv){
     PN = HEAD[2]; // Pattern (VME)
     CL = HEAD[3]; // Channel
     EC = HEAD[4]; // Event Counter
-    TT = HEAD[5]; // Trigger Time Tag
+    //TT = HEAD[5]; // Trigger Time Tag
 	
     if( nEntries==0 ){
       firstEntry = EC;
@@ -164,7 +164,7 @@ int main(int argc, char **argv){
       }
       
       if( verbosity > 1 )
-	for (int i = 0 ; i < NS ; i++)
+	for (int i = 0 ; i < (int)NS ; i++)
 	  printf("\n ADC[%d] = %d \n",i,ADC.at(i));
     }
     else if ( (NS <= 1000  && EC%500000 == 0) ||
@@ -174,7 +174,7 @@ int main(int argc, char **argv){
 
     // skip last iteration as it  
     // takes previous event values
-    if( EC == lastEntry){
+    if( (int)EC == lastEntry){
       break;
     }
     
