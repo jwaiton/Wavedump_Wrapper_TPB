@@ -462,6 +462,7 @@ void TConvert::Baseline(){
   // duplicates so be careful of scope:
   // use local_ prefix
   float base_mV_local = 0.;
+  float prev_base_mV_local = 0.;
   float peak_mV_local = -1000.;  
   float min_mV_local  = 1000.;  
   short peak_samp_local = 0;
@@ -513,8 +514,18 @@ void TConvert::Baseline(){
       }
     }
     
+    // use previous baseline if current 
+    // baseline is out or range
+
     base_mV_local /= (float)nBaseSamps;
+
+//     if( TMath::Abs(base_mV_local - prev_base_mV_local) > 5.0 &&
+// 	iEntry > 9 )
+//       base_mV_local = prev_base_mV_local;
+    
     hBase->Fill(base_mV_local);
+    
+    prev_base_mV_local = base_mV_local;
 
     peak_mV_local -= base_mV_local;
     min_mV_local  -= base_mV_local;
@@ -630,7 +641,7 @@ void TConvert::SaveBaseline(string outFolder){
   gPad->SetLogy(false);
 
   hBase_Peak->SetAxisRange(-25.,25.,"X");
-  hBase_Peak->SetAxisRange(-5., 45.,"Y");
+  hBase_Peak->SetAxisRange(-5., 65.,"Y");
   
   hBase_Peak->Draw("col");
   
@@ -639,8 +650,8 @@ void TConvert::SaveBaseline(string outFolder){
   outName = outFolder + "hBase_Peak.pdf";
   canvas->SaveAs(outName.c_str());
   
-  hMin_Peak->SetAxisRange(-25.,25.,"X");
-  hMin_Peak->SetAxisRange(-5., 45.,"Y");
+  hMin_Peak->SetAxisRange(-25.,5.,"X");
+  hMin_Peak->SetAxisRange(-5., 65.,"Y");
   
   gPad->SetGrid(1, 1);
   hMin_Peak->Draw("col");

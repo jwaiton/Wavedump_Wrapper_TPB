@@ -67,12 +67,12 @@ int main(int argc, char * argv[]){
     convert = new TConvert(tree);
     
     int user_nentries = 100000;
-    convert->SetTestMode(user_nentries);
+    //convert->SetTestMode(user_nentries);
     
     // DAQ info
     // calculate mean trigger rate
     // rate,timing and event plots
-    convert->DAQ();
+    //convert->DAQ();
     
     //-------------------
     // Cooking
@@ -122,10 +122,13 @@ int main(int argc, char * argv[]){
   return 1;
 }
 
+
 bool Welcome(int argc){
   
   printf("\n      --------------------  \n");
+  printf("\n      --------------------  \n");
   printf("\n          convert_raw       \n");
+  printf("\n      --------------------  \n");
   printf("\n      --------------------  \n");
 
   printf("\n ------------------------------ \n");
