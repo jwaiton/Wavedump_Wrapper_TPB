@@ -205,6 +205,9 @@ TStyle * GetwmStyle(){
   wmLatex->SetTextAlign(12);
   
 
+  // Gary 5th Sept 19
+  wmStyle->SetLegendBorderSize(0);
+
  return wmStyle;
 
 }

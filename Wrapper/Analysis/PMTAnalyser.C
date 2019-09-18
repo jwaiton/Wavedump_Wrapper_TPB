@@ -210,7 +210,7 @@ void PMTAnalyser::PlotWaveform(Long64_t entry){
   // access correct waveform in Get_baseline_ADC()
   rawRootTree->GetEntry(entry);
  
-  Float_t lineYMin = Get_baseline_ADC();
+  Float_t lineYMin = Get_baseline_ADC(); // first 30 ns
   Float_t lineYMax = lineYMin;
 
   TLine *baseline_0 = new TLine(lineXMin,lineYMin,
@@ -309,13 +309,23 @@ Bool_t PMTAnalyser::IsSampleInBaseline(int iSample,
   
   switch (option){
   case(0):
-    if (time_ns < 15.)
+    if (time_ns < 30.)
       return kTRUE;
     else
       return kFALSE;
   case(1):
     return kTRUE;
-  }
+  case(2):
+    if (time_ns < 15.)
+      return kTRUE;
+    else
+      return kFALSE;
+  case(3):
+    if (time_ns < 50.)
+      return kTRUE;
+    else
+      return kFALSE;
+  }  
   return kTRUE;
 }
 
@@ -404,7 +414,7 @@ Float_t PMTAnalyser::TimeOfPeak(Float_t threshold = 0.0)
 {
   if (rawRootTree == 0) return -1.;
   
-  int verbosity = 0;
+  int verbosity = 1;
   
   Long64_t ientry;
   Long64_t nentries = rawRootTree->GetEntriesFast();
@@ -1034,14 +1044,12 @@ void PMTAnalyser::SetStyle(){
 // Author: Ben Wade
 // s1520134@ed.ac.uk
 //
-// Designed to take in the waveform of an event 
-// (and 2 floats for the values)
-// and fit a Gaussian peak with an exponential 
-// tailoff (ie: Crystalball fit), then use this 
-// to calculate the rise and fall time of the 
-// signals and assign them to the variables taken in
+// Gaussian peak with an exponential 
+// tailoff fit (ie: Crystalball fit) to  
+// waveforms to extract rise and fall
+// times
 
-void PMTAnalyser::RiseFallTime(int totPulses = 10,
+void PMTAnalyser::RiseFallTime(int   totPulses = 10,
 			       float peakMean = 65.){
   
   //Making the canvas for the plots
@@ -1056,8 +1064,13 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
 
   TH1F * Fall = new TH1F("Fall", 
 			 "Pulse Fall Time;Fall Time (ns);Counts",
-			 200, 7.5, 27.5);
+			 200, 5.0, 30.0);
 
+  TH1F * Fall5 = new TH1F("Fall5", 
+			  "Pulse Fall Time to 5 pct;Fall Time 90 to 5 pct (ns);Counts",
+			  200, 5.0, 100.0);
+  
+  
   if(Run >= 70 ){
     Rise->SetBins(64,11.5,21.5);
     Fall->SetBins(64,11.5,21.5);
@@ -1070,9 +1083,9 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
   float    thresh_mV_low  = 15. ;
   
   if( Test == 'G' )
-    thresh_mV_low += 5.0*(HVStep-3.);
+    thresh_mV_low += 2.5*(HVStep-4.);
   
-  float    thresh_mV_high = thresh_mV_low + 20.;
+  float    thresh_mV_high = thresh_mV_low + 100.;
   
   if(Run >= 70 )
     thresh_mV_high = 2000;
@@ -1108,11 +1121,10 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
   // fit waveforms with crystal ball function
   while ( nPulses < totPulses ){ 
   
+    //cout << " peakMean = " << peakMean << endl;
+
     // find random entry number within event sample
-    //!!!
-    //!!!entry = (Long64_t)round(rand()*nentries/RAND_MAX); 
-    entry = 100000;
-    //
+    entry = (Long64_t)round(rand()*nentries/RAND_MAX); 
 
     // get histogram of waveform
     Get_hWave(entry,hWave);
@@ -1122,9 +1134,9 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
 
     // use full waveform to calculate baseline
     if( Run >= 70 )
-      baseline = Get_baseline_ADC(0,entry);
+      baseline = Get_baseline_ADC(2,entry); // first 15 ns
     else
-      baseline = Get_baseline_ADC(1,entry);
+      baseline = Get_baseline_ADC(3,entry); // first 50 ns
     
     if(negPulsePol){      
       peakADC  = hWave->GetMinimum();
@@ -1139,8 +1151,8 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
     if( TMath::Abs( floorADC - baseline )*mVPerBin > thresh_mV_low )
       continue;
     
-//     cout << endl;
-//     cout << " Passes pulse vito " <<  endl;
+    // cout << endl;
+    // cout << " Passes pulse vito " <<  endl;
     
     pulseRange_mV = TMath::Abs(peakADC - baseline)*mVPerBin;
     
@@ -1149,8 +1161,8 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
        pulseRange_mV  > thresh_mV_high )
       continue;
     
-//     cout << endl;
-//     cout << " Passes range vito " <<  endl;
+    //  cout << endl;
+    //  cout << " Passes range vito " <<  endl;
     
     if(negPulsePol)
       peakT = hWave->GetBinCenter(hWave->GetMinimumBin());
@@ -1158,14 +1170,14 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
       peakT = hWave->GetBinCenter(hWave->GetMaximumBin());
     
     // insist on pulse being synched with LED trigger
-    // +/- one sigma acceptance
+    // +/- 8 ns
     // Not Applied to Dark Count data
     if( TMath::Abs(peakT - peakMean) > 8. &&
 	Test !='D' )
       continue;
     
-//     cout << endl;
-//     cout << " Passes timing vito " << endl;
+    //  cout << endl;
+    //  cout << " Passes timing vito " << endl;
 
     // end of vitos
     // pulse has been selected
@@ -1178,23 +1190,18 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
     // Base, Const, Mean, Sigma, Alpha, N
     fWave->SetParameters(floorADC,10,peakT,10,-10,10);
     
-    if(Run >= 70)
-      fWave->SetParLimits(1, 0, 10000);
-    else
-      fWave->SetParLimits(1, 0, 1000);
+    fWave->SetParLimits(1, 0, 10000);
     
     fWave->SetParLimits(2, 0, waveformDuration);
     fWave->SetParLimits(4, -50, 0);
     
+    if(Run >= 50 && Run < 60)
+      hWave->SetAxisRange(0,300,"X");
+
     hWave->Draw();
     fWave->SetLineWidth(2);
     hWave->Fit("fWave", "QR"); 
-
-//     if(Run == 70 )
-//       hWave->GetXaxis()->SetRange(0,waveformDuration*1./3);
-//     if(Run == 71 )
-//       hWave->GetXaxis()->SetRange(waveformDuration*2/3,waveformDuration);
-
+    
     // Determine rise and fall times
     // from function fit
     float fPeak = 0., fFloor = 0.;
@@ -1202,7 +1209,6 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
     if(negPulsePol){
       fPeak  = fWave->GetMinimum(0,waveformDuration);
       fFloor = fWave->GetMaximum(0,waveformDuration);
-
     }
     else{
       fPeak  = fWave->GetMaximum(0,waveformDuration);
@@ -1218,35 +1224,43 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
     float fFull = fBase;
     float f090  = fBase;
     float f010  = fBase;
+    float f005  = fBase;
           
     if(negPulsePol){
       fFull = fBase - fPeak;
-      f090  -= 0.9*fFull;
-      f010  -= 0.1*fFull;
+      f090  -= 0.90*fFull;
+      f010  -= 0.10*fFull;
+      f005  -= 0.05*fFull;
     }
     else{
       fFull  = fPeak - fBase;
-      f090  += 0.9*fFull;
-      f010  += 0.1*fFull;
+      f090  += 0.90*fFull;
+      f010  += 0.10*fFull;
+      f005  += 0.05*fFull;
     }
     
     // range in X to search for y values 
     float fXAtPeak = fWave->GetX(fPeak,0,waveformDuration);
     float fPreMin  = fXAtPeak - 10.; 
     
-    if(Run >= 70)
+    if     (Run >= 70)
       fPreMin = fXAtPeak - 25.;
+    else if(Run >= 50 && Run < 60)
+      fPreMin = fXAtPeak - 10.;
 
-    float fPostMin = fXAtPeak + 25;
+    float fPostMin = fXAtPeak + 150;
     
     float timeRise10 = fWave->GetX(f010,fPreMin,fXAtPeak);
     float timeRise90 = fWave->GetX(f090,fPreMin,fXAtPeak);
     
-    float timeFall10 = fWave->GetX(f010,fXAtPeak,fPostMin);
+
     float timeFall90 = fWave->GetX(f090,fXAtPeak,fPostMin);
-    
+    float timeFall10 = fWave->GetX(f010,fXAtPeak,fPostMin);
+    float timeFall05 = fWave->GetX(f005,fXAtPeak,fPostMin);    
+
     float riseTime   = timeRise90 - timeRise10;
     float fallTime   = timeFall10 - timeFall90;
+    float fallTime5  = timeFall05 - timeFall90;
     
 //     cout << endl;
 //     cout << " fPeak      = " << fPeak      << endl;
@@ -1259,14 +1273,16 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
 //     cout << " fPostMin   = " << fPostMin   << endl;
 //     cout << " timeRise10 = " << timeRise10 << endl;
 //     cout << " timeRise90 = " << timeRise90 << endl;
-//     cout << " timeFall10 = " << timeFall10 << endl;
 //     cout << " timeFall90 = " << timeFall90 << endl;
+//     cout << " timeFall10 = " << timeFall10 << endl;
+//     cout << " timeFall05 = " << timeFall05 << endl;
 //     cout << " fallTime   = " << fallTime   << endl;
+//     cout << " fallTime5  = " << fallTime5  << endl;
 //     cout << " riseTime   = " << riseTime   << endl;
 
     // save waveform fits
     bool doPlot = true; 
-    int  oneIn = 1000; // one in #{oneIn} waveforms saved 
+    int  oneIn = 100; // one in #{oneIn} waveforms saved 
     // plus always save the first one
     if( (nPulses==1 || nPulses%(oneIn) == 0) && doPlot){
       
@@ -1320,14 +1336,36 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
   
     Rise->Fill(riseTime);
     Fall->Fill(fallTime);
-    break;
+    Fall5->Fill(fallTime5);
   }
-  
-  return;
-  
+
   hWave->Delete();   
+
+  TLatex * latex = new TLatex();
+  latex->SetNDC();
+  latex->SetTextSize(0.05);
+  latex->SetTextAlign(12);  //align at top
   
+  TString tStr = "";
+
   Rise->Draw();
+
+  tStr.Form("Mean = %.2f ",
+	    Rise->GetMean());
+   
+  //latex->SetTextColor(kBlue);  
+
+  latex->DrawLatex(0.7,0.8,tStr);
+
+  tStr.Form("StdDev = %.2f",
+	    Rise->GetStdDev());
+  
+  latex->DrawLatex(0.7,0.75,tStr);
+
+  tStr.Form("MeanErr = %.2f",
+	    Rise->GetMeanError());
+  
+  latex->DrawLatex(0.7,0.7,tStr);
   
   TString hName = FileID;
   hName = hName + ".png";
@@ -1335,8 +1373,35 @@ void PMTAnalyser::RiseFallTime(int totPulses = 10,
   //Rise->Fit("gaus");
   can->SaveAs("./RiseFall/Rise_" + hName);
   
-  Fall->Draw();
+  Fall5->Draw();
+  
+  //Fall->Draw("same");
+
+//   tStr.Form("Mean = %.2f ",
+// 	    Fall->GetMean());
+
+  tStr.Form("Mean = %.2f ",
+	    Fall5->GetMean());
+
+  latex->DrawLatex(0.7,0.8,tStr);
+
+//   tStr.Form("StdDev = %.2f",
+// 	    Fall->GetStdDev());
+  tStr.Form("StdDev = %.2f",
+	    Fall5->GetStdDev());
+  
+  latex->DrawLatex(0.7,0.75,tStr);
+
+  // tStr.Form("MeanErr = %.2f",
+  // 	    Fall->GetMeanError());
+  
+  tStr.Form("MeanErr = %.2f",
+	    Fall5->GetMeanError());
+  
+  latex->DrawLatex(0.7,0.7,tStr);
+  
   //Fall->Fit("gaus");
-  can->SaveAs("./RiseFall/Fall_" + hName);
+  //can->SaveAs("./RiseFall/Fall_" + hName);
+  can->SaveAs("./RiseFall/Fall5_" + hName);
   
 }

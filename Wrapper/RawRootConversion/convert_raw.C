@@ -33,7 +33,6 @@
 #include "TTree.h"
 #include "TConvert.h"
 
-
 bool Welcome(int argc);
 bool IsFileReady(TFile *, char *);
 
@@ -67,21 +66,57 @@ int main(int argc, char * argv[]){
     // from input file
     convert = new TConvert(tree);
     
+    int user_nentries = 100000;
+    convert->SetTestMode(user_nentries);
+    
     // DAQ info
-    // print calibration constants
     // calculate mean trigger rate
     // rate,timing and event plots
-    convert->DAQInfo();
-
-    // Noise
-    // plot: mean, ppV,
-    // peakV 
-    convert->Noise();
-    //convert->ProcessEntries();
+    convert->DAQ();
     
-    //tree->Delete();
-    //inFile->Close();
-    //inFile->Delete();
+    //-------------------
+    // Cooking
+    
+    // cook to mV and ns
+    // find peak voltage
+    // and peak sample
+    //
+    // write tree to file
+    // (which remains open)
+    convert->Cook();
+    
+    //-------------------
+    
+    // (connect to tree)
+    convert->InitCookedData();
+    
+    // Noise study
+    // plot raw variables: min, max, PPV, mean
+    convert->Noise();
+    
+    // Baseline study
+    // plot: baseline, vs event, peak vs baseline
+    convert->Baseline();
+    
+    //-------------------
+    // Calibration
+    
+    // subtract baseline
+    // write tree to same
+    // file as cookedTree
+    // (which remains open)
+    convert->Calibrate();
+
+    // Dark Count Analysis
+    // calculate dark rate
+    // reject noise 
+    // plot peak, peak vs min after noise rejection
+    convert->Dark();
+    
+    // Delete outFile pointer
+    convert->End();
+    
+    inFile->Delete();
   }
   
   return 1;
