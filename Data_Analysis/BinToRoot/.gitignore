@@ -1,0 +1,10 @@
+Plots/
+CableAnalysis/
+BinToRoot
+BinToRoot.cpp_back
+nohup.out
+CodeSnippet.txt
+input_*
+*.root
+dat_to_root
+*.dat
