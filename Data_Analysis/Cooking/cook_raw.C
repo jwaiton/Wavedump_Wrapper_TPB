@@ -84,12 +84,12 @@ int main(int argc, char * argv[]){
     cooker->PrintConstants();
 
     int user_nentries = 100000;
-    //cooker->SetTestMode(user_nentries);
+    cooker->SetTestMode(user_nentries);
     
     // DAQ info
     // calculate mean trigger rate
     // rate,timing and event plots
-    cooker->DAQ();
+    //cooker->DAQ();
     
     //-------------------
     // Cooking
@@ -103,17 +103,21 @@ int main(int argc, char * argv[]){
     cooker->Cook();
     
     //-------------------
+    // Monitor Data
     
     // (connect to tree)
     cooker->InitCookedData();
     
     // Monitor Noise
     // plot raw variables: min, max, PPV, mean
-    cooker->Noise();
-    
+    //cooker->Noise();
+
+    // Monitor Waveforms
+    cooker->Waveform();    
+
     // Baseline investigation
     // plot: baseline, vs event, peak vs baseline
-    cooker->Baseline();
+    //cooker->Baseline();
     
     // Delete outFile pointer
     cooker->End();

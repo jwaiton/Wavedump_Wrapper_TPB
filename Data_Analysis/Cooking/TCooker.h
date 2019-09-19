@@ -113,9 +113,8 @@ public :
    float Get_mVPerBin();
    int   Get_peakSample(int entry); 
    float Get_peakT_ns(int entry); 
-
-
-
+   float GetLength_ns();
+   short GetNSamples();
    //---   
    // Study of DAQ
    void  DAQ();
@@ -139,6 +138,13 @@ public :
 
    void  InitNoise();
    void  SaveNoise(string outFolder = "./Plots/Noise/");
+
+   //---
+   // Waveform Plotter
+   void  Waveform();
+
+   void  InitWaveform();
+   void  SaveWaveform(string outFolder = "./Plots/Waveforms/");
    
    //----
    // Study of Baseline
@@ -207,6 +213,9 @@ public :
 
    TH2F * hMin_Max_Cooked = nullptr;
    
+   // Waveforms
+   TH1F * hWave = nullptr;   
+
    // Baseline
    TH1F * hBase = nullptr;
    
