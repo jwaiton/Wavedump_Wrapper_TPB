@@ -644,6 +644,36 @@ void TCooker::Noise(){
     hMin_Max_Cooked->Fill(min_cook_mV,max_cook_mV);
     
    }// end: for (int iEntry = 0;
+  
+  // find peak of mean voltage in mV
+  int     max_bin_mean = hMean_Cooked->GetMaximumBin();
+  TAxis * x_axis       = hMean_Cooked->GetXaxis();
+  float   peak_mean_mV = x_axis->GetBinCenter(max_bin_mean);
+  
+  thresh_mV       = 10.0; // ideally 1/4 of 1 p.e.
+  th_low_mV       = 7.5;  // 
+  
+  noise_thresh_mV = peak_mean_mV - thresh_mV;
+  noise_th_low_mV = peak_mean_mV - th_low_mV;
+  
+  // standard threshold rel mean peak
+  int thresh_bin   = hMin_Cooked->FindBin(noise_thresh_mV);
+  int noise_counts = hMin_Cooked->Integral(0,thresh_bin);
+  
+  float noise_rate = (float)noise_counts/nentries;
+  noise_rate = noise_rate/fLength_ns * 1.0e9;
+
+  // low threshold rel mean peak
+  thresh_bin   = hMin_Cooked->FindBin(noise_th_low_mV);
+  noise_counts = hMin_Cooked->Integral(0,thresh_bin);
+  
+  float noise_rate_low = (float)noise_counts/nentries;
+  noise_rate_low = noise_rate_low/fLength_ns * 1.0e9;
+  
+  printf("\n Mean voltage         \t %.2f mV \n",peak_mean_mV);
+  printf("\n Noise Rate @ %.2f mV \t %.2f Hz \n",noise_thresh_mV,noise_rate);
+  printf("\n Noise Rate @ %.2f mV \t %.2f Hz \n\n",noise_th_low_mV,noise_rate_low);
+
 
   SaveNoise();
 
@@ -707,29 +737,43 @@ void TCooker::SaveNoise(string outFolder){
   
   gPad->SetLogy();
   
-  hMean_Cooked->SetAxisRange(-100., 100.,"X");
+  hMean_Cooked->SetAxisRange(-30., 120.,"X");
   hMean_Cooked->SetMinimum(0.1);
   hMean_Cooked->Draw();
 
   string outName = outFolder + "hMean_Cooked.pdf";
   canvas->SaveAs(outName.c_str());  
   
-  hPPV_Cooked->SetAxisRange(-50.0, 250.,"X");
+  hPPV_Cooked->SetAxisRange(-5.0, 145.,"X");
   hPPV_Cooked->SetMinimum(0.1);
   hPPV_Cooked->Draw();
   
   outName = outFolder + "hPPV_Cooked.pdf";
   canvas->SaveAs(outName.c_str());
   
-  hMax_Cooked->SetAxisRange(-50., 100.,"X");
+  hMax_Cooked->SetAxisRange(-20.,80.,"X");
   hMax_Cooked->SetMinimum(0.1);
   hMax_Cooked->Draw();
   outName = outFolder + "hMax_Cooked.pdf";
   canvas->SaveAs(outName.c_str());
   
-  hMin_Cooked->SetAxisRange(-100., 50.,"X");
+  
+  hMin_Cooked->SetAxisRange(-30.,20.,"X");
   hMin_Cooked->SetMinimum(0.1);
   hMin_Cooked->Draw();
+
+  TLine * l_thresh = new TLine(noise_thresh_mV,1,noise_thresh_mV,1000);
+  l_thresh->SetLineStyle(2);
+  l_thresh->SetLineColor(kRed);
+  l_thresh->SetLineWidth(2);
+  l_thresh->Draw();
+  
+  TLine * l_th_low = new TLine(noise_th_low_mV,1,noise_th_low_mV,1000);
+  l_th_low->SetLineStyle(2);
+  l_th_low->SetLineColor(kBlue);
+  l_th_low->SetLineWidth(2);
+  l_th_low->Draw();
+  
   outName = outFolder + "hMin_Cooked.pdf";
   canvas->SaveAs(outName.c_str());
   

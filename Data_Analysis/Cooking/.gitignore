@@ -3,5 +3,5 @@
 *.root
 *.png
 *.pdf
-convert_raw
-convert_rawDict.C
+cook_raw
+cook_rawDict.C
