@@ -81,6 +81,8 @@ int main(int argc, char * argv[]){
     // from input file
     cooker = new TCooker(tree);
     
+    cooker->PrintConstants();
+
     int user_nentries = 100000;
     //cooker->SetTestMode(user_nentries);
     

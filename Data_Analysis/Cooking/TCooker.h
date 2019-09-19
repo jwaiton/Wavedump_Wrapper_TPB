@@ -193,6 +193,12 @@ public :
    TH2F * hTT_EC       = nullptr;
 
    // Noise
+   
+   float  thresh_mV;
+   float  th_low_mV;
+   float  noise_thresh_mV;
+   float  noise_th_low_mV;
+
    TH1F * hMean_Cooked = nullptr;
    TH1F * hPPV_Cooked  = nullptr;
 
