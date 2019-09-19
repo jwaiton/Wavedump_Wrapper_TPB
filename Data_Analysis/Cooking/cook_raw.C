@@ -82,7 +82,7 @@ int main(int argc, char * argv[]){
     cooker = new TCooker(tree);
     
     int user_nentries = 100000;
-    cooker->SetTestMode(user_nentries);
+    //cooker->SetTestMode(user_nentries);
     
     // DAQ info
     // calculate mean trigger rate
