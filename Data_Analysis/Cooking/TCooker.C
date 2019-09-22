@@ -4,6 +4,7 @@
 #include <math.h>
 #include <limits.h>
 
+
 #include "../Common_Tools/wmStyle.C"
 
 void TCooker::Cook(){
@@ -87,7 +88,7 @@ void TCooker::DoCooking(){
     mean_cook_mV =  0.;
     peak_samp   =  0;
     
-    for (short iSamp = 0; iSamp < GetNSamples(); ++iSamp){
+    for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
       wave_cook_mV = ADC_To_Wave(ADC->at(iSamp));
     
       //printf("\n iSamp       = %d  \n ",iSamp);
@@ -107,7 +108,7 @@ void TCooker::DoCooking(){
     }
     
     ppV_cook_mV  = max_cook_mV - min_cook_mV;
-    mean_cook_mV = mean_cook_mV/(float)GetNSamples();
+    mean_cook_mV = mean_cook_mV/(float)fNSamples;
     
     //printf("\n event       = %d  \n ",iEntry);
     //printf("\n peak_samp   = %d  \n ",peak_samp);
@@ -163,13 +164,11 @@ bool TCooker::IsSampleInBaseline(short iSample,
   float time  = (float)iSample * SampleToTime();
   float width = 30.;
   
-  float waveform_duration = GetLength_ns();
-
   switch(option){
   case(0):
     width = width + 20; // pulse at beginning of waveform 
   case(2):
-    time = time - waveform_duration + width; // end of waveform
+    time = time - fLength_ns + width; // end of waveform
   }
   
   if( time >= 0 && time < width )
@@ -205,7 +204,7 @@ void TCooker::Baseline(){
     base_mV_local = 0.;
     nBaseSamps   = 0;
 
-    for (short iSamp = 0; iSamp < GetNSamples(); ++iSamp){
+    for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
       wave_mV = ADC_To_Wave(ADC->at(iSamp));
       
       if(wave_mV >= peak_mV_local){
@@ -228,7 +227,7 @@ void TCooker::Baseline(){
     if( IsSampleInBaseline(peak_samp_local,0) ){
       base_mV_local = 0.;
       nBaseSamps = 0;
-      for (short iSamp = 0; iSamp < GetNSamples(); ++iSamp){
+      for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
 	wave_mV = ADC_To_Wave(ADC->at(iSamp));
 	
 	if(IsSampleInBaseline(iSamp,2)){
@@ -670,17 +669,15 @@ void TCooker::Noise(){
   int thresh_bin   = hMin_Cooked->FindBin(noise_thresh_mV);
   int noise_counts = hMin_Cooked->Integral(0,thresh_bin);
   
-  float length_ns = GetLength_ns();
-
   float noise_rate = (float)noise_counts/nentries;
-  noise_rate = noise_rate/length_ns * 1.0e9;
+  noise_rate = noise_rate/fLength_ns * 1.0e9;
 
   // low threshold rel mean peak
   thresh_bin   = hMin_Cooked->FindBin(noise_th_low_mV);
   noise_counts = hMin_Cooked->Integral(0,thresh_bin);
   
   float noise_rate_low = (float)noise_counts/nentries;
-  noise_rate_low = noise_rate_low/length_ns * 1.0e9;
+  noise_rate_low = noise_rate_low/fLength_ns * 1.0e9;
   
   printf("\n Mean voltage         \t %.2f mV \n",peak_mean_mV);
   printf("\n Noise Rate @ %.2f mV \t %.2f Hz \n",noise_thresh_mV,noise_rate);
@@ -808,29 +805,55 @@ void TCooker::SaveNoise(string outFolder){
 
 
 //------------------------------
-void TCooker::Waveform(){
+void TCooker::Waveform(char option){
 
-  InitWaveform();
-
-  srand ( time(NULL) );
+  switch(option){
+  case('w'):
+    InitWaveform();
+    break;
+  case('f'):
+    InitFFT();
+    break;
+  case('b'):
+    InitWaveform();
+    InitFFT();
+    break;
+  default:
+    InitWaveform();
+    InitFFT();
+    break;
+  }
   
-  float frac = (float)nentries/RAND_MAX;
-  
-  int entry = (int)roundf(rand()*frac);
+  int entry = (int)round(rand3->Uniform(nentries)); 
 
   printf("\n entry %d \n",entry);
   
   rawTree->GetEntry(entry);
   
-  for( short iSamp = 0 ; iSamp < GetNSamples(); iSamp++)
+  for( short iSamp = 0 ; iSamp < fNSamples; iSamp++)
     hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
+
+  hWave->FFT(hFFT ,"MAG");
   
   //char answer = 'n';
   //printf(" Save waveform y/n ?");
   //scanf("%c", &answer);
   
   // if( answer=='y' || answer == 'Y')
-  SaveWaveform();
+
+  switch(option){
+  case('w'):
+    SaveWaveform();
+    break;
+  case('f'):
+    break;
+    SaveFFT();
+  case('b'):
+    SaveWaveFFT();
+    break;
+  default:
+    break;
+  }
   
 }
 
@@ -840,7 +863,17 @@ void TCooker::InitWaveform(){
   printf("\n Plotting Waveform \n\n");
   
   hWave = new TH1F("hWave","Waveform;Time (ns); Amplitude (mV)",
-		   GetNSamples(), 0., GetLength_ns());
+		   fNSamples, 0.,fLength_ns);
+  
+}
+
+void TCooker::InitFFT(){
+  
+  printf("\n ------------------------------ \n");
+  printf("\n Plotting FFT \n\n");
+
+  hFFT = new TH1F("hFFT","FFT; Frequency (MHz); Magnitude",
+		  fNSamples/2, 0, fSampFreq/2 );
   
 }
 
@@ -854,6 +887,45 @@ void TCooker::SaveWaveform(string outFolder){
   hWave->Draw();
   
   string outName = outFolder + "hWave.pdf";
+  
+  canvas->SaveAs(outName.c_str());
+  
+  DeleteCanvas();
+  
+}
+
+void TCooker::SaveFFT(string outFolder){
+
+  printf("\n Saving FFT Plot \n\n");
+  
+  InitCanvas();
+  
+  hFFT->SetBinContent(1,0.);
+  hFFT->Draw();
+  
+  string outName = outFolder + "hFFT.pdf";
+  
+  canvas->SaveAs(outName.c_str());
+  
+  DeleteCanvas();
+  
+}
+
+void TCooker::SaveWaveFFT(string outFolder){
+
+  printf("\n Saving Waveform and FFT Plots \n\n");
+  
+  InitCanvas(1400.);
+  
+  canvas->Divide(2,1);
+  
+  canvas->cd(1);
+  hWave->Draw();
+  
+  canvas->cd(2);
+  hFFT->Draw();
+  
+  string outName = outFolder + "hWaveFFT.pdf";
   
   canvas->SaveAs(outName.c_str());
   

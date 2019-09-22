@@ -107,17 +107,22 @@ int main(int argc, char * argv[]){
     
     // (connect to tree)
     cooker->InitCookedData();
-    
+
+    // Plot Waveforms, options: 
+    //    'w' waveform only
+    //    'f' fft only
+    //    'b' waveform & fft
+    char option = 'b';  
+    cooker->Waveform(option);    
+
     // Monitor Noise
     // plot raw variables: min, max, PPV, mean
-    //cooker->Noise();
-
-    // Monitor Waveforms
-    cooker->Waveform();    
+    // print noise rate @ -5 mV and -10 mV wrt mean
+    // cooker->Noise();
 
     // Baseline investigation
     // plot: baseline, vs event, peak vs baseline
-    //cooker->Baseline();
+    // cooker->Baseline();
     
     // Delete outFile pointer
     cooker->End();

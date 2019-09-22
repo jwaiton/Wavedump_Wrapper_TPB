@@ -8,6 +8,7 @@
 #include <TCanvas.h>
 #include <TStyle.h>
 #include <TLegend.h>
+#include <TRandom3.h>
 
 #include <vector>
 #include <limits.h>
@@ -141,11 +142,16 @@ public :
 
    //---
    // Waveform Plotter
-   void  Waveform();
+   void  Waveform(char option = 'f');
 
    void  InitWaveform();
    void  SaveWaveform(string outFolder = "./Plots/Waveforms/");
    
+   void  InitFFT();
+   void  SaveFFT(string outFolder = "./Plots/Waveforms/");
+  
+   void  SaveWaveFFT(string outFolder = "./Plots/Waveforms/");
+
    //----
    // Study of Baseline
    void  Baseline();
@@ -215,6 +221,9 @@ public :
    
    // Waveforms
    TH1F * hWave = nullptr;   
+   TH1F * hFFT = nullptr;
+
+   TRandom3 * rand3 = nullptr;
 
    // Baseline
    TH1F * hBase = nullptr;
@@ -345,7 +354,8 @@ bool TCooker::Init(TTree *tree)
     nentries = (int)nentries64_t;
   
   startTime = GetTrigTimeTag(0);
-
+  rand3 = new TRandom3(0);
+  
   // conversion factors
   SetConstants();
 
