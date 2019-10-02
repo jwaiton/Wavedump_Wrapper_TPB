@@ -31,8 +31,15 @@
  * 
  *
  * Dependencies
- *  root.cern
+ *  root.cern - a working version of root is required
  *
+ *  wmStyle.C - TStyle class for WATCHMAN plotting style
+ *   This file is included in the distribution and
+ *   can be found by the system by adding the following 
+ *   lines to ~/.bashrc:  
+ *    export TESTING_DIR=/path/to/Wavedump_Wrapper
+ *    export CPATH=$TESTING_DIR/Data_Analysis/Common_Tools/
+ * 
  * Known issues
  *   Under linux you will likely be required to add 
  *   the shared (.so) file location to your library path 
@@ -56,9 +63,9 @@ int main(int argc, char * argv[]){
   if( !Welcome(argc) )
     return -1;
      
-  TFile * inFile = nullptr;
-  TTree * tree   = nullptr;
-  
+  TFile * inFile  = nullptr;
+  TTree * tree    = nullptr;
+
   // object used to cook 
   // raw (root) data
   TCooker * cooker = nullptr;
@@ -66,48 +73,43 @@ int main(int argc, char * argv[]){
   // Loop over files
   for( int iFile = 1 ; iFile < argc ; iFile++){
 
+    //-------------------
+    // Setting Up
+    
     // Check file
     inFile = new TFile(argv[iFile],"READ");
     if( !IsFileReady(inFile,argv[iFile]) )
       continue;
     
-    printf("\n  Input File:       \n");
+    printf("\n  Input File:       ");
     printf("\n    %s  \n",argv[iFile]);
     
     // Get tree called 'T'
     inFile->GetObject("T",tree); 
     
-    // initalise object using tree
-    // from input file
+    // initalise TCooker object using 
+    // tree from input file
     cooker = new TCooker(tree);
     
-    cooker->PrintConstants();
-
-    int user_nentries = 100000;
+    // Optional method:
+    // reduce event loop for
+    // faster code testing
+    // NB no check that this is 
+    // lower thatn nentries
+    int user_nentries = 100000; 
     cooker->SetTestMode(user_nentries);
     
-    // DAQ info
-    // calculate mean trigger rate
-    // rate,timing and event plots
-    //cooker->DAQ();
-    
-    //-------------------
-    // Cooking
-    
-    // cook to mV and ns
-    // find peak voltage
-    // and peak sample
     //
-    // write tree to file
-    // (which remains open)
-    cooker->Cook();
-    
     //-------------------
-    // Monitor Data
-    
-    // (connect to tree)
-    cooker->InitCookedData();
+    // Monitor Raw Data 
 
+    cooker->PrintConstants();
+    
+    // DAQ info
+    //  Print mean trigger rate
+    //  Save: rate,timing and event plots
+    cooker->DAQ();
+    
     // Plot Waveforms, options: 
     //    'w' waveform only
     //    'f' fft only
@@ -115,17 +117,37 @@ int main(int argc, char * argv[]){
     char option = 'b';  
     cooker->Waveform(option);    
 
+    //
+    //-------------------
+    //-------------------
+    // Cooking
+    
+    // 'Cook' to mV and ns
+    // find peak voltage
+    // and peak sample
+    // Write tree to file
+    cooker->Cook();
+    
+    // Data has been cooked
+    //-------------------
+    //-------------------
+    // Monitor/Analyse Cooked Data
+        
+    // re-connect to file
+    // and tree
+    cooker->InitCookedData();
+    
     // Monitor Noise
     // plot raw variables: min, max, PPV, mean
     // print noise rate @ -5 mV and -10 mV wrt mean
-    // cooker->Noise();
-
-    // Baseline investigation
+    cooker->Noise();
+    
+    // Baseline investigation (not implemented)
     // plot: baseline, vs event, peak vs baseline
-    // cooker->Baseline();
+    cooker->Baseline();
     
     // Delete outFile pointer
-    cooker->End();
+    cooker->CloseCookedFile();
     
     inFile->Delete();
   }
@@ -136,10 +158,10 @@ int main(int argc, char * argv[]){
 
 bool Welcome(int argc){
   
-  printf("\n      --------------------  \n");
+  printf("\n      --------------------    ");
   printf("\n      --------------------  \n");
   printf("\n            cook_raw        \n");
-  printf("\n      --------------------  \n");
+  printf("\n      --------------------    ");
   printf("\n      --------------------  \n");
 
   printf("\n ------------------------------ \n");

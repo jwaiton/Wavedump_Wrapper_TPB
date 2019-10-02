@@ -16,60 +16,50 @@
 using namespace std;
 
 class TCooker {
-public :
-
+ public :
+  
   // Input variables
-   TTree *rawTree;
-   int   treeNumber;
-
-   uint HEAD[6];
-   
-   vector<short> * ADC  = 0;
-
-   TBranch * b_HEAD = 0;  
-   TBranch * b_ADC  = 0;   
-   
+  TTree *rawTree;
+  
+  int   treeNumber;
+  
+  uint HEAD[6];
+  
+  vector<short> * ADC  = 0;
+  
+  TBranch * b_HEAD = 0;  
+  TBranch * b_ADC  = 0;   
+  
    TFile * outFile;
 
-   // Intermediate processing variables 
-   // not written 
+   // meta data tree for 
+   // storing constants
+   TTree * metaTree;
    
    TTree * cookedTree;
+
+   // for writing
+   vector <float>  wave_buff;
    
-   float min_cook_mV;
-   float max_cook_mV;
-   float ppV_cook_mV;
-   float mean_cook_mV;
-
-   TBranch * b_min_cook_mV = 0;  
-   TBranch * b_max_cook_mV = 0;  
-   TBranch * b_ppV_cook_mV = 0;  
-   TBranch * b_mean_cook_mV = 0;  
-
+   // for reading
+   vector <float> * wave_mV = 0;
+   
+   float min_mV;
+   float max_mV;
+   float ppV_mV;
+   float mean_mV;
+   short peak_samp;
+   
+   TBranch * b_wave_mV = 0;
+   TBranch * b_min_mV  = 0;  
+   TBranch * b_max_mV  = 0;  
+   TBranch * b_ppV_mV  = 0;  
+   TBranch * b_mean_mV = 0;  
+   TBranch * b_peak_samp = 0;  
+   
    // Output (to save)
    TTree * outTree;
 
-   // event-by-event calibrated 
-   // variables to write
-
-   float min_mV;
-   float peak_mV;
-   float base_mV;
-   
-   float peak_time_ns;
-   short peak_samp;
-   
-   float event_time_ns;
-   
-   vector<float> * wave = 0;
-   
-   TBranch * b_min_mV = 0;  
-   TBranch * b_peak_mV = 0;  
-   TBranch * b_base_mV = 0;  
-   TBranch * b_peak_time_ns = 0;  
-   TBranch * b_peak_samp = 0;  
-   TBranch * b_event_time_ns = 0;  
-   
    TCooker(TTree *tree=0,
 	    char digitiser='V', // Program default is VME 1730
 	    char sampSet='3',   // variable only used for digitiser='D'
@@ -77,7 +67,7 @@ public :
    virtual ~TCooker();
    virtual int  GetEntry(int entry);
    virtual int  LoadTree(int entry);
-   virtual bool Init(TTree *tree);
+   virtual bool Init(TTree *tree=0);
    virtual void Show(int entry = -1);
    
    void InitCanvas(float w = 1000.,
@@ -99,20 +89,24 @@ public :
    void  Cook();
    
    void  InitCooking();
-   void  InitCookedDataFile();
+   void  InitCookedDataFile(string option = "RECREATE");
+
+   void  InitMetaDataTree();
    void  InitCookedDataTree();
 
    // init file and connect to tree
+
    void  InitCookedData();
    void  CloseCookedData();
    
    void  DoCooking();
+   
+   void  SaveMetaData();
    void  SaveCookedData();
    
    float ADC_To_Wave(short ADC);
    float GetRange_mV();
    float Get_mVPerBin();
-   int   Get_peakSample(int entry); 
    float Get_peakT_ns(int entry); 
    float GetLength_ns();
    short GetNSamples();
@@ -162,13 +156,12 @@ public :
    bool  IsSampleInBaseline(short i, short option);
    
    ///
-   void  End();
-
+   void  CloseCookedFile();
    
  private:
 
    string f_fileID;
-   
+   char   FileID[128]; 
    // default or user input
    char   fDigitiser;        
    char   fSampSet;
@@ -273,20 +266,22 @@ TCooker::TCooker(TTree *tree,
 		   char pulsePol) : rawTree(0) 
 {
   
-  if (tree == 0)
-    fprintf( stderr, "\n Error: No Tree");
-  
   SetDigitiser(digitiser); 
   SetSampSet(sampSet); // for desktop digitiser
-  
   SetPulsePol(pulsePol); 
   
+  if (tree == 0){
+    fprintf( stderr, "\n Warning: No input tree");
+    
+    Init(tree);
+    
+  }
+  else{
   bool success = Init(tree);
   
   if(!success)
-    fprintf( stderr, "\n Error: Init failed with this file \n");
-  
-  //PrintConstants();
+    fprintf( stderr, "\n Warning: raw tree not initialised \n");
+  }
   
 }
 
@@ -317,7 +312,8 @@ int TCooker::LoadTree(int entry)
 void TCooker::SetTestMode(int user_nentries = 1000000){
 
   nentries = user_nentries;  
-  printf("\n Warning: nentries set to %d for testing \n",nentries);
+  printf("\n Warning: \n ");
+  printf("  nentries set to %d for testing \n",nentries);
   
 }
 
@@ -326,36 +322,36 @@ bool TCooker::Init(TTree *tree)
   printf("\n ------------------------------ \n");
   printf("\n Initialising Data \n");
   
-  if (!tree){
-    fprintf( stderr, "\n Error: tree not loaded \n ");
-    return false;
-  }
-  rawTree = tree;
+  nentries64_t = 0;
 
-  treeNumber = -1;
-  rawTree->SetMakeClass(1);
-  rawTree->SetBranchAddress("HEAD",HEAD, &b_HEAD);
-  rawTree->SetBranchAddress("ADC",&ADC, &b_ADC);
+  if (!tree){
+    fprintf( stderr, "\n Warning: tree not loaded \n ");
+  }
+  else{
+    
+    rawTree = tree;
+    treeNumber = -1;
+    rawTree->SetMakeClass(1);
+    rawTree->SetBranchAddress("HEAD",HEAD, &b_HEAD);
+    rawTree->SetBranchAddress("ADC",&ADC, &b_ADC);
+
+    nentries64_t = rawTree->GetEntriesFast();
+    
+    if( nentries64_t > INT_MAX ){
+      fprintf(stderr,
+	      "\n Error, nentries = (%lld) > INT_MAX unsupported \n ",
+	      nentries64_t);
+      return false;
+    }
+    else
+      nentries = (int)nentries64_t;
   
-  if (rawTree == 0){
-    fprintf(stderr,"\n Error, rawTree == 0 \n ");
-    return false;
+    startTime = GetTrigTimeTag(0);
+    
   }
   
-  nentries64_t = rawTree->GetEntriesFast();
-  
-  if( nentries64_t > INT_MAX ){
-    fprintf(stderr,
-	    "\n Error, nentries = (%lld) > INT_MAX unsupported \n ",
-	    nentries64_t);
-    return false;
-  }
-  else
-    nentries = (int)nentries64_t;
-  
-  startTime = GetTrigTimeTag(0);
   rand3 = new TRandom3(0);
-  
+
   // conversion factors
   SetConstants();
 
@@ -365,8 +361,6 @@ bool TCooker::Init(TTree *tree)
 
   InitCanvas();
 
-  //MakeWaves();
-
   printf("\n ------------------------------ \n");
 
   return true;
@@ -375,23 +369,27 @@ bool TCooker::Init(TTree *tree)
 bool TCooker::ConnectToCookedTree()
 {
   printf("\n ------------------------------- \n");
-  printf("\n Connecting to cooked data TTree \n");
+  printf("\n Connecting to cooked data TTree   ");
+  printf("\n   %s \n",GetCookedTreeID().c_str());
 
-  //outFile->GetObject(GetCookedTreeID().c_str(),cookedTree);
+  outFile->GetObject(GetCookedTreeID().c_str(),cookedTree);
   
   if (!cookedTree){
     fprintf( stderr, "\n Error: no cooked tree  \n ");
     return false;
   }
 
-  cookedTree->SetBranchAddress("min_cook_mV",&min_cook_mV, &b_min_cook_mV);
-  cookedTree->SetBranchAddress("max_cook_mV",&max_cook_mV, &b_max_cook_mV);
-  cookedTree->SetBranchAddress("ppV_cook_mV",&ppV_cook_mV, &b_ppV_cook_mV);
-  cookedTree->SetBranchAddress("mean_cook_mV",&mean_cook_mV, &b_mean_cook_mV);
-  
+  cookedTree->SetBranchAddress("wave_mV",&wave_mV, &b_wave_mV);
+
+  cookedTree->SetBranchAddress("min_mV",&min_mV, &b_min_mV);
+  cookedTree->SetBranchAddress("max_mV",&max_mV, &b_max_mV);
+  cookedTree->SetBranchAddress("ppV_mV",&ppV_mV, &b_ppV_mV);
+  cookedTree->SetBranchAddress("mean_mV",&mean_mV, &b_mean_mV);
+
   cookedTree->SetBranchAddress("peak_samp",&peak_samp, &b_peak_samp);
 
-  rawTree->AddFriend(cookedTree);
+  /* if(rawTree) */
+  /*     rawTree->AddFriend(cookedTree); */
   
   return true;
 }
