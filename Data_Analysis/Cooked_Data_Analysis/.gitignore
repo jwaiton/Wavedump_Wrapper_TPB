@@ -1,0 +1,4 @@
+*.root
+ana_cookedDict_rdict.pcm
+analyse_cooked
+libAnaCooked.so
