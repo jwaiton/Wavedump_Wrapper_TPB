@@ -9,7 +9,7 @@
 
 #include <stdlib.h>
 
-#include "../BinToRoot/wmStyle.C"
+#include "wmStyle.C"
 
 Int_t PMTAnalyser::GetNEntriesTest(Int_t verbosity,
 				   Int_t nentries){
@@ -1050,7 +1050,8 @@ void PMTAnalyser::SetStyle(){
 // times
 
 void PMTAnalyser::RiseFallTime(int   totPulses = 10,
-			       float peakMean = 65.){
+			       float peakMean = 65.,
+			       float thresh_mV_low = 15.){
   
   //Making the canvas for the plots
   TCanvas * can = new TCanvas;
@@ -1080,10 +1081,9 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
   Long64_t entry     = 0;
   int      nPulses   = 0;    // counter
   
-  float    thresh_mV_low  = 15. ;
-  
+   
   if( Test == 'G' )
-    thresh_mV_low += 2.5*(HVStep-4.);
+    thresh_mV_low += 2.5*thresh_mV_low/15.*(HVStep-4.);
   
   float    thresh_mV_high = thresh_mV_low + 100.;
   
@@ -1373,7 +1373,7 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
   //Rise->Fit("gaus");
   can->SaveAs("./RiseFall/Rise_" + hName);
   
-  Fall5->Draw();
+  Fall->Draw();
   
   //Fall->Draw("same");
 
@@ -1381,14 +1381,14 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
 // 	    Fall->GetMean());
 
   tStr.Form("Mean = %.2f ",
-	    Fall5->GetMean());
+	    Fall->GetMean());
 
   latex->DrawLatex(0.7,0.8,tStr);
 
 //   tStr.Form("StdDev = %.2f",
 // 	    Fall->GetStdDev());
   tStr.Form("StdDev = %.2f",
-	    Fall5->GetStdDev());
+	    Fall->GetStdDev());
   
   latex->DrawLatex(0.7,0.75,tStr);
 
@@ -1396,12 +1396,12 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
   // 	    Fall->GetMeanError());
   
   tStr.Form("MeanErr = %.2f",
-	    Fall5->GetMeanError());
+	    Fall->GetMeanError());
   
   latex->DrawLatex(0.7,0.7,tStr);
   
   //Fall->Fit("gaus");
   //can->SaveAs("./RiseFall/Fall_" + hName);
-  can->SaveAs("./RiseFall/Fall5_" + hName);
+  can->SaveAs("./RiseFall/Fall_" + hName);
   
 }

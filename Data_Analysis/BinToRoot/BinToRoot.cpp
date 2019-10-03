@@ -245,7 +245,15 @@ float GetDelay(int run = 0){
     return 16.;
   else if ( run ==  81 ) //  
     return 420.;
-  else                  // Default
+  else if ( run == 100 )
+    return 120.; // peak mean at 135
+  else if ( run == 101 )
+    return 60.; // peak mean at 75
+  else if ( run == 102 )
+    return 277.; // peak mean at 292
+  else if ( run == 103 )
+    return 249.; // peak mean at 264
+  else             // Default
     return  60.;
 }
 
@@ -633,8 +641,10 @@ int ProcessBinaryFile(TString inFilePath,
   else if( verbosity == 2 )
     maxEvents = 3;
 
-  cout << endl;
-  cout << " maxEvents = " << maxEvents << endl;
+  if(testMode){
+    cout << endl;
+    cout << " maxEvents = " << maxEvents << endl;
+  }
   
   //----------------------
 
@@ -1054,7 +1064,9 @@ int ProcessBinaryFile(TString inFilePath,
 	// Note: no test to ensure delay >= 50 ns
 	// which it must be (currently 50 is hard-
 	// coded minimum so safe as of now)
-	intVDCfixed    += Accumulate_Fixed(VDC,time);
+
+
+	intVDCfixed += Accumulate_Fixed(VDC,time);
       }
 
 
@@ -1233,7 +1245,7 @@ int ProcessBinaryFile(TString inFilePath,
   float maxY = GetVoltageRange(digitiser)*(16 + 1)/32*1.0e3 ;
 
   if( !negPulsePol &&
-      (run < 70 || run > 100) ){
+      (run < 70 || run > 200) ){
     minY = GetVoltageRange(digitiser)*(16 - 1)/32*1.0e3;
     maxY = GetVoltageRange(digitiser)*(16 + 2)/32*1.0e3;
   }
@@ -1299,7 +1311,7 @@ int ProcessBinaryFile(TString inFilePath,
   //=================================
   //  Gate around Delay
   
-  if( run < 70 || run > 90)
+  if( run < 70 || run > 200)
     hQ_Fixed->SetAxisRange(-500., 2500.,"X");
   
   hQ_Filter->SetLineColor(kBlue);
@@ -1318,7 +1330,7 @@ int ProcessBinaryFile(TString inFilePath,
   //  Gate around Peak
   gPad->SetLogy(1);
   
-  if( run < 70 || run > 90)
+  if( run < 70 || run > 200)
     hQ_Peak->SetAxisRange(-500., 2500.,"X");
   
   hQ_Peak->Draw();

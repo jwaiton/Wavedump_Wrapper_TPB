@@ -9,3 +9,6 @@ libExePA.so
 ShippingData_C_ACLiC_dict_rdict.pcm
 Backups/
 canvas.pdf
+RiseFall/
+*.root
+WaveformFits/

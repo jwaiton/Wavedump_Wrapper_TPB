@@ -122,7 +122,7 @@ int main(Int_t argc, Char_t *argv[]){
     
     // Limit to subset of entries for quicker testing
     //PMT->SetTestMode(kFALSE);
-    PMT->SetTestMode();
+    //PMT->SetTestMode();
      
     // Testing output 
     //PMT->MakeCalibratedTree();
@@ -147,9 +147,12 @@ int main(Int_t argc, Char_t *argv[]){
     //Rise/Fall Time Study
     
     // number of pulses to fit 
-    int nPulses = 500;
-    
-    PMT->RiseFallTime(nPulses,peakMean);
+    int nPulses = 100;
+
+    float thresh_mV = 1.5;
+      
+    PMT->RiseFallTime(nPulses,peakMean,
+		      thresh_mV);
 
     int event = 0;
     if(!investigatePulses) 
