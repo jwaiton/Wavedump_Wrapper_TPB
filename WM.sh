@@ -1,8 +1,6 @@
 #!/bin/bash
 
 echo " Setting Watchman Environment "
-
-echo $WM_PARENT
  
 # testing code
 export WM_CODE=${WM_PARENT}Wavedump_Wrapper/
