@@ -3,5 +3,14 @@ WATCHMAN UK PMT Performance Testing
 
 Repository for Watchman-PMT data taking, processing and analysis framework.
 
-Instructions
-Source the WM.sh file to set up the enviroment variables
+Email issues and suggestions to:
+ gary.smith@ed.ac.uk
+
+Instructions:
+
+ Modify and execute the following lines to set up the environment,
+  (e.g. add them to your .bashrc file)
+
+export WM_PARENT=/path/to/Testing/
+source ${WM_PARENT}/Wavedump_Wrapper/WM.sh
+
