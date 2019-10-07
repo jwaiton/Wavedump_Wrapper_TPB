@@ -107,7 +107,6 @@ class TCooker {
    float ADC_To_Wave(short ADC);
    float GetRange_mV();
    float Get_mVPerBin();
-   float Get_peakT_ns(int entry); 
    float GetLength_ns();
    short GetNSamples();
    //---   

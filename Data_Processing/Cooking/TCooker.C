@@ -550,12 +550,6 @@ void TCooker::CountMissedEvents(int dTrigEntry){
   
 }
 
-float TCooker::Get_peakT_ns(int entry){
-  
-  return SampleToTime()*Get_peakSample(entry);
-  
-} 
-
 float TCooker::GetLength_ns(){
   return fLength_ns;
 }
