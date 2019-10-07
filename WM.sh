@@ -1,9 +1,9 @@
 #!/bin/bash
 
-echo " Setting Watchman Environment"
+echo " Setting Watchman Environment "
 
-export WM_PARENT=/Users/gsmith23/Desktop/Watchman/Testing/
-
+echo $WM_PARENT
+ 
 # testing code
 export WM_CODE=${WM_PARENT}Wavedump_Wrapper/
 export DAQ_DIR=${WM_CODE}Data_Acquisition/
