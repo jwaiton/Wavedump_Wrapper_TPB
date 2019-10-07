@@ -1,5 +1,7 @@
-17 Sept 2019 
+7th October 2019 
 WATCHMAN UK PMT Performance Testing 
 
-Source controlled code repository for Watchman-PMT data taking and analysis.
+Repository for Watchman-PMT data taking, processing and analysis framework.
 
+Instructions
+Source the WM.sh file to set up the enviroment variables
