@@ -6,13 +6,15 @@ export WM_PARENT=/Users/gsmith23/Desktop/Watchman/Testing/
 
 # testing code
 export WM_CODE=${WM_PARENT}Wavedump_Wrapper/
-export DAQ_DIR=${WM_CODE}Data_Acquisition/
+
 export DATA_DIR=${WM_CODE}Data_Storage/
 export BINARY_DATA_DIR=${DATA_DIR}Binary_Data/
-export RAW_ROOT_DATA_DIR=$DATA_DIR/Raw_Root_Data/
+export RAW_ROOT_DATA_DIR=${DATA_DIR}/Raw_Root_Data/
+
 export DAT_TO_ROOT=${WM_CODE}Data_Processing/Binary_Conversion/
 export COOKING=${WM_CODE}Data_Processing/Cooking/
 export WM_ANALYSIS=${WM_CODE}Data_Analysis/
+
 export CALIBRATION=${WM_ANALYSIS}Calibration/
 export BIN_TO_ROOT=${WM_ANALYSIS}BinToRoot/
 export GAIN_TEST_DIR=${WM_ANALYSIS}Gain_Test/
