@@ -62,7 +62,7 @@ class TCooker {
 
    TCooker(TTree *tree=0,
 	    char digitiser='V', // Program default is VME 1730
-	    char sampSet='3',   // variable only used for digitiser='D'
+	    char sampSet='2',   // variable only used for digitiser='D'
 	    char pulsePol='N'); // 'N' Neg or 'P' Pos
    virtual ~TCooker();
    virtual int  GetEntry(int entry);

@@ -25,6 +25,10 @@ export CPATH=${CPATH}:$WM_CODE/Data_Processing/Cooking/
 # binaries
 export PATH=${PATH}:$WM_CODE/Data_Processing/Binary_Conversion/
 
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${COOKING}
+fi
+
 nominal_HV(){
     echo $(grep " $1 " ${WM_ANALYSIS}Documents/HVScan.txt) | cut -d " " -f 7
 }

@@ -89,8 +89,9 @@ int main(int argc, char * argv[]){
     
     // initalise TCooker object using 
     // tree from input file
-    cooker = new TCooker(tree);
-    
+    //cooker = new TCooker(tree);
+    cooker = new TCooker(tree,'D');
+
     // Optional method:
     // reduce event loop for
     // faster code testing

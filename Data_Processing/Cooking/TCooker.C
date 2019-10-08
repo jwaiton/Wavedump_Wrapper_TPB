@@ -21,15 +21,13 @@ void TCooker::Cook(){
   printf("\n Cooking is complete            \n");
   printf("\n ------------------------------   ");
   printf("\n ------------------------------ \n");
-
-
+  
 }
 
 void TCooker::InitCooking(){
 
   printf("\n ------------------------------ \n");
   printf("\n Initialising Cook \n");
-
 
   InitCookedDataFile();
   InitMetaDataTree();
@@ -46,7 +44,6 @@ void TCooker::InitCookedData(){
   ConnectToCookedTree();
   
 }
-
 
 void TCooker::InitCookedDataFile(string option){
 
@@ -87,7 +84,6 @@ void TCooker::SaveMetaData(){
 }
 
 void TCooker::SaveCookedData(){
-
   
   printf("\n ------------------------------ \n");
   printf("\n Writing cooked data            \n");
@@ -218,7 +214,8 @@ string TCooker::GetCookedTreeID(){
 float TCooker::ADC_To_Wave(short ADC){
 
   float wave_mV_local = ADC * Get_mVPerBin();
-  wave_mV_local -= 1000.;
+  
+  wave_mV_local -= GetRange_mV()/2.;
   
   if(fPulsePol=='N')
     wave_mV_local = -wave_mV_local;
@@ -1181,7 +1178,7 @@ short TCooker::SetNSamples(){
   if(fDigitiser=='V')
     return smpByts/2; // shorts
   else
-    return smpByts;   // ints
+    return smpByts/4;   // ints
 }
 
 float TCooker::SetLength_ns(){
