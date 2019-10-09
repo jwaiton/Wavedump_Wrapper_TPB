@@ -155,7 +155,7 @@ int main(Int_t argc, Char_t *argv[]){
     // Rise/Fall Time Study
     
     // number of pulses to fit 
-    int nPulses = 2000;
+    int nPulses = 100;
     
     // threshold for pulse fitting
     // and dark counts
