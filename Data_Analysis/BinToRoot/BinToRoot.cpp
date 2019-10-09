@@ -250,9 +250,9 @@ float GetDelay(int run = 0){
   else if ( run == 101 )
     return 60.; // peak mean at 75
   else if ( run == 102 )
-    return 277.; // peak mean at 292
+    return 277.; // peak mean (292) - 15 = 277
   else if ( run == 103 )
-    return 249.; // peak mean at 264
+    return 249.; // peak mean (264) - 15 = 249
   else             // Default
     return  60.;
 }

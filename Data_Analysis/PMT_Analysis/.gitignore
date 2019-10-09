@@ -12,3 +12,6 @@ canvas.pdf
 RiseFall/
 *.root
 WaveformFits/
+*.so
+Waveforms/
+FFT/

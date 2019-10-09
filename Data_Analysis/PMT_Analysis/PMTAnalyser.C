@@ -180,7 +180,7 @@ void PMTAnalyser::PlotFFT(Long64_t entry){
   hName += ".png";
   canvas->SaveAs(hName);
   
-  string sysCommand = "okular ";
+  string sysCommand = "open ";
   sysCommand += hName;
   sysCommand += " &";
   system(sysCommand.c_str());
@@ -261,7 +261,7 @@ void PMTAnalyser::PlotWaveform(Long64_t entry){
   hName += ".png";
   canvas->SaveAs(hName);
 
-  string sysCommand = "okular ";
+  string sysCommand = "open ";
   sysCommand += hName;
   sysCommand += " &";
   system(sysCommand.c_str());
@@ -1065,14 +1065,41 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
 
   TH1F * Fall = new TH1F("Fall", 
 			 "Pulse Fall Time;Fall Time (ns);Counts",
-			 200, 5.0, 30.0);
+			 200, 0.0, 30.0);
 
   TH1F * Fall5 = new TH1F("Fall5", 
-			  "Pulse Fall Time to 5 pct;Fall Time 90 to 5 pct (ns);Counts",
-			  200, 5.0, 100.0);
+			  "Pulse Fall Time to 5 pct;Fall Time: 90 to 5 pct (ns);Counts",
+			  200, 0.0, 40.0);
   
+  // Define in mV
+  float max_peak_ADC = 100.; 
+
+  if( Run == 103 )
+    max_peak_ADC  = 10.;
+
+  // convert to ADC bins
+  max_peak_ADC /=  mVPerBin; 
   
-  if(Run >= 70 ){
+  TH2F * Peak_Rise = nullptr;
+  
+  Peak_Rise = new TH2F("Peak_Rise", 
+		       "Pulse Rise Time vs Peak ADC;Peak ADC;Rise Time (ns)",
+		       25,0,max_peak_ADC,
+		       25, 0.0, 8.0);
+  
+  TH2F * Peak_Fall = nullptr;
+
+  Peak_Fall = new TH2F("Peak_Fall", 
+		       "Pulse Fall Time vs Peak ADC;Peak ADC;Fall Time (ns)",
+		       25,0,max_peak_ADC,
+		       25, 0.0, 20.0);
+  
+  if     ( Run > 99 ){    
+    Rise->SetAxisRange(0.,8,"X");
+    Fall->SetAxisRange(0.,20.,"X");
+    Fall5->SetAxisRange(0.,30.,"X");
+  }
+  else if( Run >= 70 ){
     Rise->SetBins(64,11.5,21.5);
     Fall->SetBins(64,11.5,21.5);
   }
@@ -1081,7 +1108,6 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
   Long64_t entry     = 0;
   int      nPulses   = 0;    // counter
   
-   
   if( Test == 'G' )
     thresh_mV_low += 2.5*thresh_mV_low/15.*(HVStep-4.);
   
@@ -1115,20 +1141,23 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
   TF1* fWave = new TF1("fWave",fName,
 		       0, waveformDuration);
   
-  cout << endl;
-  cout << " peakMean = " << peakMean << endl;
-
+  int verbosity = 0;
+    
+  if(verbosity > 0){
+    cout << endl;
+    cout << " peakMean = " << peakMean << endl;
+  }
   // fit waveforms with crystal ball function
   while ( nPulses < totPulses ){ 
-  
-    //cout << " peakMean = " << peakMean << endl;
-
+    
     // find random entry number within event sample
     entry = (Long64_t)round(rand()*nentries/RAND_MAX); 
 
     // get histogram of waveform
     Get_hWave(entry,hWave);
     
+    hWave->SetAxisRange(peakMean-50., peakMean+150.,"X");
+
     maxADC = hWave->GetMaximum();
     minADC = hWave->GetMinimum();
 
@@ -1151,8 +1180,10 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
     if( TMath::Abs( floorADC - baseline )*mVPerBin > thresh_mV_low )
       continue;
     
-    // cout << endl;
-    // cout << " Passes pulse vito " <<  endl;
+    if(verbosity > 0){
+      cout << endl;
+      cout << " Passes pulse vito " <<  endl;
+    }
     
     pulseRange_mV = TMath::Abs(peakADC - baseline)*mVPerBin;
     
@@ -1161,8 +1192,10 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
        pulseRange_mV  > thresh_mV_high )
       continue;
     
-    //  cout << endl;
-    //  cout << " Passes range vito " <<  endl;
+    if(verbosity > 0){
+      cout << endl;
+      cout << " Passes range vito " <<  endl;
+    }
     
     if(negPulsePol)
       peakT = hWave->GetBinCenter(hWave->GetMinimumBin());
@@ -1176,13 +1209,15 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
 	Test !='D' )
       continue;
     
-    //  cout << endl;
-    //  cout << " Passes timing vito " << endl;
-
+    if(verbosity > 0){
+      cout << endl;
+      cout << " Passes timing vito " << endl;
+    }
+     
+    nPulses++;
+    
     // end of vitos
     // pulse has been selected
-
-    nPulses++;    
     
     cout << endl;
     cout << " Fitting pulse number " << nPulses <<  endl;
@@ -1252,7 +1287,6 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
     
     float timeRise10 = fWave->GetX(f010,fPreMin,fXAtPeak);
     float timeRise90 = fWave->GetX(f090,fPreMin,fXAtPeak);
-    
 
     float timeFall90 = fWave->GetX(f090,fXAtPeak,fPostMin);
     float timeFall10 = fWave->GetX(f010,fXAtPeak,fPostMin);
@@ -1282,24 +1316,39 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
 
     // save waveform fits
     bool doPlot = true; 
-    int  oneIn = 100; // one in #{oneIn} waveforms saved 
-    // plus always save the first one
-    if( (nPulses==1 || nPulses%(oneIn) == 0) && doPlot){
+    int  oneIn = 50; // one in #{oneIn} waveforms saved 
+    char fitResult = 'G'; // good
+    
+    // Bad fit classifications
+    if     ( riseTime < 1.0 || riseTime > 8. )
+      fitResult  = 'R';// rise time
+    else if( fallTime < 3.0 || fallTime > 20. )
+      fitResult  = 'F';// fall time
+    else if( TMath::Abs( fPeak - fFloor )*mVPerBin < thresh_mV_low )
+      fitResult = 'A'; // fit peak amplitude
+    else if( TMath::Abs( peakMean - fXAtPeak ) > 8.0)
+      fitResult = 'T'; // peak time
+    else if( fallTime < 4.5 )
+      fitResult = 'L'; // low fall time
+
+    // always save the first waveform fit
+    // always save bad fits
+    if( (nPulses==1 || nPulses%(oneIn) == 0 || fitResult != 'G' ) && doPlot){
       
       // Horizontal lines
-      TLine * lBase = new TLine(0,fBase,waveformDuration,fBase);
+      TLine * lBase = new TLine(peakMean-50,fBase,peakMean+150,fBase);
       lBase->SetLineColor(kBlue);
       lBase->Draw();
 
-      TLine * l10 = new TLine(0,f010,waveformDuration,f010);
+      TLine * l10 = new TLine(peakMean-50,f010,peakMean+150,f010);
       l10->SetLineColor(kGreen);
       l10->Draw();
       
-      TLine * l90 = new TLine(0,f090,waveformDuration,f090);
+      TLine * l90 = new TLine(peakMean-50,f090,peakMean+150,f090);
       l90->SetLineColor(kOrange);
       l90->Draw();
       
-      TLine * lPeak = new TLine(0,fPeak,waveformDuration,fPeak);
+      TLine * lPeak = new TLine(peakMean-50,fPeak,peakMean+150,fPeak);
       lPeak->SetLineColor(kMagenta);
       lPeak->Draw();
       
@@ -1312,11 +1361,11 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
       lRise90->SetLineColor(kRed);
       lRise90->Draw();
       
-      if( Run >= 70 ){
-	TLine * l100 = new TLine(fPeakT,fPeak,fPeakT,fPeak);
-	lRise90->SetLineColor(kMagenta);
-	lRise90->Draw();
-      }
+//       if( Run >= 70 ){
+// 	TLine * l100 = new TLine(fPeakT,fPeak,fPeakT,fPeak);
+// 	lRise90->SetLineColor(kMagenta);
+// 	lRise90->Draw();
+//       }
       
       TLine * lFall90 = new TLine(timeFall90,fFloor,timeFall90,fPeak);
       lFall90->SetLineColor(kBlue);
@@ -1327,18 +1376,41 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
       lFall10->Draw();
       
       char OutFile[128];
-      if(Test=='G')
-	sprintf(OutFile, "./WaveformFits/Waveform_Run_%d_entry_%lld_HV_%d.png",Run,entry,HVStep);
-      else
-	sprintf(OutFile, "./WaveformFits/Waveform_Run_%d_entry_%lld_Test_%c.png",Run,entry,Test);
+      if(Test=='G'){
+	sprintf(OutFile,
+		"./WaveformFits/Waveform_Run_%d_entry_%lld_HV_%d_Result_%c.png",
+		Run,entry,HVStep,fitResult);
+      }
+      else{
+	sprintf(OutFile,
+		"./WaveformFits/Waveform_Run_%d_entry_%lld_Test_%c_Result_%c.png",
+		Run,entry,Test,fitResult);
+      }
+      
       can->SaveAs(OutFile);
     }
-  
+    
+    // include low fall time results
+    if( fitResult == 'L' )
+      fitResult = 'G';
+      
+    // Skip Filling if bad fit results
+    if( fitResult!='G' ){
+      nPulses--;
+      continue;
+    }
+    
     Rise->Fill(riseTime);
     Fall->Fill(fallTime);
     Fall5->Fill(fallTime5);
-  }
+    
+    float fPeakADC = fFloor - fPeak;
 
+    Peak_Fall->Fill(fPeakADC,fallTime);
+    Peak_Rise->Fill(fPeakADC,riseTime);
+  
+  }
+  
   hWave->Delete();   
 
   TLatex * latex = new TLatex();
@@ -1349,20 +1421,20 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
   TString tStr = "";
 
   Rise->Draw();
-
-  tStr.Form("Mean = %.2f ",
+  
+  tStr.Form("mean = %.2f ",
 	    Rise->GetMean());
    
   //latex->SetTextColor(kBlue);  
 
   latex->DrawLatex(0.7,0.8,tStr);
 
-  tStr.Form("StdDev = %.2f",
+  tStr.Form("std dev = %.2f",
 	    Rise->GetStdDev());
   
   latex->DrawLatex(0.7,0.75,tStr);
 
-  tStr.Form("MeanErr = %.2f",
+  tStr.Form("std err = %.2f",
 	    Rise->GetMeanError());
   
   latex->DrawLatex(0.7,0.7,tStr);
@@ -1370,38 +1442,51 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
   TString hName = FileID;
   hName = hName + ".png";
  
-  //Rise->Fit("gaus");
   can->SaveAs("./RiseFall/Rise_" + hName);
   
   Fall->Draw();
   
-  //Fall->Draw("same");
-
-//   tStr.Form("Mean = %.2f ",
-// 	    Fall->GetMean());
-
-  tStr.Form("Mean = %.2f ",
+  tStr.Form("mean = %.2f ",
 	    Fall->GetMean());
 
   latex->DrawLatex(0.7,0.8,tStr);
 
-//   tStr.Form("StdDev = %.2f",
-// 	    Fall->GetStdDev());
-  tStr.Form("StdDev = %.2f",
+  tStr.Form("std dev = %.2f",
 	    Fall->GetStdDev());
   
   latex->DrawLatex(0.7,0.75,tStr);
 
-  // tStr.Form("MeanErr = %.2f",
-  // 	    Fall->GetMeanError());
-  
-  tStr.Form("MeanErr = %.2f",
+  tStr.Form("std err = %.2f",
 	    Fall->GetMeanError());
   
   latex->DrawLatex(0.7,0.7,tStr);
-  
-  //Fall->Fit("gaus");
-  //can->SaveAs("./RiseFall/Fall_" + hName);
+
   can->SaveAs("./RiseFall/Fall_" + hName);
   
+  // Fall5
+  Fall5->Draw();
+
+  tStr.Form("mean = %.2f ",
+	    Fall5->GetMean());
+
+  latex->DrawLatex(0.7,0.8,tStr);
+
+  tStr.Form("std dev = %.2f",
+	    Fall5->GetStdDev());
+  
+  latex->DrawLatex(0.7,0.75,tStr);
+
+  tStr.Form("std err = %.2f",
+	    Fall5->GetMeanError());
+  
+  latex->DrawLatex(0.7,0.7,tStr);
+
+  can->SaveAs("./RiseFall/Fall_5_" + hName);
+
+  // 2D
+  Peak_Rise->Draw("colz");
+  can->SaveAs("./RiseFall/Peak_Rise_" + hName);
+
+  Peak_Fall->Draw("colz");
+  can->SaveAs("./RiseFall/Peak_Fall_" + hName);
 }

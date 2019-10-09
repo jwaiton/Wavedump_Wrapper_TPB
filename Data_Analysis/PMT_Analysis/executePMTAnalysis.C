@@ -61,7 +61,7 @@ int main(Int_t argc, Char_t *argv[]){
   // 'V' for VME, 'D' for desktop
   Char_t  digitiser = 'D';
   
-  Bool_t investigateTiming   = kTRUE;
+  Bool_t investigateTiming   = kFALSE;
   Bool_t investigatePulses   = kFALSE;
   Bool_t investigateDarkRate = kFALSE;
   Bool_t investigateFFT      = kFALSE;
@@ -82,8 +82,7 @@ int main(Int_t argc, Char_t *argv[]){
     return -1;
   }
 
-  // signal threshold for dark rate
-  // and pulse analysis
+  // signal threshold for timing
   Float_t thresh_mV  = 20.0;
 
   // Dark Rate
@@ -108,7 +107,8 @@ int main(Int_t argc, Char_t *argv[]){
       cerr << " Error, Check File: " << argv[iFile] << endl; 
       return -1;
     }
-    
+   
+
     // connect to tree in input file
     TString treeName = (TString)testInfo->GetTreeName(argv[iFile]);
     inFile->GetObject(treeName,tree); 
@@ -128,9 +128,17 @@ int main(Int_t argc, Char_t *argv[]){
     //PMT->MakeCalibratedTree();
 
     shipData = new ShippingData(testInfo->pmtID(argv[iFile]));
-    
+   
+
     // FFT study
     // PMT->PlotAccumulatedFFT();
+    
+    if     (testInfo->run(argv[iFile])==102){
+      thresh_mV  = 20.0;
+    }
+    else if(testInfo->run(argv[iFile])==103){
+      thresh_mV  = 2.0;
+    }
     
     //------------
     // Timing Study
@@ -144,13 +152,23 @@ int main(Int_t argc, Char_t *argv[]){
     }
     
     //------------
-    //Rise/Fall Time Study
+    // Rise/Fall Time Study
     
     // number of pulses to fit 
-    int nPulses = 100;
-
-    float thresh_mV = 1.5;
-      
+    int nPulses = 2000;
+    
+    // threshold for pulse fitting
+    // and dark counts
+    thresh_mV = 15;
+    
+    if     (testInfo->run(argv[iFile])==102){
+      peakMean = 292.;
+    }
+    else if(testInfo->run(argv[iFile])==103){
+      peakMean  = 264.;
+      thresh_mV = 1.5;
+    }
+    
     PMT->RiseFallTime(nPulses,peakMean,
 		      thresh_mV);
 

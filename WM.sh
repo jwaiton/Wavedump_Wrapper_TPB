@@ -24,6 +24,7 @@ export CPATH=${CPATH}:$WM_CODE/Data_Processing/Cooking/
 
 # binaries
 export PATH=${PATH}:$WM_CODE/Data_Processing/Binary_Conversion/
+export PATH=${PATH}:$WM_CODE/Data_Processing/Binary_Conversion/DT_Version/
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${COOKING}
