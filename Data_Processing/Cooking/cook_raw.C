@@ -33,12 +33,9 @@
  * Dependencies
  *  root.cern - a working version of root is required
  *
- *  wmStyle.C - TStyle class for WATCHMAN plotting style
- *   This file is included in the distribution and
- *   can be found by the system by adding the following 
- *   lines to ~/.bashrc:  
- *    export TESTING_DIR=/path/to/Wavedump_Wrapper
- *    export CPATH=$TESTING_DIR/Data_Analysis/Common_Tools/
+ *  wmStyle.C - TStyle class setting for WATCHMAN visualisation
+ *   This file is included in the distribution in
+ *   /path/to/Wavedump_Wrapper/Common_Tools/
  * 
  * Known issues
  *   Under linux you will likely be required to add 
