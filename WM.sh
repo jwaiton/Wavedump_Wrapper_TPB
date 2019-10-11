@@ -19,16 +19,17 @@ export GAIN_TEST_DIR=${WM_ANALYSIS}Gain_Test/
 export SHIPPING_DATA=${WM_ANALYSIS}Shipping_Data/
 
 # header files
-export CPATH=$WM_CODE/Common_Tools/
-export CPATH=${CPATH}:$WM_CODE/Data_Processing/Cooking/
+export CPATH=${WM_CODE}/Common_Tools/
+export CPATH=${CPATH}:${WM_CODE}/Data_Processing/Cooking/
 
 # binaries
-export PATH=${PATH}:$WM_CODE/Data_Processing/Binary_Conversion/
-export PATH=${PATH}:$WM_CODE/Data_Processing/Binary_Conversion/DT_Version/
+export PATH=${PATH}:${WM_CODE}/Data_Processing/Binary_Conversion/
+export PATH=${PATH}:${WM_CODE}/Data_Processing/Binary_Conversion/DT_Version/
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${COOKING}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_ANALYSIS}PMT_Analysis
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_CODE}/Common_Tools/
 fi
 
 nominal_HV(){
