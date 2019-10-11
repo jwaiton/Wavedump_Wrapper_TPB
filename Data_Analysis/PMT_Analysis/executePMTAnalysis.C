@@ -61,7 +61,7 @@ int main(Int_t argc, Char_t *argv[]){
   // 'V' for VME, 'D' for desktop
   Char_t  digitiser = 'D';
   
-  Bool_t investigateTiming   = kFALSE;
+  Bool_t investigateTiming   = kTRUE;
   Bool_t investigatePulses   = kFALSE;
   Bool_t investigateDarkRate = kFALSE;
   Bool_t investigateFFT      = kFALSE;
@@ -92,7 +92,7 @@ int main(Int_t argc, Char_t *argv[]){
   TH1F  * hQ   = nullptr;
   
   // Timing peaks
-  Float_t peakMeans[argc-1], peakMean;
+  Float_t peakMeans[argc-1], peakMean = 50;
   for (Int_t i = 0 ; i < (argc-1) ; i++)
     peakMeans[i] = 0.;
   
@@ -107,7 +107,6 @@ int main(Int_t argc, Char_t *argv[]){
       cerr << " Error, Check File: " << argv[iFile] << endl; 
       return -1;
     }
-   
 
     // connect to tree in input file
     TString treeName = (TString)testInfo->GetTreeName(argv[iFile]);
