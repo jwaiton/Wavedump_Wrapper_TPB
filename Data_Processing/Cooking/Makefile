@@ -76,7 +76,9 @@ endif
 
 #-------------------------------------------------------------------------
 
-SRC           = TCooker.C 
+COMMON = ../../Common_Tools/
+
+SRC           = TCooker.C $(COMMON)FileNameParser.C
 
 OBJ           = $(SRC:.C=.o)
 HDR           = $(SRC:.C=.h)

@@ -24,7 +24,7 @@ void testFileNameParser(){
 
   // incorrect usage - need to first give 
   // filename as argument upon creation
-  // this will produce and error
+  // this will produce an error
   cout << endl;
   cout << " run  = " << fnp1->GetRun() << endl;
   

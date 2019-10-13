@@ -13,6 +13,8 @@
 #include <vector>
 #include <limits.h>
 
+
+
 using namespace std;
 
 class TCooker {
@@ -75,6 +77,7 @@ class TCooker {
    void DeleteCanvas();
 
    void   SetFileID();
+   void   SetFileID(string userFileID);
    string GetFileID();
    
    string GetCookedTreeID();
@@ -268,6 +271,8 @@ TCooker::TCooker(TTree *tree,
   SetDigitiser(digitiser); 
   SetSampSet(sampSet); // for desktop digitiser
   SetPulsePol(pulsePol); 
+
+  SetFileID();
   
   if (tree == 0){
     fprintf( stderr, "\n Warning: No input tree");

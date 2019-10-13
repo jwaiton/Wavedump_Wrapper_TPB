@@ -81,8 +81,56 @@ string FileNameParser::GetFileName(string filePath){
   return fileName;
 }
 
+// Set using file name directly
+void FileNameParser::SetFileID(string fileName){
+  
+  if(option < 0)
+    FileID = fileName.substr(0,fileName.size() - 5);
+  else{
+    char buff[128];
+    sprintf(buff,"Run_%d_PMT_%d_Loc_%d_Test_%c",Run,PMT,Loc,Test);
+    FileID = buff;
+  }
+}
+
+// Set using data members
+// which must have been set already
+void FileNameParser::SetFileID(){
+  
+  if(allSet){
+    char buff[128];
+    sprintf(buff,"Run_%d_PMT_%d_Loc_%d_Test_%c",Run,PMT,Loc,Test);
+    FileID = buff;
+  }
+  else{
+    cerr << "Error: data members not set " << endl;
+  }
+
+}
+
+// Get directly from file name
 string FileNameParser::GetFileID(string fileName){
-  return fileName.substr(0,fileName.size() - 5);
+  return fileName.substr(0,fileName.size() - 5);;
+}
+
+// Get data member which must 
+//  have already been set
+string FileNameParser::GetFileID(){
+  return FileID;
+}
+
+void FileNameParser::Print_Data(){
+  
+  printf(" \n   FileID = %s", FileID.c_str());
+  printf(" \n   Run    = %d", Run);
+  printf(" \n   PMT    = %d", PMT);
+  printf(" \n   Loc    = %d", Loc);
+  printf(" \n   Test   = %c", Test);
+  
+  if(Test=='G')
+    printf(" \n   HVStep   = %d", HVStep);
+
+  printf(" \n ");
 }
 
 string FileNameParser::GetTreeName(string filePath){
@@ -92,10 +140,24 @@ string FileNameParser::GetTreeName(string filePath){
   return treeName; 
 }
 
+string FileNameParser::GetTreeName(){
+  
+  string treeName = "Events_" + GetFileID();
+  
+  return treeName; 
+}
+
 
 string FileNameParser::Get_hQ_Fixed_Name(string filePath){
   
   string hName = "hQ_Fixed_" + GetFileID(GetFileName(filePath));
+  
+  return hName; 
+}
+
+string FileNameParser::Get_hQ_Fixed_Name(){
+  
+  string hName = "hQ_Fixed_" + GetFileID();
   
   return hName; 
 }

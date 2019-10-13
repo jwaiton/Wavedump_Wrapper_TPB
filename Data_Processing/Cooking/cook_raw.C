@@ -1,48 +1,58 @@
 /*****************************************************
- * A program to process raw root files from wavedump
+ * A program to process raw root files produced  
+ * using dat_to_root
  *
  * Author 
  *  gary.smith@ed.ac.uk
- *  17 09 2019
+ *  13 10 2019
  *
  * Purpose
  *  This program reads in a TTree
  *  of raw variables (ADC and HEAD)
- *  and created an output TTree of
- *  'cooked' variables and stores 
- *  it in a root file.
+ *  and creates an output TTree of
+ *  'cooked' variables, storing 
+ *  it in another root file.
  *
+ * Setting Up
+ *   The environment should first be set using 
+ *   the WM.sh script - located in ../../
+ * 
  * How to build
  *  $ make 
  *
- * How to run
- *
- * $ ./cook_raw wave_0.dat.root
+ * How to run 
+ *  e.g.
+ * $ ./cook_raw /path/to/RUN000001/PMT0130/SPEtest/wave_0.dat.root
  * 
  * Input
  *  .root file created with dat_to_root
  * 
  * Output
- *  Monitoring Plots are saved in directory structure
- *    ./Plots/DAQ 
- *    ./Plots/Noise
- *  which must be created prior to running
- *  A root file of cooked variables is saved.
+ *  Monitoring Plots can be saved in directory structure
+ *     ./Plots/DAQ 
+ *     ./Plots/Noise
+ *     ./Plots/Baseline
+ *     ./Plots/Waveforms
+ *   which must be created prior to running.
+ *    (the script make_plot_directories.sh is 
+ *       provided to automate this) 
  * 
+ *  A root file of: 
+ *      cooked variables 
+ *      meta data 
+ *  can optionallt be saved
+ *  in the current folder.
  *
  * Dependencies
  *  root.cern - a working version of root is required
  *
- *  wmStyle.C - TStyle class setting for WATCHMAN visualisation
+ *  wmStyle.C - TStyle class settings for WATCHMAN visualisation
  *   This file is included in the distribution in
  *   /path/to/Wavedump_Wrapper/Common_Tools/
  * 
- * Known issues
- *   Under linux you will likely be required to add 
- *   the shared (.so) file location to your library path 
- *   ie add the path to this directory  
- *  e.g. add the following line to your .bashrc file:
- *   export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/insert/the/path/here/
+ *  FileNameParser.h - class for accessing file ID
+ *   also included in common tools
+ * 
  */ 
 
 #include <iostream>
@@ -50,7 +60,10 @@
 #include <string>
 #include "TFile.h"
 #include "TTree.h"
+
 #include "TCooker.h"
+
+#include "FileNameParser.h"
 
 bool Welcome(int argc);
 bool IsFileReady(TFile *, char *);
@@ -66,18 +79,29 @@ int main(int argc, char * argv[]){
   // object used to cook 
   // raw (root) data
   TCooker * cooker = nullptr;
+
+  // object used for extracting file ID info 
+  // from argv[], namely:
+  //  Run, PMT, Test, Location, 
+  FileNameParser * fNP =  nullptr;
   
-  // Loop over files
   for( int iFile = 1 ; iFile < argc ; iFile++){
 
     //-------------------
+    //-------------------
     // Setting Up
     
-    // Check file
+    // argv should be full path to data file
+    // in standard WATCHMAN PMT Testing format
+    // (option 1 is for use with this format)
+    fNP = new FileNameParser(argv[iFile],1);
+
+    // Check root file
     inFile = new TFile(argv[iFile],"READ");
     if( !IsFileReady(inFile,argv[iFile]) )
       continue;
     
+    printf("\n ------------------------------ \n");
     printf("\n  Input File:       ");
     printf("\n    %s  \n",argv[iFile]);
     
@@ -86,21 +110,22 @@ int main(int argc, char * argv[]){
     
     // initalise TCooker object using 
     // tree from input file
-    //cooker = new TCooker(tree);
-    cooker = new TCooker(tree,'D');
+    cooker = new TCooker(tree);
+    //cooker = new TCooker(tree,'D');// desktop digi version
+       
+    // set the cooker object FileID using the
+    // FileNameParser object member function
+    cooker->SetFileID(fNP->GetFileID().c_str());
 
     // Optional method:
-    // reduce event loop for
-    // faster code testing
-    // NB no check that this is 
-    // lower thatn nentries
+    // reduce event loop for faster code testing
+    // NB no check that this is lower that nentries
     int user_nentries = 100000; 
     cooker->SetTestMode(user_nentries);
     
-    //
+    //-------------------
     //-------------------
     // Monitor Raw Data 
-
     cooker->PrintConstants();
     
     // DAQ info
@@ -108,6 +133,9 @@ int main(int argc, char * argv[]){
     //  Save: rate,timing and event plots
     cooker->DAQ();
     
+    //.....
+    // In progress - currently saves one waveform
+    //
     // Plot Waveforms, options: 
     //    'w' waveform only
     //    'f' fft only
@@ -118,15 +146,19 @@ int main(int argc, char * argv[]){
     //
     //-------------------
     //-------------------
-    // Cooking
+    // Cook Data
     
     // 'Cook' to mV and ns
     // find peak voltage
     // and peak sample
-    // Write tree to file
+    // Save meta data tree
+    // Save cooked data tree
     cooker->Cook();
     
     // Data has been cooked
+    //-------------------
+
+
     //-------------------
     //-------------------
     // Monitor/Analyse Cooked Data
@@ -140,7 +172,7 @@ int main(int argc, char * argv[]){
     // print noise rate @ -5 mV and -10 mV wrt mean
     cooker->Noise();
     
-    // Baseline investigation (not implemented)
+    // Baseline investigation (not applied to data)
     // plot: baseline, vs event, peak vs baseline
     cooker->Baseline();
     
@@ -148,6 +180,8 @@ int main(int argc, char * argv[]){
     cooker->CloseCookedFile();
     
     inFile->Delete();
+    
+    delete fNP;
   }
   
   return 1;
