@@ -77,7 +77,7 @@ endif
 
 #-------------------------------------------------------------------------
 
-SRC           = PMTAnalyser.C DataInfo.C ShippingData.C FileNameParser.C
+SRC           = PMTAnalyser.C DataInfo.C ../../Common_Tools/ShippingData.C ../../Common_Tools/FileNameParser.C
 
 OBJ           = $(SRC:.C=.o)
 HDR           = $(SRC:.C=.h)
@@ -100,7 +100,7 @@ clean:
 		rm -f *.o *.d *.so $(PROGRAMS)
 
 realclean:	clean
-		rm -f *.d *~ core
+		rm -f *.d *~ core *.pcm
 		rm -f executePMTAnalysisDict.*
 
 executePMTAnalysisDict.C: 	$(HDR) ExePA_LinkDef.h

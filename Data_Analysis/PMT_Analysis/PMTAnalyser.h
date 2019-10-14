@@ -156,12 +156,12 @@ void PMTAnalyser::Init(TTree *tree,
   
   testInfo = new FileNameParser(tree->GetName());
   
-  Test     = testInfo->Test;
-  HVStep   = testInfo->HVStep;
-  Run      = testInfo->Run;
-  PMT      = testInfo->PMT;
-  Loc      = testInfo->Loc;
-  FileID   = testInfo->FileID;
+  Test     = testInfo->GetTest();
+  HVStep   = testInfo->GetHVStep();
+  Run      = testInfo->GetRun();
+  PMT      = testInfo->GetPMT();
+  Loc      = testInfo->GetLoc();
+  FileID   = testInfo->GetFileID();
   
   dataInfo = new DataInfo();
 

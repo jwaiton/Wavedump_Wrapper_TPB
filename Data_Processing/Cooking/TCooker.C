@@ -73,8 +73,6 @@ void TCooker::SaveMetaData(){
   printf("\n Writing meta data              \n");   
   
   sprintf(FileID,"%s",f_fileID.c_str());
-  
-  printf("\n FileID =  %s \n",FileID);
 
   metaTree->Fill();
 
@@ -192,14 +190,18 @@ void TCooker::CloseCookedFile(){
   outFile->Close();  
 }
 
-////
 void TCooker::SetFileID(){
 
-  //!!! Temporary
-  f_fileID = "Run_1_PMT_130_Loc_0_Test_D";
+  f_fileID = "fileID";
+
+}
+
+void TCooker::SetFileID(string userFileID){
   
-  printf("\n Warning: Hard-coding File ID");
-  printf("\n \t %s \n ",f_fileID.c_str());
+  f_fileID = userFileID;
+  
+  printf("\n TCooker object FileID set to: ");
+  printf("\n  %s \n ",f_fileID.c_str());
   
 }
 
@@ -852,8 +854,8 @@ void TCooker::Waveform(char option){
     SaveWaveform();
     break;
   case('f'):
-    break;
     SaveFFT();
+    break;
   case('b'):
     SaveWaveFFT();
     break;

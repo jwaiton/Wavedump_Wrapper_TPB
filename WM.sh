@@ -1,16 +1,20 @@
 #!/bin/bash
 
 echo " Setting Watchman Environment "
+
+# if not set in .bashrc then set here
+# export WM_PARENT=/path/to/
  
 # testing code
 export WM_CODE=${WM_PARENT}Wavedump_Wrapper/
 
 export DATA_DIR=${WM_CODE}Data_Storage/
 export BINARY_DATA_DIR=${DATA_DIR}Binary_Data/
-export RAW_ROOT_DATA_DIR=${DATA_DIR}/Raw_Root_Data/
+export RAW_ROOT_DATA_DIR=${DATA_DIR}Raw_Root_Data/
 
 export DAT_TO_ROOT=${WM_CODE}Data_Processing/Binary_Conversion/
 export COOKING=${WM_CODE}Data_Processing/Cooking/
+export COMMON=${WM_CODE}Common_Tools/
 export WM_ANALYSIS=${WM_CODE}Data_Analysis/
 
 export CALIBRATION=${WM_ANALYSIS}Calibration/
@@ -19,16 +23,17 @@ export GAIN_TEST_DIR=${WM_ANALYSIS}Gain_Test/
 export SHIPPING_DATA=${WM_ANALYSIS}Shipping_Data/
 
 # header files
-export CPATH=$WM_CODE/Common_Tools/
-export CPATH=${CPATH}:$WM_CODE/Data_Processing/Cooking/
+export CPATH=${CPATH}:${COMMON}
+export CPATH=${CPATH}:${WM_CODE}Data_Processing/Cooking/
 
 # binaries
-export PATH=${PATH}:$WM_CODE/Data_Processing/Binary_Conversion/
-export PATH=${PATH}:$WM_CODE/Data_Processing/Binary_Conversion/DT_Version/
+export PATH=${PATH}:${WM_CODE}Data_Processing/Binary_Conversion/
+export PATH=${PATH}:${WM_CODE}Data_Processing/Binary_Conversion/DT_Version/
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${COOKING}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_ANALYSIS}PMT_Analysis
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${COMMON}
 fi
 
 nominal_HV(){

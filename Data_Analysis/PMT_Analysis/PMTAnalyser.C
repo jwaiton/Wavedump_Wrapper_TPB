@@ -1084,15 +1084,23 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
   
   Peak_Rise = new TH2F("Peak_Rise", 
 		       "Pulse Rise Time vs Peak ADC;Peak ADC;Rise Time (ns)",
-		       25,0,max_peak_ADC,
-		       25, 0.0, 8.0);
+		       50,0,max_peak_ADC,
+		       50, 0.0, 8.0);
   
   TH2F * Peak_Fall = nullptr;
 
   Peak_Fall = new TH2F("Peak_Fall", 
 		       "Pulse Fall Time vs Peak ADC;Peak ADC;Fall Time (ns)",
-		       25,0,max_peak_ADC,
-		       25, 0.0, 20.0);
+		       50,0,max_peak_ADC,
+		       50, 0.0, 20.0);
+
+
+  TH2F * Rise_Fall = nullptr;
+  
+  Rise_Fall = new TH2F("Rise_Fall", 
+		       "Pulse Fall Time vs Pulse Rise Time;Rise Time (ns);Fall Time (ns)",
+		       50, 0.0, 8.0,
+		       50, 0.0, 20.0);
   
   if     ( Run > 99 ){    
     Rise->SetAxisRange(0.,8,"X");
@@ -1409,6 +1417,8 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
     Peak_Fall->Fill(fPeakADC,fallTime);
     Peak_Rise->Fill(fPeakADC,riseTime);
   
+    Rise_Fall->Fill(riseTime,fallTime);
+
   }
   
   hWave->Delete();   
@@ -1440,9 +1450,12 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
   latex->DrawLatex(0.7,0.7,tStr);
   
   TString hName = FileID;
-  hName = hName + ".png";
- 
+  
+  hName = FileID + ".png";
   can->SaveAs("./RiseFall/Rise_" + hName);
+
+  hName = FileID + ".root";
+  Rise->SaveAs("./Rise_" + hName);
   
   Fall->Draw();
   
@@ -1461,8 +1474,12 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
   
   latex->DrawLatex(0.7,0.7,tStr);
 
+  hName = FileID + ".png";
   can->SaveAs("./RiseFall/Fall_" + hName);
   
+  hName = FileID + ".root";
+  Fall->SaveAs("Fall_" + hName);
+
   // Fall5
   Fall5->Draw();
 
@@ -1481,12 +1498,21 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
   
   latex->DrawLatex(0.7,0.7,tStr);
 
+  hName = FileID + ".png";
   can->SaveAs("./RiseFall/Fall_5_" + hName);
 
+  hName = FileID + ".root";  
+  Fall5->SaveAs("Fall_5_" + hName);
+  
+  hName = FileID + ".png";
   // 2D
   Peak_Rise->Draw("colz");
   can->SaveAs("./RiseFall/Peak_Rise_" + hName);
 
   Peak_Fall->Draw("colz");
   can->SaveAs("./RiseFall/Peak_Fall_" + hName);
+  
+  Rise_Fall->Draw("colz");
+  can->SaveAs("./RiseFall/Rise_Fall_" + hName);
+
 }
