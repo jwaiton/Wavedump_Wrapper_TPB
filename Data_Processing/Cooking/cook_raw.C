@@ -121,7 +121,7 @@ int main(int argc, char * argv[]){
     // reduce event loop for faster code testing
     // NB no check that this is lower that nentries
     int user_nentries = 100000; 
-    cooker->SetTestMode(user_nentries);
+    //cooker->SetTestMode(user_nentries);
     
     //-------------------
     //-------------------
