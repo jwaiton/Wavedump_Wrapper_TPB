@@ -76,9 +76,9 @@ endif
 
 #-------------------------------------------------------------------------
 
-COMMON = ../../Common_Tools/
+#COMMON = ../../Common_Tools/
 
-SRC           = TCooker.C $(COMMON)FileNameParser.C
+SRC           = TCooker.C ../../Common_Tools/FileNameParser.C
 
 OBJ           = $(SRC:.C=.o)
 HDR           = $(SRC:.C=.h)
@@ -102,7 +102,7 @@ clean:
 
 realclean:	clean
 		rm -f *.d *~ core
-		rm -f cook_rawDict.*
+		rm -f cook_rawDict.* *.pcm
 
 cook_rawDict.C: 	$(HDR) CookRaw_LinkDef.h
 		@echo "Generating dictionary cook_rawDict..."
