@@ -8,33 +8,34 @@ echo " Setting Watchman Environment "
 # testing code
 export WM_CODE=${WM_PARENT}Wavedump_Wrapper/
 
-export DATA_DIR=${WM_CODE}Data_Storage/
-export BINARY_DATA_DIR=${DATA_DIR}Binary_Data/
-export RAW_ROOT_DATA_DIR=${DATA_DIR}/Raw_Root_Data/
+export WM_DATA=${WM_CODE}Data_Storage/
+export WM_BINARY=${WM_DATA}Binary_Data/
+export WM_ROOT=${WM_DATA}/Raw_Root_Data/
 
-export DAT_TO_ROOT=${WM_CODE}Data_Processing/Binary_Conversion/
-export COOKING=${WM_CODE}Data_Processing/Cooking/
-export WM_ANALYSIS=${WM_CODE}Data_Analysis/
+export WM_CONVERT=${WM_CODE}Data_Processing/Binary_Conversion/
+export WM_COOK=${WM_CODE}Data_Processing/Cooking/
+export WM_COMMON=${WM_CODE}/Common_Tools/
+export WM_ANALYSE=${WM_CODE}Data_Analysis/
 
-export CALIBRATION=${WM_ANALYSIS}Calibration/
-export BIN_TO_ROOT=${WM_ANALYSIS}BinToRoot/
-export GAIN_TEST_DIR=${WM_ANALYSIS}Gain_Test/
-export SHIPPING_DATA=${WM_ANALYSIS}Shipping_Data/
+export CALIBRATION=${WM_ANALYSE}Calibration/
+export BIN_TO_ROOT=${WM_ANALYSE}BinToRoot/
+export GAIN_TEST_DIR=${WM_ANALYSE}Gain_Test/
+export SHIPPING_DATA=${WM_ANALYSE}Shipping_Data/
 
 # header files
-export CPATH=${WM_CODE}/Common_Tools/
-export CPATH=${CPATH}:${WM_CODE}/Data_Processing/Cooking/
+export CPATH=${CPATH}:${WM_COMMON}
+export CPATH=${CPATH}:${WM_COOK}
 
 # binaries
-export PATH=${PATH}:${WM_CODE}/Data_Processing/Binary_Conversion/
-export PATH=${PATH}:${WM_CODE}/Data_Processing/Binary_Conversion/DT_Version/
+export PATH=${PATH}:${WM_CONVERT}
+export PATH=${PATH}:${WM_CONVERT}/DT_Version/
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${COOKING}
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_ANALYSIS}PMT_Analysis
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_CODE}/Common_Tools/
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_COOK}
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_COMMON}
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_ANALYSE}PMT_Analysis
 fi
 
 nominal_HV(){
-    echo $(grep " $1 " ${WM_ANALYSIS}Documents/HVScan.txt) | cut -d " " -f 7
+    echo $(grep " $1 " ${WM_COMMON}HVScan.txt) | cut -d " " -f 7
 }
