@@ -83,7 +83,7 @@ int main(int argc, char * argv[]){
   // object used for extracting file ID info 
   // from argv[], namely:
   //  Run, PMT, Test, Location, 
-  FileNameParser * fNP =  nullptr;
+  //FileNameParser * fNP =  nullptr;
   
   for( int iFile = 1 ; iFile < argc ; iFile++){
 
@@ -94,7 +94,7 @@ int main(int argc, char * argv[]){
     // argv should be full path to data file
     // in standard WATCHMAN PMT Testing format
     // (option 1 is for use with this format)
-    fNP = new FileNameParser(argv[iFile],1);
+    //fNP = new FileNameParser(argv[iFile],1);
 
     // Check root file
     inFile = new TFile(argv[iFile],"READ");
@@ -115,7 +115,7 @@ int main(int argc, char * argv[]){
        
     // set the cooker object FileID using the
     // FileNameParser object member function
-    cooker->SetFileID(fNP->GetFileID().c_str());
+    //cooker->SetFileID(fNP->GetFileID().c_str());
 
     // Optional method:
     // reduce event loop for faster code testing
@@ -141,7 +141,7 @@ int main(int argc, char * argv[]){
     //    'f' fft only
     //    'b' waveform & fft
     char option = 'b';  
-    cooker->Waveform(option);    
+    //cooker->Waveform(option);    
 
     //
     //-------------------
@@ -177,11 +177,11 @@ int main(int argc, char * argv[]){
     cooker->Baseline();
     
     // Delete outFile pointer
-    cooker->CloseCookedFile();
+    //cooker->CloseCookedFile();
     
     inFile->Delete();
     
-    delete fNP;
+    //delete fNP;
   }
   
   return 1;

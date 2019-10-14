@@ -77,6 +77,9 @@ int main(Int_t argc, Char_t *argv[]){
   ShippingData   * shipData = nullptr;
   FileNameParser * testInfo = new FileNameParser();
 
+   shipData = new ShippingData(130);
+   cout << " DR(130) = " << shipData->GetDR() << endl;
+  
   if( !IsValidDigitiser(digitiser,testInfo->run(argv[1])) ||
       !IsValidArgc(argc) ){
     return -1;
@@ -126,8 +129,7 @@ int main(Int_t argc, Char_t *argv[]){
     // Testing output 
     //PMT->MakeCalibratedTree();
 
-    shipData = new ShippingData(testInfo->pmtID(argv[iFile]));
-   
+    //shipData = new ShippingData(testInfo->pmtID(argv[iFile]));
 
     // FFT study
     // PMT->PlotAccumulatedFFT();

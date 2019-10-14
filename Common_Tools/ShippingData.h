@@ -80,9 +80,16 @@ public :
 ShippingData::ShippingData(int PMT, 
 			   int verbosity)
 {
-  TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("ShippingData.root");
+
+  const char * s1 = getenv("COMMON");
+
+  string path2Ship = s1;
+  path2Ship += "ShippingData.root";
+  
+  TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject(path2Ship.c_str());
+  
   if (!f || !f->IsOpen()) {
-    f = new TFile("ShippingData.root");
+    f = new TFile(path2Ship.c_str());
   }
 
   TTree * tree = nullptr;
