@@ -29,12 +29,29 @@ void testFileNameParser(){
   cout << " run  = " << fnp1->GetRun() << endl;
   
   // ------------------------
+  // Usage with file name containing IDs
+  FileNameParser * fnp2 = new FileNameParser(filename);
+  
+  cout << endl;
+  cout << " FileID  = " << fnp2->GetFileID() << endl;
+
+  // ------------------------
+  // Usage with tree name containing IDs
+  filename ="Events_Run_102_PMT_152_Loc_0_Test_S";
+
+  FileNameParser * fnp3 = new FileNameParser(filename);
+  
+  cout << endl;
+  cout << " FileID  = " << fnp3->GetFileID() << endl;
+
+  // ------------------------
   // Usage with raw data path
   filename = "Data_Storage/Binary_Data/RUN000001/PMT0130/SPEtest/wave_0.dat";
   
-  FileNameParser * fnp2 = new FileNameParser(filename,1);
+  // note usage of option = 1 
+  FileNameParser * fnp4 = new FileNameParser(filename,1);
 
   cout << endl;
-  cout << " run  = " << fnp2->GetRun() << endl;
+  cout << " run  = " << fnp4->GetRun() << endl;
   
 }
