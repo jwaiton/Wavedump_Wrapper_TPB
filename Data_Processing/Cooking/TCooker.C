@@ -215,14 +215,14 @@ string TCooker::GetCookedTreeID(){
 
 float TCooker::ADC_To_Wave(short ADC){
 
-  float wave_mV_local = ADC * Get_mVPerBin();
+  float wave = ADC * Get_mVPerBin();
   
-  wave_mV_local -= GetRange_mV()/2.;
+  wave -= GetRange_mV()/2.;
   
   if(fPulsePol=='N')
-    wave_mV_local = -wave_mV_local;
+    wave = -wave;
   
-  return wave_mV_local;
+  return wave;
 }
 
 bool TCooker::IsSampleInBaseline(short iSample,
@@ -287,7 +287,7 @@ void TCooker::Baseline(){
     hBase->Fill(base_mV);
     
     max_mV -= base_mV;
-    min_mV  -= base_mV;
+    min_mV -= base_mV;
     
     hPeak->Fill(max_mV);
        
@@ -465,6 +465,154 @@ void TCooker::SaveBaseline(string outFolder){
 
   DeleteCanvas();
 }
+
+
+void TCooker::Dark(float thresh_mV){
+  
+  InitDark();
+  
+  int nDark = 0;
+  int nDark_noise = 0;
+
+  for (int iEntry = 0; iEntry < nentries; iEntry++) {
+    cookedTree->GetEntry(iEntry);
+     
+    if(max_mV > thresh_mV)
+      nDark_noise++;
+
+    // Noise Rejection 
+    if( min_mV < -2.5 && max_mV < thresh_mV)
+      continue;
+    
+    if( max_mV < -2*min_mV && max_mV > thresh_mV )
+      continue;
+    
+    hD_Peak->Fill(max_mV);
+    hD_Min_Peak->Fill(min_mV,max_mV);
+    
+    if( max_mV < thresh_mV)
+      continue;
+    
+    nDark++;
+    
+  }// end: for (int iEntry 
+
+  float darkRate = (float)nDark/nentries;
+  darkRate = darkRate/fLength_ns * 1.0e9;
+  
+  printf("\n \n nentries = %d \n",nentries);
+  printf("\n dark counts (noise rejected) = %d \n",nDark);
+  printf("\n dark rate   (noise rejected) = %.0f \n",darkRate);
+  
+  darkRate = (float)nDark_noise/nentries;
+  darkRate = darkRate/fLength_ns * 1.0e9;
+  
+  printf("\n dark counts (with noise)     = %d \n",nDark_noise);
+  printf("\n dark rate   (with noise)     = %.0f \n\n",darkRate);
+
+  SaveDark();
+  
+}
+
+void TCooker::InitDark(){
+  
+  printf("\n ------------------------------ \n");
+  printf("\n Dark Counts Analysis           \n");
+  
+  float mVPerBin =  Get_mVPerBin();
+  float max_mV   =  GetRange_mV()/2.;
+  float min_mV   = -GetRange_mV()/2.;
+  int   nBins    = 0;
+  
+  // fix binning and set number of bins
+  Set_THF_Params(&min_mV,&max_mV,&mVPerBin,&nBins);
+  
+//   hBase = new TH1F("hBase",
+// 		   "hBase;baseline voltage (mV);Counts",
+// 		   nBins,min_mV,max_mV);
+  
+  hD_Peak = new TH1F("hD_Peak",
+		     "hD_Peak;peak voltage (mV);Counts",
+		     nBins,min_mV,max_mV);
+  
+//   hBase_Peak = new TH2F("hBase_Peak",
+// 			"hBase_Peak;baseline voltage (mV);peak voltage (mV)",
+// 			nBins,min_mV,max_mV,
+// 			nBins,min_mV,max_mV);
+  
+  hD_Min_Peak = new TH2F("hD_Min_Peak",
+			   "hD_Min_Peak;min voltage (mV);peak voltage (mV)",
+			   nBins,min_mV,max_mV,
+			   nBins,min_mV,max_mV);
+
+}
+
+
+void TCooker::SaveDark(string outFolder){
+
+  InitCanvas();
+
+  TLegend *leg = new TLegend(0.21,0.2,0.31,0.9);
+    
+  //  char title[128] = "";
+  leg->SetTextSize(0.025);
+  leg->SetHeader("Baseline start","C");
+  
+//   Int_t colors[] = {kRed-7,kRed,kRed+2,
+// 		    kRed-5,kOrange,kOrange+2,
+// 		    kOrange+4,kYellow+1,kGreen+1,
+// 		    kGreen+3,kGreen-5,kCyan+1,
+// 		    kCyan+3,kBlue-7,kBlue,
+// 		    kBlue+3,kViolet,kMagenta+1};
+  
+  leg->SetMargin(0.4); 
+
+  gPad->SetLogy();
+  
+  hD_Peak->SetAxisRange(-5., 75.,"X");
+  hD_Peak->SetMinimum(0.1);
+  hD_Peak->Draw();
+  
+  TLine * lVert = new TLine(10,0,10,20);
+  lVert->SetLineColor(kBlue);
+  lVert->SetLineWidth(2);
+  lVert->SetLineStyle(2);
+  lVert->Draw();
+
+  string outName = outFolder + "hD_Peak.pdf";
+  canvas->SaveAs(outName.c_str());
+  
+  gPad->SetLogy(false);
+
+//   hBase_Peak->SetAxisRange(-25.,25.,"X");
+//   hBase_Peak->SetAxisRange(-5., 45.,"Y");
+  
+//   hBase_Peak->Draw("col");
+  
+//   gPad->SetLogz();
+  
+//   outName = outFolder + "hBase_Peak.pdf";
+//   canvas->SaveAs(outName.c_str());
+
+  //
+  hD_Min_Peak->SetAxisRange(-25.,25.,"X");
+  hD_Min_Peak->SetAxisRange(-5., 45.,"Y");
+  
+  gPad->SetGrid(1, 1);
+  hD_Min_Peak->Draw("col");
+  
+  gPad->SetLogz();
+  
+  outName = outFolder + "hD_Min_Peak.pdf";
+  canvas->SaveAs(outName.c_str());
+
+  gPad->SetGrid(0,0);
+  
+  gPad->SetLogz(false);
+
+  DeleteCanvas();
+}
+
 
 //------------------------------
 // Fix histogram binning

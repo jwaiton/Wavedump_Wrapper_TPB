@@ -111,7 +111,6 @@ int main(int argc, char * argv[]){
     // initalise TCooker object using 
     // tree from input file
     cooker = new TCooker(tree);
-
     //cooker = new TCooker(tree,'D');// desktop digi version
        
     // set the cooker object FileID using the
@@ -127,6 +126,7 @@ int main(int argc, char * argv[]){
     //-------------------
     //-------------------
     // Monitor Raw Data 
+    
     cooker->PrintConstants();
     
     // DAQ info
@@ -150,8 +150,9 @@ int main(int argc, char * argv[]){
     // Cook Data
     
     // 'Cook' to mV and ns
+    // To Do: subtract baseline
     // find peak voltage
-    // and peak sample
+    // and peak sample, 
     // Save meta data tree
     // Save cooked data tree
     cooker->Cook();
@@ -159,6 +160,8 @@ int main(int argc, char * argv[]){
     // Data has been cooked
     //-------------------
 
+
+    //  Move functions below to Analysis
 
     //-------------------
     //-------------------
@@ -176,6 +179,10 @@ int main(int argc, char * argv[]){
     // Baseline investigation (not applied to data)
     // plot: baseline, vs event, peak vs baseline
     cooker->Baseline();
+    
+    // Dark Rate investigation 
+    // plot: 
+    cooker->Dark();
     
     // Delete outFile pointer
     cooker->CloseCookedFile();

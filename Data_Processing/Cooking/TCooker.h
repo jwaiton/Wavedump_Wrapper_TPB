@@ -13,38 +13,37 @@
 #include <vector>
 #include <limits.h>
 
-
-
 using namespace std;
 
 class TCooker {
  public :
   
-  // Input variables
+  //--------------------
+  // Input 
   TTree *rawTree;
-  
   int   treeNumber;
-  
+
+  // raw root data tree variables
   uint HEAD[6];
-  
-  vector<short> * ADC  = 0;
+  vector<short> * ADC = 0;
   
   TBranch * b_HEAD = 0;  
   TBranch * b_ADC  = 0;   
   
-   TFile * outFile;
-
-   // meta data tree for 
-   // storing constants
-   TTree * metaTree;
-   
-   TTree * cookedTree;
-
-   // for writing
-   vector <float>  wave_buff;
-   
-   // for reading
-   vector <float> * wave_mV = 0;
+  //--------------------
+  // Output
+  TFile * outFile;
+  
+  // meta data tree for 
+  // storing constants
+  TTree * metaTree;
+  TTree * cookedTree;
+  
+  // for writing
+  vector <float>  wave_buff;
+  
+  // Re-inputting output (reading)
+  vector <float> * wave_mV = 0;
    
    float min_mV;
    float max_mV;
@@ -59,9 +58,6 @@ class TCooker {
    TBranch * b_mean_mV = 0;  
    TBranch * b_peak_samp = 0;  
    
-   // Output (to save)
-   TTree * outTree;
-
    TCooker(TTree *tree=0,
 	    char digitiser='V', // Program default is VME 1730
 	    char sampSet='2',   // variable only used for digitiser='D'
@@ -98,7 +94,6 @@ class TCooker {
    void  InitCookedDataTree();
 
    // init file and connect to tree
-
    void  InitCookedData();
    void  CloseCookedData();
    
@@ -112,8 +107,9 @@ class TCooker {
    float Get_mVPerBin();
    float GetLength_ns();
    short GetNSamples();
+   
    //---   
-   // Study of DAQ
+   // Monitor DAQ
    void  DAQ();
    
    void  InitDAQ();
@@ -130,14 +126,14 @@ class TCooker {
    bool  ConnectToCookedTree();
 
    //---
-   // Study of Noise
+   // Monitor Noise
    void  Noise();
 
    void  InitNoise();
    void  SaveNoise(string outFolder = "./Plots/Noise/");
 
    //---
-   // Waveform Plotter
+   // Monitor Waveforms
    void  Waveform(char option = 'f');
 
    void  InitWaveform();
@@ -149,7 +145,7 @@ class TCooker {
    void  SaveWaveFFT(string outFolder = "./Plots/Waveforms/");
 
    //----
-   // Study of Baseline
+   // Study Baseline
    void  Baseline();
 
    void  InitBaseline();
@@ -157,13 +153,20 @@ class TCooker {
 
    bool  IsSampleInBaseline(short i, short option);
    
-   ///
    void  CloseCookedFile();
    
+   //----
+   // Study Dark Counts
+   void  Dark(float thresh_mV = 10.);
+   
+   void  InitDark();
+   void  SaveDark(string outFolder = "./Plots/Dark/");
+
  private:
 
    string f_fileID;
    char   FileID[128]; 
+   
    // default or user input
    char   fDigitiser;        
    char   fSampSet;
@@ -358,8 +361,6 @@ bool TCooker::Init(TTree *tree)
 
   // conversion factors
   SetConstants();
-
-  SetFileID();
 
   SetStyle();
 
