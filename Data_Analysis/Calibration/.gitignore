@@ -1,7 +1,0 @@
-*.pcm
-*.so
-*.root
-*.png
-*.pdf
-convert_raw
-convert_rawDict.C
