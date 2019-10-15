@@ -77,15 +77,19 @@ char FileNameParser::parseChar(string f, string s1, string s2){
 string FileNameParser::GetFileName(string filePath){
 
   int pos1 = filePath.find("Run_",0);
-  string fileName = filePath.substr(pos1,filePath.size() - pos1);  
-  return fileName;
+  string name = filePath.substr(pos1,filePath.size() - pos1);  
+  return name;
+}
+
+int FileNameParser::HasExtension(string name){
+  return name.find(".",0); 
 }
 
 // Set using file name directly
-void FileNameParser::SetFileID(string fileName){
+void FileNameParser::SetFileID(string name){
   
   if(option < 0)
-    FileID = fileName.substr(0,fileName.size() - 5);
+    FileID = name.substr(0,name.size() - 5);
   else{
     char buff[128];
     sprintf(buff,"Run_%d_PMT_%d_Loc_%d_Test_%c",Run,PMT,Loc,Test);
@@ -109,8 +113,8 @@ void FileNameParser::SetFileID(){
 }
 
 // Get directly from file name
-string FileNameParser::GetFileID(string fileName){
-  return fileName.substr(0,fileName.size() - 5);;
+string FileNameParser::GetFileID(string name){
+  return name.substr(0,name.size() - 5);;
 }
 
 // Get data member which must 
@@ -162,38 +166,38 @@ string FileNameParser::Get_hQ_Fixed_Name(){
   return hName; 
 }
 
-int FileNameParser::pmtID(string filename){
+int FileNameParser::pmtID(string name){
 
   if(option < 0)
-    return parseInt(filename,"PMT_","Loc");
+    return parseInt(name,"PMT_","Loc");
   else
-    return parseInt(filename,"/PMT",4);
+    return parseInt(name,"/PMT",4);
 }
 
-int FileNameParser::run(string filename){
+int FileNameParser::run(string name){
  
   if(option < 0)
-    return parseInt(filename,"Run_","PMT");
+    return parseInt(name,"Run_","PMT");
   else
-    return parseInt(filename,"/RUN",6);
+    return parseInt(name,"/RUN",6);
 }
 
-int FileNameParser::location(string filename){
+int FileNameParser::location(string name){
   
   if(option < 0)
-    return parseInt(filename,"Loc_","Test");
+    return parseInt(name,"Loc_","Test");
   else
-    return parseInt(filename,"wave_","dat");
+    return parseInt(name,"wave_","dat");
 }
 
-char FileNameParser::test(string filename){ 
+char FileNameParser::test(string name){ 
   
   char ctr; 
   
   if(option < 0)
-    ctr = parseChar(filename,"Test_","root");
+    ctr = parseChar(name,"Test_","root");
   else 
-    ctr = parseChar(filename,"/PMT");
+    ctr = parseChar(name,"/PMT");
   
   if( ctr > '0' && ctr < '6' ) 
     return 'G';
@@ -201,10 +205,10 @@ char FileNameParser::test(string filename){
     return ctr;
 } 
 
-int FileNameParser::hVStep(string filename){ 
+int FileNameParser::hVStep(string name){ 
 
-  if(test(filename)=='G')
-    return parseInt(filename,"Test_","root");
+  if(test(name)=='G')
+    return parseInt(name,"Test_","root");
   else 
     return 0;
 } 

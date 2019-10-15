@@ -12,12 +12,15 @@ using namespace std;
 
 void testFileNameParser(){
 
+  printf("\n --------------------");
+  printf("\n Example 1: default constructor \n");
+  
   // ------------------------
   // Usage with file name containing IDs
   string filename = "Run_102_PMT_152_Loc_0_Test_S.root";
 
   FileNameParser * fnp1 = new FileNameParser();
-
+  
   // possible usage but does not set class data members 
   cout << endl;
   cout << " run  = " << fnp1->run(filename) << endl;
@@ -30,6 +33,9 @@ void testFileNameParser(){
   
   // ------------------------
   // Usage with file name containing IDs
+  printf("\n --------------------");
+  printf("\n Example 2: file name \n");
+
   FileNameParser * fnp2 = new FileNameParser(filename);
   
   cout << endl;
@@ -37,6 +43,9 @@ void testFileNameParser(){
 
   // ------------------------
   // Usage with tree name containing IDs
+  printf("\n --------------------");
+  printf("\n Example 3: tree name \n");
+
   filename ="Events_Run_102_PMT_152_Loc_0_Test_S";
 
   FileNameParser * fnp3 = new FileNameParser(filename);
@@ -46,6 +55,9 @@ void testFileNameParser(){
 
   // ------------------------
   // Usage with raw data path
+  printf("\n --------------------");
+  printf("\n Example 4: binary data path \n");
+
   filename = "Data_Storage/Binary_Data/RUN000001/PMT0130/SPEtest/wave_0.dat";
   
   // note usage of option = 1 
