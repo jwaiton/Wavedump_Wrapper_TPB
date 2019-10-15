@@ -24,6 +24,7 @@ public:
   char   parseChar(string f, string s1, string s2);
 
   string GetFileName(string filePath);
+  string GetDir();
   string GetFileID();
   string GetFileID(string);
 
@@ -52,13 +53,15 @@ public:
 
   void   SetFileID(string name);
   void   SetFileID();
-  
+  void   SetDir(string filePath);
+
   int  PMT;   
   int  Run;   
   int  Loc;   
   char Test;  
   int  HVStep;
   string FileID;
+  string Dir;
 
   bool allSet;
 
@@ -98,7 +101,9 @@ FileNameParser::FileNameParser(string str_with_ID){
   allSet = true;
 
   SetFileID();
-
+  
+  SetDir(str_with_ID);
+  
   Print_Data();
   
 }
@@ -114,9 +119,11 @@ FileNameParser::FileNameParser(string rawFilePath,
   Test = test(rawFilePath);
   
   allSet = true;
-
+ 
   SetFileID();
-
+  
+  SetDir(rawFilePath);
+ 
   Print_Data();
 
 }
@@ -127,6 +134,7 @@ FileNameParser::~FileNameParser(){
 
 void FileNameParser::Init(int userOption){
 
+  printf("\n  ----------------------------- \n") ;
   printf("\n  FileNameParser \n") ;
   
   allSet = false;
@@ -139,6 +147,7 @@ void FileNameParser::Init(int userOption){
   
   option = userOption;
   
+
 }
     
 #endif

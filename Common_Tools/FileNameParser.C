@@ -81,6 +81,27 @@ string FileNameParser::GetFileName(string filePath){
   return name;
 }
 
+void FileNameParser::SetDir(string filePath){
+
+  if(option > 0){
+    int pos1 = filePath.find("wave_",0);
+    Dir = filePath.substr(0,pos1);  
+  }
+  else{
+    int pos1 = filePath.find("Events_",0);
+    
+    if(pos1==-1)
+      pos1 = filePath.find("Run_",0);
+    
+    Dir = filePath.substr(0,pos1);  
+  }
+  
+}
+
+string FileNameParser::GetDir(){
+  return Dir;
+}
+
 int FileNameParser::HasExtension(string name){
   return name.find(".",0); 
 }
@@ -130,9 +151,11 @@ void FileNameParser::Print_Data(){
   printf(" \n   PMT    = %d", PMT);
   printf(" \n   Loc    = %d", Loc);
   printf(" \n   Test   = %c", Test);
-  
+
   if(Test=='G')
     printf(" \n   HVStep   = %d", HVStep);
+
+  printf(" \n   Dir    = %s", Dir.c_str());  
 
   printf(" \n ");
 }

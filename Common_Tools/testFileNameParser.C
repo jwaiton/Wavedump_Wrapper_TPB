@@ -17,7 +17,7 @@ void testFileNameParser(){
   
   // ------------------------
   // Usage with file name containing IDs
-  string filename = "Run_102_PMT_152_Loc_0_Test_S.root";
+  string filename = "/path/to/Run_102_PMT_152_Loc_0_Test_S.root";
 
   FileNameParser * fnp1 = new FileNameParser();
   
@@ -39,8 +39,8 @@ void testFileNameParser(){
   FileNameParser * fnp2 = new FileNameParser(filename);
   
   cout << endl;
-  cout << " FileID  = " << fnp2->GetFileID() << endl;
-
+  cout << " FileID   = " << fnp2->GetFileID() << endl;
+  cout << " dir      = " << fnp2->GetDir() << endl;
   // ------------------------
   // Usage with tree name containing IDs
   printf("\n --------------------");
@@ -58,12 +58,13 @@ void testFileNameParser(){
   printf("\n --------------------");
   printf("\n Example 4: binary data path \n");
 
-  filename = "Data_Storage/Binary_Data/RUN000001/PMT0130/SPEtest/wave_0.dat";
+  filename = "/Data_Storage/Binary_Data/RUN000001/PMT0130/SPEtest/wave_0.dat";
   
   // note usage of option = 1 
   FileNameParser * fnp4 = new FileNameParser(filename,1);
 
   cout << endl;
   cout << " run  = " << fnp4->GetRun() << endl;
+  cout << " dir  = " << fnp4->GetDir() << endl;
   
 }
