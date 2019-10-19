@@ -195,7 +195,7 @@ void PMTAnalyser::PlotWaveform(Long64_t entry){
 
   TCanvas * canvas = new TCanvas();
   
-  Float_t w = 600., h = 500.;
+  Float_t w = 800., h = 500.;
   canvas->SetWindowSize(w,h);
 
   TH1F * hWave = new TH1F("hWave","Waveform;Time (ns); Voltage (ADC counts)",
@@ -244,9 +244,9 @@ void PMTAnalyser::PlotWaveform(Long64_t entry){
   cout << " entry = " << entry << endl;
     
   hWave->Draw();
-  baseline_0->Draw();
-  baseline_0_long->Draw();
-  baseline_1->Draw();
+  //baseline_0->Draw();
+  //baseline_0_long->Draw();
+  //baseline_1->Draw();
   
   tStr.Form("Entry %lld", entry);
   latex->DrawLatex(0.6,0.8,tStr);

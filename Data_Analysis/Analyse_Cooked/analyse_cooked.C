@@ -56,7 +56,7 @@ int main(int argc, char * argv[]){
     //-------------------
     // Setting Up
 
-    path = argv[iFile];}
+    path = argv[iFile];
     
     printf("\n ------------------------------ \n");
     printf("\n  Input File:       ");
@@ -69,18 +69,22 @@ int main(int argc, char * argv[]){
     // reduce event loop for faster code testing
     // NB no check that this is lower that nentries
     int user_nentries = 1000000; 
-    cooked_analyser->SetTestMode(user_nentries);
+    //cooked_analyser->SetTestMode(user_nentries);
     
     //-------------------
     //-------------------
     // Meta Data 
     
     cooked_analyser->PrintMetaData();
-    
-    // Dark Rate investigation 
-    // plot: 
-    cooked_analyser->Dark();
 
+    cooked_analyser->Noise();
+    
+    cooked_analyser->Dark();
+    
+    //cooked_analyser->Waveform();
+
+  }
+  
   return 1;
 }
 

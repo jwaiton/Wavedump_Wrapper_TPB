@@ -76,8 +76,9 @@ CXXFLAGS     += -DWITH_DEBUG
 endif
 
 #-------------------------------------------------------------------------
+COMMON        = ../../Common_Tools/
 
-SRC           = PMTAnalyser.C DataInfo.C ../../Common_Tools/ShippingData.C ../../Common_Tools/FileNameParser.C
+SRC           = PMTAnalyser.C DataInfo.C ${COMMON}ShippingData.C ${COMMON}FileNameParser.C
 
 OBJ           = $(SRC:.C=.o)
 HDR           = $(SRC:.C=.h)

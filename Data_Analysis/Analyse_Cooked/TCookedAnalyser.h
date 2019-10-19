@@ -29,7 +29,7 @@ class TCookedAnalyser {
   
   short  SampFreq;
   short  NSamples;
-  int    NADCBins;
+  short  NADCBins;
   short  Range_V;
   float  nsPerSamp;
   float  mVPerBin;
@@ -51,17 +51,17 @@ class TCookedAnalyser {
   TTree * cookedTree;
   
   // Input 
-  vector <float> * wave_mV = 0;   
+  vector <short> * ADC = 0;   
   float min_mV;
-  float max_mV;
-  float ppV_mV;
+  float peak_mV;
   float mean_mV;
   short peak_samp;
-  
-  TBranch * b_wave_mV = 0;
+  // time
+
+
+  TBranch * b_ADC = 0;
   TBranch * b_min_mV  = 0;  
-  TBranch * b_max_mV  = 0;  
-  TBranch * b_ppV_mV  = 0;  
+  TBranch * b_peak_mV  = 0;  
   TBranch * b_mean_mV = 0;  
   TBranch * b_peak_samp = 0;  
   
@@ -87,12 +87,57 @@ class TCookedAnalyser {
   // limit entries for faster testing
   void  SetTestMode(int);
   
+  //---
+  // Monitor Noise
+  // Noise
   
+  float  thresh_mV;
+  float  th_low_mV;
+  float  noise_thresh_mV;
+  float  noise_th_low_mV;
+  
+  TH1F * hMean_Cooked = nullptr;
+  TH1F * hPPV_Cooked  = nullptr;
+  
+  TH1F * hMin_Cooked = nullptr;
+  TH1F * hMax_Cooked = nullptr;
+  
+  TH2F * hMin_Max_Cooked = nullptr;
+  
+  void  Noise();
+  
+  void  InitNoise();
+  void  SaveNoise(string outFolder = "./Plots/Noise/");
+
+  float ADC_To_Wave(short ADC);
+
   //----
-  // Study Dark Counts
+  // Dark Counts
+
+  TH1F * hD_Peak = nullptr;
+  TH2F * hD_Min_Peak = nullptr;
+
   void  Dark(float thresh_mV = 10.);
   void  InitDark();
   void  SaveDark(string outFolder = "./Plots/Dark/");
+
+  //---
+  // Monitor Waveforms
+
+  TH1F * hWave = nullptr;   
+  TH1F * hFFT = nullptr;
+  
+  TRandom3 * rand3 = nullptr;
+
+  void  Waveform(char option = 'f');
+  
+  void  InitWaveform();
+  void  SaveWaveform(string outFolder = "./Plots/Waveforms/");
+  
+  void  InitFFT();
+  void  SaveFFT(string outFolder = "./Plots/Waveforms/");
+  
+  void  SaveWaveFFT(string outFolder = "./Plots/Waveforms/");
 
  private:
   
@@ -100,10 +145,6 @@ class TCookedAnalyser {
    Long64_t nentries64_t; // dummy
    int      nentries;
 
-   // Dark Counts
-   TH1F * hD_Peak = nullptr;
-   TH2F * hD_Min_Peak = nullptr;
-   
    TCanvas * canvas = nullptr;
    
    void  Set_THF_Params(float *,float *,float *, int *);
@@ -223,11 +264,10 @@ void TCookedAnalyser::InitCooked(){
 
   cookedTree->SetMakeClass(1);
   
-  cookedTree->SetBranchAddress("wave_mV",&wave_mV, &b_wave_mV);
+  cookedTree->SetBranchAddress("ADC",&ADC, &b_ADC);
 
   cookedTree->SetBranchAddress("min_mV",&min_mV, &b_min_mV);
-  cookedTree->SetBranchAddress("max_mV",&max_mV, &b_max_mV);
-  cookedTree->SetBranchAddress("ppV_mV",&ppV_mV, &b_ppV_mV);
+  cookedTree->SetBranchAddress("peak_mV",&peak_mV, &b_peak_mV);
   cookedTree->SetBranchAddress("mean_mV",&mean_mV, &b_mean_mV);
   cookedTree->SetBranchAddress("peak_samp",&peak_samp, &b_peak_samp);
   

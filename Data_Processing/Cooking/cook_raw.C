@@ -4,7 +4,7 @@
  *
  * Author 
  *  gary.smith@ed.ac.uk
- *  13 10 2019
+ *  15 10 2019
  *
  * Purpose
  *  This program reads in a TTree
@@ -28,30 +28,24 @@
  *  .root file created with dat_to_root
  * 
  * Output
- *  Monitoring Plots can be saved in directory structure
+ *  A root file containing: 
+ *      cooked variables 
+ *      meta data 
+ *  Monitoring Plots (optional)
+ *  in the following folders:
  *     ./Plots/DAQ 
- *     ./Plots/Noise
  *     ./Plots/Baseline
  *     ./Plots/Waveforms
  *   which must be created prior to running.
  *    (the script make_plot_directories.sh is 
  *       provided to automate this) 
- * 
- *  A root file of: 
- *      cooked variables 
- *      meta data 
- *  can optionallt be saved
- *  in the current folder.
  *
  * Dependencies
  *  root.cern - a working version of root is required
  *
- *  wmStyle.C - TStyle class settings for WATCHMAN visualisation
- *   This file is included in the distribution in
- *   /path/to/Wavedump_Wrapper/Common_Tools/
- * 
- *  FileNameParser.h - class for accessing file ID
- *   also included in common tools
+ *   WATCHMAN common tools
+ *     wmStyle.C - TStyle class settings for WATCHMAN visualisation
+ *     FileNameParser.h - class for accessing file ID variables 
  * 
  */ 
 
@@ -90,22 +84,18 @@ int main(int argc, char * argv[]){
     //-------------------
     //-------------------
     // Setting Up
-    
-    // argv should be full path to data file
-    // in standard WATCHMAN PMT Testing format
-    // (option 1 is for use with this format)
-    fNP = new FileNameParser(argv[iFile],1);
 
     // Check root file
     inFile = new TFile(argv[iFile],"READ");
     if( !IsFileReady(inFile,argv[iFile]) )
       continue;
     
-    printf("\n ------------------------------ \n");
-    printf("\n  Input File:       ");
-    printf("\n    %s  \n",argv[iFile]);
+    // argv should be full path to data file
+    // in standard WATCHMAN PMT Testing format
+    // (option 1 is for use with this format)
+    fNP = new FileNameParser(argv[iFile],1);
     
-    // Get tree called 'T'
+    // Get raw data tree, which is called 'T'
     inFile->GetObject("T",tree); 
     
     // initalise TCooker object using 
@@ -115,7 +105,11 @@ int main(int argc, char * argv[]){
        
     // set the cooker object FileID using the
     // FileNameParser object member function
-    cooker->SetFileID(fNP->GetFileID().c_str());
+    cooker->SetFileID(fNP->GetFileID());
+    
+    // Set output file directory 
+    // to same as input file directory
+    cooker->SetDir(fNP->GetDir());
 
     // Optional method:
     // reduce event loop for faster code testing
@@ -123,69 +117,28 @@ int main(int argc, char * argv[]){
     int user_nentries = 100000; 
     //cooker->SetTestMode(user_nentries);
     
-    //-------------------
-    //-------------------
-    // Monitor Raw Data 
-    
     cooker->PrintConstants();
-    
+
+    //-------------------
     // DAQ info
     //  Print mean trigger rate
     //  Save: rate,timing and event plots
     cooker->DAQ();
     
-    //.....
-    // In progress - currently saves one waveform
-    //
-    // Plot Waveforms, options: 
-    //    'w' waveform only
-    //    'f' fft only
-    //    'b' waveform & fft
-    char option = 'b';  
-    cooker->Waveform(option);    
-
-    //
     //-------------------
     //-------------------
     // Cook Data
     
-    // 'Cook' to mV and ns
-    // To Do: subtract baseline
-    // find peak voltage
-    // and peak sample, 
+    // Calculate basic variables
+    // flip ADC pulse for negative pulse polarity data
+
+    // To Do: 
+    //  fit timing peak to set delay
+    //  (not for Dark Counts data)
+
     // Save meta data tree
     // Save cooked data tree
     cooker->Cook();
-    
-    // Data has been cooked
-    //-------------------
-
-
-    //  Move functions below to Analysis
-
-    //-------------------
-    //-------------------
-    // Monitor/Analyse Cooked Data
-        
-    // re-connect to file
-    // and tree
-    cooker->InitCookedData();
-    
-    // Monitor Noise
-    // plot raw variables: min, max, PPV, mean
-    // print noise rate @ -5 mV and -10 mV wrt mean
-    cooker->Noise();
-    
-    // Baseline investigation (not applied to data)
-    // plot: baseline, vs event, peak vs baseline
-    cooker->Baseline();
-    
-    // Dark Rate investigation 
-    // plot: 
-    cooker->Dark();
-    
-    // Delete outFile pointer
-    cooker->CloseCookedFile();
     
     inFile->Delete();
     
@@ -234,6 +187,11 @@ bool IsFileReady(TFile * inFile, char * arg){
     fprintf(stderr,"\n Error, Check File: %s \n",arg);
     return false;
   }
-  else 
+  else {
+    printf("\n ------------------------------ \n");
+    printf("\n  Input File:       ");
+    printf("\n    %s  \n",arg);
+
     return true;
+  }
 }

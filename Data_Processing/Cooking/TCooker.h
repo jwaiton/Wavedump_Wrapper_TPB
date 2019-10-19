@@ -25,7 +25,8 @@ class TCooker {
 
   // raw root data tree variables
   uint HEAD[6];
-  vector<short> * ADC = 0;
+  vector<short> * ADC = 0;     // reading
+  vector<short>   ADC_buff;    // writing
   
   TBranch * b_HEAD = 0;  
   TBranch * b_ADC  = 0;   
@@ -39,227 +40,178 @@ class TCooker {
   TTree * metaTree;
   TTree * cookedTree;
   
-  // for writing
-  vector <float>  wave_buff;
+  // dont save - ADC is smaller
+  vector <float>  wave_mV;
+
+  // variables for writing
+  float base_mV; // baseline (average in mV) 
+  float min_mV;
+  float peak_mV;
+  float Q_mVns;  // charge of peak 
+  float mean_mV;
+  short peak_samp;
+  float start_s; // event start time
+
+  TRandom3 * rand3 = nullptr;
+
+  TCooker(TTree *tree=0,
+	  char digitiser='V', // Program default is VME 1730
+	  char sampSet='2',   // variable only used for digitiser='D'
+	  char pulsePol='N'); // 'N' Neg or 'P' Pos
+  virtual ~TCooker();
+  virtual int  GetEntry(int entry);
+  virtual int  LoadTree(int entry);
+  virtual bool Init(TTree *tree=0);
+  virtual void Show(int entry = -1);
   
-  // Re-inputting output (reading)
-  vector <float> * wave_mV = 0;
-   
-   float min_mV;
-   float max_mV;
-   float ppV_mV;
-   float mean_mV;
-   short peak_samp;
-   
-   TBranch * b_wave_mV = 0;
-   TBranch * b_min_mV  = 0;  
-   TBranch * b_max_mV  = 0;  
-   TBranch * b_ppV_mV  = 0;  
-   TBranch * b_mean_mV = 0;  
-   TBranch * b_peak_samp = 0;  
-   
-   TCooker(TTree *tree=0,
-	    char digitiser='V', // Program default is VME 1730
-	    char sampSet='2',   // variable only used for digitiser='D'
-	    char pulsePol='N'); // 'N' Neg or 'P' Pos
-   virtual ~TCooker();
-   virtual int  GetEntry(int entry);
-   virtual int  LoadTree(int entry);
-   virtual bool Init(TTree *tree=0);
-   virtual void Show(int entry = -1);
-   
-   void InitCanvas(float w = 1000.,
-		   float h = 800.);
-   void DeleteCanvas();
-
-   void   SetFileID();
-   void   SetFileID(string userFileID);
-   string GetFileID();
-   
-   string GetCookedTreeID();
-
-   void  PrintConstants();
-   
-   // limit entries for faster testing
-   void  SetTestMode(int);
-
-   //--------------------------
-   // Cooking 
-   void  Cook();
-   
-   void  InitCooking();
-   void  InitCookedDataFile(string option = "RECREATE");
-
-   void  InitMetaDataTree();
-   void  InitCookedDataTree();
-
-   // init file and connect to tree
-   void  InitCookedData();
-   void  CloseCookedData();
-   
-   void  DoCooking();
-   
-   void  SaveMetaData();
-   void  SaveCookedData();
-   
-   float ADC_To_Wave(short ADC);
-   float GetRange_mV();
-   float Get_mVPerBin();
-   float GetLength_ns();
-   short GetNSamples();
-   
-   //---   
-   // Monitor DAQ
-   void  DAQ();
-   
-   void  InitDAQ();
-   void  SaveDAQ(string outFolder = "./Plots/DAQ/");
-
-   double GetTrigTimeTag();
-   double GetTrigTimeTag(int entry);
-   
-   double GetElapsedTime(int * cycles,
-			 double prevTime);
-   
-   void  CountMissedEvents(int dTrigEntry);
-
-   bool  ConnectToCookedTree();
-
-   //---
-   // Monitor Noise
-   void  Noise();
-
-   void  InitNoise();
-   void  SaveNoise(string outFolder = "./Plots/Noise/");
-
-   //---
-   // Monitor Waveforms
-   void  Waveform(char option = 'f');
-
-   void  InitWaveform();
-   void  SaveWaveform(string outFolder = "./Plots/Waveforms/");
-   
-   void  InitFFT();
-   void  SaveFFT(string outFolder = "./Plots/Waveforms/");
+  void InitCanvas(float w = 1000.,
+		  float h = 800.);
+  void DeleteCanvas();
   
-   void  SaveWaveFFT(string outFolder = "./Plots/Waveforms/");
+  void   SetFileID();
+  void   SetFileID(string userFileID);
+  string GetFileID();
+  
+  void   SetDir(string userFileDir);
+  string GetDir();
+  
+  string GetCookedTreeID();
+  
+  void  PrintConstants();
+  
+  // limit entries for faster testing
+  void  SetTestMode(int);
+  
+  //--------------------------
+  // Cooking 
+  void  Cook();
+  
+  void  InitCooking();
+  void  InitCookedDataFile(string option = "RECREATE");
+  
+  void  InitMetaDataTree();
+  void  InitCookedDataTree();
+  
+  // init file and connect to tree
+  void  InitCookedData();
+  void  CloseCookedData();
+  
+  void  DoCooking();
+  
+  void  SaveMetaData();
+  void  SaveCookedData();
+  
+  float ADC_To_Wave(short ADC);
+  float GetRange_mV();
+  float Get_mVPerBin();
+  float GetLength_ns();
+  short GetNSamples();
+  short GetNADCBins();
 
-   //----
-   // Study Baseline
-   void  Baseline();
+  //---   
+  // Monitor DAQ
+  void  DAQ();
+  
+  void  InitDAQ();
+  void  SaveDAQ(string outFolder = "./Plots/DAQ/");
+  
+  double GetTrigTimeTag();
+  double GetTrigTimeTag(int entry);
+  
+  double GetElapsedTime(int * cycles,
+			double prevTime);
+  
+  void  CountMissedEvents(int dTrigEntry);
 
-   void  InitBaseline();
-   void  SaveBaseline(string outFolder = "./Plots/Baseline/");
 
-   bool  IsSampleInBaseline(short i, short option);
-   
-   void  CloseCookedFile();
-   
-   //----
-   // Study Dark Counts
-   void  Dark(float thresh_mV = 10.);
-   
-   void  InitDark();
-   void  SaveDark(string outFolder = "./Plots/Dark/");
+  short Invert_Negative_ADC_Pulses(short ADC);
+  
+  void  InitBaseline();
+  void  SaveBaseline(string outFolder = "./Plots/Baseline/");
+  
+  bool  IsSampleInBaseline(short iSample);
 
+  
+  void  CloseCookedFile();
+  
  private:
+  
+  string f_fileID;
+  string f_fileDir;
+  char   FileID[128]; 
+  
+  // default or user input
+  char   fDigitiser;        
+  char   fSampSet;
+  char   fPulsePol;
+  
+  // default or set using above
+  short  fSampFreq;
+  
+  // set using header info
+  short  fNSamples;
+  
+  // set using digitiser
+  short  fNADCBins;
+  
+  // set using digitiser
+  short  fRange_V;
+  
+  // calculate
+  float  f_nsPerSamp;
+  float  f_mVPerBin;
+  float  fLength_ns;
+  
+  // mean of peak time
+  float  fDelay_ns; 
 
-   string f_fileID;
-   char   FileID[128]; 
-   
-   // default or user input
-   char   fDigitiser;        
-   char   fSampSet;
-   char   fPulsePol;
-   
-   // default or set using above
-   short  fSampFreq;
-
-   // set using header info
-   short  fNSamples;
-   
-   // set using digitiser
-   int    fNADCBins;
-
-   // set using digitiser
-   short  fRange_V;
-   
-   // calculate
-   float  f_nsPerSamp;
-   float  f_mVPerBin;
-   float  fLength_ns;
-
-   // only accommodating int size here
-   Long64_t nentries64_t; // dummy
-   int      nentries;
-
-   // DAQ
-   float  startTime;
-   int    nMissedEvents;
-   
-   TH1F * hNEventsTime = nullptr;
-   TH1F * hEventRate   = nullptr;
-   TH1F * hTrigFreq    = nullptr;
-   TH2F * hTT_EC       = nullptr;
-
-   // Noise
-   
-   float  thresh_mV;
-   float  th_low_mV;
-   float  noise_thresh_mV;
-   float  noise_th_low_mV;
-
-   TH1F * hMean_Cooked = nullptr;
-   TH1F * hPPV_Cooked  = nullptr;
-
-   TH1F * hMin_Cooked = nullptr;
-   TH1F * hMax_Cooked = nullptr;
-
-   TH2F * hMin_Max_Cooked = nullptr;
-   
-   // Waveforms
-   TH1F * hWave = nullptr;   
-   TH1F * hFFT = nullptr;
-
-   TRandom3 * rand3 = nullptr;
-
-   // Baseline
-   TH1F * hBase = nullptr;
-   
-   int  nEvents_Base = 10000;
-   TH2F * hEvent_Base = nullptr;
-
-   TH1F * hPeak = nullptr;
-   TH2F * hBase_Peak = nullptr;
-   TH2F * hMin_Peak = nullptr;
-
-   // Dark Counts
-   TH1F * hD_Peak = nullptr;
-   TH2F * hD_Min_Peak = nullptr;
-   
-   TCanvas * canvas = nullptr;
-
-   void  SetDigitiser(char);
-   void  SetSampSet(char);
-   void  SetPulsePol(char);
-   
-   void  SetConstants();
-   
-   short SetSampleFreq();
-   short SetNSamples();
-   float SetLength_ns();
-   
-   int   SetNADCBins();
-   short SetRange_V();
-   float Set_mVPerBin();
-
-   float Set_nsPerSamp();
-   float SampleToTime();
-   
-   void  Set_THF_Params(float *,float *,float *, int *);
-   
-   void  SetStyle();
-
+  // only accommodating int size here
+  Long64_t nentries64_t; // dummy
+  int      nentries;
+  
+  // DAQ
+  float  startTime;
+  int    nMissedEvents;
+  
+  TH1F * hNEventsTime = nullptr;
+  TH1F * hEventRate   = nullptr;
+  TH1F * hTrigFreq    = nullptr;
+  TH2F * hTT_EC       = nullptr;
+  
+  // Baseline
+  TH1F * hBase = nullptr;
+  
+  int    nEvents_Base = 10000;
+  TH2F * hEvent_Base = nullptr;
+  
+  TH1F * hPeak = nullptr;
+  TH2F * hBase_Peak = nullptr;
+  TH2F * hMin_Peak = nullptr;
+  
+  
+  TCanvas * canvas = nullptr;
+  
+  void  SetDigitiser(char);
+  void  SetSampSet(char);
+  void  SetPulsePol(char);
+  
+  void  SetConstants();
+  
+  short SetSampleFreq();
+  short SetNSamples();
+  float SetLength_ns();
+  
+  short SetNADCBins();
+  short SetRange_V();
+  float Set_mVPerBin();
+  
+  float Set_nsPerSamp();
+  float SampleToTime();
+  
+  void  Set_THF_Params(float *,float *,float *, int *);
+  
+  void  SetStyle();
+  
 };
 
 #endif
@@ -371,33 +323,6 @@ bool TCooker::Init(TTree *tree)
   return true;
 }
 
-bool TCooker::ConnectToCookedTree()
-{
-  printf("\n ------------------------------- \n");
-  printf("\n Connecting to cooked data TTree   ");
-  printf("\n   %s \n",GetCookedTreeID().c_str());
-
-  outFile->GetObject(GetCookedTreeID().c_str(),cookedTree);
-  
-  if (!cookedTree){
-    fprintf( stderr, "\n Error: no cooked tree  \n ");
-    return false;
-  }
-
-  cookedTree->SetBranchAddress("wave_mV",&wave_mV, &b_wave_mV);
-
-  cookedTree->SetBranchAddress("min_mV",&min_mV, &b_min_mV);
-  cookedTree->SetBranchAddress("max_mV",&max_mV, &b_max_mV);
-  cookedTree->SetBranchAddress("ppV_mV",&ppV_mV, &b_ppV_mV);
-  cookedTree->SetBranchAddress("mean_mV",&mean_mV, &b_mean_mV);
-
-  cookedTree->SetBranchAddress("peak_samp",&peak_samp, &b_peak_samp);
-
-  /* if(rawTree) */
-  /*     rawTree->AddFriend(cookedTree); */
-  
-  return true;
-}
 
 void TCooker::Show(int entry)
 {

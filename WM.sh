@@ -30,15 +30,24 @@ export CPATH=${CPATH}:${WM_COOK}
 
 # binaries
 export PATH=${PATH}:${WM_CONVERT}
-export PATH=${PATH}:${WM_CONVERT}/DT_Version/
+export PATH=${PATH}:${WM_CONVERT}DT_Version/
+export PATH=${PATH}:${WM_ANALYSE}Shipping_Data
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_COOK}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_COMMON}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_ANALYSE}PMT_Analysis
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_ANALYSE}Analyse_Cooked
+fi
 
+if [[ "$OSTYPE" == "darwin"* ]]; then
+export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${WM_ANALYSE}Analyse_Cooked
 fi
 
 nominal_HV(){
     echo $(grep " $1 " ${WM_COMMON}HVScan.txt) | cut -d " " -f 7
+}
+
+HV_step_1(){
+    echo $(grep " $1 " ${WM_COMMON}HVScan.txt) | cut -d " " -f 2
 }

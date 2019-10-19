@@ -12,16 +12,18 @@ using namespace std;
 void ShippingData::PrintAll(){
   
   cout <<  endl; 
-  cout << " Shipping Data " << endl; 
-  cout << " Nominal Voltage  = " << GetEBB() << endl;
-  cout << " Peak To Valley   = " << GetPTV() << endl;
-  cout << " Dark Rate        = " << GetDR()  << endl;
+  cout << " Shipping Data for PMT " << GetPMT() << endl; 
+  cout << "  Nominal Voltage = " << GetEBB() << endl;
+  cout << "  Peak To Valley  = " << GetPTV() << endl;
+  cout << "  Dark Rate       = " << GetDR()  << endl;
   
 }
 
-void ShippingData::SetAll(int userPMT)
+void ShippingData::SetAll(int inputPMT)
 {
    if (fTree == 0) return;
+
+   userPMT = inputPMT;
 
    Long64_t nentries = fTree->GetEntriesFast();
 
@@ -56,8 +58,8 @@ void ShippingData::SetAll(int userPMT)
    }
 }
 
-void ShippingData::SetNewPMT(int userPMT){
-  SetAll(userPMT);
+void ShippingData::SetNewPMT(int inputPMT){
+  SetAll(inputPMT);
 }
 
 Float_t ShippingData::GetSk(){
@@ -83,4 +85,8 @@ Float_t ShippingData::GetTTS(){
 }
 Float_t ShippingData::GetPTV(){
   return userPTV;
+}
+
+Int_t ShippingData::GetPMT(){
+  return userPMT;
 }
