@@ -31,9 +31,9 @@ void TCookedAnalyser::Noise(){
     
     hMean_Cooked->Fill(mean_mV);
     hPPV_Cooked->Fill(peak_mV-min_mV);
-    hMax_Cooked->Fill(peak_mV);
+    hPeak_Cooked->Fill(peak_mV);
     hMin_Cooked->Fill(min_mV);
-    hMin_Max_Cooked->Fill(min_mV,peak_mV);
+    hMin_Peak_Cooked->Fill(min_mV,peak_mV);
     
    }// end: for (int iEntry = 0;
   
@@ -86,16 +86,16 @@ void TCookedAnalyser::InitNoise(){
   Set_THF_Params(&minX,&maxX,&binWidth,&nBins);
   
   hMean_Cooked = new TH1F("hMean_Cooked",
-		   ";mean voltage (mV) [cooked];Counts",
-		   nBins,minX,maxX);
+			  ";mean voltage (mV);Counts",
+			  nBins,minX,maxX);
 
-  hMax_Cooked =  new TH1F("hMax_Cooked",
-		   ";raw max voltage (mV) [cooked];Counts",
-		   nBins,minX,maxX);
+  hPeak_Cooked =  new TH1F("hPeak_Cooked",
+			   ";peak voltage (mV);Counts",
+			   nBins,minX,maxX);
   
   hMin_Cooked =  new TH1F("hMin_Cooked",
-		   ";raw min voltage (mV) [cooked];Counts",
-		   nBins,minX,maxX);
+			  ";min voltage (mV);Counts",
+			  nBins,minX,maxX);
   
   //   printf("\n nBins    = %d \n",nBins);
 //   printf("\n minX   = %f \n",minX);
@@ -103,10 +103,10 @@ void TCookedAnalyser::InitNoise(){
 //   printf("\n binWidth = %f \n",binWidth);
 //   printf("\n mVPerBin = %f \n",mVPerBin);
 
-  hMin_Max_Cooked =  new TH2F("hMin_Max_Cooked",
-			      "max vs min before baseline sub.; min voltage (mV) [cooked];max voltage (mV) [cooked]",
-			      nBins,minX,maxX,
-			      nBins,minX,maxX);
+  hMin_Peak_Cooked =  new TH2F("hMin_Peak_Cooked",
+			       "peak vs min ; min voltage (mV);peak voltage (mV)",
+			       nBins,minX,maxX,
+			       nBins,minX,maxX);
 
   // prepare for range starting at zero
   minX = 0.0;
@@ -114,10 +114,10 @@ void TCookedAnalyser::InitNoise(){
   nBins  = 0;
   
   Set_THF_Params(&minX,&maxX,&binWidth,&nBins);
-
+  
   hPPV_Cooked =  new TH1F("hPPV_Cooked",
-		   ";peak to peak voltage (mV) [cooked];Counts",
-		   nBins,minX,maxX);
+			  ";peak to peak voltage (mV);Counts",
+			  nBins,minX,maxX);
 
 }
 
@@ -144,10 +144,10 @@ void TCookedAnalyser::SaveNoise(string outFolder){
   outName = outFolder + "hPPV_Cooked.pdf";
   canvas->SaveAs(outName.c_str());
   
-  hMax_Cooked->SetAxisRange(-20.,80.,"X");
-  hMax_Cooked->SetMinimum(0.1);
-  hMax_Cooked->Draw();
-  outName = outFolder + "hMax_Cooked.pdf";
+  hPeak_Cooked->SetAxisRange(-20.,80.,"X");
+  hPeak_Cooked->SetMinimum(0.1);
+  hPeak_Cooked->Draw();
+  outName = outFolder + "hPeak_Cooked.pdf";
   canvas->SaveAs(outName.c_str());
   
   
@@ -173,12 +173,12 @@ void TCookedAnalyser::SaveNoise(string outFolder){
   gPad->SetLogy(false);
   gPad->SetLogz();
   
-  hMin_Max_Cooked->SetAxisRange(-25., 15.,"X");
-  hMin_Max_Cooked->SetAxisRange(-15., 50.,"Y");
+  hMin_Peak_Cooked->SetAxisRange(-25., 15.,"X");
+  hMin_Peak_Cooked->SetAxisRange(-15., 50.,"Y");
   
-  hMin_Max_Cooked->Draw("colz");
+  hMin_Peak_Cooked->Draw("colz");
 
-  outName = outFolder + "hMin_Max_Cooked.pdf";
+  outName = outFolder + "hMin_Peak_Cooked.pdf";
   canvas->SaveAs(outName.c_str());
 
   gPad->SetLogz(false);
@@ -190,8 +190,8 @@ void TCookedAnalyser::SaveNoise(string outFolder){
 
 void TCookedAnalyser::Dark(float thresh_mV){
   
-   InitDark();
-   
+  InitDark();
+  
   int nDark = 0;
   int nDark_noise = 0;
 

@@ -51,8 +51,6 @@ class TCooker {
   short peak_samp;
   float start_s; // event start time
 
-  TRandom3 * rand3 = nullptr;
-
   TCooker(TTree *tree=0,
 	  char digitiser='V', // Program default is VME 1730
 	  char sampSet='2',   // variable only used for digitiser='D'
@@ -307,8 +305,6 @@ bool TCooker::Init(TTree *tree)
     startTime = GetTrigTimeTag(0);
     
   }
-  
-  rand3 = new TRandom3(0);
 
   // conversion factors
   SetConstants();

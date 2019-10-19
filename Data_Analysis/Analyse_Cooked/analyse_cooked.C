@@ -77,11 +77,36 @@ int main(int argc, char * argv[]){
     
     cooked_analyser->PrintMetaData();
 
+    //-------------------
+    //-------------------
+    // Monitoring
+
+    // ----
+    // Waveform plotting
+    // [To Do:inherit from executePMTAnalysis.C]
+    char aChar = 'N';
+    
+    printf("\n Plot waveform? ");
+    printf("\n  options:  ");
+    printf("\n  'n' - No ");
+    printf("\n  'w' - Waveform ");
+    printf("\n  'f' - FFT ");
+    printf("\n  'b' - 'W' and 'F' \n");
+    
+    scanf("%c",&aChar);
+    
+    if(aChar!='N' && aChar!='n')
+      cooked_analyser->Waveform(aChar);
+
+    // ----
     cooked_analyser->Noise();
     
-    cooked_analyser->Dark();
-    
-    //cooked_analyser->Waveform();
+    //-------------------
+    //-------------------
+    // Analysis 
+
+    if(cooked_analyser->GetTest()=='D')
+      cooked_analyser->Dark();
 
   }
   

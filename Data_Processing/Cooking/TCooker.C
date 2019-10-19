@@ -665,6 +665,7 @@ void TCooker::PrintConstants(){
       hNEventsTime->Fill(time/60.,iEntry);
       
       eventRate = deltaEvents/deltaT;
+      
       hEventRate->Fill(time/60.,eventRate/1000.);  
     
       // reset integrated variables

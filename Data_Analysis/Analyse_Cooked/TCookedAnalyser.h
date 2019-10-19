@@ -52,18 +52,20 @@ class TCookedAnalyser {
   
   // Input 
   vector <short> * ADC = 0;   
-  float min_mV;
   float peak_mV;
-  float mean_mV;
   short peak_samp;
-  // time
-
+  float min_mV;
+  float mean_mV;
+  float start_s;
+  float base_mV;
 
   TBranch * b_ADC = 0;
-  TBranch * b_min_mV  = 0;  
   TBranch * b_peak_mV  = 0;  
-  TBranch * b_mean_mV = 0;  
   TBranch * b_peak_samp = 0;  
+  TBranch * b_min_mV  = 0;  
+  TBranch * b_mean_mV = 0;  
+  TBranch * b_start_s = 0;  
+  TBranch * b_base_mV = 0;  
   
   TCookedAnalyser(string path);
   ~TCookedAnalyser();
@@ -100,9 +102,11 @@ class TCookedAnalyser {
   TH1F * hPPV_Cooked  = nullptr;
   
   TH1F * hMin_Cooked = nullptr;
-  TH1F * hMax_Cooked = nullptr;
+  TH1F * hPeak_Cooked = nullptr;
   
-  TH2F * hMin_Max_Cooked = nullptr;
+  TH2F * hMin_Peak_Cooked = nullptr;
+  
+  char  GetTest();
   
   void  Noise();
   
@@ -166,6 +170,7 @@ TCookedAnalyser::TCookedAnalyser(string path)
     return;
   }
   
+  // set FileID using inFile path
   fnp = new FileNameParser(path);  
   FileID = fnp->GetFileID();
   
@@ -200,6 +205,8 @@ void TCookedAnalyser::Init()
   InitMeta();
   InitCooked();
   
+  rand3 = new TRandom3(0);
+
   SetStyle();  
   InitCanvas();
   
@@ -265,11 +272,12 @@ void TCookedAnalyser::InitCooked(){
   cookedTree->SetMakeClass(1);
   
   cookedTree->SetBranchAddress("ADC",&ADC, &b_ADC);
-
-  cookedTree->SetBranchAddress("min_mV",&min_mV, &b_min_mV);
   cookedTree->SetBranchAddress("peak_mV",&peak_mV, &b_peak_mV);
-  cookedTree->SetBranchAddress("mean_mV",&mean_mV, &b_mean_mV);
   cookedTree->SetBranchAddress("peak_samp",&peak_samp, &b_peak_samp);
+  cookedTree->SetBranchAddress("min_mV",&min_mV, &b_min_mV);
+  cookedTree->SetBranchAddress("mean_mV",&mean_mV, &b_mean_mV);
+  cookedTree->SetBranchAddress("start_s",&start_s, &b_start_s);
+  cookedTree->SetBranchAddress("base_mV",&base_mV, &b_base_mV);
   
   nentries64_t = cookedTree->GetEntriesFast();
   
@@ -286,6 +294,14 @@ void TCookedAnalyser::InitCooked(){
   printf("\n ------------------------------ \n");
   
   return;
+}
+
+char TCookedAnalyser::GetTest(){
+  
+  if(fnp)
+    return fnp->GetTest();
+  else
+    return 'E';
 }
 
 
