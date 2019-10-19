@@ -131,80 +131,49 @@ void TCooker::DoCooking(){
   printf("\n Cooking                       \n");
   
   int    nBaseSamps;
-  
   double time = 0 , prevTime = 0; 
   int    trigCycles = 0;
     
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     rawTree->GetEntry(iEntry);
   
-    // sample-by-sample variables
-    //printf("\n iEntry = %d  \n ",iEntry);
-    wave_mV.clear();
-   
-    // for writing ADC to cooked tree
-    ADC_buff.clear();
+    wave_mV.clear(), ADC_buff.clear();
+    nBaseSamps = 0,     peak_samp  =  0   ;
+    min_mV     = 1000., peak_mV   = -1000.;
+    base_mV    = 0.,    mean_mV   =  0.   ;
 
-    // event-by-event variables
-    base_mV   =  0.;
-    min_mV    =  1000.;
-    peak_mV   = -1000.;
-    mean_mV   =  0.;
-    peak_samp =  0;
-      
-    nBaseSamps = 0;
-
+    // event start time
     time = GetElapsedTime(&trigCycles,prevTime);
     prevTime = time; // now set for next entry
-
     start_s = (float)time; 
 
     // first loop - find baseline
     for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
-
-      wave_mV.push_back(ADC_To_Wave(ADC->at(iSamp)));
-      
-      // first 50 ns of waveform
+      wave_mV.push_back(ADC_To_Wave(ADC->at(iSamp)));      
       if( IsSampleInBaseline(iSamp) ){
 	base_mV += wave_mV.at(iSamp);
 	nBaseSamps++;
       }
     }
-    
-    base_mV /= (float)nBaseSamps ;
+    base_mV /= (float)nBaseSamps;
 
     // second loop - apply baseline subtraction, set variables
     for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
-      
-      // subtract baseline
       wave_mV.at(iSamp) -= base_mV;
-
-//       printf("\n iSamp     = %d  \n ",iSamp);
-//       printf("\n ADC       = %hd \n ",ADC->at(iSamp));
-//       printf("\n wave_mV = %f  \n ",wave_mV.at(iSamp));
-      
-      // min      
+      // min
       if( wave_mV.at(iSamp) < min_mV)
 	min_mV = wave_mV.at(iSamp);
-      
-      // max, peak_samp
+      // peak peak_samp
       if( wave_mV.at(iSamp) >= peak_mV ){
 	peak_mV = wave_mV.at(iSamp);
 	peak_samp  = iSamp;
       }
-      // mean
       mean_mV += wave_mV.at(iSamp);
       // if pulse polarity is negative then flip 
       ADC_buff.push_back(Invert_Negative_ADC_Pulses(ADC->at(iSamp)));
     }
-    
     mean_mV = mean_mV/(float)fNSamples;    
-    
-    //printf("\n event       = %d  \n ",iEntry);
-    //printf("\n peak_samp   = %d  \n ",peak_samp);
-    //printf("\n peak_mV  = %f  \n ",peak_mV);
-    //printf("\n min_mV  = %f  \n ",min_mV);
-    
+
     cookedTree->Fill();
   }
   
