@@ -47,7 +47,6 @@ class TCooker {
   float base_mV; // baseline (average in mV) 
   float min_mV;
   float peak_mV;
-  float Q_mVns;  // charge of peak 
   float mean_mV;
   short peak_samp;
   float start_s; // event start time

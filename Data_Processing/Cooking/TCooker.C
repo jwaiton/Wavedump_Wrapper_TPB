@@ -98,21 +98,17 @@ void TCooker::InitCookedDataTree(){
   cookedTree = new TTree(treeName.c_str(),treeName.c_str());
 
   cookedTree->Branch("ADC",&ADC_buff);
- 
-  cookedTree->Branch("base_mV",&base_mV,"base_mV/F"); 
-  cookedTree->Branch("min_mV",&min_mV,"min_mV/F");
   cookedTree->Branch("peak_mV",&peak_mV,"peak_mV/F");
-  cookedTree->Branch("Q_mVns",&Q_mVns,"Q_mVnS/F");
-  cookedTree->Branch("mean_mV",&mean_mV,"mean_mV/F");
   cookedTree->Branch("peak_samp",&peak_samp,"peak_samp/S");
+  cookedTree->Branch("min_mV",&min_mV,"min_mV/F");
+  cookedTree->Branch("mean_mV",&mean_mV,"mean_mV/F");
   cookedTree->Branch("start_s",&start_s,"start_s/F");
+  cookedTree->Branch("base_mV",&base_mV,"base_mV/F"); 
   
 }
 
 void TCooker::InitMetaDataTree(){
   
-  // ----------
-  // Temporary tree for calibrating
   string treeName = "Meta_";
   treeName += GetFileID();
 
@@ -152,8 +148,7 @@ void TCooker::DoCooking(){
     // event-by-event variables
     base_mV   =  0.;
     min_mV    =  1000.;
-    peak_mV    = -1000.;
-    Q_mVns    =  0.;
+    peak_mV   = -1000.;
     mean_mV   =  0.;
     peak_samp =  0;
       
