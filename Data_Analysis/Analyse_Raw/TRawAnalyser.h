@@ -30,18 +30,6 @@ class TRawAnalyser {
   TBranch * b_HEAD = 0;  
   TBranch * b_ADC  = 0;   
   
-  float min_mV;
-  float max_mV;
-  float ppV_mV;
-  float mean_mV;
-  short peak_samp;
-  
-  TBranch * b_min_mV  = 0;  
-  TBranch * b_max_mV  = 0;  
-  TBranch * b_ppV_mV  = 0;  
-  TBranch * b_mean_mV = 0;  
-  TBranch * b_peak_samp = 0;  
-  
   TRawAnalyser(TTree *tree=0,
 	       char digitiser='V', // Program default is VME 1730
 	       char sampSet='2',   // variable only used for digitiser='D'
@@ -133,41 +121,12 @@ class TRawAnalyser {
    TH1F * hTrigFreq    = nullptr;
    TH2F * hTT_EC       = nullptr;
 
-   // Noise
-   
-   float  thresh_mV;
-   float  th_low_mV;
-   float  noise_thresh_mV;
-   float  noise_th_low_mV;
-
-   TH1F * hMean_Cooked = nullptr;
-   TH1F * hPPV_Cooked  = nullptr;
-
-   TH1F * hMin_Cooked = nullptr;
-   TH1F * hMax_Cooked = nullptr;
-
-   TH2F * hMin_Max_Cooked = nullptr;
-   
    // Waveforms
    TH1F * hWave = nullptr;   
    TH1F * hFFT = nullptr;
 
    TRandom3 * rand3 = nullptr;
 
-   // Baseline
-   TH1F * hBase = nullptr;
-   
-   int  nEvents_Base = 10000;
-   TH2F * hEvent_Base = nullptr;
-
-   TH1F * hPeak = nullptr;
-   TH2F * hBase_Peak = nullptr;
-   TH2F * hMin_Peak = nullptr;
-
-   // Dark Counts
-   TH1F * hD_Peak = nullptr;
-   TH2F * hD_Min_Peak = nullptr;
-   
    TCanvas * canvas = nullptr;
 
    void  SetDigitiser(char);
