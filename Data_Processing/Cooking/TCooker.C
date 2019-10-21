@@ -17,7 +17,8 @@ void TCooker::Cook(){
 
   SaveMetaData();
   SaveCookedData();
-  
+  outFile->Close();
+    
   printf("\n Cooking is complete            \n");
   printf("\n ------------------------------   ");
   printf("\n ------------------------------ \n");
@@ -35,19 +36,11 @@ void TCooker::InitCooking(){
 
 }
 
-void TCooker::InitCookedData(){
-
-  printf("\n ------------------------------ \n");
-  printf("\n Initialising Cooked Data      \n");
-  
-  InitCookedDataFile("OPEN");
-  ConnectToCookedTree();
-  
-}
 
 void TCooker::InitCookedDataFile(string option){
 
-  string fileName = GetFileID();
+  string fileName = GetDir();
+  fileName += GetFileID();
   fileName += ".root";
     
   if     (!strcmp(option.c_str(),"RECREATE")) 
@@ -91,7 +84,7 @@ void TCooker::SaveCookedData(){
     
   cookedTree->Write();
   cookedTree->Delete();
-  outFile->Close();
+
 
 }
 
@@ -104,21 +97,18 @@ void TCooker::InitCookedDataTree(){
 
   cookedTree = new TTree(treeName.c_str(),treeName.c_str());
 
-  cookedTree->Branch("wave_mV",&wave_buff);
-  
-  cookedTree->Branch("min_mV",&min_mV,"min_mV/F");
-  cookedTree->Branch("max_mV",&max_mV,"max_mV/F");
-  cookedTree->Branch("ppV_mV",&ppV_mV,"ppV_mV/F");
-  cookedTree->Branch("mean_mV",&mean_mV,"mean_mV/F");
+  cookedTree->Branch("ADC",&ADC_buff);
+  cookedTree->Branch("peak_mV",&peak_mV,"peak_mV/F");
   cookedTree->Branch("peak_samp",&peak_samp,"peak_samp/S");
-
+  cookedTree->Branch("min_mV",&min_mV,"min_mV/F");
+  cookedTree->Branch("mean_mV",&mean_mV,"mean_mV/F");
+  cookedTree->Branch("start_s",&start_s,"start_s/F");
+  cookedTree->Branch("base_mV",&base_mV,"base_mV/F"); 
   
 }
 
 void TCooker::InitMetaDataTree(){
   
-  // ----------
-  // Temporary tree for calibrating
   string treeName = "Meta_";
   treeName += GetFileID();
 
@@ -126,7 +116,7 @@ void TCooker::InitMetaDataTree(){
   
   metaTree->Branch("SampFreq",&fSampFreq,"SampFreq/S");
   metaTree->Branch("NSamples",&fNSamples,"NSamples/S");
-  metaTree->Branch("NADCBins",&fNADCBins,"NADCBins/I");
+  metaTree->Branch("NADCBins",&fNADCBins,"NADCBins/S");
   metaTree->Branch("Range_V",&fRange_V,"Range_V/S");
   metaTree->Branch("nsPerSamp",&f_nsPerSamp,"nsPerSamp/F");
   metaTree->Branch("mVPerBin",&f_mVPerBin,"mVPerBin/F");
@@ -140,54 +130,53 @@ void TCooker::DoCooking(){
   printf("\n ------------------------------ \n");
   printf("\n Cooking                       \n");
   
+  int    nBaseSamps;
+  double time = 0 , prevTime = 0; 
+  int    trigCycles = 0;
+    
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     rawTree->GetEntry(iEntry);
   
-    //printf("\n iEntry = %d  \n ",iEntry);
-    wave_buff.clear();
-    
-    min_mV    =  1000.;
-    max_mV    = -1000.;
-    ppV_mV    =  0.;
-    mean_mV   =  0.;
-    peak_samp =  0;
-    
+    wave_mV.clear(), ADC_buff.clear();
+    nBaseSamps = 0,     peak_samp  =  0   ;
+    min_mV     = 1000., peak_mV   = -1000.;
+    base_mV    = 0.,    mean_mV   =  0.   ;
+
+    // event start time
+    time = GetElapsedTime(&trigCycles,prevTime);
+    prevTime = time; // now set for next entry
+    start_s = (float)time; 
+
+    // first loop - find baseline
     for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
-      wave_buff.push_back(ADC_To_Wave(ADC->at(iSamp)));
-      
-//       printf("\n iSamp     = %d  \n ",iSamp);
-//       printf("\n ADC       = %hd \n ",ADC->at(iSamp));
-//       printf("\n wave_buff = %f  \n ",wave_buff.at(iSamp));
-	
-      // min      
-      if( wave_buff.at(iSamp) < min_mV)
-	min_mV = wave_buff.at(iSamp);
-      
-      // max, peak_samp
-      if( wave_buff.at(iSamp) >= max_mV ){
-	max_mV = wave_buff.at(iSamp);
+      wave_mV.push_back(ADC_To_Wave(ADC->at(iSamp)));      
+      if( IsSampleInBaseline(iSamp) ){
+	base_mV += wave_mV.at(iSamp);
+	nBaseSamps++;
+      }
+    }
+    base_mV /= (float)nBaseSamps;
+
+    // second loop - apply baseline subtraction, set variables
+    for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
+      wave_mV.at(iSamp) -= base_mV;
+      // min
+      if( wave_mV.at(iSamp) < min_mV)
+	min_mV = wave_mV.at(iSamp);
+      // peak peak_samp
+      if( wave_mV.at(iSamp) >= peak_mV ){
+	peak_mV = wave_mV.at(iSamp);
 	peak_samp  = iSamp;
       }
-      // mean
-      mean_mV += wave_buff.at(iSamp);
-     }
-    
-    ppV_mV  = max_mV - min_mV;
-    mean_mV = mean_mV/(float)fNSamples;
-    
-    //printf("\n event       = %d  \n ",iEntry);
-    //printf("\n peak_samp   = %d  \n ",peak_samp);
-    //printf("\n max_mV  = %f  \n ",max_mV);
-    //printf("\n min_mV  = %f  \n ",min_mV);
+      mean_mV += wave_mV.at(iSamp);
+      // if pulse polarity is negative then flip 
+      ADC_buff.push_back(Invert_Negative_ADC_Pulses(ADC->at(iSamp)));
+    }
+    mean_mV = mean_mV/(float)fNSamples;    
 
     cookedTree->Fill();
   }
   
-}
-
-void TCooker::CloseCookedFile(){
-  
-  outFile->Close();  
 }
 
 void TCooker::SetFileID(){
@@ -205,106 +194,62 @@ void TCooker::SetFileID(string userFileID){
   
 }
 
+void TCooker::SetDir(string userFileDir){
+  
+  f_fileDir = userFileDir;
+  
+  printf("\n TCooker object FileDir set to: ");
+  printf("\n  %s \n ",f_fileDir.c_str());
+  
+}
+
 string TCooker::GetFileID(){
   return f_fileID;
+}
+
+string TCooker::GetDir(){
+  return f_fileDir;
 }
 
 string TCooker::GetCookedTreeID(){
   return "Cooked_" + GetFileID();  
 }
 
-float TCooker::ADC_To_Wave(short ADC){
-
-  float wave_mV_local = ADC * Get_mVPerBin();
+short TCooker::Invert_Negative_ADC_Pulses(short ADC){
   
-  wave_mV_local -= GetRange_mV()/2.;
-  
-  if(fPulsePol=='N')
-    wave_mV_local = -wave_mV_local;
-  
-  return wave_mV_local;
-}
-
-bool TCooker::IsSampleInBaseline(short iSample,
-				 short option = 1){
-  
-  float time  = (float)iSample * SampleToTime();
-  float width = 30.;
-  
-  switch(option){
-  case(0):
-    width = width + 20; // pulse at beginning of waveform 
-    break;
-  case(2):
-    time = time - fLength_ns + width; // end of waveform
-    break;
+  if(fPulsePol=='N'){
+    ADC -= GetNADCBins()/2;
+    ADC = -ADC; 
+    ADC += GetNADCBins()/2;
   }
   
-  if( time >= 0 && time < width )
+  return ADC;
+}
+
+float TCooker::ADC_To_Wave(short ADC){
+
+  float wave = ADC * Get_mVPerBin();
+  
+  wave -= GetRange_mV()/2.;
+  
+  if(fPulsePol=='N')
+    wave = -wave;
+  
+  return wave;
+}
+
+bool TCooker::IsSampleInBaseline(short iSample){
+  
+  float sampTime = (float)iSample * SampleToTime();
+  float width    = 50.;
+  
+  if( sampTime <= width)
     return true;
   else
     return false;
 }
 
 //------------------------------
-
-void TCooker::Baseline(){
-    
-  InitBaseline();
-  
-  float base_mV = 0.;
-  short nBaseSamps = 0;
-  
-  for (int iEntry = 0; iEntry < nentries; iEntry++) {
-    cookedTree->GetEntry(iEntry);
-
-    nBaseSamps = 0;
-    
-    // standard baseline region
-    if( !IsSampleInBaseline(peak_samp,0) ){
-      
-      for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
-        
-	if(IsSampleInBaseline(iSamp,1)){
-	  base_mV += wave_mV->at(iSamp);
-	  nBaseSamps++;
-	}
-      }//end: for (short iSamp =
-      
-    }     
-    else{ // recalculate baseline if peak in standard region
-      
-      for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
-	if(IsSampleInBaseline(iSamp,2)){
-	  base_mV += wave_mV->at(iSamp);
-	  nBaseSamps++;
-	}
-      }
-    }
-    
-    base_mV /= (float)nBaseSamps;
-
-    hBase->Fill(base_mV);
-    
-    max_mV -= base_mV;
-    min_mV  -= base_mV;
-    
-    hPeak->Fill(max_mV);
-       
-    hBase_Peak->Fill(base_mV,max_mV);
-    hMin_Peak->Fill(min_mV,max_mV);
-  
-    if( iEntry > 0 && iEntry < 10000 )
-      hEvent_Base->Fill(iEntry,base_mV);
-    
-    // printf("\n event  = %d  \n ",iEntry);
-    // printf("\n min_mV = %f  \n ",min_mV);
-    
-  }// end: for (int iEntry 
-  
-  SaveBaseline();
-  
-}
 
 void TCooker::InitBaseline(){
   
@@ -580,6 +525,10 @@ float TCooker::Get_mVPerBin(){
   return f_mVPerBin;
 }
 
+short TCooker::GetNADCBins(){
+  return fNADCBins;
+}
+
 void TCooker::SetSampSet(char sampSet){
   
   if  (fDigitiser=='V')
@@ -634,7 +583,7 @@ void TCooker::PrintConstants(){
   printf("   period per sample   = %.1f ns  \n",f_nsPerSamp);
   printf("\n  samples per waveform = %d     \n",fNSamples);
   printf("   waveform duration   = %.1f ns  \n",fLength_ns);
-  printf("\n  number of ADC Bins   = %d     \n",fNADCBins);
+  printf("\n  number of ADC Bins   = %hd    \n",fNADCBins);
   printf("  ADC range            = %d V     \n",fRange_V);
   printf("   ADC bin width       = %.2f mV  \n",f_mVPerBin);
 
@@ -645,301 +594,7 @@ void TCooker::PrintConstants(){
   
 }
 
-//------------------------------
-void TCooker::Noise(){
 
-  InitNoise();
-  
-  for (int iEntry = 0; iEntry < nentries; iEntry++) {
-    cookedTree->GetEntry(iEntry);
-
-    //printf(" \n mean_mV = %f \n", mean_mV);
-    
-    hMean_Cooked->Fill(mean_mV);
-    hPPV_Cooked->Fill(ppV_mV);
-    hMax_Cooked->Fill(max_mV);
-    hMin_Cooked->Fill(min_mV);
-    hMin_Max_Cooked->Fill(min_mV,max_mV);
-    
-   }// end: for (int iEntry = 0;
-  
-  // find peak of mean voltage in mV
-  int     max_bin_mean = hMean_Cooked->GetMaximumBin();
-  TAxis * x_axis       = hMean_Cooked->GetXaxis();
-  float   peak_mean_mV = x_axis->GetBinCenter(max_bin_mean);
-  
-  thresh_mV       = 10.0; // ideally 1/4 of 1 p.e.
-  th_low_mV       = 5.0;  // 
-  
-  noise_thresh_mV = peak_mean_mV - thresh_mV;
-  noise_th_low_mV = peak_mean_mV - th_low_mV;
-  
-  // standard threshold rel mean peak
-  int thresh_bin   = hMin_Cooked->FindBin(noise_thresh_mV);
-  int noise_counts = hMin_Cooked->Integral(0,thresh_bin);
-  
-  float noise_rate = (float)noise_counts/nentries;
-  noise_rate = noise_rate/fLength_ns * 1.0e9;
-
-  // low threshold rel mean peak
-  thresh_bin   = hMin_Cooked->FindBin(noise_th_low_mV);
-  noise_counts = hMin_Cooked->Integral(0,thresh_bin);
-  
-  float noise_rate_low = (float)noise_counts/nentries;
-  noise_rate_low = noise_rate_low/fLength_ns * 1.0e9;
-  
-  printf("\n Mean voltage %.2f mV \n",peak_mean_mV);
-  printf("\n Noise Rate @ %.2f mV \t %.2f Hz \n",noise_th_low_mV,noise_rate_low);
-  printf("\n Noise Rate @ %.2f mV \t %.2f Hz \n",noise_thresh_mV,noise_rate);
-
-  SaveNoise();
-
-}
-
-void TCooker::InitNoise(){
-  
-  printf("\n ------------------------------ \n");
-  printf("\n Analysing Noise   \n");
-
-  float mVPerBin =  Get_mVPerBin();
-  float minX     = -GetRange_mV()/2.;
-  float maxX     =  GetRange_mV()/2.;
-  int   nBins    = 0;
-  
-  // fix binning and set number of bins
-  Set_THF_Params(&minX,&maxX,&mVPerBin,&nBins);
-  
-  hMean_Cooked = new TH1F("hMean_Cooked",
-		   ";mean voltage (mV) [cooked];Counts",
-		   nBins,minX,maxX);
-
-  hMax_Cooked =  new TH1F("hMax_Cooked",
-		   ";raw max voltage (mV) [cooked];Counts",
-		   nBins,minX,maxX);
-  
-  hMin_Cooked =  new TH1F("hMin_Cooked",
-		   ";raw min voltage (mV) [cooked];Counts",
-		   nBins,minX,maxX);
-  
-  //   printf("\n nBins    = %d \n",nBins);
-//   printf("\n minX   = %f \n",minX);
-//   printf("\n maxX   = %f \n",maxX);
-//   printf("\n mVPerBin = %f \n",mVPerBin);
-//   printf("\n Get_mVPerBin() = %f \n",Get_mVPerBin());
-
-  hMin_Max_Cooked =  new TH2F("hMin_Max_Cooked",
-			      "max vs min before baseline sub.; min voltage (mV) [cooked];max voltage (mV) [cooked]",
-			      nBins,minX,maxX,
-			      nBins,minX,maxX);
-
-  // prepare for range starting at zero
-  minX = 0.0;
-  maxX = GetRange_mV()/2.;
-  nBins  = 0;
-  
-  Set_THF_Params(&minX,&maxX,&mVPerBin,&nBins);
-
-  hPPV_Cooked =  new TH1F("hPPV_Cooked",
-		   ";peak to peak voltage (mV) [cooked];Counts",
-		   nBins,minX,maxX);
-
-}
-
-
-void TCooker::SaveNoise(string outFolder){
-
-  printf("\n Saving Noise Monitoring Plots \n\n");
-
-  InitCanvas();
-  
-  gPad->SetLogy();
-  
-  hMean_Cooked->SetAxisRange(-30., 120.,"X");
-  hMean_Cooked->SetMinimum(0.1);
-  hMean_Cooked->Draw();
-
-  string outName = outFolder + "hMean_Cooked.pdf";
-  canvas->SaveAs(outName.c_str());  
-  
-  hPPV_Cooked->SetAxisRange(-5.0, 145.,"X");
-  hPPV_Cooked->SetMinimum(0.1);
-  hPPV_Cooked->Draw();
-  
-  outName = outFolder + "hPPV_Cooked.pdf";
-  canvas->SaveAs(outName.c_str());
-  
-  hMax_Cooked->SetAxisRange(-20.,80.,"X");
-  hMax_Cooked->SetMinimum(0.1);
-  hMax_Cooked->Draw();
-  outName = outFolder + "hMax_Cooked.pdf";
-  canvas->SaveAs(outName.c_str());
-  
-  
-  hMin_Cooked->SetAxisRange(-30.,20.,"X");
-  hMin_Cooked->SetMinimum(0.1);
-  hMin_Cooked->Draw();
-
-  TLine * l_thresh = new TLine(noise_thresh_mV,1,noise_thresh_mV,1000);
-  l_thresh->SetLineStyle(2);
-  l_thresh->SetLineColor(kRed);
-  l_thresh->SetLineWidth(2);
-  l_thresh->Draw();
-  
-  TLine * l_th_low = new TLine(noise_th_low_mV,1,noise_th_low_mV,1000);
-  l_th_low->SetLineStyle(2);
-  l_th_low->SetLineColor(kBlue);
-  l_th_low->SetLineWidth(2);
-  l_th_low->Draw();
-  
-  outName = outFolder + "hMin_Cooked.pdf";
-  canvas->SaveAs(outName.c_str());
-  
-  gPad->SetLogy(false);
-  gPad->SetLogz();
-  
-  hMin_Max_Cooked->SetAxisRange(-25., 15.,"X");
-  hMin_Max_Cooked->SetAxisRange(-15., 50.,"Y");
-  
-  hMin_Max_Cooked->Draw("colz");
-
-  outName = outFolder + "hMin_Max_Cooked.pdf";
-  canvas->SaveAs(outName.c_str());
-
-  gPad->SetLogz(false);
-  
-  DeleteCanvas();
-  
-}
-
-
-//------------------------------
-void TCooker::Waveform(char option){
-
-  switch(option){
-  case('w'):
-    InitWaveform();
-    break;
-  case('f'):
-    InitFFT();
-    break;
-  case('b'):
-    InitWaveform();
-    InitFFT();
-    break;
-  default:
-    InitWaveform();
-    InitFFT();
-    break;
-  }
-  
-  int entry = (int)round(rand3->Uniform(nentries)); 
-
-  printf("\n entry %d \n",entry);
-  
-  rawTree->GetEntry(entry);
-  
-  for( short iSamp = 0 ; iSamp < fNSamples; iSamp++)
-    hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
-
-  hWave->FFT(hFFT ,"MAG");
-  
-  //char answer = 'n';
-  //printf(" Save waveform y/n ?");
-  //scanf("%c", &answer);
-  
-  // if( answer=='y' || answer == 'Y')
-
-  switch(option){
-  case('w'):
-    SaveWaveform();
-    break;
-  case('f'):
-    SaveFFT();
-    break;
-  case('b'):
-    SaveWaveFFT();
-    break;
-  default:
-    break;
-  }
-  
-}
-
-void TCooker::InitWaveform(){
-  
-  printf("\n ------------------------------ \n");
-  printf("\n Plotting Waveform \n\n");
-  
-  hWave = new TH1F("hWave","Waveform;Time (ns); Amplitude (mV)",
-		   fNSamples, 0.,fLength_ns);
-  
-}
-
-void TCooker::InitFFT(){
-  
-  printf("\n ------------------------------ \n");
-  printf("\n Plotting FFT \n\n");
-
-  hFFT = new TH1F("hFFT","FFT; Frequency (MHz); Magnitude",
-		  fNSamples/2, 0, fSampFreq/2 );
-  
-}
-
-
-void TCooker::SaveWaveform(string outFolder){
-
-  printf("\n Saving Waveform Plot \n\n");
-  
-  InitCanvas();
-  
-  hWave->Draw();
-  
-  string outName = outFolder + "hWave.pdf";
-  
-  canvas->SaveAs(outName.c_str());
-  
-  DeleteCanvas();
-  
-}
-
-void TCooker::SaveFFT(string outFolder){
-
-  printf("\n Saving FFT Plot \n\n");
-  
-  InitCanvas();
-  
-  hFFT->SetBinContent(1,0.);
-  hFFT->Draw();
-  
-  string outName = outFolder + "hFFT.pdf";
-  
-  canvas->SaveAs(outName.c_str());
-  
-  DeleteCanvas();
-  
-}
-
-void TCooker::SaveWaveFFT(string outFolder){
-
-  printf("\n Saving Waveform and FFT Plots \n\n");
-  
-  InitCanvas(1600.);
-  
-  canvas->Divide(2,1);
-  
-  canvas->cd(1);
-  hWave->Draw();
-  
-  canvas->cd(2);
-  hFFT->Draw();
-  
-  string outName = outFolder + "hWaveFFT.pdf";
-  
-  canvas->SaveAs(outName.c_str());
-  
-  DeleteCanvas();
-  
-}
 
 //------------------------------
 // 
@@ -1010,6 +665,7 @@ void TCooker::SaveWaveFFT(string outFolder){
       hNEventsTime->Fill(time/60.,iEntry);
       
       eventRate = deltaEvents/deltaT;
+      
       hEventRate->Fill(time/60.,eventRate/1000.);  
     
       // reset integrated variables
@@ -1140,8 +796,6 @@ void TCooker::SaveDAQ(string outFolder){
   DeleteCanvas();
 }
 
-
-
 short TCooker::SetSampleFreq(){
   
   if(fDigitiser=='D'){
@@ -1187,7 +841,7 @@ float TCooker::SetLength_ns(){
   return f_nsPerSamp*fNSamples;
 }
 
-int TCooker::SetNADCBins(){
+short TCooker::SetNADCBins(){
   
   if( fDigitiser == 'D' )
     return 4096;

@@ -13,29 +13,6 @@ public :
    TTree          *fTree;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
 
-// Fixed size dimensions of array or collections stored in the TTree if any.
-
-   // Declaration of leaf types
-   Int_t           PMT;
-   Float_t         Sk;
-   Float_t         Skb;
-   Float_t         Sp;
-   Float_t         Idb;
-   Int_t           EBB;
-   Int_t           DR;
-   Float_t         TTS;
-   Float_t         PTV;
-
-   // List of branches
-   TBranch        *b_PMT;   //!
-   TBranch        *b_Sk;   //!
-   TBranch        *b_Skb;   //!
-   TBranch        *b_Sp;   //!
-   TBranch        *b_Idb;   //!
-   TBranch        *b_EBB;   //!
-   TBranch        *b_DR;   //!
-   TBranch        *b_TTS;   //!
-   TBranch        *b_PTV;   //!
 
    ShippingData(int PMT = 0,
 		int verbosity = 1);
@@ -45,7 +22,7 @@ public :
    virtual void     Init(TTree *tree);
    virtual void     Show(Long64_t entry = -1);
    
-   void    SetNewPMT(int userPMT);
+   void    SetNewPMT(int inputPMT);
    
    Float_t GetSk();
    Float_t GetSkb();
@@ -55,8 +32,30 @@ public :
    Int_t   GetDR();
    Float_t GetTTS();
    Float_t GetPTV();
+
+   Int_t   GetPMT();
    
  private: 
+
+   Int_t     PMT;
+   Float_t   Sk;
+   Float_t   Skb;
+   Float_t   Sp;
+   Float_t   Idb;
+   Int_t     EBB;
+   Int_t     DR;
+   Float_t   TTS;
+   Float_t   PTV;
+
+   TBranch  *b_PMT;
+   TBranch  *b_Sk; 
+   TBranch  *b_Skb;
+   TBranch  *b_Sp; 
+   TBranch  *b_Idb;
+   TBranch  *b_EBB;
+   TBranch  *b_DR; 
+   TBranch  *b_TTS;
+   TBranch  *b_PTV;
 
    Float_t userSk;
    Float_t userSkb;
@@ -66,9 +65,10 @@ public :
    Int_t   userDR;
    Float_t userTTS;
    Float_t userPTV;
+   Int_t   userPMT;
 
    Bool_t isAllSet;
-   void  SetAll(int userPMT);
+   void  SetAll(int inputPMT);
 
    void  PrintAll();
    
@@ -81,9 +81,12 @@ ShippingData::ShippingData(int PMT,
 			   int verbosity)
 {
 
-  const char * s1 = getenv("COMMON");
+  const char * s1 = getenv("WM_COMMON");
+
+  //printf(" Common directory = %s",s1);
 
   string path2Ship = s1;
+    
   path2Ship += "ShippingData.root";
   
   TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject(path2Ship.c_str());

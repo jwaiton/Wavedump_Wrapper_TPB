@@ -56,7 +56,7 @@ DllSuf        = dylib
 endif
 SOFLAGS       = -dynamiclib -single_module -undefined dynamic_lookup
 endif
- 
+
 ifeq ($(CXX),)
 $(error $(ARCH) invalid architecture)
 endif
@@ -76,15 +76,17 @@ endif
 
 #-------------------------------------------------------------------------
 
-SRC           = TConvert.C 
+COMMON        = ../../Common_Tools/
+
+SRC           =  ${COMMON}ShippingData.C
 
 OBJ           = $(SRC:.C=.o)
 HDR           = $(SRC:.C=.h)
 DEP           = $(SRC:.C=.d)
-OBJS          = $(OBJ) convert_rawDict.o
+OBJS          = $(OBJ) ship_datDict.o
 
-LIBCONRAW     = libConRaw.so
-PROGRAMS      = convert_raw
+LIBCONRAW     = libShipData.so
+PROGRAMS      = shipping_data
 
 all:            $(PROGRAMS)
 
@@ -92,20 +94,20 @@ $(LIBCONRAW):	$(OBJS)
 		$(LD) $(LDFLAGS) $(SOFLAGS) -o $@ $^
 		@echo "$@ done"
 
-convert_raw:	convert_raw.o $(LIBCONRAW)
-		$(LD) $(LDFLAGS) convert_raw.o -L$(CURDIR) -lConRaw $(GLIBS) -o $@
+shipping_data:	shipping_data.o $(LIBCONRAW)
+		$(LD) $(LDFLAGS) shipping_data.o -L$(CURDIR) -lShipData $(GLIBS) -o $@
 
 clean:
 		rm -f *.o *.d *.so $(PROGRAMS)
 
 realclean:	clean
 		rm -f *.d *~ core
-		rm -f convert_rawDict.*
+		rm -f *.pcm ana_*Dict.C 
 
-convert_rawDict.C: 	$(HDR) ConRaw_LinkDef.h
-		@echo "Generating dictionary convert_rawDict..."
+ship_datDict.C: 	$(HDR) ShipData_LinkDef.h
+		@echo "Generating dictionary ship_datDict..."
 		$(ROOTSYS)/bin/rootcint -f $@ -c $(INCLUDES) $(HDR) \
-		 ConRaw_LinkDef.h
+		 ShipData_LinkDef.h
 
 #-------------------------------------------------------------------------
 

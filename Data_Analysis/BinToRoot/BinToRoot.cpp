@@ -576,7 +576,7 @@ void SetStyle(){
   wmStyle->SetLabelOffset(0.01 ,"Y");
   
   //---------  Title
-  wmStyle->SetOptTitle(1);
+  wmStyle->SetOptTitle(0);
   wmStyle->SetTitleStyle(0);
   wmStyle->SetTitleBorderSize(0);
 
@@ -799,7 +799,7 @@ int ProcessBinaryFile(TString inFilePath,
 				    "hMaxADC_Filtered;maxADC;counts",
 				    1000, 200.,1200.);
   label =  "Signal charge vs peak voltage;";
-  label += "Charge (mV ns);Peak voltage with baseline subtracted (mV)";
+  label += "Charge (mV ns);Peak voltage  (mV)";
   
   TH2F * hQV = new TH2F("hQFixed_PeakV",
 			label,
@@ -1258,6 +1258,9 @@ int ProcessBinaryFile(TString inFilePath,
     maxY = GetVoltageRange(digitiser)*(16 + 8  )/32*1.0e3;
   }
 
+  minY = GetVoltageRange(digitiser)*(16 - 2)/32*1.0e3;
+  maxY = GetVoltageRange(digitiser)*(16 + 1)/32*1.0e3 ;
+
   hTV->SetAxisRange(minY,maxY,"Y");
 
   float minX = 0.;
@@ -1312,13 +1315,20 @@ int ProcessBinaryFile(TString inFilePath,
   //  Gate around Delay
   
   if( run < 70 || run > 200)
-    hQ_Fixed->SetAxisRange(-500., 2500.,"X");
-  
-  hQ_Filter->SetLineColor(kBlue);
+    hQ_Fixed->SetAxisRange(-500., 2500.,"X");  
 
   gPad->SetLogy(1);
+  //hQ_Fixed->SetLineStyle(5);
+  
+  //hQ_Fixed->SetFillStyle(3002);
+  hQ_Fixed->SetFillColorAlpha(kBlack,0.1);
   hQ_Fixed->Draw();
-
+  
+  hQ_Filter->SetLineStyle(2);
+  hQ_Filter->SetLineColor(kBlue);  
+  //hQ_Filter->SetFillStyle(3744);
+  hQ_Filter->SetFillColorAlpha(kBlue,0.2); 
+  //hQ_Filter->SetFillColor(kBlue); 
   // 
   if( makeFilteredHisto )
     hQ_Filter->Draw("same");

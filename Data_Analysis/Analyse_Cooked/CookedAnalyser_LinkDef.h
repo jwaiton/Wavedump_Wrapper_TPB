@@ -4,6 +4,7 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class TCooker;
+#pragma link C++ class TCookedAnalyser;
+#pragma link C++ class FileNameParser;
 
 #endif

@@ -56,7 +56,7 @@ DllSuf        = dylib
 endif
 SOFLAGS       = -dynamiclib -single_module -undefined dynamic_lookup
 endif
- 
+
 ifeq ($(CXX),)
 $(error $(ARCH) invalid architecture)
 endif
@@ -76,15 +76,17 @@ endif
 
 #-------------------------------------------------------------------------
 
-SRC           = ../../Data_Processing/Cooking/TCooker.C
+COMMON        = ../../Common_Tools/
+
+SRC           = TCookedAnalyser.C ${COMMON}FileNameParser.C
 
 OBJ           = $(SRC:.C=.o)
 HDR           = $(SRC:.C=.h)
 DEP           = $(SRC:.C=.d)
-OBJS          = $(OBJ) ana_rawDict.o
+OBJS          = $(OBJ) ana_cookedDict.o
 
-LIBCONRAW     = libAnaRaw.so
-PROGRAMS      = analyse_raw
+LIBCONRAW     = libCookedAnalyser.so
+PROGRAMS      = analyse_cooked
 
 all:            $(PROGRAMS)
 
@@ -92,20 +94,20 @@ $(LIBCONRAW):	$(OBJS)
 		$(LD) $(LDFLAGS) $(SOFLAGS) -o $@ $^
 		@echo "$@ done"
 
-analyse_raw:	analyse_raw.o $(LIBCONRAW)
-		$(LD) $(LDFLAGS) analyse_raw.o -L$(CURDIR) -lAnaRaw $(GLIBS) -o $@
+analyse_cooked:	analyse_cooked.o $(LIBCONRAW)
+		$(LD) $(LDFLAGS) analyse_cooked.o -L$(CURDIR) -lCookedAnalyser $(GLIBS) -o $@
 
 clean:
 		rm -f *.o *.d *.so $(PROGRAMS)
 
 realclean:	clean
 		rm -f *.d *~ core
-		rm -f ana_rawDict.*
+		rm -f *.pcm ana_*Dict.C 
 
-ana_rawDict.C: 	$(HDR) AnaRaw_LinkDef.h
-		@echo "Generating dictionary ana_rawDict..."
+ana_cookedDict.C: 	$(HDR) CookedAnalyser_LinkDef.h
+		@echo "Generating dictionary ana_cookedDict..."
 		$(ROOTSYS)/bin/rootcint -f $@ -c $(INCLUDES) $(HDR) \
-		 AnaRaw_LinkDef.h
+		 CookedAnalyser_LinkDef.h
 
 #-------------------------------------------------------------------------
 

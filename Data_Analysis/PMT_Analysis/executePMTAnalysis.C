@@ -59,13 +59,13 @@ Bool_t IsValidArgc(int);
 int main(Int_t argc, Char_t *argv[]){
   
   // 'V' for VME, 'D' for desktop
-  Char_t  digitiser = 'D';
+  Char_t  digitiser = 'V';
   
-  Bool_t investigateTiming   = kTRUE;
-  Bool_t investigatePulses   = kFALSE;
+  Bool_t investigateTiming   = kFALSE;
+  Bool_t investigateRiseFall = kFALSE;
+  Bool_t investigatePulses   = kTRUE;
   Bool_t investigateDarkRate = kFALSE;
   Bool_t investigateFFT      = kFALSE;
-  //Bool_t investigateAP       = kFALSE;
 
   Bool_t writeOutput         = kFALSE;
 
@@ -74,13 +74,13 @@ int main(Int_t argc, Char_t *argv[]){
   
   TTree          * tree = nullptr;
   PMTAnalyser    * PMT = nullptr;
-  ShippingData   * shipData = nullptr;
-  FileNameParser * testInfo = new FileNameParser();
+  //  ShippingData   * shipData = nullptr;
+  FileNameParser * testInfo = new FileNameParser(argv[1]);
 
-   shipData = new ShippingData(130);
-   cout << " DR(130) = " << shipData->GetDR() << endl;
+//    shipData = new ShippingData(130);
+//    cout << " DR(130) = " << shipData->GetDR() << endl;
   
-  if( !IsValidDigitiser(digitiser,testInfo->run(argv[1])) ||
+  if( !IsValidDigitiser(digitiser,testInfo->GetRun()) ||
       !IsValidArgc(argc) ){
     return -1;
   }
@@ -170,8 +170,9 @@ int main(Int_t argc, Char_t *argv[]){
       thresh_mV = 1.5;
     }
     
-    PMT->RiseFallTime(nPulses,peakMean,
-		      thresh_mV);
+    if(investigateRiseFall)
+      PMT->RiseFallTime(nPulses,peakMean,
+			thresh_mV);
 
     int event = 0;
     if(!investigatePulses) 

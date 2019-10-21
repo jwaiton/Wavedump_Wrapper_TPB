@@ -1,5 +1,5 @@
 /*****************************************************
- * A program to process raw root files produced  
+ * A program to analyse raw root files produced  
  * using dat_to_root
  *
  * Author 
@@ -9,9 +9,6 @@
  * Purpose
  *  This program reads in a TTree
  *  of raw variables (ADC and HEAD)
- *  and creates an output TTree of
- *  'cooked' variables, storing 
- *  it in another root file.
  *
  * Setting Up
  *   The environment should first be set using 
@@ -22,30 +19,25 @@
  *
  * How to run 
  *  e.g.
- * $ ./cook_raw /path/to/RUN000001/PMT0130/SPEtest/wave_0.dat.root
+ * $ ./analyse_raw /path/to/RUN000001/PMT0130/SPEtest/wave_0.dat.root
  * 
  * Input
  *  .root file created with dat_to_root
  * 
  * Output
- *  A root file containing: 
- *      cooked variables 
- *      meta data 
- *  Monitoring Plots (optional)
- *  in the following folders:
+ *  Monitoring Plots can be saved in directory structure
  *     ./Plots/DAQ 
- *     ./Plots/Baseline
  *     ./Plots/Waveforms
  *   which must be created prior to running.
  *    (the script make_plot_directories.sh is 
  *       provided to automate this) 
- *
+ * 
  * Dependencies
  *  root.cern - a working version of root is required
  *
- *   WATCHMAN common tools
- *     wmStyle.C - TStyle class settings for WATCHMAN visualisation
- *     FileNameParser.h - class for accessing file ID variables 
+ *  wmStyle.C - TStyle class settings for WATCHMAN visualisation
+ *   This file is included in the distribution in
+ *   /path/to/Wavedump_Wrapper/Common_Tools/
  * 
  */ 
 
@@ -55,9 +47,7 @@
 #include "TFile.h"
 #include "TTree.h"
 
-#include "TCooker.h"
-
-#include "FileNameParser.h"
+#include "TRawAnalyser.h"
 
 bool Welcome(int argc);
 bool IsFileReady(TFile *, char *);
@@ -70,79 +60,60 @@ int main(int argc, char * argv[]){
   TFile * inFile  = nullptr;
   TTree * tree    = nullptr;
 
-  // object used to cook 
+  // object used to analyse 
   // raw (root) data
-  TCooker * cooker = nullptr;
+  TRawAnalyser * analyser = nullptr;
 
-  // object used for extracting file ID info 
-  // from argv[], namely:
-  //  Run, PMT, Test, Location, 
-  FileNameParser * fNP =  nullptr;
-  
   for( int iFile = 1 ; iFile < argc ; iFile++){
 
     //-------------------
     //-------------------
     // Setting Up
-
+    
     // Check root file
     inFile = new TFile(argv[iFile],"READ");
     if( !IsFileReady(inFile,argv[iFile]) )
       continue;
     
-    // argv should be full path to data file
-    // in standard WATCHMAN PMT Testing format
-    // (option 1 is for use with this format)
-    fNP = new FileNameParser(argv[iFile],1);
+    printf("\n ------------------------------ \n");
+    printf("\n  Input File:       ");
+    printf("\n    %s  \n",argv[iFile]);
     
-    // Get raw data tree, which is called 'T'
+    // Get tree called 'T'
     inFile->GetObject("T",tree); 
     
-    // initalise TCooker object using 
+    // initalise TRawAnalyser object using 
     // tree from input file
-    cooker = new TCooker(tree);
-    //cooker = new TCooker(tree,'D');// desktop digi version
-       
-    // set the cooker object FileID using the
-    // FileNameParser object member function
-    cooker->SetFileID(fNP->GetFileID());
+    analyser = new TRawAnalyser(tree);
+    //analyser = new TRawAnalyser(tree,'D');// desktop digi version
     
-    // Set output file directory 
-    // to same as input file directory
-    cooker->SetDir(fNP->GetDir());
-
     // Optional method:
     // reduce event loop for faster code testing
     // NB no check that this is lower that nentries
     int user_nentries = 100000; 
-    //cooker->SetTestMode(user_nentries);
+    //analyser->SetTestMode(user_nentries);
     
-    cooker->PrintConstants();
-
     //-------------------
+    //-------------------
+    // Monitor Raw Data 
+    analyser->PrintConstants();
+    
     // DAQ info
     //  Print mean trigger rate
     //  Save: rate,timing and event plots
-    cooker->DAQ();
+    analyser->DAQ();
     
-    //-------------------
-    //-------------------
-    // Cook Data
-    
-    // Calculate basic variables
-    // flip ADC pulse for negative pulse polarity data
-
-    // To Do: 
-    //  fit timing peak to set delay
-    //  (not for Dark Counts data)
-
-    // Save meta data tree
-    // Save cooked data tree
-    cooker->Cook();
+    //.....
+    // In progress - currently saves one waveform
+    //
+    // Plot Waveforms, options: 
+    //    'w' waveform only
+    //    'f' fft only
+    //    'b' waveform & fft
+    char option = 'b';  
+    analyser->Waveform(option);    
     
     inFile->Delete();
-    
-    delete fNP;
   }
   
   return 1;
@@ -153,7 +124,7 @@ bool Welcome(int argc){
   
   printf("\n      --------------------    ");
   printf("\n      --------------------  \n");
-  printf("\n            cook_raw        \n");
+  printf("\n          analyse_raw       \n");
   printf("\n      --------------------    ");
   printf("\n      --------------------  \n");
 
@@ -172,14 +143,13 @@ bool Welcome(int argc){
   else{
     printf("\n  enter file as argument \n");
     printf("\n  e.g. \n");
-    printf("\n  ./cook_raw ./wave_0.dat.root \n\n");
-    printf("\n ------------------------------ \n");
+    printf("\n  ./analyse_raw ./wave_0.dat.root \n\n");
+    printf("\n ----------------------------------- \n");
     return false;
   }
   
   
 }
-
 
 bool IsFileReady(TFile * inFile, char * arg){
   
@@ -187,11 +157,6 @@ bool IsFileReady(TFile * inFile, char * arg){
     fprintf(stderr,"\n Error, Check File: %s \n",arg);
     return false;
   }
-  else {
-    printf("\n ------------------------------ \n");
-    printf("\n  Input File:       ");
-    printf("\n    %s  \n",arg);
-
+  else 
     return true;
-  }
 }

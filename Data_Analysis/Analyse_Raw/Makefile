@@ -76,15 +76,15 @@ endif
 
 #-------------------------------------------------------------------------
 
-SRC           = ../../Data_Processing/Cooking/TCooker.C
+SRC           = TRawAnalyser.C 
 
 OBJ           = $(SRC:.C=.o)
 HDR           = $(SRC:.C=.h)
 DEP           = $(SRC:.C=.d)
-OBJS          = $(OBJ) ana_cookedDict.o
+OBJS          = $(OBJ) analyse_rawDict.o
 
-LIBCONRAW     = libAnaCooked.so
-PROGRAMS      = analyse_cooked
+LIBCONRAW     = libAnalyseRaw.so
+PROGRAMS      = analyse_raw
 
 all:            $(PROGRAMS)
 
@@ -92,20 +92,20 @@ $(LIBCONRAW):	$(OBJS)
 		$(LD) $(LDFLAGS) $(SOFLAGS) -o $@ $^
 		@echo "$@ done"
 
-analyse_cooked:	analyse_cooked.o $(LIBCONRAW)
-		$(LD) $(LDFLAGS) analyse_cooked.o -L$(CURDIR) -lAnaCooked $(GLIBS) -o $@
-	
+analyse_raw:	analyse_raw.o $(LIBCONRAW)
+		$(LD) $(LDFLAGS) analyse_raw.o -L$(CURDIR) -lAnalyseRaw $(GLIBS) -o $@
+
 clean:
 		rm -f *.o *.d *.so $(PROGRAMS)
 
 realclean:	clean
 		rm -f *.d *~ core
-		rm -f *.pcm ana_*Dict.C 
+		rm -f analyse_rawDict.* *.pcm
 
-ana_cookedDict.C: 	$(HDR) AnaCooked_LinkDef.h
-		@echo "Generating dictionary ana_cookedDict..."
+analyse_rawDict.C: 	$(HDR) AnalyseRaw_LinkDef.h
+		@echo "Generating dictionary analyse_rawDict..."
 		$(ROOTSYS)/bin/rootcint -f $@ -c $(INCLUDES) $(HDR) \
-		 AnaCooked_LinkDef.h
+		 AnalyseRaw_LinkDef.h
 
 #-------------------------------------------------------------------------
 

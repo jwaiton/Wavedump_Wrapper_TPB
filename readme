@@ -13,4 +13,3 @@ Instructions:
 
 export WM_PARENT=/path/to/Testing/
 source ${WM_PARENT}/Wavedump_Wrapper/WM.sh
-

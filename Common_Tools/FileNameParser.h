@@ -24,6 +24,7 @@ public:
   char   parseChar(string f, string s1, string s2);
 
   string GetFileName(string filePath);
+  string GetDir();
   string GetFileID();
   string GetFileID(string);
 
@@ -31,11 +32,14 @@ public:
   string GetTreeName();
   string Get_hQ_Fixed_Name(string filePath);
   string Get_hQ_Fixed_Name();
-  int    pmtID(string filename);
-  int    run(string filename);
-  int    location(string filename);
-  char   test(string filename);
-  int    hVStep(string filename);
+
+  int    HasExtension(string name);
+
+  int    pmtID(string name);
+  int    run(string name);
+  int    location(string name);
+  char   test(string name);
+  int    hVStep(string name);
 
   void   Print_Data();
   
@@ -47,15 +51,17 @@ public:
   
  private:
 
-  void   SetFileID(string fileName);
+  void   SetFileID(string name);
   void   SetFileID();
-  
+  void   SetDir(string filePath);
+
   int  PMT;   
   int  Run;   
   int  Loc;   
   char Test;  
   int  HVStep;
   string FileID;
+  string Dir;
 
   bool allSet;
 
@@ -74,27 +80,30 @@ FileNameParser::FileNameParser(){
 }
 
 
-// Option for use with TTree name
-FileNameParser::FileNameParser(string treeName){
+// Option for use with string containing
+// the FileID somewhere within it
+FileNameParser::FileNameParser(string str_with_ID){
   
   Init();
 
-  string fileName = GetFileName(treeName);
+  // strip path info leaving file name
+  string name = GetFileName(str_with_ID);
+
+  if( HasExtension(name) < 0 )
+    name += ".root";
   
-  // change to same format as root filename
-  fileName = fileName + ".root";
-  
-  PMT    = pmtID(fileName);
-  Run    = run(fileName);
-  Loc    = location(fileName);
-  Test   = test(fileName);
-  HVStep = hVStep(fileName); // 0 if Test!='G'
+  PMT    = pmtID(name);
+  Run    = run(name);
+  Loc    = location(name);
+  Test   = test(name);
+  HVStep = hVStep(name); // 0 if Test!='G'
   
   allSet = true;
 
-  //SetFileID(fileName);
   SetFileID();
-
+  
+  SetDir(str_with_ID);
+  
   Print_Data();
   
 }
@@ -110,9 +119,11 @@ FileNameParser::FileNameParser(string rawFilePath,
   Test = test(rawFilePath);
   
   allSet = true;
-
+ 
   SetFileID();
-
+  
+  SetDir(rawFilePath);
+ 
   Print_Data();
 
 }
@@ -123,6 +134,7 @@ FileNameParser::~FileNameParser(){
 
 void FileNameParser::Init(int userOption){
 
+  printf("\n  ----------------------------- \n") ;
   printf("\n  FileNameParser \n") ;
   
   allSet = false;
@@ -135,6 +147,7 @@ void FileNameParser::Init(int userOption){
   
   option = userOption;
   
+
 }
     
 #endif
