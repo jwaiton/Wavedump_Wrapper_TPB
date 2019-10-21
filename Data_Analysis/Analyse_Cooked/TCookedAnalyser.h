@@ -111,7 +111,7 @@ class TCookedAnalyser {
   void  Noise();
   void  InitNoise();
   void  SaveNoise(string outFolder = "./Plots/Noise/");
-
+  
   float ADC_To_Wave(short ADC);
 
   //----
