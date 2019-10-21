@@ -1,6 +1,7 @@
 #define TCookedAnalyser_cxx
 #include "TCookedAnalyser.h"
 #include <TH2.h>
+#include <TF1.h>
 #include <math.h>
 #include <limits.h>
 
@@ -18,6 +19,62 @@ string TCookedAnalyser::GetFileID(){
   return FileID;
 }
 
+float TCookedAnalyser::Get_LED_delay(){
+  
+  printf("\n ------------------------------ \n");
+  printf("\n Getting LED delay   \n");
+
+  InitCanvas();
+    
+  float range    = Length_ns;
+  float binWidth = nsPerSamp;
+  float min_time = 0.0;
+  float max_time = range;
+  int   nBins = 0;
+  
+  Set_THF_Params(&min_time,&max_time,&binWidth,&nBins);
+  
+  TH1F * hPeakTime = new TH1F("hPeakTime",
+			      "hPeakTime;peak time (ns);Counts",
+			      nBins,min_time,max_time);
+  float LED_delay   = 1.0;
+  float delay_width = 1.0;
+  float peak_time = 0.;
+  float thresh_mV = 10.;
+  
+  for (int iEntry = 0; iEntry < nentries; iEntry++) {
+    cookedTree->GetEntry(iEntry);
+    
+    peak_time = peak_samp * nsPerSamp;
+    
+    if(peak_mV > thresh_mV)
+      hPeakTime->Fill(peak_time);
+
+  }
+  
+  hPeakTime->Fit("gaus","Q","",min_time,max_time);
+  
+  TF1 * fPeak = hPeakTime->GetFunction("gaus");
+  LED_delay   = fPeak->GetParameter(1);
+  delay_width = fPeak->GetParameter(2);
+  
+  float min_delay   = LED_delay - 3.*delay_width; 
+  float max_delay   = LED_delay + 3.*delay_width; 
+
+  hPeakTime->Fit("gaus","QR","",min_delay,max_delay);
+  
+  hPeakTime->Draw();  
+  canvas->SaveAs("./Plots/Timing/hPeakTime.pdf");
+ 
+  DeleteCanvas();
+
+  LED_delay   = hPeakTime->GetFunction("gaus")->GetParameter(1);
+  delay_width = hPeakTime->GetFunction("gaus")->GetParameter(2);
+  
+  printf(" delay = %.1f (%.1f)", LED_delay, delay_width);
+
+  return LED_delay;
+}
 
 //------------------------------
 void TCookedAnalyser::Noise(){

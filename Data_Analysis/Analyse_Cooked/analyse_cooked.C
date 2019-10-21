@@ -68,7 +68,7 @@ int main(int argc, char * argv[]){
     // Optional method:
     // reduce event loop for faster code testing
     // NB no check that this is lower that nentries
-    int user_nentries = 1000000; 
+    int user_nentries = 100000; 
     //cooked_analyser->SetTestMode(user_nentries);
     
     //-------------------
@@ -93,23 +93,31 @@ int main(int argc, char * argv[]){
     printf("\n  'f' - FFT ");
     printf("\n  'b' - 'W' and 'F' \n");
     
-    scanf("%c",&aChar);
+    //scanf("%c",&aChar);
     
     if(aChar!='N' && aChar!='n')
       cooked_analyser->Waveform(aChar);
 
     // ----
-    cooked_analyser->Noise();
+    //cooked_analyser->Noise();
     
     //-------------------
     //-------------------
     // Analysis 
-
-    if(cooked_analyser->GetTest()=='D')
+    
+    char  test = cooked_analyser->GetTest();
+    float LED_delay = 0.0;
+    
+    switch(test){
+    case('D'):
       cooked_analyser->Dark();
+    default:
+      LED_delay = cooked_analyser->Get_LED_delay();
+      printf("\n LED_delay = %.2f \n",LED_delay);
+    }
+    
+  }// end of: for( int iFile = 1 ;
 
-  }
-  
   return 1;
 }
 

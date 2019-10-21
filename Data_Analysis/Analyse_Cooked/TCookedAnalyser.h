@@ -109,11 +109,15 @@ class TCookedAnalyser {
   char  GetTest();
   
   void  Noise();
-  
   void  InitNoise();
   void  SaveNoise(string outFolder = "./Plots/Noise/");
 
   float ADC_To_Wave(short ADC);
+
+  //----
+  // LED data
+  
+  float Get_LED_delay();
 
   //----
   // Dark Counts
@@ -224,15 +228,6 @@ void TCookedAnalyser::InitMeta(){
     fprintf( stderr, "\n Error: no meta tree  \n ");
     return;
   }
-
-  TBranch * b_SampFreq  = 0;
-  TBranch * b_NSamples  = 0;
-  TBranch * b_NADCBins  = 0;
-  TBranch * b_Range_V   = 0;
-  TBranch * b_nsPerSamp = 0;
-  TBranch * b_mVPerBin  = 0;
-  TBranch * b_Length_ns = 0;
-  //  TBranch * b_FileID    = 0;
 
   metaTree->SetBranchAddress("SampFreq",&SampFreq,&b_SampFreq);
   metaTree->SetBranchAddress("NSamples",&NSamples,&b_NSamples);
