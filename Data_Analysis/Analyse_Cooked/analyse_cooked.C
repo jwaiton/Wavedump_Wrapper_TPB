@@ -84,7 +84,7 @@ int main(int argc, char * argv[]){
     // ----
     // Waveform plotting
     // [To Do:inherit from executePMTAnalysis.C]
-    char aChar = 'N';
+    char aChar = 'b';
     
     printf("\n Plot waveform? ");
     printf("\n  options:  ");
@@ -97,9 +97,9 @@ int main(int argc, char * argv[]){
     
     if(aChar!='N' && aChar!='n')
       cooked_analyser->Waveform(aChar);
-
-    // ----
-    //cooked_analyser->Noise();
+    
+    //----
+    cooked_analyser->Noise();
     
     //-------------------
     //-------------------

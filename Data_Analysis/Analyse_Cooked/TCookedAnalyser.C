@@ -71,7 +71,7 @@ float TCookedAnalyser::Get_LED_delay(){
   LED_delay   = hPeakTime->GetFunction("gaus")->GetParameter(1);
   delay_width = hPeakTime->GetFunction("gaus")->GetParameter(2);
   
-  printf(" delay = %.1f (%.1f)", LED_delay, delay_width);
+  //printf(" delay = %.1f (%.1f)", LED_delay, delay_width);
 
   return LED_delay;
 }
