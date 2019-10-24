@@ -6,3 +6,4 @@ ana_cookedDict.C
 *.o
 *.d
 Plots/
+Testing/
