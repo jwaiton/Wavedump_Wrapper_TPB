@@ -12,6 +12,8 @@ export WM_DATA=${WM_CODE}Data_Storage/
 export WM_BINARY=${WM_DATA}Binary_Data/
 export WM_ROOT=${WM_DATA}Raw_Root_Data/
 
+export WM_DAQ=${WM_CODE}Data_Acquisition/
+
 export WM_PROCESS=${WM_CODE}Data_Processing/
 export WM_CONVERT=${WM_PROCESS}Binary_Conversion/
 export WM_COOK=${WM_PROCESS}Cooking/
@@ -19,6 +21,7 @@ export WM_COOK=${WM_PROCESS}Cooking/
 export WM_COMMON=${WM_CODE}Common_Tools/
 
 export WM_ANALYSE=${WM_CODE}Data_Analysis/
+export WM_ANALYSE_COOKED=${WM_ANALYSE}Analyse_Cooked/
 export CALIBRATION=${WM_ANALYSE}Calibration/
 export BIN_TO_ROOT=${WM_ANALYSE}BinToRoot/
 export GAIN_TEST_DIR=${WM_ANALYSE}Gain_Test/

@@ -93,13 +93,13 @@ int main(int argc, char * argv[]){
     printf("\n  'f' - FFT ");
     printf("\n  'b' - 'W' and 'F' \n");
     
-    //scanf("%c",&aChar);
+    scanf("%c",&aChar);
     
     if(aChar!='N' && aChar!='n')
       cooked_analyser->Waveform(aChar);
 
     // ----
-    //cooked_analyser->Noise();
+    cooked_analyser->Noise();
     
     //-------------------
     //-------------------
@@ -111,6 +111,7 @@ int main(int argc, char * argv[]){
     switch(test){
     case('D'):
       cooked_analyser->Dark();
+      break;
     default:
       LED_delay = cooked_analyser->Get_LED_delay();
       printf("\n LED_delay = %.2f \n",LED_delay);
