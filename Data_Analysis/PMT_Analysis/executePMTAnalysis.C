@@ -61,9 +61,9 @@ int main(Int_t argc, Char_t *argv[]){
   // 'V' for VME, 'D' for desktop
   Char_t  digitiser = 'V';
   
-  Bool_t investigateTiming   = kFALSE;
-  Bool_t investigateRiseFall = kFALSE;
-  Bool_t investigatePulses   = kTRUE;
+  Bool_t investigateTiming   = kTRUE;
+  Bool_t investigateRiseFall = kTRUE;
+  Bool_t investigatePulses   = kFALSE;
   Bool_t investigateDarkRate = kFALSE;
   Bool_t investigateFFT      = kFALSE;
 
@@ -156,7 +156,7 @@ int main(Int_t argc, Char_t *argv[]){
     // Rise/Fall Time Study
     
     // number of pulses to fit 
-    int nPulses = 5000;
+    int nPulses = 50;
     
     // threshold for pulse fitting
     // and dark counts

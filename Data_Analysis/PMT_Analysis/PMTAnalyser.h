@@ -154,7 +154,11 @@ void PMTAnalyser::Init(TTree *tree,
   // default
   testMode = kFALSE;
   
+  // TEMP SETTINGS
+  negPulsePol  = false;
   testInfo = new FileNameParser(tree->GetName());
+
+  //testInfo = new FileNameParser(tree->GetName(),0);
   
   Test     = testInfo->GetTest();
   HVStep   = testInfo->GetHVStep();
@@ -162,7 +166,7 @@ void PMTAnalyser::Init(TTree *tree,
   PMT      = testInfo->GetPMT();
   Loc      = testInfo->GetLoc();
   FileID   = testInfo->GetFileID();
-  
+
   dataInfo = new DataInfo();
 
   NSamples     = dataInfo->GetNSamples(Test,
@@ -171,7 +175,7 @@ void PMTAnalyser::Init(TTree *tree,
   NVDCBins     = dataInfo->GetNVDCBins(digitiser);
   mVPerBin     = dataInfo->GetmVPerBin(digitiser);  
   nsPerSample  = dataInfo->GetnsPerSample(digitiser);  
-  negPulsePol  = dataInfo->GetNegPulsePol(Test);  
+  //negPulsePol  = dataInfo->GetNegPulsePol(Test);  
   
   waveformDuration = (float)NSamples * nsPerSample;
   

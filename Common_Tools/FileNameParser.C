@@ -160,9 +160,16 @@ void FileNameParser::Print_Data(){
   printf(" \n ");
 }
 
-string FileNameParser::GetTreeName(string filePath){
+string FileNameParser::GetTreeName(string filePath, int option = 0){
   
   string treeName = "Events_" + GetFileID(GetFileName(filePath));
+  
+  return treeName; 
+}
+
+string FileNameParser::GetTreeName(string filePath){
+  
+  string treeName = "Cooked_" + GetFileID(GetFileName(filePath));
   
   return treeName; 
 }

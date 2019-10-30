@@ -28,6 +28,7 @@ public:
   string GetFileID();
   string GetFileID(string);
 
+  string GetTreeName(string filePath, int option);
   string GetTreeName(string filePath);
   string GetTreeName();
   string Get_hQ_Fixed_Name(string filePath);
