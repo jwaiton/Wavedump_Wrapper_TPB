@@ -414,35 +414,66 @@ void TCookedAnalyser::Waveform(char option){
     break;
   }
   
-  int entry = (int)round(rand3->Uniform(nentries)); 
-
-  printf("\n entry %d \n",entry);
+  int  entry  = 0;
+  char answer = 'R';
   
-  cookedTree->GetEntry(entry);
-  
-  for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
-    hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
-
-  hWave->FFT(hFFT ,"MAG");
-  
-  //char answer = 'n';
-  //printf(" Save waveform y/n ?");
-  //scanf("%c", &answer);
-  
-  // if( answer=='y' || answer == 'Y')
-
-  switch(option){
-  case('w'):
-    SaveWaveform();
-    break;
-  case('f'):
-    SaveFFT();
-    break;
-  case('b'):
-    SaveWaveFFT();
-    break;
-  default:
-    break;
+  // Plotting Loop
+  while ( answer!='X' ){
+    
+    printf("\n Which entry to plot? \n");
+    printf("\n F - First entry \n");
+    printf("\n N - Next \n");
+    printf("\n P - Previous \n");
+    printf("\n R - Random selection \n");
+    printf("\n X - eXit with no plotting \n");
+    
+    // note deliberate use of whitespace before %c
+    scanf(" %c", &answer);
+    
+    switch(answer){
+    case('F'):
+      entry = 0;
+      break;
+    case('R'):
+      entry = (int)round(rand3->Uniform(nentries)); ;
+      break;
+    case('N'):
+      entry++;
+      break;
+    case('P'):
+      entry--;
+    default:
+      entry = -1;
+    }
+    
+    if(entry > -1)
+      printf("\n plotting entry %d \n",entry);
+    else{
+      printf("\n exiting waveform plotting \n");
+      return;
+    }
+    
+    cookedTree->GetEntry(entry);
+    
+    for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
+      hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
+    
+    hWave->FFT(hFFT ,"MAG");
+    
+    switch(option){
+    case('w'):
+      SaveWaveform();
+      break;
+    case('f'):
+      SaveFFT();
+      break;
+    case('b'):
+      SaveWaveFFT();
+      break;
+    default:
+      break;
+    }
+    
   }
   
 }
@@ -513,12 +544,18 @@ void TCookedAnalyser::SaveWaveFFT(string outFolder){
   hWave->Draw();
   
   canvas->cd(2);
+  hFFT->SetBinContent(1,0.);
   hFFT->Draw();
   
   string outName = outFolder + "hWaveFFT.pdf";
   
   canvas->SaveAs(outName.c_str());
   
+  string sysCommand = "evince ";
+  sysCommand += outName;
+  sysCommand += " &";
+  system(sysCommand.c_str());
+
   DeleteCanvas();
   
 }
