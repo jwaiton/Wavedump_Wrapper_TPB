@@ -58,7 +58,7 @@ void testFileNameParser(){
   printf("\n --------------------");
   printf("\n Example 4: binary data path \n");
 
-  filename = "/Data_Storage/Binary_Data/RUN000001/PMT0130/SPEtest/wave_0.dat";
+  filename = "/Data_Storage/Binary_Data/RUN1234/PMT130/Nominal/wave_0.dat";
   
   // note usage of option = 1 
   FileNameParser * fnp4 = new FileNameParser(filename,1);
@@ -66,5 +66,6 @@ void testFileNameParser(){
   cout << endl;
   cout << " run  = " << fnp4->GetRun() << endl;
   cout << " dir  = " << fnp4->GetDir() << endl;
+  cout << " test = " << fnp4->GetTest() << endl;
   
 }
