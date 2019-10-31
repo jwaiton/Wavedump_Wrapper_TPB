@@ -23,33 +23,34 @@ export WM_ANALYSE_COOKED=${WM_ANALYSE}Analyse_Cooked/
 export CALIBRATION=${WM_ANALYSE}Calibration/
 export BIN_TO_ROOT=${WM_ANALYSE}BinToRoot/
 export GAIN_TEST_DIR=${WM_ANALYSE}Gain_Test/
-export SHIPPING_DATA=${WM_ANALYSE}Shipping_Data/
+export WM_SHIPPING_DATA=${WM_ANALYSE}Shipping_Data/
 
 # header files
-
 export CPATH=${CPATH}:${WM_COMMON}
 export CPATH=${CPATH}:${WM_COOK}
+export CPATH=${CPATH}:${WM_ANALYSE_COOKED}
 
 # binaries
 export PATH=${PATH}:${WM_CONVERT}
 export PATH=${PATH}:${WM_CONVERT}DT_Version/
 export PATH=${PATH}:${WM_COOK}
-export PATH=${PATH}:${WM_ANALYSE}Analyse_Cooked/
+export PATH=${PATH}:${WM_ANALYSE_COOKED}
 export PATH=${PATH}:${WM_ANALYSE}Shipping_Data/
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_COOK}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_COMMON}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_ANALYSE}PMT_Analysis/
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_ANALYSE}Analyse_Cooked/
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_ANALYSE_COOKED}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_ANALYSE}Shipping_Data/
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_ANALYSE}Waveform_Plotter/
 fi
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
 export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${WM_COOK}
 export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${WM_COMMON}
 export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${WM_ANALYSE}PMT_Analysis/
-export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${WM_ANALYSE}Analyse_Cooked/
+export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${WM_ANALYSE_COOKED}
 export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${WM_ANALYSE}Shipping_Data/
 fi
 
@@ -60,3 +61,9 @@ nominal_HV(){
 HV_step_1(){
     echo $(grep " $1 " ${WM_COMMON}HVScan.txt) | cut -d " " -f 2
 }
+
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+open(){
+    evince $1
+}
+fi

@@ -425,7 +425,7 @@ void TCookedAnalyser::Waveform(char option){
     printf("\n N - Next \n");
     printf("\n P - Previous \n");
     printf("\n R - Random selection \n");
-    printf("\n X - eXit with no plotting \n");
+    printf("\n X - eXit \n");
     
     // note deliberate use of whitespace before %c
     scanf(" %c", &answer);
@@ -460,15 +460,20 @@ void TCookedAnalyser::Waveform(char option){
     
     hWave->FFT(hFFT ,"MAG");
     
+    string outPath = "./Plots/Waveforms/";
+
     switch(option){
     case('w'):
-      SaveWaveform();
+      outPath += "hWave.pdf";
+      SaveWaveform(outPath);
       break;
     case('f'):
-      SaveFFT();
+      outPath += "hFFT.pdf";
+      SaveFFT(outPath);
       break;
     case('b'):
-      SaveWaveFFT();
+      outPath += "hWaveFFT.pdf";
+      SaveWaveFFT(outPath);
       break;
     default:
       break;
@@ -499,7 +504,7 @@ void TCookedAnalyser::InitFFT(){
 }
 
 
-void TCookedAnalyser::SaveWaveform(string outFolder){
+void TCookedAnalyser::SaveWaveform(string outPath ){
 
   printf("\n Saving Waveform Plot \n\n");
   
@@ -507,15 +512,13 @@ void TCookedAnalyser::SaveWaveform(string outFolder){
   
   hWave->Draw();
   
-  string outName = outFolder + "hWave.pdf";
-  
-  canvas->SaveAs(outName.c_str());
-  
+  canvas->SaveAs(outPath.c_str());
+
   DeleteCanvas();
   
 }
 
-void TCookedAnalyser::SaveFFT(string outFolder){
+void TCookedAnalyser::SaveFFT(string outPath){
 
   printf("\n Saving FFT Plot \n\n");
   
@@ -524,15 +527,13 @@ void TCookedAnalyser::SaveFFT(string outFolder){
   hFFT->SetBinContent(1,0.);
   hFFT->Draw();
   
-  string outName = outFolder + "hFFT.pdf";
-  
-  canvas->SaveAs(outName.c_str());
+  canvas->SaveAs(outPath.c_str());
   
   DeleteCanvas();
   
 }
 
-void TCookedAnalyser::SaveWaveFFT(string outFolder){
+void TCookedAnalyser::SaveWaveFFT(string outPath){
 
   printf("\n Saving Waveform and FFT Plots \n\n");
   
@@ -547,20 +548,11 @@ void TCookedAnalyser::SaveWaveFFT(string outFolder){
   hFFT->SetBinContent(1,0.);
   hFFT->Draw();
   
-  string outName = outFolder + "hWaveFFT.pdf";
+  canvas->SaveAs(outPath.c_str());
   
-  canvas->SaveAs(outName.c_str());
-  
-  string sysCommand = "evince ";
-  sysCommand += outName;
-  sysCommand += " &";
-  system(sysCommand.c_str());
-
   DeleteCanvas();
   
 }
-
-
 
 
 //------------------------------

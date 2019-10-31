@@ -8,3 +8,6 @@ make realclean ; make
 
 cd $WM_ANALYSE_COOKED
 make realclean ; make
+
+cd $WM_SHIPPING_DATA
+make realclean ; make
