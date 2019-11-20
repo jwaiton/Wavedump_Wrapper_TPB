@@ -513,6 +513,8 @@ void TCookedAnalyser::SaveWaveFFT(string outFolder){
   hWave->Draw();
   
   canvas->cd(2);
+
+  hFFT->SetBinContent(1,0.);
   hFFT->Draw();
   
   string outName = outFolder + "hWaveFFT.pdf";

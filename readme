@@ -1,4 +1,4 @@
-7th October 2019 
+24th October 2019 
 WATCHMAN UK PMT Performance Testing 
 
 Repository for Watchman-PMT data taking, processing and analysis framework.
@@ -13,3 +13,8 @@ Instructions:
 
 export WM_PARENT=/path/to/Testing/
 source ${WM_PARENT}/Wavedump_Wrapper/WM.sh
+
+Programs
+ making.sh  - builds the binaries
+ running.sh - runs conversion, cooking and analysis
+              (currently all plots are overwritten)

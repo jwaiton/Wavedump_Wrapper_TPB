@@ -4,9 +4,19 @@ echo " ------------------------------"
 date  
 echo " ------------------------------"
 
-export FILE_PATH=/Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/Data_Storage/Binary_Data/RUN000001/PMT0130/SPEtest/
+echo " Enter full path to binary file, e.g.: " 
+echo "/home/user1/Watchman/Wavedump_Wrapper/Data_Storage/Binary_Data/Setup/RUN000002/PMT0015/Nominal/" 
 
-dat_to_root ${FILE_PATH}wave_0.dat
+read DIR_PATH
+
+echo " Enter file name e.g " 
+echo " wave_0.dat" 
+
+read FILE_NAME
+
+FILE_PATH=${DIR_PATH}${FILE_NAME}
+
+dat_to_root ${FILE_PATH}
 
 echo " ------------------------------"
 date 
@@ -14,7 +24,7 @@ echo " ------------------------------"
 
 cd $WM_COOK
 ./make_plot_directories.sh
-cook_raw ${FILE_PATH}wave_0.dat.root
+cook_raw ${FILE_PATH}.root
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
 evince ${WM_COOK}Plots/DAQ/hEventRate.pdf &
@@ -28,7 +38,7 @@ echo " ------------------------------"
 
 cd $WM_ANALYSE_COOKED
 ./make_plot_directories.sh
-analyse_cooked  ${FILE_PATH}/Run*
+analyse_cooked  ${DIR_PATH}/Run*
 
 echo " ------------------------------"
 date 

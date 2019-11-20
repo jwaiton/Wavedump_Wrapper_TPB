@@ -93,7 +93,7 @@ int main(int argc, char * argv[]){
     printf("\n  'f' - FFT ");
     printf("\n  'b' - 'W' and 'F' \n");
     
-    scanf("%c",&aChar);
+    //scanf("%c",&aChar);
     
     if(aChar!='N' && aChar!='n')
       cooked_analyser->Waveform(aChar);
