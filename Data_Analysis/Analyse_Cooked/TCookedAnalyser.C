@@ -414,35 +414,71 @@ void TCookedAnalyser::Waveform(char option){
     break;
   }
   
-  int entry = (int)round(rand3->Uniform(nentries)); 
+  int  entry  = 0;
+  char answer = 'R';
+  
+  // Plotting Loop
+  while ( answer!='X' ){
+    
+    printf("\n Which entry to plot? \n");
+    printf("\n F - First entry \n");
+    printf("\n N - Next \n");
+    printf("\n P - Previous \n");
+    printf("\n R - Random selection \n");
+    printf("\n X - eXit \n");
+    
+    // note deliberate use of whitespace before %c
+    scanf(" %c", &answer);
+    
+    switch(answer){
+    case('F'):
+      entry = 0;
+      break;
+    case('R'):
+      entry = (int)round(rand3->Uniform(nentries)); ;
+      break;
+    case('N'):
+      entry++;
+      break;
+    case('P'):
+      entry--;
+    default:
+      entry = -1;
+    }
+    
+    if(entry > -1)
+      printf("\n plotting entry %d \n",entry);
+    else{
+      printf("\n exiting waveform plotting \n");
+      return;
+    }
+    
+    cookedTree->GetEntry(entry);
+    
+    for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
+      hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
+    
+    hWave->FFT(hFFT ,"MAG");
+    
+    string outPath = "./Plots/Waveforms/";
 
-  printf("\n entry %d \n",entry);
-  
-  cookedTree->GetEntry(entry);
-  
-  for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
-    hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
-
-  hWave->FFT(hFFT ,"MAG");
-  
-  //char answer = 'n';
-  //printf(" Save waveform y/n ?");
-  //scanf("%c", &answer);
-  
-  // if( answer=='y' || answer == 'Y')
-
-  switch(option){
-  case('w'):
-    SaveWaveform();
-    break;
-  case('f'):
-    SaveFFT();
-    break;
-  case('b'):
-    SaveWaveFFT();
-    break;
-  default:
-    break;
+    switch(option){
+    case('w'):
+      outPath += "hWave.pdf";
+      SaveWaveform(outPath);
+      break;
+    case('f'):
+      outPath += "hFFT.pdf";
+      SaveFFT(outPath);
+      break;
+    case('b'):
+      outPath += "hWaveFFT.pdf";
+      SaveWaveFFT(outPath);
+      break;
+    default:
+      break;
+    }
+    
   }
   
 }
@@ -468,7 +504,7 @@ void TCookedAnalyser::InitFFT(){
 }
 
 
-void TCookedAnalyser::SaveWaveform(string outFolder){
+void TCookedAnalyser::SaveWaveform(string outPath ){
 
   printf("\n Saving Waveform Plot \n\n");
   
@@ -476,15 +512,13 @@ void TCookedAnalyser::SaveWaveform(string outFolder){
   
   hWave->Draw();
   
-  string outName = outFolder + "hWave.pdf";
-  
-  canvas->SaveAs(outName.c_str());
-  
+  canvas->SaveAs(outPath.c_str());
+
   DeleteCanvas();
   
 }
 
-void TCookedAnalyser::SaveFFT(string outFolder){
+void TCookedAnalyser::SaveFFT(string outPath){
 
   printf("\n Saving FFT Plot \n\n");
   
@@ -493,15 +527,13 @@ void TCookedAnalyser::SaveFFT(string outFolder){
   hFFT->SetBinContent(1,0.);
   hFFT->Draw();
   
-  string outName = outFolder + "hFFT.pdf";
-  
-  canvas->SaveAs(outName.c_str());
+  canvas->SaveAs(outPath.c_str());
   
   DeleteCanvas();
   
 }
 
-void TCookedAnalyser::SaveWaveFFT(string outFolder){
+void TCookedAnalyser::SaveWaveFFT(string outPath){
 
   printf("\n Saving Waveform and FFT Plots \n\n");
   
@@ -513,19 +545,14 @@ void TCookedAnalyser::SaveWaveFFT(string outFolder){
   hWave->Draw();
   
   canvas->cd(2);
-
   hFFT->SetBinContent(1,0.);
   hFFT->Draw();
   
-  string outName = outFolder + "hWaveFFT.pdf";
-  
-  canvas->SaveAs(outName.c_str());
+  canvas->SaveAs(outPath.c_str());
   
   DeleteCanvas();
   
 }
-
-
 
 
 //------------------------------

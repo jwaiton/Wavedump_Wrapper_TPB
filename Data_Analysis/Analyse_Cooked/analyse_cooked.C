@@ -81,23 +81,26 @@ int main(int argc, char * argv[]){
     //-------------------
     // Monitoring
 
-    // ----
-    // Waveform plotting
-    // [To Do:inherit from executePMTAnalysis.C]
-    char aChar = 'b';
+    // Separate waveform & FFT plotter program
+    // exists in WM distrubution
+    // // ----
+    // // Waveform plotting
+    // // [To Do:inherit from executePMTAnalysis.C]
+    // char aChar = 'b';
     
-    printf("\n Plot waveform? ");
-    printf("\n  options:  ");
-    printf("\n  'n' - No ");
-    printf("\n  'w' - Waveform ");
-    printf("\n  'f' - FFT ");
-    printf("\n  'b' - 'W' and 'F' \n");
+    // printf("\n Plot waveform? ");
+    // printf("\n  options:  ");
+    // printf("\n  'n' - No ");
+    // printf("\n  'w' - Waveform ");
+    // printf("\n  'f' - FFT ");
+    // printf("\n  'b' - 'W' and 'F' \n");
+    // scanf("%c",&aChar);
     
-    //scanf("%c",&aChar);
+    // if(aChar!='N' && aChar!='n'){
+    //   cooked_analyser->Waveform(aChar);
+    // }
     
-    if(aChar!='N' && aChar!='n')
-      cooked_analyser->Waveform(aChar);
-
+    //----
     cooked_analyser->Noise();
     
     //-------------------
