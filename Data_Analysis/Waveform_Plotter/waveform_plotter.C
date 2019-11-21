@@ -83,16 +83,6 @@ int main(int argc, char * argv[]){
   
   string outPath = "./Plots/Waveforms/";
   
-  string sysCommand = "touch ";
-  sysCommand += outPath;
-  system(sysCommand.c_str());
-  
-  sysCommand = "open ";
-  sysCommand += outPath;
-  sysCommand += " &";
-  system(sysCommand.c_str());
-
-  
   switch(aChar){
   case('w'):
     outPath += "hWave.pdf";
@@ -106,6 +96,20 @@ int main(int argc, char * argv[]){
   default:
     break;
   }
+
+  string sysCommand = "touch ";
+  sysCommand += outPath;
+  system(sysCommand.c_str());
+  
+#ifdef  __linux__  
+  sysCommand = "evince ";
+#else
+  sysCommand = "open ";
+#endif   
+  
+  sysCommand += outPath;
+  sysCommand += " &";
+  system(sysCommand.c_str());
     
   if(aChar!='N' && aChar!='n'){
     wave_plotter->Waveform(aChar);
