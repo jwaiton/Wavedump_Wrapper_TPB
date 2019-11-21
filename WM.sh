@@ -38,6 +38,7 @@ export PATH=${PATH}:${WM_CONVERT}DT_Version/
 export PATH=${PATH}:${WM_COOK}
 export PATH=${PATH}:${WM_ANALYSE_COOKED}
 export PATH=${PATH}:${WM_ANALYSE}Shipping_Data/
+export PATH=${PATH}:${WM_ANALYSE}Waveform_Plotter/
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_COOK}

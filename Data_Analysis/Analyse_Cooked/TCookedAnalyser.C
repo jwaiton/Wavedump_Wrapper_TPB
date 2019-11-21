@@ -47,19 +47,20 @@ float TCookedAnalyser::Get_LED_delay(){
     
     peak_time = peak_samp * nsPerSamp;
     
-    if(peak_mV > thresh_mV)
+    //if(peak_mV > thresh_mV)
       hPeakTime->Fill(peak_time);
 
   }
   
-  hPeakTime->Fit("gaus","Q","",min_time,max_time);
+  //hPeakTime->Fit("gaus","Q","",min_time,max_time);
+  hPeakTime->Fit("gaus","Q","",110,150);
   
   TF1 * fPeak = hPeakTime->GetFunction("gaus");
   LED_delay   = fPeak->GetParameter(1);
   delay_width = fPeak->GetParameter(2);
   
-  float min_delay   = LED_delay - 3.*delay_width; 
-  float max_delay   = LED_delay + 3.*delay_width; 
+  float min_delay   = LED_delay - 2*delay_width; 
+  float max_delay   = LED_delay + 2*delay_width; 
 
   hPeakTime->Fit("gaus","QR","",min_delay,max_delay);
   
@@ -71,7 +72,7 @@ float TCookedAnalyser::Get_LED_delay(){
   LED_delay   = hPeakTime->GetFunction("gaus")->GetParameter(1);
   delay_width = hPeakTime->GetFunction("gaus")->GetParameter(2);
   
-  //printf(" delay = %.1f (%.1f)", LED_delay, delay_width);
+  printf(" delay = %.1f (%.1f)", LED_delay, delay_width);
 
   return LED_delay;
 }
@@ -461,7 +462,7 @@ void TCookedAnalyser::Waveform(char option){
     hWave->FFT(hFFT ,"MAG");
     
     string outPath = "./Plots/Waveforms/";
-
+    
     switch(option){
     case('w'):
       outPath += "hWave.pdf";

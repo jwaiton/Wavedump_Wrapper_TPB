@@ -82,7 +82,7 @@ int main(int argc, char * argv[]){
   scanf("%c",&aChar);
   
   string outPath = "./Plots/Waveforms/";
-
+  
   switch(aChar){
   case('w'):
     outPath += "hWave.pdf";
@@ -97,16 +97,14 @@ int main(int argc, char * argv[]){
     break;
   }
 
-  string sysCommand = "evince ";
-  sysCommand += outPath;
-  sysCommand += " &";
-  system(sysCommand.c_str());
+  // string sysCommand = "evince ";
+  // sysCommand += outPath;
+  // sysCommand += " &";
+  // system(sysCommand.c_str());
   
   if(aChar!='N' && aChar!='n'){
     wave_plotter->Waveform(aChar);
   }
-  
-
   
   
   return 1;
