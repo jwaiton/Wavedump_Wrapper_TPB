@@ -26,6 +26,7 @@ export CALIBRATION=${WM_ANALYSE}Calibration/
 export BIN_TO_ROOT=${WM_ANALYSE}BinToRoot/
 export GAIN_TEST_DIR=${WM_ANALYSE}Gain_Test/
 export WM_SHIPPING_DATA=${WM_ANALYSE}Shipping_Data/
+export WM_WAVE_PLOT=${WM_ANALYSE}Waveform_Plotter/
 
 # header files
 export CPATH=${CPATH}:${WM_COMMON}
@@ -37,8 +38,8 @@ export PATH=${PATH}:${WM_CONVERT}
 export PATH=${PATH}:${WM_CONVERT}DT_Version/
 export PATH=${PATH}:${WM_COOK}
 export PATH=${PATH}:${WM_ANALYSE_COOKED}
-export PATH=${PATH}:${WM_ANALYSE}Shipping_Data/
-export PATH=${PATH}:${WM_ANALYSE}Waveform_Plotter/
+export PATH=${PATH}:${WM_SHIPPING_DATA}
+export PATH=${PATH}:${WM_WAVE_PLOT}
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WM_COOK}
