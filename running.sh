@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# process binary file
+# output .root version
+# output cooked version
+# simple analysis of cooked version
+
+# recommended to instead use
+# process_analyse_locally.sh
+
 echo " ------------------------------"
 date  
 echo " ------------------------------"
