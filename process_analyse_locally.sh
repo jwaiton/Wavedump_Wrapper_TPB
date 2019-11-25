@@ -2,7 +2,7 @@
 
 # process binary file
 # output .root version
-# output cooked version]
+# output cooked version
 # simple analysis of cooked version
 
 # copy this file to the location 
