@@ -207,7 +207,7 @@ int FileNameParser::pmtID(string name){
 int FileNameParser::run(string name){
  
   if(option < 0)
-    return parseInt(name,"Run_","PMT");
+    return parseInt(name,"Run_","PMT0");
   else
     return parseInt(name,"/RUN",6);
 }
@@ -227,7 +227,7 @@ char FileNameParser::test(string name){
   if(option < 0)
     ctr = parseChar(name,"Test_","root");
   else 
-    ctr = parseChar(name,"/PMT");
+    ctr = parseChar(name,"/PMT0");
   
   if( ctr > '0' && ctr < '6' ) 
     return 'G';

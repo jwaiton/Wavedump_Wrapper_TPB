@@ -58,7 +58,7 @@ void testFileNameParser(){
   printf("\n --------------------");
   printf("\n Example 4: binary data path \n");
 
-  filename = "/Data_Storage/Binary_Data/RUN1234/PMT130/Nominal/wave_0.dat";
+  filename = "/Data_Storage/Binary_Data/RUN1234/PMT0130/Nominal/wave_0.dat";
   
   // note usage of option = 1 
   FileNameParser * fnp4 = new FileNameParser(filename,1);

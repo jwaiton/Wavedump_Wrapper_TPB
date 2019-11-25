@@ -25,45 +25,118 @@ read FILE_NAME
 
 FILE_PATH=${DIR_PATH}${FILE_NAME}
 
-dat_to_root ${FILE_PATH}
+echo " Convert Binary to ROOT file? " 
+echo " (Y/N)" 
+
+read ANSWER
 
 echo " ------------------------------"
 date 
 echo " ------------------------------"
 
-mkdir -p ./Plots/DAQ/
+if [[ "$ANSWER" == "Y" || "$ANSWER" == "y" ]]; then
+    dat_to_root ${FILE_PATH}
+    mkdir -p ./Plots/DAQ/
 
-cook_raw ${FILE_PATH}.root
-
-if [[ "$OSTYPE" == "linux-gnu" ]]; then
-evince ./Plots/DAQ/hEventRate.pdf &
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-open ./Plots/DAQ/hEventRate.pdf &
+    echo " ------------------------------"
+    date  
+    echo " ------------------------------"
 fi
 
-echo " ------------------------------"
-date 
-echo " ------------------------------"
+echo " Cook Raw ROOT file ? " 
+echo " (Y/N)" 
 
-mkdir -p ./Plots/Noise/
-mkdir -p ./Plots/Timing/
-mkdir -p ./Plots/Dark/
-
-analyse_cooked  ${DIR_PATH}/Run*
+read ANSWER
 
 echo " ------------------------------"
-date 
+date  
 echo " ------------------------------"
 
-mkdir -p ./Plots/Waveforms/
-
-(echo "b" && echo "R" && echo "X") | waveform_plotter ${DIR_PATH}/Run*
-
-if [[ "$OSTYPE" == "linux-gnu" ]]; then
-evince ./Plots/Noise/hPeak_Cooked.pdf &
-evince ./Plots/Waveforms/hWaveFFT.pdf &
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-open ./Plots/Noise/hPeak_Cooked.pdf &
-open ./Plots/Waveforms/hWaveFFT.pdf & 
+if [[ "$ANSWER" == "Y" || "$ANSWER" == "y" ]]; then
+    
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+	export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${WM_COOK}
+    fi
+    
+    cook_raw ${FILE_PATH}.root
+    
+    
+    if [[ "$OSTYPE" == "linux-gnu" ]]; then
+	evince ./Plots/DAQ/hEventRate.pdf &
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+	open ./Plots/DAQ/hEventRate.pdf &
+    fi
+    
+    echo " ------------------------------"
+    date  
+    echo " ------------------------------"
+    
 fi
+
+echo " Analyse cooked file ? " 
+echo " (Y/N)" 
+
+read ANSWER
+
+echo " ------------------------------"
+date 
+echo " ------------------------------"
+
+if [[ "$ANSWER" == "Y" || "$ANSWER" == "y" ]]; then
+    
+    mkdir -p ./Plots/Noise/
+    mkdir -p ./Plots/Timing/
+    mkdir -p ./Plots/Dark/
+    
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+	export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${WM_ANALYSE_COOKED}
+    fi 
+    
+    analyse_cooked  ${DIR_PATH}/Run*
+
+    if [[ "$OSTYPE" == "linux-gnu" ]]; then
+	evince ./Plots/Noise/hPeak_Cooked.pdf &
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+	open ./Plots/Noise/hPeak_Cooked.pdf &
+    fi
+    
+    echo " ------------------------------"
+    date  
+    echo " ------------------------------"
+    
+fi
+
+
+echo " Plot Waveform ? " 
+echo " (Y/N)" 
+
+read ANSWER
+
+echo " ------------------------------"
+date 
+echo " ------------------------------"
+
+if [[ "$ANSWER" == "Y" || "$ANSWER" == "y" ]]; then
+
+    mkdir -p ./Plots/Waveforms/
+
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+	export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${WM_ANALYSE}Waveform_Plotter/
+    fi 
+    
+    (echo "b" && echo "R" && echo "X") | waveform_plotter ${DIR_PATH}/Run*
+    
+    if [[ "$OSTYPE" == "linux-gnu" ]]; then
+	evince ./Plots/Waveforms/hWaveFFT.pdf &
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+	open ./Plots/Waveforms/hWaveFFT.pdf & 
+    fi
+    
+    echo " ------------------------------"
+    date  
+    echo " ------------------------------"
+    
+fi
+
+
 

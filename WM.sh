@@ -4,7 +4,7 @@ echo " Setting Watchman Environment "
 
 # if not set in .bashrc then set here
 # export WM_PARENT=/path/to/
- 
+
 # testing code
 export WM_CODE=${WM_PARENT}Wavedump_Wrapper/
 
