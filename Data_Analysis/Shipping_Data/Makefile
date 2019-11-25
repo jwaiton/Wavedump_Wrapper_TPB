@@ -102,7 +102,7 @@ clean:
 
 realclean:	clean
 		rm -f *.d *~ core
-		rm -f *.pcm ana_*Dict.C 
+		rm -f *.pcm ship_*Dict.C 
 
 ship_datDict.C: 	$(HDR) ShipData_LinkDef.h
 		@echo "Generating dictionary ship_datDict..."
