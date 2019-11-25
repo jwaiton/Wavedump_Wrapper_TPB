@@ -201,7 +201,7 @@ int FileNameParser::pmtID(string name){
   if(option < 0)
     return parseInt(name,"PMT_","Loc");
   else
-    return parseInt(name,"/PMT",4);
+    return parseInt(name,"/PMT0",4);
 }
 
 int FileNameParser::run(string name){
