@@ -125,7 +125,7 @@ bool Welcome(int argc){
   
   printf("\n      --------------------    ");
   printf("\n      --------------------  \n");
-  printf("\n         analyse_cooked     \n");
+  printf("\n        waveform_plotter    \n");
   printf("\n      --------------------    ");
   printf("\n      --------------------  \n");
 
@@ -139,7 +139,7 @@ bool Welcome(int argc){
   else{
     printf("\n  enter single file as argument \n");
     printf("\n  e.g. \n");
-    printf("\n  ./analyse_cooked /path/to/Run_1_PMT_130_Loc_0_Test_D.root \n\n");
+    printf("\n  ./waveform_plotter Run_1_PMT_130_Loc_0_Test_D.root \n\n");
     printf("\n ------------------------------ \n");
     return false;
   }
