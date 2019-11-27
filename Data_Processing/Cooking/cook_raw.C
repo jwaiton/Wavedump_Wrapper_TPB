@@ -21,31 +21,31 @@
  *  $ make 
  *
  * How to run 
- *  e.g.
- * $ ./cook_raw /path/to/RUN000001/PMT0130/SPEtest/wave_0.dat.root
- * 
+ *  e.g. (test parameters are extracted from the file path)
+ * $ cook_raw /path/to/RUN000001/PMT0130/SPEtest/wave_0.dat.root
+ *
  * Input
- *  .root file created with dat_to_root
+ *  A .root file that was created using dat_to_root
  * 
  * Output
  *  A root file containing: 
- *      cooked variables 
- *      meta data 
+ *      a cooked variables TTree  
+ *      a meta data TTree 
  *  Monitoring Plots (optional)
  *  in the following folders:
  *     ./Plots/DAQ 
  *     ./Plots/Baseline
  *     ./Plots/Waveforms
- *   which must be created prior to running.
+ *   these folders must be created prior to running.
  *    (the script make_plot_directories.sh is 
  *       provided to automate this) 
  *
  * Dependencies
  *  root.cern - a working version of root is required
  *
- *   WATCHMAN common tools
- *     wmStyle.C - TStyle class settings for WATCHMAN visualisation
- *     FileNameParser.h - class for accessing file ID variables 
+ *  WATCHMAN common tools
+ *    wmStyle.C - TStyle class settings for WATCHMAN visualisation
+ *    FileNameParser.h - class for extracting file ID variables 
  * 
  */ 
 
@@ -95,7 +95,7 @@ int main(int argc, char * argv[]){
     // (option 1 is for use with this format)
     fNP = new FileNameParser(argv[iFile],1);
     
-    // Get raw data tree, which is called 'T'
+    // Get raw data tree, which is always called 'T'
     inFile->GetObject("T",tree); 
     
     // initalise TCooker object using 
@@ -130,11 +130,7 @@ int main(int argc, char * argv[]){
     // Cook Data
     
     // Calculate basic variables
-    // flip ADC pulse for negative pulse polarity data
-
-    // To Do: 
-    //  fit timing peak to set delay
-    //  (not for Dark Counts data)
+    // NB: ADC pulse is flipped for negative pulse polarity data
 
     // Save meta data tree
     // Save cooked data tree
