@@ -114,8 +114,6 @@ int main(int argc, char * argv[]){
   if(aChar!='N' && aChar!='n'){
     wave_plotter->Waveform(aChar);
   }
-
-  
   
   return 1;
 }

@@ -7,7 +7,8 @@
  *  15 10 2019
  *
  * Purpose
- *  This program reads in a TTree
+ *  This program reads in a TTree and performs
+ *  an analysis.
  *
  * Setting Up
  *   The environment should first be set using 
@@ -18,15 +19,17 @@
  *
  * How to run 
  *  e.g.
- * $ ./analyse_cooked /path/to/Run_1_PMT_130_Loc_0_Test_D.root
+ * $ analyse_cooked /path/to/Run_1_PMT_130_Loc_0_Test_D.root
  * 
  * Input
  *  .root file created with TCooker
  * 
  * Output
  *   Plots can be saved in directory structure
+ *    e.g.
  *     ./Plots/Dark 
  *   which must be created prior to running.
+ *   ( see make_plot_directories.sh)
  * 
  * Dependencies
  *  root.cern - a working version of root is required
@@ -81,26 +84,6 @@ int main(int argc, char * argv[]){
     //-------------------
     // Monitoring
 
-    // Separate waveform & FFT plotter program
-    // exists in WM distrubution
-    // // ----
-    // // Waveform plotting
-    // // [To Do:inherit from executePMTAnalysis.C]
-    // char aChar = 'b';
-    
-    // printf("\n Plot waveform? ");
-    // printf("\n  options:  ");
-    // printf("\n  'n' - No ");
-    // printf("\n  'w' - Waveform ");
-    // printf("\n  'f' - FFT ");
-    // printf("\n  'b' - 'W' and 'F' \n");
-    // scanf("%c",&aChar);
-    
-    // if(aChar!='N' && aChar!='n'){
-    //   cooked_analyser->Waveform(aChar);
-    // }
-    
-    //----
     cooked_analyser->Noise();
     
     //-------------------
