@@ -69,6 +69,6 @@ HV_step_1(){
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
 open(){
-    evince $1
+    evince $1 &
 }
 fi

@@ -31,7 +31,8 @@ float TCookedAnalyser::Get_LED_delay(){
   float min_time = 0.0;
   float max_time = range;
   int   nBins = 0;
-  
+
+  // fix the binning
   Set_THF_Params(&min_time,&max_time,&binWidth,&nBins);
   
   TH1F * hPeakTime = new TH1F("hPeakTime",
@@ -47,7 +48,7 @@ float TCookedAnalyser::Get_LED_delay(){
     
     peak_time = peak_samp * nsPerSamp;
     
-    //if(peak_mV > thresh_mV)
+    if(peak_mV > thresh_mV)
       hPeakTime->Fill(peak_time);
 
   }
