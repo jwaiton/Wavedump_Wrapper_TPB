@@ -115,8 +115,11 @@ class TCookedAnalyser {
   float ADC_To_Wave(short ADC);
 
   //----
-  // LED data
-  
+  // template member function   
+  TH1F * Get_hQ_Fixed(float delay);
+
+  //----
+  // LED data  
   float Get_LED_delay();
 
   //----

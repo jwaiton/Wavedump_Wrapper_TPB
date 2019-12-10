@@ -72,7 +72,7 @@ int main(int argc, char * argv[]){
     // reduce event loop for faster code testing
     // NB no check that this is lower that nentries
     int user_nentries = 100000; 
-    //cooked_analyser->SetTestMode(user_nentries);
+    cooked_analyser->SetTestMode(user_nentries);
     
     //-------------------
     //-------------------
@@ -91,7 +91,8 @@ int main(int argc, char * argv[]){
     // Analysis 
     
     char  test = cooked_analyser->GetTest();
-    float LED_delay = 0.0;
+    float LED_delay  = 0.0;
+    float gate_start = -15.;
     
     switch(test){
     case('D'):
@@ -100,6 +101,14 @@ int main(int argc, char * argv[]){
     default:
       LED_delay = cooked_analyser->Get_LED_delay();
       printf("\n LED_delay = %.2f \n",LED_delay);
+      
+      gate_start = LED_delay - 15.;
+
+      //.....
+      // testing implementation
+      TH1F * hQ_Fixed = cooked_analyser->Get_hQ_Fixed(gate_start);
+      hQ_Fixed->SaveAs("hQ_Fixed.C"); // generates macro of plot
+      // $ root hQ_Fixed.C  // to run macro from command line
     }
     
   }// end of: for( int iFile = 1 ;

@@ -19,6 +19,70 @@ string TCookedAnalyser::GetFileID(){
   return FileID;
 }
 
+//----------
+//   
+
+TH1F * TCookedAnalyser::Get_hQ_Fixed(float delay = 100.){
+
+  // See $BinToRoot/BinToRoot.cpp
+  // for existing methods
+
+  int   nBins = 100.;
+  float minQ  = -100.0;
+  float maxQ  = 900.0;
+
+  TH1F * hQ_Fixed = new TH1F("hQ_Fixed","hQ_Fixed;Charge (mV ns);Counts",
+			     nBins,minQ,maxQ);
+
+  float gate_width = 50.; // might require up to 70 ns ?
+
+  float wave_mV = 0.0;
+  float time_ns = 0.0;
+
+  float volts  = 0.0;
+  float charge = 0.0;
+
+  for (int iEntry = 0; iEntry < nentries; iEntry++) {
+    cookedTree->GetEntry(iEntry);
+
+    // zero at start of event
+    volts = 0.0;
+
+    for( short iSamp = 0 ; iSamp < NSamples; iSamp++){
+      
+      wave_mV = ADC_To_Wave(ADC->at(iSamp));
+      time_ns = iSamp*nsPerSamp;
+
+      ///........
+      // in development
+      //
+      // Sum ADC values in pulse region 
+      // and subtrace baseline here. 
+      // NB pulse pol has already been made positive.
+      if     ( time_ns >=  delay   && 
+	       time_ns <  (delay + gate_width) ){
+	volts += wave_mV; 
+	
+      }// baseline subtraction
+      else if( time_ns <   delay   &&
+	       time_ns >= (delay - gate_width ) ){ 
+	volts -= wave_mV;
+      }
+      
+    }
+    
+    // Convert ADC to units of charge then
+    // fill histogram 
+    charge = volts*nsPerSamp;
+    hQ_Fixed->Fill(charge);
+  }
+  
+  return hQ_Fixed;
+}
+
+//
+//----------
+
 float TCookedAnalyser::Get_LED_delay(){
   
   printf("\n ------------------------------ \n");
@@ -85,7 +149,7 @@ void TCookedAnalyser::Noise(){
   
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     cookedTree->GetEntry(iEntry);
-
+    
     //printf(" \n mean_mV = %f \n", mean_mV);
     
     hMean_Cooked->Fill(mean_mV);
