@@ -1,4 +1,4 @@
-24th October 2019 
+10th December 2019 
 WATCHMAN UK PMT Performance Testing 
 
 Repository for Watchman-PMT data taking, processing and analysis framework.
@@ -8,13 +8,18 @@ Email issues and suggestions to:
 
 Instructions:
 
- Modify and execute the following lines to set up the environment,
-  (e.g. add them to your .bashrc file)
+1) Modify and execute the following lines to set up the environment,
+  ( e.g. add them to your .bashrc file )
 
-export WM_PARENT=/path/to/Testing/
-source ${WM_PARENT}/Wavedump_Wrapper/WM.sh
+$ export WM_PARENT=/path/to/
+$ source ${WM_PARENT}/Wavedump_Wrapper/WM.sh
 
-Programs
- making.sh  - builds the binaries
- running.sh - runs conversion, cooking and analysis
-              (currently all plots are overwritten)
+2) build all the binaries
+  ( requires root to be installed ) 
+$ ./making.sh
+
+3) run file conversion and basic analysis
+  ( creates files and folders in the local directory )
+$ cp process_analyse_locally.sh /path/to/binary/RUN00000X/PMT00YY/TestName/
+$ cd /path/to/binary/RUN00000X/PMT00YY/TestName/
+$ ./process_analyse_locally.sh   
