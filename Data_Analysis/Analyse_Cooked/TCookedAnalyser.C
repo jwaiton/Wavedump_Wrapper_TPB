@@ -117,8 +117,8 @@ float TCookedAnalyser::Get_LED_delay(){
 
   }
   
-  hPeakTime->Fit("gaus","Q","",min_time,max_time);
-  //hPeakTime->Fit("gaus","Q","",110,150);
+  //hPeakTime->Fit("gaus","Q","",min_time,max_time);
+  hPeakTime->Fit("gaus","Q","",110,150);
   
   TF1 * fPeak = hPeakTime->GetFunction("gaus");
   LED_delay   = fPeak->GetParameter(1);
