@@ -123,7 +123,9 @@ TStyle * GetwmStyle(){
   // set the paper & margin sizes
   wmStyle->SetPaperSize(20,26);
   wmStyle->SetPadTopMargin(0.05);
+  //wmStyle->SetPadTopMargin(0.08);
   wmStyle->SetPadRightMargin(0.05); // increase for colz plots!!
+  //wmStyle->SetPadRightMargin(0.08); // increase for colz plots!!
   wmStyle->SetPadBottomMargin(0.16);
   wmStyle->SetPadLeftMargin(0.14);
   
