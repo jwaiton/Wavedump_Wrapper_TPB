@@ -116,6 +116,18 @@ int main(int argc, char * argv[]){
     // NB no check that this is lower that nentries
     int user_nentries = 100000; 
     //cooker->SetTestMode(user_nentries);
+
+    // Apply Equipment 
+    // Specific Settings
+
+    // scale amplitudes to 
+    // match 10x preamp gain   
+    // cooker->SetAmpGain(20);
+
+    // set known bad ADC channels
+    // to event-by-event baseline values
+    // arg is first (lowest) bin masked 
+    // cooker->SetFirstMaskBin(1000);
     
     cooker->PrintConstants();
 
@@ -129,9 +141,10 @@ int main(int argc, char * argv[]){
     //-------------------
     // Cook Data
     
+    
     // Calculate basic variables
-    // NB: ADC pulse is flipped for negative pulse polarity data
-
+    // NB: ADC pulse is flipped for negative pulse polarity data     
+    
     // Save meta data tree
     // Save cooked data tree
     cooker->Cook();
