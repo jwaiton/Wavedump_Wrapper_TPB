@@ -34,6 +34,8 @@ class TCookedAnalyser {
   float  nsPerSamp;
   float  mVPerBin;
   float  Length_ns;
+  short  FirstMaskBin;
+  float  AmpGain;
   char   FileID_char[128]; 
   string FileID; 
   
@@ -44,6 +46,8 @@ class TCookedAnalyser {
   TBranch * b_nsPerSamp = 0;
   TBranch * b_mVPerBin  = 0;
   TBranch * b_Length_ns = 0;
+  TBranch * b_AmpGain   = 0;
+  TBranch * b_FirstMaskBin = 0;
   //TBranch * b_FileID    = 0;
 
   //--------------------
@@ -113,6 +117,7 @@ class TCookedAnalyser {
   void  SaveNoise(string outFolder = "./Plots/Noise/");
   
   float ADC_To_Wave(short ADC);
+  float Wave_To_Amp_Scaled_Wave(float wave);
 
   //----
   // template member function   
@@ -239,6 +244,9 @@ void TCookedAnalyser::InitMeta(){
   metaTree->SetBranchAddress("nsPerSamp",&nsPerSamp,&b_nsPerSamp);
   metaTree->SetBranchAddress("mVPerBin",&mVPerBin,&b_mVPerBin);
   metaTree->SetBranchAddress("Length_ns",&Length_ns,&b_Length_ns);
+  metaTree->SetBranchAddress("AmpGain",&AmpGain,&b_AmpGain);
+  metaTree->SetBranchAddress("FirstMaskBin",&FirstMaskBin,&b_FirstMaskBin);
+
   //metaTree->SetBranchAddress("FileID",FileID_char,&b_FileID);
   
   //sprintf(FileID,"%s",FileID_char);

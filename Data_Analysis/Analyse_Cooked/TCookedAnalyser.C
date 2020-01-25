@@ -455,10 +455,15 @@ float TCookedAnalyser::ADC_To_Wave(short ADC){
   float wave = ADC * mVPerBin;
 
   wave -= Range_V*1000./2.;
-
+  
+  wave = Wave_To_Amp_Scaled_Wave(wave);
+  
   return wave;
 }
 
+float TCookedAnalyser::Wave_To_Amp_Scaled_Wave(float wave){
+  return wave/AmpGain*10.;
+}
 
 //------------------------------
 void TCookedAnalyser::Waveform(char option){
