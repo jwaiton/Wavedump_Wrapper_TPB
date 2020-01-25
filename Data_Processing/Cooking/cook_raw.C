@@ -66,7 +66,7 @@ int main(int argc, char * argv[]){
   
   if( !Welcome(argc) )
     return -1;
-     
+  
   TFile * inFile  = nullptr;
   TTree * tree    = nullptr;
 
@@ -120,14 +120,17 @@ int main(int argc, char * argv[]){
     // Apply Equipment 
     // Specific Settings
 
+    float amp_gain = 10.;
+    short firstMaskBin = -1;
+
     // scale amplitudes to 
     // match 10x preamp gain   
-    // cooker->SetAmpGain(20);
+    cooker->SetAmpGain(amp_gain);
 
     // set known bad ADC channels
     // to event-by-event baseline values
     // arg is first (lowest) bin masked 
-    // cooker->SetFirstMaskBin(1000);
+    cooker->SetFirstMaskBin(firstMaskBin);
     
     cooker->PrintConstants();
 
