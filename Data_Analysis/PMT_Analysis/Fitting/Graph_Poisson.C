@@ -20,16 +20,15 @@ float Prob_n_from_mu(float mu, int n){
   return TMath::Exp(-mu)*TMath::Power(mu,n)/TMath::Factorial(n);
 }
 
-// float Prob_zero_from_TH1F(TH1F * hQ, int thresh_low -100, int thres_high = 100){
+float Prob_zero_from_TH1F(TH1F * hQ, int thresh_low -100, int thres_high = 100){
   
-//   int binLow  = hQ->GetXaxis()->FindBin(thresh_low);
-//   int binHigh = hQ->GetXaxis()->FindBin(thres_high);
+  int binLow  = hQ->GetXaxis()->FindBin(thresh_low);
+  int binHigh = hQ->GetXaxis()->FindBin(thres_high);
   
-//   float prob = hQ->Integral(binLow,binHigh)/hQ_Fixed->Integral();
+  float prob = hQ->Integral(binLow,binHigh)/hQ->Integral();
   
-//   return prob;
-// }
-
+  return prob;
+}
 
 void Graph_Prob_n(int nPhot = 2){
   
@@ -40,16 +39,20 @@ void Graph_Prob_n(int nPhot = 2){
   TH1F    *hr;
   
   // extend to include more data points?
-  static const int nPoints = 5;
+  static const int nPoints = 100;
   
   // automate array fill within for loop? 
-  double mu[nPoints] = {0.10,0.15,0.20,1.0,5.0};
+  //double mu[nPoints] = {0.10,0.15,0.20,1.0,5.0};
+  double mu[nPoints];
   
   double prob[nPoints];
   
   // populate probabilities
   for(int i = 0; i < nPoints; i++ ){
+
+    mu[i] = (float)i/nPoints*10.; 
     prob[i] = Prob_n_from_mu(mu[i],nPhot);
+
   }
   
   // histogram settings
