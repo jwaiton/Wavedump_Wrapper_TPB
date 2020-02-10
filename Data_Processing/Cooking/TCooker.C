@@ -148,7 +148,7 @@ void TCooker::DoCooking(){
     time = GetElapsedTime(&trigCycles,prevTime);
     prevTime = time; // now set for next entry
     start_s = (float)time; 
-
+    
     // first loop - find baseline, set wave_mV
     for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
       // voltage scaled to pre-amp gain
@@ -160,16 +160,16 @@ void TCooker::DoCooking(){
       }
     }
     base_mV /= (float)nBaseSamps;
-
+    
     // second loop - apply baseline subtraction, set variables
     for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
       
       // subtract baseline or mask 
       if(iSamp >= fFirstMaskBin){
-	wave_mV.at(iSamp) = base_mV;
+	wave_mV.at(iSamp) -= base_mV;
       }
       else{
-	wave_mV.at(iSamp) -= base_mV;
+	wave_mV.at(iSamp) = base_mV;
       }
       // min
       if( wave_mV.at(iSamp) < min_mV)
@@ -250,12 +250,12 @@ short TCooker::Invert_Negative_ADC_Pulses(short ADC){
 float TCooker::ADC_To_Wave(short ADC){
 
   float wave = ADC * Get_mVPerBin();
-  
+
   wave -= GetRange_mV()/2.;
-  
+
   if(fPulsePol=='N')
     wave = -wave;
-  
+
   wave = Wave_To_Amp_Scaled_Wave(wave);
   
   return wave;
@@ -273,8 +273,10 @@ short TCooker::Wave_To_ADC(float wave){
   wave = wave/Get_mVPerBin();
   
   short ADC = (short)roundf(wave);
+
+  ADC = Invert_Negative_ADC_Pulses(ADC);
   
-  return Invert_Negative_ADC_Pulses(ADC);
+  return ADC; 
 }
 
 
