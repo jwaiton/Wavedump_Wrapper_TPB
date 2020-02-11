@@ -96,7 +96,7 @@ int main(int argc, char * argv[]){
     
     switch(test){
     case('D'):
-      cooked_analyser->Dark();
+      cooked_analyser->Dark(20.);
       break;
     default:
       LED_delay = cooked_analyser->Get_LED_delay();

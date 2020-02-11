@@ -200,7 +200,8 @@ void TCookedAnalyser::InitNoise(){
   
   float range = (float)roundf(Range_V)*1000.;
   
-  float binWidth =  mVPerBin;
+  // for amp not 10x, scale bin width 
+  float binWidth =  Wave_To_Amp_Scaled_Wave(mVPerBin);
   float minX     = -range/2.;
   float maxX     =  range/2.;
   int   nBins    = 0;
@@ -367,7 +368,7 @@ void TCookedAnalyser::InitDark(){
 
   float max      =  range/2;
   float min      = -range/2;
-  float binWidth = mVPerBin;
+  float binWidth = Wave_To_Amp_Scaled_Wave(mVPerBin);
   int   nBins    = 0;
 
   //  fix binning and set number of bins
