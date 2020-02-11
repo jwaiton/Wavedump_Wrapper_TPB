@@ -182,11 +182,12 @@ void TCooker::DoCooking(){
       }
       mean_mV += wave_mV.at(iSamp);
       
-      // ADC pulse flip and ADC mask
-      if( iSamp >= fFirstMaskBin  ){ 
+      // ADC
+      // ADC mask
+      if( fFirstMaskBin > 0 && 
+	  iSamp >= fFirstMaskBin  ){ 
 	ADC_buff.push_back(Wave_To_ADC(base_mV));	
-	//ADC_buff.push_back(fNADCBins/2); 
-      }
+      } // ADC flip
       else{ 
 	// if pulse polarity is negative then flip 
 	ADC_buff.push_back(Invert_Negative_ADC_Pulses(ADC->at(iSamp)));
