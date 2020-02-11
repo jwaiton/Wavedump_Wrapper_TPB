@@ -101,7 +101,8 @@ int main(int argc, char * argv[]){
     // initalise TCooker object using 
     // tree from input file
     cooker = new TCooker(tree);
-    //cooker = new TCooker(tree,'D');// desktop digi version
+    //cooker = new TCooker(tree,'D','2','P');// desktop digi, inverting amp
+    //cooker = new TCooker(tree,'D','2','N');// desktop digi, no amp
        
     // set the cooker object FileID using the
     // FileNameParser object member function
@@ -121,8 +122,11 @@ int main(int argc, char * argv[]){
     // Specific Settings
 
     float amp_gain = 10.;
+    //amp_gain = 1.;
     short firstMaskBin = -1;
-
+    //firstMaskBin = 1000;
+    //firstMaskBin = 988;
+    
     // scale amplitudes to 
     // match 10x preamp gain   
     cooker->SetAmpGain(amp_gain);

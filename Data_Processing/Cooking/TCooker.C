@@ -167,7 +167,7 @@ void TCooker::DoCooking(){
       // subtract baseline or mask 
       if( fFirstMaskBin > 0 && 
 	  iSamp > fFirstMaskBin){
-	wave_mV.at(iSamp) = base_mV;
+	wave_mV.at(iSamp) = 0.0;
       }
       else{
 	wave_mV.at(iSamp) -= base_mV;
