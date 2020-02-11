@@ -102,7 +102,7 @@ int main(int argc, char * argv[]){
     // tree from input file
     cooker = new TCooker(tree);
     // cooker = new TCooker(tree,'D','2','P');// desktop digi, inverting amp
-    // cooker = new TCooker(tree,'D','2','N');// desktop digi, no amp
+    //cooker = new TCooker(tree,'D','2','N');// desktop digi, no amp
        
     // set the cooker object FileID using the
     // FileNameParser object member function
