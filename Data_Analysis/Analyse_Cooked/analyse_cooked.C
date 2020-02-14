@@ -71,7 +71,7 @@ int main(int argc, char * argv[]){
     // Optional method:
     // reduce event loop for faster code testing
     // NB no check that this is lower that nentries
-    int user_nentries = 100000; 
+    //int user_nentries = 100000; 
     //cooked_analyser->SetTestMode(user_nentries);
     
     //-------------------
@@ -96,7 +96,7 @@ int main(int argc, char * argv[]){
     
     switch(test){
     case('D'):
-      cooked_analyser->Dark(20.);
+      cooked_analyser->Dark();
       break;
     default:
       LED_delay = cooked_analyser->Get_LED_delay();
