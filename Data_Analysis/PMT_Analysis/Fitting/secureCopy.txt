@@ -1,1 +1,0 @@
-scp user1@194.74.2.25:/home/user1/Wrapper/Analysis/Fitting/Run_30_PMT_1_Loc_4_Test_S.root ./

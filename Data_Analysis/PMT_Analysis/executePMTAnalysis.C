@@ -59,15 +59,15 @@ Bool_t IsValidArgc(int);
 int main(Int_t argc, Char_t *argv[]){
   
   // 'V' for VME, 'D' for desktop
-  Char_t  digitiser = 'V';
+  Char_t  digitiser = 'D';
   
-  Bool_t investigateTiming   = kTRUE;
-  Bool_t investigateRiseFall = kTRUE;
+  Bool_t investigateTiming   = kFALSE;
+  Bool_t investigateRiseFall = kFALSE;
   Bool_t investigatePulses   = kFALSE;
   Bool_t investigateDarkRate = kFALSE;
   Bool_t investigateFFT      = kFALSE;
 
-  Bool_t writeOutput         = kFALSE;
+  Bool_t writeOutput         = kTRUE;
 
   TFile * outFile = nullptr;  
   TFile * inFile  = nullptr;
