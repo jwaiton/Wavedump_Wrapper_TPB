@@ -169,6 +169,7 @@ void TCooker::DoCooking(){
 	peak_samp  = iSamp;
       }
       mean_mV += wave_mV.at(iSamp);
+      
       // if pulse polarity is negative then flip 
       ADC_buff.push_back(Invert_Negative_ADC_Pulses(ADC->at(iSamp)));
     }
@@ -231,7 +232,7 @@ float TCooker::ADC_To_Wave(short ADC){
   float wave = ADC * Get_mVPerBin();
   
   wave -= GetRange_mV()/2.;
-  
+
   if(fPulsePol=='N')
     wave = -wave;
   
