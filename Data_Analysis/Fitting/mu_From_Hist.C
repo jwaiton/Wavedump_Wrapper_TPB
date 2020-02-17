@@ -1,6 +1,10 @@
+#include <iomanip>
+#include <iostream>
+
 #include "TFile.h"
 #include "TH1F.h"
 #include "TLine.h"
+
 
 #include "Poisson.C"
 #include "GetValley.C"
@@ -26,7 +30,7 @@ float mu_From_Histo(TString rootFileName = "Run_30_PMT_133_Loc_3_Test_S"){
   float high = GetValley(rootFileName);
 
   cout << endl;
-  cout << " charge at valley is " << high << " mVns " << endl;  
+  cout << " charge at valley is " << setprecision(3) << high << " mVns " << endl;  
   
   TString hName = "hQ_Fixed_" + rootFileName;
   
@@ -40,7 +44,7 @@ float mu_From_Histo(TString rootFileName = "Run_30_PMT_133_Loc_3_Test_S"){
   float P0 =  Prob_zero_from_TH1F(hQ_Fixed,-500,high);
   
   cout << endl;
-  cout << " Poisson P(O) is " << P0*100 << " %" <<endl;  
+  cout << " Poisson P(O) is " << setprecision(4) << P0*100 << " %" <<endl;  
   
   hQ_Fixed->Draw();
   gPad->SetLogy();
@@ -53,8 +57,8 @@ float mu_From_Histo(TString rootFileName = "Run_30_PMT_133_Loc_3_Test_S"){
   float mu =  Mu_from_prob_zero(P0);
 
   cout << endl;
-  cout << " Poisson mean is " << mu  << " photoelectrons at first dynode" << endl;  
-  
+  cout << " Poisson mean is " << setprecision(3) << mu  << " photoelectrons at first dynode" << endl;  
+  cout << endl;
   
   return mu;
 }
