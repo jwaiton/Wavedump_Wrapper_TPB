@@ -41,12 +41,16 @@ double error;
 
 typedef struct {
 
+  TF1            * fPeak;
+  TF1            * fValley;
   ValueWithError peak;
   ValueWithError peakToValley;
   ValueWithError noise;
   ValueWithError ped;
   ValueWithError mu;
   ValueWithError valley;
+  ValueWithError peakCounts;
+  ValueWithError valleyCounts;
   int id;
   
 } Result;
@@ -246,8 +250,7 @@ Result* Fit_PeakAndValley(TH1F*  fhisto){
 
   double ef = (sval/vval)*sqrt( std::pow(evval/vval,2)+ std::pow(esval/sval,2)); 
 
-  double pzero = fhisto->Integral(1, fhisto->FindBin(f2->GetMinimumX( valleyPos -50, valleyPos +50)))/fhisto->GetEntries();
-  
+  double pzero = fhisto->Integral(1, fhisto->FindBin(f2->GetMinimumX( valleyPos -50, valleyPos +50)))/fhisto->GetEntries();  
   
   // drawing stuff
   f2->SetLineColor(2);
@@ -260,13 +263,21 @@ Result* Fit_PeakAndValley(TH1F*  fhisto){
   gPad->SetLogy();
   
   // fill result
+  
+  res->fPeak   = f;
+  res->fValley = f2;
   res->peak.value = f->GetParameter(1); 
   res->peak.error = f->GetParError(1); 
   res->peakToValley.value = sval/vval;
   res->peakToValley.error = ef;
   res->mu.value = -log(pzero);
   res->valley.value = f2->GetMinimumX( valleyPos -50, valleyPos +50);
-
+  
+  res->valleyCounts.value = vval;
+  res->valleyCounts.error = evval;
+  res->peakCounts.value   = sval;
+  res->peakCounts.error   = esval;
+    
   //----------------------------------
   // Pedestal Study
   // noise gauss
