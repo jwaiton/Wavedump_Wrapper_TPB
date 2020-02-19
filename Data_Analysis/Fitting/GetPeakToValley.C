@@ -6,7 +6,7 @@ using namespace std;
 
 Result* Fit_PeakAndValley(TH1F*  fhisto);
 
-void GetPeakToValley(TString rootFileName = "Run_30_PMT_133_Loc_3_Test_S"){
+Result * GetPeakToValley(TString rootFileName = "Run_30_PMT_133_Loc_3_Test_S"){
 
   TString hName = "hQ_Fixed_" + rootFileName;
       
@@ -20,12 +20,15 @@ void GetPeakToValley(TString rootFileName = "Run_30_PMT_133_Loc_3_Test_S"){
   
   TFile * rootFile = new TFile(rootFileName);
   
-  Result * results = Fit_PeakAndValley((TH1F*)rootFile->Get(hName));
+  Result * result = Fit_PeakAndValley((TH1F*)rootFile->Get(hName));
   
   cout << endl;
-  cout << "peak           = " << results->peak.value         << " (" << results->peak.error         << ") " << endl;
-  cout << "peak to valley = " << results->peakToValley.value << " (" << results->peakToValley.error << ") " << endl;
+  cout << " peak           = " << result->peak.value         << " (" << result->peak.error         << ") " << endl;
+  cout << " valley         = " << result->valley.value       << " (" << result->valley.error       << ") " << endl;
+  cout << " peak to valley = " << result->peakToValley.value << " (" << result->peakToValley.error << ") " << endl;
+  cout << " peak counts    = " << result->peakCounts.value   << " (" << result->peakCounts.error   << ") " << endl;
+  cout << " valley counts  = " << result->valleyCounts.value << " (" << result->valleyCounts.error << ") " << endl;
 
-  
+  return result;
 }
 

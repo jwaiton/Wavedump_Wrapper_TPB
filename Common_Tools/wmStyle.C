@@ -126,8 +126,10 @@ TStyle * GetwmStyle(){
   //wmStyle->SetPadTopMargin(0.08);
   wmStyle->SetPadRightMargin(0.05); // increase for colz plots!!
   //wmStyle->SetPadRightMargin(0.08); // increase for colz plots!!
-  wmStyle->SetPadBottomMargin(0.16);
-  wmStyle->SetPadLeftMargin(0.14);
+  //
+  wmStyle->SetPadBottomMargin(0.15);
+  wmStyle->SetPadLeftMargin(0.1);
+
   
   // use large fonts
   wmStyle->SetTextFont(wmFont);
@@ -156,8 +158,7 @@ TStyle * GetwmStyle(){
   // wmStyle->SetMarkerSize(1.5);
   wmStyle->SetMarkerSize(1.);
   
-  // label offsets
-  wmStyle->SetLabelOffset(0.015);
+  //wmStyle->SetTitleYOffset(1.);
   wmStyle->SetTitleYOffset(1.);
   wmStyle->SetTitleXOffset(1.);
   // wmStyle->SetTitleYSize(0.02)

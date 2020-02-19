@@ -3,19 +3,21 @@
 
 #include "TFile.h"
 #include "TH1F.h"
+#include "TF1.h"
 #include "TLine.h"
 
-
 #include "Poisson.C"
-#include "GetValley.C"
+#include "GetPeakToValley.C"
 
+#include <TLatex.h>
+
+#include "wmStyle.C"
 
 using namespace std;
 
 float Prob_zero_from_TH1F(TH1F * hQ,
  			  int low  = -100,
 			  int high = 100){
-  
   
   int binLow  = hQ->GetXaxis()->FindBin(low);
   int binHigh = hQ->GetXaxis()->FindBin(high);
@@ -25,39 +27,102 @@ float Prob_zero_from_TH1F(TH1F * hQ,
   return prob;
 }
 
-float mu_From_Histo(TString rootFileName = "Run_30_PMT_133_Loc_3_Test_S"){
+float mu_From_Histo(TString rootFileName = "Run_30_PMT_133_Loc_3_Test_S",
+		    string pathToData = "./"){
 
-  float high = GetValley(rootFileName);
+  TStyle *wmStyle = GetwmStyle();
+  //gStyle->SetOptTitle(0);
+  gROOT->SetStyle("wmStyle");
+  gROOT->ForceStyle();
+
+  Result * result = GetPeakToValley(rootFileName);
+  
+  float valley_Q = result->valley.value;
+  float peak_Q   = result->peak.value;
 
   cout << endl;
-  cout << " charge at valley is " << setprecision(3) << high << " mVns " << endl;  
+  cout << " charge at valley is " << setprecision(3) << valley_Q << " mVns " << endl;  
+  cout << " charge at peak is   " << setprecision(3) << peak_Q   << " mVns " << endl;  
   
   TString hName = "hQ_Fixed_" + rootFileName;
   
   rootFileName = rootFileName + ".root";
-  rootFileName = "./" + rootFileName;
-  
+
+  rootFileName = pathToData + rootFileName;
+
   TFile * file = TFile::Open(rootFileName);
   
   TH1F * hQ_Fixed = (TH1F*)file->Get(hName);
-
-  float P0 =  Prob_zero_from_TH1F(hQ_Fixed,-500,high);
+  
+  float P0 =  Prob_zero_from_TH1F(hQ_Fixed,-500,valley_Q);
   
   cout << endl;
   cout << " Poisson P(O) is " << setprecision(4) << P0*100 << " %" <<endl;  
   
+  
   hQ_Fixed->Draw();
   gPad->SetLogy();
-
-  TLine * l = new TLine(high,0,high,1000);
-  l->SetLineColor(kRed);
   
-  l->Draw("same");
+  TLine * lV = new TLine(valley_Q,0,valley_Q,result->valleyCounts.value);
+  TLine * lP = new TLine(peak_Q,0,peak_Q,result->peakCounts.value);
 
-  float mu =  Mu_from_prob_zero(P0);
+  lV->SetLineColor(kBlue);
+  lP->SetLineColor(kGreen+2);
+  
+  lV->Draw("same");
+  lP->Draw("same");
+
+  result->fPeak->SetLineColor(kGreen+2);
+  result->fPeak->Draw("same");
+
+  result->fValley->SetLineColor(kBlue);
+  result->fValley->Draw("same");
+  
+  TLatex * latex = new TLatex(); 
+  latex->SetNDC();
+  latex->SetTextSize(0.03);;
+  
+  char text_ptv[64];
+  sprintf(text_ptv," p:v     %.2f",
+	  result->peakToValley.value);
+
+  char text_mu[64];
+  sprintf(text_mu," mu      %.2f p.e.",
+	  result->mu.value);
+
+  char text_valley[64];
+  sprintf(text_valley," valley  %.0f mVns",
+	  result->valley.value);
+
+  char text_peak[64];
+  sprintf(text_peak," peak    %.0f mVns",
+	  result->peak.value);
+  
+  float gain = result->peak.value/400.;
+
+  char text_gain[64];
+  sprintf(text_gain," gain    %.2f #times 10^{7}",
+	  gain); 
+
+  latex->DrawLatex(0.6,0.85,text_ptv);
+  latex->DrawLatex(0.6,0.8,text_mu);
+  latex->DrawLatex(0.6,0.75,text_valley);
+  latex->DrawLatex(0.6,0.7,text_peak);
+  latex->DrawLatex(0.6,0.65,text_gain);
+  
+  string plotName = "./Plots/";
+  
+  plotName += hName;
+  plotName += ".pdf";
+  
+  gPad->SaveAs(plotName.c_str());
+
+  float mu  =  Mu_from_prob_zero(P0);
+  //float mu2 =  result->mu.value;
 
   cout << endl;
-  cout << " Poisson mean is " << setprecision(3) << mu  << " photoelectrons at first dynode" << endl;  
+  cout << " Poisson mean is " << setprecision(3) << mu   << " photoelectrons at first dynode" << endl;  
+  //cout << " Poisson mean is " << setprecision(3) << mu2  << " photoelectrons at first dynode" << endl;  
   cout << endl;
   
   return mu;
