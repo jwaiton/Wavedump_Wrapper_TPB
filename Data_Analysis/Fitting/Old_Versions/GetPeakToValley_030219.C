@@ -1,14 +1,18 @@
-#include<iostream>
-#include<fstream>
-#include<vector>
-#include"TMath.h"
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
 
-#include"TFile.h"
-#include"TTree.h"
+#include "TMath.h"
+
+#include "TFile.h"
+#include "TTree.h"
 #include "TH1F.h"
 #include "TROOT.h"
 #include "TStyle.h"
 #include "TSystem.h"
+
+#include "TString.h"
 
 #include "RooRealVar.h"
 #include "RooAddPdf.h"
@@ -28,6 +32,8 @@
 #include "TFitResult.h"
 #include "TFitResultPtr.h"
 
+using namespace std;
+
 // Result
 
 typedef struct {
@@ -35,7 +41,6 @@ typedef struct {
 double value;
 double error;
 
-  
 
 } ValueWithError;
 
@@ -43,10 +48,6 @@ typedef struct {
 
   ValueWithError peak;
   ValueWithError peakToValley;
-  ValueWithError noise;
-  ValueWithError ped;
-  ValueWithError mu;
-  ValueWithError valley;
   int id;
   
 } Result;
@@ -156,39 +157,37 @@ TH1F* h2h(TH1D* hold ){
   return h;
 }
 
+TH1D* findHisto(TFile *input, 
+		TString hName = "hQ_Fixed_Run_200_PMT_15_Loc_0_Test_S"){
 
+  cout << " hName " << hName << endl;
+    
+  TH1D* histo = (TH1D*)input->Get(hName);
 
-TH1D* findHisto(TFile *input){
-  TH1D* histo = (TH1D*)input->Get("SPE0");
   if (histo) return histo;
-  histo = (TH1D*)input->Get("SPE1");
-  if (histo) return histo;
-  histo = (TH1D*)input->Get("SPE2");
-  if (histo) return histo;
-  histo = (TH1D*)input->Get("SPE3");
-  if (histo) return histo;
+  
   std::cout << "no histo " << std::endl;
   return 0;
+
 }
 
-//Result* fitModel(TH1F* fhisto, double minval = -500 , double maxval = 2000 ){
-Result* Fit_PeakAndValley(TH1F*  fhisto, 
-			  double minval = -500 , 
-			  double maxval = 2000 ){
-
-
-  TCanvas* can = new TCanvas("can","can",800,600);
+Result* fitModel(string file = "Run_200_PMT_15_Loc_0_Test_S.root", 
+		 string hName   = "hQ_Fixed_Run_200_PMT_15_Loc_0_Test_S",
+		 double minval = -500,
+		 double maxval = 2000 ){
+  
   Result* res = new Result();
+  
+  TCanvas * canvas = new TCanvas("Canvas", "Canvas");
+  
   //gROOT -> ProcessLine( ".x ./mattStyle.C" );
   
-  gStyle->SetOptFit(0);
-  gStyle->SetOptStat(0);
-  //
-  //TFile *input=new TFile(file.c_str());
-  //TH1D* histo = findHisto(input);
-  //if (histo ==0) return 0;
+  TFile *input=new TFile(file.c_str());
+  TH1D* histo = findHisto(input,
+			  hName);
+  if (histo ==0) return 0;
   
-  //TH1F* fhisto = h2h(histo);
+  TH1F* fhisto = h2h(histo);
   fhisto->GetXaxis()->SetTitle("charge [mV ns]");
   fhisto->GetYaxis()->SetTitle("Counts");
   fhisto->GetYaxis()->SetTitleOffset(1.3);
@@ -200,30 +199,17 @@ Result* Fit_PeakAndValley(TH1F*  fhisto,
   double peakPos = std::get<0>(params)+ std::get<1>(params);
 
   // gaussian fit to max
-  TH1F* thisto = (TH1F*)fhisto->Clone("thisto");
-  thisto->Fit("gaus", "","", peakPos - 100, peakPos +120 );
-  TF1* gf1 = thisto->GetFunction("gaus");
-  TF1* f1 = (TF1*)gf1->Clone();
-  double sval1 = f1->GetParameter(1);
-  std::cout << " s val " << peakPos <<  " " << sval1 << std::endl; 
-  
-  fhisto->Fit("gaus", "","", sval1 - 100, sval1 +100 );
-
+  fhisto->Fit("gaus", "","", peakPos - 100, peakPos +120 );
   TF1* gf = fhisto->GetFunction("gaus");
-  TF1* f = (TF1*)gf->Clone("gaus");
+  TF1* f = (TF1*)gf->Clone();
   double sval = f->Eval(f->GetParameter(1));
   double esval = TMath::Abs(f->Eval(gf->GetParError(1) + f->GetParameter(1) ) - sval) ;
   f->SetLineColor(2);
   f->SetLineWidth(3);
   f->Draw("SAME");
-  
-  
-  fhisto->Fit("pol2", "S", "",valleyPos - 40 , valleyPos +50);
-  TF1* f2 = fhisto->GetFunction("pol2");
-  double a = f2->GetParameter(2); double b = f2->GetParameter(1);
-  double xmin = -b/(2*a);
-  
-  TFitResultPtr pres= fhisto->Fit("pol2", "S", "",xmin - 30 , xmin +50);
+
+
+  TFitResultPtr pres= fhisto->Fit("pol2", "S", "",valleyPos - 50 , valleyPos +50);
   TFitResult* polres = pres.Get();
   double ea = polres->Error(2); double eb = polres->Error(1);
 
@@ -234,72 +220,57 @@ Result* Fit_PeakAndValley(TH1F*  fhisto,
 
  
   // find min of parabola
-  f2 = fhisto->GetFunction("pol2");
-  a = f2->GetParameter(2); b = f2->GetParameter(1);
+  TF1* f2 = fhisto->GetFunction("pol2");
+  double a = f2->GetParameter(2); double b = f2->GetParameter(1);
   double vval = f2->GetMinimum( valleyPos -50, valleyPos +50);
-
-  f2->Draw();
-  
-  
-  double sum = sqrt(std::pow(ea/a,2) +  std::pow(eb/b,2.) - (2*rho/(a*b)));
-  xmin = -b/(2*a);
+  double sum = std::pow(ea/a,2) +  std::pow(eb/b,2.) - (2*rho/(a*b));
+  double xmin = -b/(2*a);
   double x2 = xmin *(1 + sum);
   double evval = f->Eval(x2) - f->Eval(xmin) ;
 
   double ef = (sval/vval)*sqrt( std::pow(evval/vval,2)+ std::pow(esval/sval,2)); 
 
-  double pzero = fhisto->Integral(1, fhisto->FindBin(f2->GetMinimumX( valleyPos -50, valleyPos +50)))/fhisto->GetEntries();
-  
-  
   // drawing stuff
   f2->SetLineColor(2);
   f2->SetLineWidth(3);
-  //f2->Draw("SAME");
-  //fhisto->SetMaximum(100e3);
-  fhisto->Draw("HISTO");
-  f->Draw("SAME");
   f2->Draw("SAME");
-  gPad->SetLogy();
+  fhisto->Draw("HISTO");
+  //fhisto->SetMinimum(1000);
+  f2->Draw("SAME");
+  f->Draw("SAME");
   
+  gPad->SetLogy(1);
+  canvas->SaveAs("./Plots/PeakToValley.pdf");
+
   // fill result
   res->peak.value = f->GetParameter(1); 
   res->peak.error = f->GetParError(1); 
   res->peakToValley.value = sval/vval;
   res->peakToValley.error = ef;
-  res->mu.value = -log(pzero);
-  res->valley.value = f2->GetMinimumX( valleyPos -50, valleyPos +50);
-
-  //----------------------------------
-  // Pedestal Study
-  // noise gauss
-  std::cout << "fit the noise " << std::endl;
-  TF1* noise = new TF1("ngaus","gaus", -40, 40);
-  noise->SetParameter(1,0);
-  noise->SetParameter(2,10);
-  double maxN = TMath::Max( std::get<0>(params) + 5, f2->GetMinimumX( valleyPos -50, valleyPos +50) - 20 );
-
-  //!!!!!!
-  // Fitting below causes the valley fit to disappear
-  //fhisto->Fit(noise, "","", -40,  f2->GetMinimumX( valleyPos -50, valleyPos +50) - 20 );
-  res->noise.value = noise->GetParameter(2);
-  res->noise.error = noise->GetParError(2);
-
-  res->ped.value = noise->GetParameter(1);
-  res->ped.error = noise->GetParError(1);
+  //res->peak = sval;
   
-  std::string name = std::string(fhisto->GetName()) + ".png" ;
-  
-  name = "./Plots/" + name;
-  
-  can->Print(name.c_str());
-
-  std::string epsname = std::string(fhisto->GetName()) + ".eps" ;
-  
-  epsname = "./Plots/" + epsname;
-  
-  can->Print(epsname.c_str());
-    
- return res;
+  return res;
 }
 
+void GetPeakToValley(string rootFileName = "Run_200_PMT_15_Loc_0_Test_S"){
+
+  string hName = "hQ_Fixed_" + rootFileName;
+      
+  rootFileName = rootFileName + ".root";
+
+  //!!!!!
+  // set to relevant local path
+  string RawRootDataDIR = "/Users/gsmith23/Desktop/Watchman/Testing/Wavedump_Wrapper/RawRootData/";
+
+  rootFileName = RawRootDataDIR + rootFileName;
+  
+  Result * results = fitModel(rootFileName,
+			      hName);
+  
+  cout << endl;
+  cout << "peak           = " << results->peak.value         << " (" << results->peak.error         << ") " << endl;
+  cout << "peak to valley = " << results->peakToValley.value << " (" << results->peakToValley.error << ") " << endl;
+  
+  
+}
 

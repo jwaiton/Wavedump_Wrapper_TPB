@@ -66,7 +66,7 @@ int main(int argc, char * argv[]){
   
   if( !Welcome(argc) )
     return -1;
-     
+  
   TFile * inFile  = nullptr;
   TTree * tree    = nullptr;
 
@@ -101,7 +101,8 @@ int main(int argc, char * argv[]){
     // initalise TCooker object using 
     // tree from input file
     cooker = new TCooker(tree);
-    //cooker = new TCooker(tree,'D');// desktop digi version
+    // cooker = new TCooker(tree,'D','2','P');// desktop digi, inverting amp
+    //cooker = new TCooker(tree,'D','2','N');// desktop digi, no amp
        
     // set the cooker object FileID using the
     // FileNameParser object member function
@@ -116,6 +117,24 @@ int main(int argc, char * argv[]){
     // NB no check that this is lower that nentries
     int user_nentries = 100000; 
     //cooker->SetTestMode(user_nentries);
+
+    // Apply Equipment 
+    // Specific Settings
+
+    float amp_gain = 10.;
+    //amp_gain = 1.;
+    short firstMaskBin = -1;
+    //firstMaskBin = 1000;
+    // firstMaskBin = 988;
+    
+    // scale amplitudes to 
+    // match 10x preamp gain   
+    cooker->SetAmpGain(amp_gain);
+
+    // set known bad ADC channels
+    // to event-by-event baseline values
+    // arg is first (lowest) bin masked 
+    cooker->SetFirstMaskBin(firstMaskBin);
     
     cooker->PrintConstants();
 
@@ -129,9 +148,10 @@ int main(int argc, char * argv[]){
     //-------------------
     // Cook Data
     
+    
     // Calculate basic variables
-    // NB: ADC pulse is flipped for negative pulse polarity data
-
+    // NB: ADC pulse is flipped for negative pulse polarity data     
+    
     // Save meta data tree
     // Save cooked data tree
     cooker->Cook();

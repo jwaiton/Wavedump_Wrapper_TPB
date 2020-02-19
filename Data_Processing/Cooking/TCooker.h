@@ -99,6 +99,11 @@ class TCooker {
   void  SaveCookedData();
   
   float ADC_To_Wave(short ADC);
+  float Wave_To_Amp_Scaled_Wave(float wave);
+
+  short Wave_To_ADC(float wave_mV);
+  float Amp_Scaled_Wave_To_Unscaled_Wave(float wave);
+
   float GetRange_mV();
   float Get_mVPerBin();
   float GetLength_ns();
@@ -131,6 +136,9 @@ class TCooker {
   
   void  CloseCookedFile();
   
+  void  SetAmpGain(float amp_gain);
+  void  SetFirstMaskBin(short first_mask_bin);
+
  private:
   
   string f_fileID;
@@ -142,8 +150,12 @@ class TCooker {
   char   fSampSet;
   char   fPulsePol;
   
+  float  fAmpGain;
+  
   // default or set using above
   short  fSampFreq;
+
+  short  fFirstMaskBin;
   
   // set using header info
   short  fNSamples;
@@ -223,6 +235,11 @@ TCooker::TCooker(TTree *tree,
   SetDigitiser(digitiser); 
   SetSampSet(sampSet); // for desktop digitiser
   SetPulsePol(pulsePol); 
+  
+  // initialise to default
+  // user to set cook_raw.C
+  SetAmpGain(10);
+  SetFirstMaskBin(-1);
 
   SetFileID();
   

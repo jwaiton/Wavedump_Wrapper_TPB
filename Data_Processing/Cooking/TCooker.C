@@ -121,6 +121,8 @@ void TCooker::InitMetaDataTree(){
   metaTree->Branch("nsPerSamp",&f_nsPerSamp,"nsPerSamp/F");
   metaTree->Branch("mVPerBin",&f_mVPerBin,"mVPerBin/F");
   metaTree->Branch("Length_ns",&fLength_ns,"Length_ns/F");
+  metaTree->Branch("AmpGain",&fAmpGain,"AmpGain/F");
+  metaTree->Branch("FirstMaskBin",&fFirstMaskBin,"FirstMaskBin/S");
   metaTree->Branch("FileID",FileID,"FileID/C");
   
 }
@@ -131,7 +133,7 @@ void TCooker::DoCooking(){
   printf("\n Cooking                       \n");
   
   int    nBaseSamps;
-  double time = 0 , prevTime = 0; 
+  double time = 0, prevTime = 0; 
   int    trigCycles = 0;
     
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
@@ -146,9 +148,11 @@ void TCooker::DoCooking(){
     time = GetElapsedTime(&trigCycles,prevTime);
     prevTime = time; // now set for next entry
     start_s = (float)time; 
-
-    // first loop - find baseline
+    
+    // first loop - find baseline, set wave_mV
     for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
+      // voltage scaled to pre-amp gain
+      // plus pulse flip if necessary
       wave_mV.push_back(ADC_To_Wave(ADC->at(iSamp)));      
       if( IsSampleInBaseline(iSamp) ){
 	base_mV += wave_mV.at(iSamp);
@@ -156,29 +160,46 @@ void TCooker::DoCooking(){
       }
     }
     base_mV /= (float)nBaseSamps;
-
+    
     // second loop - apply baseline subtraction, set variables
     for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
-      wave_mV.at(iSamp) -= base_mV;
+      
+      // subtract baseline or mask 
+      if( fFirstMaskBin > 0 && 
+	  iSamp > fFirstMaskBin){
+	wave_mV.at(iSamp) = 0.0;
+      }
+      else{
+	wave_mV.at(iSamp) -= base_mV;
+      }
       // min
       if( wave_mV.at(iSamp) < min_mV)
 	min_mV = wave_mV.at(iSamp);
-      // peak peak_samp
+      // peak_samp
       if( wave_mV.at(iSamp) >= peak_mV ){
 	peak_mV = wave_mV.at(iSamp);
 	peak_samp  = iSamp;
       }
       mean_mV += wave_mV.at(iSamp);
       
-      // if pulse polarity is negative then flip 
-      ADC_buff.push_back(Invert_Negative_ADC_Pulses(ADC->at(iSamp)));
+      // ADC
+      // ADC mask
+      if( fFirstMaskBin > 0 && 
+	  iSamp >= fFirstMaskBin  ){ 
+	ADC_buff.push_back(Wave_To_ADC(base_mV));	
+      } // ADC flip
+      else{ 
+	// if pulse polarity is negative then flip 
+	ADC_buff.push_back(Invert_Negative_ADC_Pulses(ADC->at(iSamp)));
+      }
     }
     mean_mV = mean_mV/(float)fNSamples;    
-
+    
     cookedTree->Fill();
   }
   
 }
+
 
 void TCooker::SetFileID(){
 
@@ -230,13 +251,42 @@ short TCooker::Invert_Negative_ADC_Pulses(short ADC){
 float TCooker::ADC_To_Wave(short ADC){
 
   float wave = ADC * Get_mVPerBin();
-  
+
   wave -= GetRange_mV()/2.;
 
   if(fPulsePol=='N')
     wave = -wave;
+
+  wave = Wave_To_Amp_Scaled_Wave(wave);
   
   return wave;
+}
+
+short TCooker::Wave_To_ADC(float wave){
+
+  wave = Amp_Scaled_Wave_To_Unscaled_Wave(wave);
+
+  if(fPulsePol=='N')
+    wave = -wave;
+
+  wave += GetRange_mV()/2.;
+  
+  wave = wave/Get_mVPerBin();
+  
+  short ADC = (short)roundf(wave);
+
+  ADC = Invert_Negative_ADC_Pulses(ADC);
+  
+  return ADC; 
+}
+
+
+float TCooker::Wave_To_Amp_Scaled_Wave(float wave){
+  return wave/fAmpGain*10.;
+}
+
+float TCooker::Amp_Scaled_Wave_To_Unscaled_Wave(float wave){
+  return wave*fAmpGain/10.;
 }
 
 bool TCooker::IsSampleInBaseline(short iSample){
@@ -464,7 +514,7 @@ double TCooker::GetTrigTimeTag(int entry) {
 }
 
 double TCooker::GetElapsedTime(int * cycles,
-				double prevTime) {
+			       double prevTime) {
 
   double time = GetTrigTimeTag();
   
@@ -517,6 +567,16 @@ void TCooker::SetDigitiser(char digitiser){
   
   return;
 }
+
+
+void TCooker::SetAmpGain(float amp_gain){  
+  fAmpGain = amp_gain ;
+}
+
+void TCooker::SetFirstMaskBin(short first_mask_bin){  
+  fFirstMaskBin = first_mask_bin;
+}
+
 
 float TCooker::GetRange_mV(){
   return (float)fRange_V*1000.;
@@ -587,14 +647,15 @@ void TCooker::PrintConstants(){
   printf("\n  number of ADC Bins   = %hd    \n",fNADCBins);
   printf("  ADC range            = %d V     \n",fRange_V);
   printf("   ADC bin width       = %.2f mV  \n",f_mVPerBin);
-
-  if(fPulsePol!='N')
-    printf("\n \t pulse polarity       = %c   \n",fPulsePol);
-
+  printf("\n  pulse polarity       = %c     \n",fPulsePol);
+  printf("\n  pre-amp gain         = %.1f   \n",fAmpGain);
+  
+  if(fFirstMaskBin!=-1)
+    printf("\n  first mask bin      = %hd    \n",fFirstMaskBin);
+  
   printf(" \n " );
   
 }
-
 
 
 //------------------------------
@@ -864,6 +925,7 @@ float TCooker::Set_mVPerBin(){
   return 1000.*fRange_V/fNADCBins;
   
 }
+
 
 
 void TCooker::SetStyle(){

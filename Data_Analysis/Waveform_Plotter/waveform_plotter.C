@@ -60,7 +60,7 @@ int main(int argc, char * argv[]){
   printf("\n  Input File:       ");
   printf("\n    %s  \n",path.c_str());    
   
-  // initalise TCooker object 
+  // initalise object from class with Waveform() method 
   wave_plotter = new TCookedAnalyser(path);
   
   //-------------------
@@ -78,7 +78,7 @@ int main(int argc, char * argv[]){
   printf("\n  'n' - No ");
   printf("\n  'w' - Waveform ");
   printf("\n  'f' - FFT ");
-  printf("\n  'b' - 'W' and 'F' \n");
+  printf("\n  'b' - 'w' and 'f' \n");
   scanf("%c",&aChar);
   
   string outPath = "./Plots/Waveforms/";
@@ -106,11 +106,10 @@ int main(int argc, char * argv[]){
 #else
   sysCommand = "open ";
 #endif   
-  
+
   sysCommand += outPath;
-  sysCommand += " &";
   system(sysCommand.c_str());
-    
+
   if(aChar!='N' && aChar!='n'){
     wave_plotter->Waveform(aChar);
   }

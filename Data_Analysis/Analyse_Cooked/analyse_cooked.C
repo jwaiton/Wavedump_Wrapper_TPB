@@ -71,7 +71,8 @@ int main(int argc, char * argv[]){
     // Optional method:
     // reduce event loop for faster code testing
     // NB no check that this is lower that nentries
-    int user_nentries = 100000; 
+
+    //int user_nentries = 100000; 
     //cooked_analyser->SetTestMode(user_nentries);
     
     //-------------------
