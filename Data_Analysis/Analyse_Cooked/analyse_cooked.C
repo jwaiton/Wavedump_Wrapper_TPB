@@ -40,6 +40,7 @@
 
 #include <iostream>
 #include <string>
+#include "TSystem.h"
 #include "TCookedAnalyser.h"
 
 bool Welcome(int argc);
@@ -48,7 +49,8 @@ int main(int argc, char * argv[]){
   
   if( !Welcome(argc) )
     return -1;
-     
+
+      
   TCookedAnalyser * cooked_analyser = nullptr;
 
   string path;
@@ -84,7 +86,7 @@ int main(int argc, char * argv[]){
     //-------------------
     //-------------------
     // Monitoring
-
+    gSystem->Exec("mkdir -p ./Plots/Noise");
     cooked_analyser->Noise();
     
     //-------------------
@@ -97,19 +99,20 @@ int main(int argc, char * argv[]){
     
     switch(test){
     case('D'):
+      gSystem->Exec("mkdir -p ./Plots/Dark");
       cooked_analyser->Dark();
       break;
     default:
+
+      gSystem->Exec("mkdir -p ./Plots/Timing");
       LED_delay = cooked_analyser->Get_LED_delay();
       printf("\n LED_delay = %.2f \n",LED_delay);
       
       gate_start = LED_delay - 15.;
 
-      //.....
-      // testing implementation
-      TH1F * hQ_Fixed = cooked_analyser->Get_hQ_Fixed(gate_start);
-      hQ_Fixed->SaveAs("hQ_Fixed.C"); // generates macro of plot
-      // $ root hQ_Fixed.C  // to run macro from command line
+      gSystem->Exec("mkdir -p ./Plots/Charge");
+      // Saves a new root file containing the hist
+      cooked_analyser->Make_hQ_Fixed(gate_start);
     }
     
   }// end of: for( int iFile = 1 ;

@@ -120,8 +120,7 @@ class TCookedAnalyser {
   float Wave_To_Amp_Scaled_Wave(float wave);
 
   //----
-  // template member function   
-  TH1F * Get_hQ_Fixed(float delay);
+  void  Make_hQ_Fixed(float delay);
 
   //----
   // LED data  

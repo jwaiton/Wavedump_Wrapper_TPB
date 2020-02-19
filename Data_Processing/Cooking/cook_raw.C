@@ -54,6 +54,7 @@
 #include <string>
 #include "TFile.h"
 #include "TTree.h"
+#include "TSystem.h"
 
 #include "TCooker.h"
 
@@ -69,6 +70,8 @@ int main(int argc, char * argv[]){
   
   TFile * inFile  = nullptr;
   TTree * tree    = nullptr;
+
+  gSystem->Exec("mkdir ./Plots/");
 
   // object used to cook 
   // raw (root) data
@@ -142,6 +145,7 @@ int main(int argc, char * argv[]){
     // DAQ info
     //  Print mean trigger rate
     //  Save: rate,timing and event plots
+    gSystem->Exec("mkdir ./Plots/DAQ");
     cooker->DAQ();
     
     //-------------------

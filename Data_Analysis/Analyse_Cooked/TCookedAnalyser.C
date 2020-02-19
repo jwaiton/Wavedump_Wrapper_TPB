@@ -22,7 +22,7 @@ string TCookedAnalyser::GetFileID(){
 //----------
 //   
 
-TH1F * TCookedAnalyser::Get_hQ_Fixed(float delay = 100.){
+void TCookedAnalyser::Make_hQ_Fixed(float delay = 100.){
 
   // See $BinToRoot/BinToRoot.cpp
   // for existing methods
@@ -89,10 +89,17 @@ TH1F * TCookedAnalyser::Get_hQ_Fixed(float delay = 100.){
     hQ_Fixed->Fill(charge);
   }
   
+  hQ_Fixed->Draw();
+  gPad->SetLogy();
+  
+  histName = "./Plots/Charge/" + histName;
+  histName += ".pdf";
+  
+  gPad->SaveAs(histName.c_str());
+  
   outFile->cd();
   outFile->Write();
-  
-  return hQ_Fixed;
+
 }
 
 //
