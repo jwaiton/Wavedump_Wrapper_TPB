@@ -27,15 +27,15 @@ float Prob_zero_from_TH1F(TH1F * hQ,
   return prob;
 }
 
-float mu_From_Histo(TString rootFileName = "Run_30_PMT_133_Loc_3_Test_S",
-		    string pathToData = "./"){
-
+float mu_From_Histo(TString rootFileName = "hQ_Fixed_Run_30_PMT_133_Loc_3_Test_S",string pathToData = "./"){
+  
   TStyle *wmStyle = GetwmStyle();
   //gStyle->SetOptTitle(0);
   gROOT->SetStyle("wmStyle");
   gROOT->ForceStyle();
 
-  Result * result = GetPeakToValley(rootFileName);
+  Result * result = GetPeakToValley(rootFileName,
+				    pathToData);
   
   float valley_Q = result->valley.value;
   float peak_Q   = result->peak.value;
@@ -44,7 +44,8 @@ float mu_From_Histo(TString rootFileName = "Run_30_PMT_133_Loc_3_Test_S",
   cout << " charge at valley is " << setprecision(3) << valley_Q << " mVns " << endl;  
   cout << " charge at peak is   " << setprecision(3) << peak_Q   << " mVns " << endl;  
   
-  TString hName = "hQ_Fixed_" + rootFileName;
+  //TString hName = "hQ_Fixed_" + rootFileName;
+  TString hName = rootFileName;
   
   rootFileName = rootFileName + ".root";
 
