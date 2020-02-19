@@ -27,11 +27,23 @@ TH1F * TCookedAnalyser::Get_hQ_Fixed(float delay = 100.){
   // See $BinToRoot/BinToRoot.cpp
   // for existing methods
 
+  string fileName = "hQ_Fixed_";
+  string histName = "hQ_Fixed_";
+  
+  fileName += GetFileID();
+  histName += GetFileID();
+  
+  fileName += ".root";
+  
+  printf("\n  %s \n",fileName.c_str());
+  
+  TFile * outFile = new TFile(fileName.c_str(),"RECREATE",fileName.c_str()); 
+
   int   nBins = 100.;
   float minQ  = -100.0;
   float maxQ  = 900.0;
 
-  TH1F * hQ_Fixed = new TH1F("hQ_Fixed","hQ_Fixed;Charge (mV ns);Counts",
+  TH1F * hQ_Fixed = new TH1F(histName.c_str(),"hQ_Fixed;Charge (mV ns);Counts",
 			     nBins,minQ,maxQ);
 
   float gate_width = 50.; // might require up to 70 ns ?
@@ -76,6 +88,9 @@ TH1F * TCookedAnalyser::Get_hQ_Fixed(float delay = 100.){
     charge = volts*nsPerSamp;
     hQ_Fixed->Fill(charge);
   }
+  
+  outFile->cd();
+  outFile->Write();
   
   return hQ_Fixed;
 }

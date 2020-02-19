@@ -6,7 +6,7 @@ read test
 echo 'Which RUN ? ( e.g. 000001 )'
 read RUN
 
-PARENT=/home/user1/Watchman/Wavedump_Wrapper/Data_Storage/Binary_Data/Sync/RUN${RUN}/
+PARENT=/home/user1/Watchman/Wavedump_Wrapper/Data_Storage/Larisa/${RUN}/
 
 echo 'PMT for wave0? (e.g. 0052)'
 read PMT0

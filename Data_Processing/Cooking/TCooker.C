@@ -192,7 +192,6 @@ void TCooker::DoCooking(){
 	// if pulse polarity is negative then flip 
 	ADC_buff.push_back(Invert_Negative_ADC_Pulses(ADC->at(iSamp)));
       }
-      
     }
     mean_mV = mean_mV/(float)fNSamples;    
     
