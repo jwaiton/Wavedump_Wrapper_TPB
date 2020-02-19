@@ -4,11 +4,9 @@
 
 using namespace std;
 
-Result* Fit_PeakAndValley(TH1F*  fhisto, 
-			  double minval, 
-			  double maxval);
+Result* Fit_PeakAndValley(TH1F*  fhisto);
 
-void GetPeakToValley(TString rootFileName = "Run_60_PMT_152_Loc_0_HV_7"){
+void GetPeakToValley(TString rootFileName = "Run_30_PMT_133_Loc_3_Test_S"){
 
   TString hName = "hQ_Fixed_" + rootFileName;
       
@@ -22,13 +20,12 @@ void GetPeakToValley(TString rootFileName = "Run_60_PMT_152_Loc_0_HV_7"){
   
   TFile * rootFile = new TFile(rootFileName);
   
-  Result * results = Fit_PeakAndValley((TH1F*)rootFile->Get(hName),
-				       -500,
-				       2000);
+  Result * results = Fit_PeakAndValley((TH1F*)rootFile->Get(hName));
   
   cout << endl;
   cout << "peak           = " << results->peak.value         << " (" << results->peak.error         << ") " << endl;
   cout << "peak to valley = " << results->peakToValley.value << " (" << results->peakToValley.error << ") " << endl;
+
   
 }
 

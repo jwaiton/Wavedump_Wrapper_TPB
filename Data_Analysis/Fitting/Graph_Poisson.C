@@ -4,31 +4,7 @@
 #include "TCanvas.h"
 #include "TGraph.h"
 
-float Mu_from_prob_zero(float prob_zero){
-  return (-1*TMath::Log(prob_zero));
-}
-
-float Prob_n_from_prob_zero(float prob_zero, float n){
-  return prob_zero*TMath::Power(Mu_from_prob_zero(prob_zero),n)/TMath::Factorial(n);
-}
-
-float Prob_zero_from_mu(float mu){
-  return TMath::Exp(-mu);
-}
-
-float Prob_n_from_mu(float mu, int n){
-  return TMath::Exp(-mu)*TMath::Power(mu,n)/TMath::Factorial(n);
-}
-
-float Prob_zero_from_TH1F(TH1F * hQ, int thresh_low -100, int thres_high = 100){
-  
-  int binLow  = hQ->GetXaxis()->FindBin(thresh_low);
-  int binHigh = hQ->GetXaxis()->FindBin(thres_high);
-  
-  float prob = hQ->Integral(binLow,binHigh)/hQ->Integral();
-  
-  return prob;
-}
+#include "Poisson.C"
 
 void Graph_Prob_n(int nPhot = 2){
   
@@ -36,7 +12,7 @@ void Graph_Prob_n(int nPhot = 2){
   TCanvas * canvas =  new TCanvas("Graph","Graph");
 
   // dummy histogram for controlling canvas
-  TH1F    *hr;
+  TH1F * hr;
   
   // extend to include more data points?
   static const int nPoints = 100;
