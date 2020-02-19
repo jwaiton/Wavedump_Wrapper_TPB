@@ -12,16 +12,14 @@ float GetValley(TString rootFileName = "Run_30_PMT_133_Loc_3_Test_S"){
       
   rootFileName = rootFileName + ".root";
 
-  //!!!!!
-  // set to relevant local path
   TString RawRootDataDIR = "./";
   
   rootFileName = RawRootDataDIR + rootFileName;
   
   TFile * rootFile = new TFile(rootFileName);
   
-  Result * results = Fit_PeakAndValley((TH1F*)rootFile->Get(hName));
-  return results->valley.value;
+  Result * result = Fit_PeakAndValley((TH1F*)rootFile->Get(hName));
+  return result->valley.value;
   
 }
 
