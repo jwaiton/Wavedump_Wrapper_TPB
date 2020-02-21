@@ -37,6 +37,7 @@
 
 #include <iostream>
 #include <string>
+#include "TSystem.h"
 #include "TCookedAnalyser.h"
 
 bool Welcome(int argc);
@@ -80,7 +81,8 @@ int main(int argc, char * argv[]){
   printf("\n  'f' - FFT ");
   printf("\n  'b' - 'w' and 'f' \n");
   scanf("%c",&aChar);
-  
+
+  gSystem->Exec("mkdir -p ./Plots/Waveforms/");
   string outPath = "./Plots/Waveforms/";
   
   switch(aChar){
@@ -108,6 +110,7 @@ int main(int argc, char * argv[]){
 #endif   
 
   sysCommand += outPath;
+  sysCommand += " &";
   system(sysCommand.c_str());
 
   if(aChar!='N' && aChar!='n'){
