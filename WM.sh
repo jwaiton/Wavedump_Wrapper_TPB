@@ -21,7 +21,9 @@ export WM_COOK=${WM_PROCESS}Cooking/
 export WM_COMMON=${WM_CODE}Common_Tools/
 
 export WM_ANALYSE=${WM_CODE}Data_Analysis/
+export WM_ANALYSE=${WM_CODE}Data_Analysis/
 export WM_ANALYSE_COOKED=${WM_ANALYSE}Analyse_Cooked/
+export WM_FITTING=${WM_ANALYSE}Fitting/
 export CALIBRATION=${WM_ANALYSE}Calibration/
 export BIN_TO_ROOT=${WM_ANALYSE}BinToRoot/
 export GAIN_TEST_DIR=${WM_ANALYSE}Gain_Test/

@@ -71,7 +71,7 @@ int main(int argc, char * argv[]){
   TFile * inFile  = nullptr;
   TTree * tree    = nullptr;
 
-  gSystem->Exec("mkdir ./Plots/");
+  gSystem->Exec("mkdir -p ./Plots/");
 
   // object used to cook 
   // raw (root) data
@@ -145,7 +145,7 @@ int main(int argc, char * argv[]){
     // DAQ info
     //  Print mean trigger rate
     //  Save: rate,timing and event plots
-    gSystem->Exec("mkdir ./Plots/DAQ");
+    gSystem->Exec("mkdir -p ./Plots/DAQ");
     cooker->DAQ();
     
     //-------------------
