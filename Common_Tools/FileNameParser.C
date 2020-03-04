@@ -272,7 +272,7 @@ char   FileNameParser::GetTest(){
     return Test;
   else
     cerr << "Error: data members not set " << endl;
-  return -1;
+  return 'E';
 }
 
 int    FileNameParser::GetHVStep(){

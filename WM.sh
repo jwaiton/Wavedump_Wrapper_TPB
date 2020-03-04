@@ -36,6 +36,7 @@ export CPATH=${CPATH}:${WM_COOK}
 export CPATH=${CPATH}:${WM_ANALYSE_COOKED}
 
 # binaries
+export PATH=${PATH}:${WM_CODE}
 export PATH=${PATH}:${WM_CONVERT}
 export PATH=${PATH}:${WM_CONVERT}DT_Version/
 export PATH=${PATH}:${WM_COOK}

@@ -22,10 +22,15 @@ string TCookedAnalyser::GetFileID(){
 //----------
 //   
 
-void TCookedAnalyser::Make_hQ_Fixed(float delay = 100.){
+void TCookedAnalyser::Make_hQ_Fixed(){
 
   // See $BinToRoot/BinToRoot.cpp
   // for existing methods
+
+  float gate_start = Get_LED_Delay() - 15;
+  
+  // Does 70 ns give 10^7 gain?
+  float gate_width = 50.; 
 
   string fileName = "hQ_Fixed_";
   string histName = "hQ_Fixed_";
@@ -46,10 +51,15 @@ void TCookedAnalyser::Make_hQ_Fixed(float delay = 100.){
   TH1F * hQ_Fixed = new TH1F(histName.c_str(),"hQ_Fixed;Charge (mV ns);Counts",
 			     nBins,minQ,maxQ);
 
-  float gate_width = 50.; // might require up to 70 ns ?
-
+  
   float wave_mV = 0.0;
   float time_ns = 0.0;
+
+  int   nSigSamps = 0;
+  int   nBasSamps = 0;
+
+  float sig_volts = 0;
+  float bas_volts = 0;
 
   float volts  = 0.0;
   float charge = 0.0;
@@ -58,8 +68,11 @@ void TCookedAnalyser::Make_hQ_Fixed(float delay = 100.){
     cookedTree->GetEntry(iEntry);
 
     // zero at start of event
-    volts = 0.0;
-
+    sig_volts = 0.0;
+    bas_volts = 0.0;
+    nSigSamps = 0;
+    nBasSamps = 0;
+    
     for( short iSamp = 0 ; iSamp < NSamples; iSamp++){
       
       wave_mV = ADC_To_Wave(ADC->at(iSamp));
@@ -71,22 +84,28 @@ void TCookedAnalyser::Make_hQ_Fixed(float delay = 100.){
       // Sum ADC values in pulse region 
       // and subtrace baseline here. 
       // NB pulse pol has already been made positive.
-      if     ( time_ns >=  delay   && 
-	       time_ns <  (delay + gate_width) ){
-	volts += wave_mV; 
-	
+      if     ( time_ns >=  gate_start   && 
+	       time_ns <  (gate_start + gate_width) ){
+	sig_volts += wave_mV; 
+	nSigSamps++;
       }// baseline subtraction
-      else if( time_ns <   delay   &&
-	       time_ns >= (delay - gate_width ) ){ 
-	volts -= wave_mV;
+      else if( time_ns <   gate_start   &&
+	       time_ns >= (gate_start - gate_width ) ){ 
+	bas_volts += wave_mV;
+	nBasSamps++;
       }
+      
+      volts = sig_volts - (bas_volts*(float)nSigSamps/nBasSamps);
       
     }
     
     // Convert ADC to units of charge then
     // fill histogram 
     charge = volts*nsPerSamp;
-    hQ_Fixed->Fill(charge);
+    
+    //if(HasLowNoise(min_mV,peak_mV))
+      hQ_Fixed->Fill(charge);
+  
   }
   
   hQ_Fixed->Draw();
@@ -97,33 +116,48 @@ void TCookedAnalyser::Make_hQ_Fixed(float delay = 100.){
   
   gPad->SaveAs(histName.c_str());
   
+  gPad->SetLogy(false);
+
   outFile->cd();
   outFile->Write();
 
 }
 
+bool TCookedAnalyser::HasLowNoise(float min_mV, float peak_mV,
+				  float thresh_mV){
+  
+  if     (min_mV < -2.5 && peak_mV < thresh_mV)
+    return false;
+  else if(peak_mV < -2*min_mV && peak_mV > thresh_mV )
+    return false;
+  else 
+    return true;
+}
+
+
 //
 //----------
 
-float TCookedAnalyser::Get_LED_delay(){
+void TCookedAnalyser::Fit_Peak_Time_Dist(){
   
   printf("\n ------------------------------ \n");
   printf("\n Getting LED delay   \n");
 
   InitCanvas();
     
-  float range    = Length_ns;
   float binWidth = nsPerSamp;
-  float min_time = 0.0;
-  float max_time = range;
+  float hist_min_time = 0.0;
+  float hist_max_time = 200.0;  
+  float fit_min_time  = 50.0;
+  float fit_max_time  = 150.0;
   int   nBins = 0;
 
   // fix the binning
-  Set_THF_Params(&min_time,&max_time,&binWidth,&nBins);
+  Set_THF_Params(&hist_min_time,&hist_max_time,&binWidth,&nBins);
   
   TH1F * hPeakTime = new TH1F("hPeakTime",
 			      "hPeakTime;peak time (ns);Counts",
-			      nBins,min_time,max_time);
+			      nBins,hist_min_time,hist_max_time);
   float LED_delay   = 1.0;
   float delay_width = 1.0;
   float peak_time = 0.;
@@ -139,27 +173,20 @@ float TCookedAnalyser::Get_LED_delay(){
 
   }
 
-  int   binMax  = hPeakTime->GetMaximumBin();
-  float timeMax = hPeakTime->GetXaxis()->GetBinCenter(binMax);
-  min_time = timeMax - 8.;
-  max_time = timeMax + 8.;
-  
-  //TF1 * fPeak = new TF1("fPeak","gaus",min_time,);
-  
-  printf("\n min_time = %.1f \n", min_time);
-
-  hPeakTime->Fit("gaus","QR","",min_time,max_time);
-  //hPeakTime->Fit("gaus","Q","",110,150);
+  hPeakTime->Fit("gaus","QR","",fit_min_time,fit_max_time);
   
   TF1 * fPeak = hPeakTime->GetFunction("gaus");
   LED_delay   = fPeak->GetParameter(1);
   delay_width = fPeak->GetParameter(2);
-  
-  float min_delay   = LED_delay - 2*delay_width; 
-  float max_delay   = LED_delay + 2*delay_width; 
+  fPeak->Delete();
 
-  hPeakTime->Fit("gaus","QR","",min_delay,max_delay);
+  fit_min_time = LED_delay - 2*delay_width; 
+  fit_max_time = LED_delay + 2*delay_width; 
+
+  hPeakTime->Fit("gaus","QR","",fit_min_time,fit_max_time);
   
+  hPeakTime->GetFunction("gaus")->SetLineColor(kBlue);
+
   hPeakTime->Draw();  
   canvas->SaveAs("./Plots/Timing/hPeakTime.pdf");
  
@@ -170,7 +197,22 @@ float TCookedAnalyser::Get_LED_delay(){
   
   printf("\n delay = %.1f (%.1f) \n", LED_delay, delay_width);
 
-  return LED_delay;
+  IsTimingDistFitted = true;
+  Set_LED_Delay(LED_delay);
+}
+
+void TCookedAnalyser::Set_LED_Delay(float LED_delay){
+  fLED_Delay = LED_delay;
+}
+
+float TCookedAnalyser::Get_LED_Delay(){
+  
+  if(IsTimingDistFitted)
+    return fLED_Delay;
+  else {
+    Fit_Peak_Time_Dist();
+    return Get_LED_Delay();
+  }
 }
 
 //------------------------------
@@ -182,7 +224,7 @@ void TCookedAnalyser::Noise(){
     cookedTree->GetEntry(iEntry);
     
     //printf(" \n mean_mV = %f \n", mean_mV);
-    
+
     hMean_Cooked->Fill(mean_mV);
     hPPV_Cooked->Fill(peak_mV-min_mV);
     hPeak_Cooked->Fill(peak_mV);
@@ -590,7 +632,7 @@ void TCookedAnalyser::Waveform(char option){
 void TCookedAnalyser::InitWaveform(){
   
   printf("\n ------------------------------ \n");
-  printf("\n Plotting Waveform \n\n");
+  printf("\n Init hWave \n\n");
   
   hWave = new TH1F("hWave","Waveform;Time (ns); Amplitude (mV)",
 		   NSamples, 0.,Length_ns);
@@ -600,7 +642,7 @@ void TCookedAnalyser::InitWaveform(){
 void TCookedAnalyser::InitFFT(){
   
   printf("\n ------------------------------ \n");
-  printf("\n Plotting FFT \n\n");
+  printf("\n Init hFFT \n\n");
 
   hWave = new TH1F("hWave","Waveform;Time (ns); Amplitude (mV)",
 		   NSamples, 0.,Length_ns);
@@ -663,6 +705,120 @@ void TCookedAnalyser::SaveWaveFFT(string outPath){
   DeleteCanvas();
   
 }
+
+
+TF1 * TCookedAnalyser::Fit_Pulse(int entry){
+  
+  float LED_delay = Get_LED_Delay(); 
+  float min_time_range = LED_delay - 65;  // 50
+  float max_time_range = LED_delay + 185; // 300
+  
+  if(max_time_range > Length_ns)
+    max_time_range = Length_ns;
+  
+  if(min_time_range < 0)
+    min_time_range = 0.0;
+  
+  // "crystalball" params defined below (fNumber = 500)
+  // https://root.cern.ch/root/html608/TFormula_8cxx_source.html
+  // https://en.wikipedia.org/wiki/Crystal_Ball_function
+  // 0 - const (height of peak)
+  // 1 - mean  
+  // 2 - sigma (width)
+  // 3 - alpha (small appears to give bigger skew)
+  // 4 - N     (normalisation)
+  
+  // add baseline patameter
+  string fName = "[0]+crystalball(1)";
+  
+  TF1 * fWave = new TF1("fWave",fName.c_str(),
+			min_time_range,max_time_range);
+  
+  int attempts = 0;
+  do{
+    
+    attempts++;
+    
+    //if(entry==-1)
+    entry = (int)round(rand3->Uniform(nentries));
+
+    printf("\n nentries =  %d \n",nentries);
+    printf("\n Fitting entry %d \n",entry);
+    
+    cookedTree->GetEntry(entry);
+    
+    InitWaveform();
+
+    for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
+      hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
+    
+    // basline,height,mean,sigma,alpha,norm
+    fWave->SetParameters(base_mV,10,LED_delay,2.5,-1,1);
+    
+    fWave->SetParLimits(0, base_mV-5,base_mV+5); // baseline
+    fWave->SetParLimits(1, 0, 1000); // height
+    fWave->SetParLimits(2, LED_delay-7.5,LED_delay+7.5);//mean
+    fWave->SetParLimits(3,0.5,5); // sigma
+    fWave->SetParLimits(4,-2,-0.5); // alpha
+    fWave->FixParameter(5,1); // N
+    
+    hWave->SetAxisRange(min_time_range,max_time_range,"X");
+    
+    hWave->Fit("fWave", "R");
+  }
+  while( !IsGoodPulseFit(fWave) );
+  
+  hWave->Draw();
+
+  printf("\n There were %d attempts to fit. \n",attempts);
+  
+  SavePulseFit();
+  
+  return fWave;
+}
+
+bool TCookedAnalyser::IsGoodPulseFit(TF1 * f1){
+  
+  //  float base   = f1->GetParameter(0);
+  float height = f1->GetParameter(1);
+//   float mean   = f1->GetParameter(2);
+//   float sigma  = f1->GetParameter(3);
+//   float norm   = f1->GetParameter(4); 
+  
+  float xi_sq  = f1->GetChisquare()/f1->GetNDF(); 
+  
+  if ( height < 10 ){
+    printf("\n pulse amplitude is %f mV \n",height);
+    return false;
+  }
+  else if( xi_sq > 5 || xi_sq < 0.01 ){
+    printf("\n #chi^{2} is %f  \n",xi_sq);
+    return false;
+  }
+  else{
+    printf("\n #chi^{2}/NDF is %f  \n",xi_sq);
+    return true;
+  }
+}
+
+void TCookedAnalyser::SavePulseFit(string outPath ){
+
+  printf("\n Saving Pulse Fit Plot \n\n");
+  
+  InitCanvas();
+  
+  hWave->Draw();
+  TF1 * f = hWave->GetFunction("fWave");
+  f->Draw("same");
+
+  outPath += "Pulse.pdf";
+
+  canvas->SaveAs(outPath.c_str());
+
+  DeleteCanvas();
+  
+}
+
 
 
 //------------------------------
