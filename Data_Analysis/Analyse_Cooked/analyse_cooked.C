@@ -37,11 +37,13 @@
  *  FileNameParser
  *  TCookedAnalyser
  */ 
-
 #include <iostream>
+
 #include <string>
 #include "TSystem.h"
 #include "TCookedAnalyser.h"
+
+#include "TF1.h"
 
 bool Welcome(int argc);
 
@@ -49,7 +51,6 @@ int main(int argc, char * argv[]){
   
   if( !Welcome(argc) )
     return -1;
-
       
   TCookedAnalyser * cooked_analyser = nullptr;
 
@@ -74,7 +75,7 @@ int main(int argc, char * argv[]){
     // reduce event loop for faster code testing
     // NB no check that this is lower that nentries
 
-    //int user_nentries = 100000; 
+    //int user_nentries = 10; 
     //cooked_analyser->SetTestMode(user_nentries);
     
     //-------------------
@@ -83,19 +84,17 @@ int main(int argc, char * argv[]){
     
     cooked_analyser->PrintMetaData();
 
-    //-------------------
-    //-------------------
-    // Monitoring
-    gSystem->Exec("mkdir -p ./Plots/Noise");
-    cooked_analyser->Noise();
+    // //-------------------
+//     //-------------------
+//     // Monitoring
+//     gSystem->Exec("mkdir -p ./Plots/Noise");
+//     cooked_analyser->Noise();
     
     //-------------------
     //-------------------
     // Analysis 
     
     char  test = cooked_analyser->GetTest();
-    float LED_delay  = 0.0;
-    float gate_start = -15.;
     
     switch(test){
     case('D'):
@@ -103,17 +102,31 @@ int main(int argc, char * argv[]){
       cooked_analyser->Dark();
       break;
     default:
-
-      gSystem->Exec("mkdir -p ./Plots/Timing");
-      LED_delay = cooked_analyser->Get_LED_delay();
-      printf("\n LED_delay = %.2f \n",LED_delay);
       
-      gate_start = LED_delay - 15.;
-
+      //-------------
+      // Timing
+      gSystem->Exec("mkdir -p ./Plots/Timing");
+      
+      // Mean LED pulse peak time
+      cooked_analyser->Fit_Peak_Time_Dist();
+      cooked_analyser->Get_LED_Delay();
+      
+      //-------------
+      // Charge
       gSystem->Exec("mkdir -p ./Plots/Charge");
-      // Saves a new root file containing the hist
-      cooked_analyser->Make_hQ_Fixed(gate_start);
+      
+      // Save a new root file with charge hist
+      cooked_analyser->Make_hQ_Fixed();
+      
+      //-------------
+      // Pulse fitting test
+      gSystem->Exec("mkdir -p ./Plots/PulseFit");
+
+      TF1 * fWave = cooked_analyser->Fit_Pulse();
+      
     }
+    
+    
     
   }// end of: for( int iFile = 1 ;
 

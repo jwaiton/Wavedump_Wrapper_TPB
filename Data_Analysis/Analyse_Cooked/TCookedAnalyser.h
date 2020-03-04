@@ -111,6 +111,7 @@ class TCookedAnalyser {
   TH2F * hMin_Peak_Cooked = nullptr;
   
   char  GetTest();
+  int   GetRun();
   
   void  Noise();
   void  InitNoise();
@@ -120,12 +121,15 @@ class TCookedAnalyser {
   float Wave_To_Amp_Scaled_Wave(float wave);
 
   //----
-  void  Make_hQ_Fixed(float delay);
+  void  Make_hQ_Fixed();
 
   //----
   // LED data  
-  float Get_LED_delay();
 
+  void  Fit_Peak_Time_Dist();
+  void  Set_LED_Delay(float LED_delay);
+  float Get_LED_Delay();
+  
   //----
   // Dark Counts
 
@@ -154,6 +158,18 @@ class TCookedAnalyser {
   
   void  SaveWaveFFT(string outPath = "./Plots/Waveforms/");
 
+  void  SavePulseFit(string outPath = "./Plots/PulseFit/");
+
+  //--- 
+  // Rise and Fall Times
+   
+  TF1 * Fit_Pulse(int entry = -1);
+  
+  bool IsGoodPulseFit(TF1* f1);
+  
+/*   float Get_Pulse_Rise_Time(); */
+/*   float Get_Pulse_Fall_Time(); */
+  
  private:
   
    // only accommodating int size here
@@ -165,7 +181,9 @@ class TCookedAnalyser {
    void  Set_THF_Params(float *,float *,float *, int *);
    
    void  SetStyle();
-
+   float fLED_Delay;
+   bool IsTimingDistFitted;
+   
 };
 
 #endif
@@ -252,7 +270,9 @@ void TCookedAnalyser::InitMeta(){
 
   metaTree->GetEntry(0);
   
-
+  fLED_Delay = 100.;
+  IsTimingDistFitted = false;
+  
   printf("\n ------------------------------ \n");
 
 }
@@ -307,6 +327,14 @@ char TCookedAnalyser::GetTest(){
     return fnp->GetTest();
   else
     return 'E';
+}
+
+int TCookedAnalyser::GetRun(){
+
+  if(fnp)
+    return fnp->GetRun();
+  else
+    return -1;
 }
 
 
