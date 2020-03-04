@@ -150,7 +150,8 @@ class TCookedAnalyser {
   void  SaveWaveform(string outPath = "./Plots/Waveforms/");
   
   void  InitFFT();
-  void  SaveFFT(string outPath = "./Plots/Waveforms/");
+  void  SaveFFT(string outPath = "./Plots/Waveforms/",
+		int    option  = 0);
   
   void  SaveWaveFFT(string outPath = "./Plots/Waveforms/");
 

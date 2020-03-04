@@ -138,8 +138,17 @@ float TCookedAnalyser::Get_LED_delay(){
       hPeakTime->Fill(peak_time);
 
   }
+
+  int   binMax  = hPeakTime->GetMaximumBin();
+  float timeMax = hPeakTime->GetXaxis()->GetBinCenter(binMax);
+  min_time = timeMax - 8.;
+  max_time = timeMax + 8.;
   
-  hPeakTime->Fit("gaus","Q","",min_time,max_time);
+  //TF1 * fPeak = new TF1("fPeak","gaus",min_time,);
+  
+  printf("\n min_time = %.1f \n", min_time);
+
+  hPeakTime->Fit("gaus","QR","",min_time,max_time);
   //hPeakTime->Fit("gaus","Q","",110,150);
   
   TF1 * fPeak = hPeakTime->GetFunction("gaus");
@@ -159,7 +168,7 @@ float TCookedAnalyser::Get_LED_delay(){
   LED_delay   = hPeakTime->GetFunction("gaus")->GetParameter(1);
   delay_width = hPeakTime->GetFunction("gaus")->GetParameter(2);
   
-  printf(" delay = %.1f (%.1f)", LED_delay, delay_width);
+  printf("\n delay = %.1f (%.1f) \n", LED_delay, delay_width);
 
   return LED_delay;
 }
@@ -536,6 +545,7 @@ void TCookedAnalyser::Waveform(char option){
       break;
     case('P'):
       entry--;
+      break;
     default:
       entry = -1;
     }
@@ -563,7 +573,7 @@ void TCookedAnalyser::Waveform(char option){
       break;
     case('f'):
       outPath += "hFFT.pdf";
-      SaveFFT(outPath);
+      SaveFFT(outPath,1);
       break;
     case('b'):
       outPath += "hWaveFFT.pdf";
@@ -592,6 +602,9 @@ void TCookedAnalyser::InitFFT(){
   printf("\n ------------------------------ \n");
   printf("\n Plotting FFT \n\n");
 
+  hWave = new TH1F("hWave","Waveform;Time (ns); Amplitude (mV)",
+		   NSamples, 0.,Length_ns);
+
   hFFT = new TH1F("hFFT","FFT; Frequency (MHz); Magnitude",
 		  NSamples/2, 0, SampFreq/2 );
   
@@ -612,13 +625,16 @@ void TCookedAnalyser::SaveWaveform(string outPath ){
   
 }
 
-void TCookedAnalyser::SaveFFT(string outPath){
+void TCookedAnalyser::SaveFFT(string outPath, int option){
 
   printf("\n Saving FFT Plot \n\n");
   
   InitCanvas();
   
   hFFT->SetBinContent(1,0.);
+  hFFT->SetAxisRange(5,450.,"X");
+  gPad->SetLogx(option);
+  //gPad->SetLogy(option);
   hFFT->Draw();
   
   canvas->SaveAs(outPath.c_str());
