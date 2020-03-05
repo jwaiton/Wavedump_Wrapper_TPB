@@ -45,7 +45,7 @@ void TCookedAnalyser::Make_hQ_Fixed(float delay = 100.){
 
   TH1F * hQ_Fixed = new TH1F(histName.c_str(),"hQ_Fixed;Charge (mV ns);Counts",
 			     nBins,minQ,maxQ);
-
+  
   float gate_width = 50.; // might require up to 70 ns ?
 
   float wave_mV = 0.0;
