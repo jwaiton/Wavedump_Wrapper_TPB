@@ -1,6 +1,0 @@
-/Users/gsmith23/Desktop/Watchman/PMT_Performance_Testing/Wavedump_Wrapper/Data_Storage/Binary_Data/RUN000001/PMT0130/SPEtest/
-wave_0.dat
-Y
-Y
-Y
-Y

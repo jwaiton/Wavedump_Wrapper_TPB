@@ -27,14 +27,8 @@ echo " ------------------------------"
 date 
 echo " ------------------------------"
 
-mkdir -p ./Plots/Noise/
-mkdir -p ./Plots/Timing/
-mkdir -p ./Plots/Dark/
-
 analyse_cooked  ${DIR_PATH}/Run*
 
 echo " ------------------------------"
 date 
 echo " ------------------------------"
-
-mkdir -p ./Plots/Waveforms/
