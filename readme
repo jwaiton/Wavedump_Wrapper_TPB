@@ -25,10 +25,16 @@ $ ./making.sh
 
 4) Run file conversion and basic analysis to generate the analysis files and folders in the local directory. 
 
-    [ NB the cooking stage requires that the data files are stored in a specific folder naming scheme with
-    RUN000XXX containing a run number (e.g. XXX=001), PMT0YYY containing the PMT number (e.g YYY=005) with
-    the leading 0 required, and TestName beginning with e.g. D (Dark Rate), N (Nominal), S (SPE) or G (Gain) ]
+Have a read through $WM_CODE/process_analyse_locally_auto.sh
 
+    [ NB the cooking stage requires that the data files are stored in a specific folder naming scheme with
+    /RUN000XXX containing a run number (e.g. XXX=001), /PMT0YYY containing the PMT number (e.g YYY=005) with
+    the leading 0 required, /TestName beginning with e.g. D (Dark Rate), N (Nominal), S (SPE) or G (Gain),
+    and the channel number in the file name: e.g /wave_0.dat for DAQ channel 0 (underscore required)]
+
+Example using file /my/path/to/parent/data/folder/RUN000001/PMT0130/Nominal/wave_0.dat
 $ cd /my/path/to/parent/data/folder/RUN000001/PMT0130/Nominal/
-$ source process_analyse_locally_auto.sh 
+$ source process_analyse_locally_auto.sh // creates files in the current folder
+
+
 
