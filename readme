@@ -1,5 +1,5 @@
 2nd April 2020 
-WATCHMAN UK PMT Performance Testing Software
+WATCHMAN UK PMT Performance Testing 
 
 Repository for Watchman-PMT data taking, processing and analysis framework.
 
@@ -7,7 +7,7 @@ Email issues and suggestions to:
  gary.smith@ed.ac.uk
 
 Instructions:
-(tested on Mac OS 10.13.6, CentOS7, Scientific Linux 7.6)
+(tested on Mac OS 10.13.6, CentOS7, Scientific Linux 7.6, Ubuntu )
 
 1) Access the Code. Clone this repository on your local machine 
 (Fork if planning to contribute). 
@@ -34,7 +34,4 @@ Have a read through $WM_CODE/process_analyse_locally_auto.sh
 
 Example using file /my/path/to/parent/data/folder/RUN000001/PMT0130/Nominal/wave_0.dat
 $ cd /my/path/to/parent/data/folder/RUN000001/PMT0130/Nominal/
-$ source process_analyse_locally_auto.sh // creates files in the current folder
-
-
-
+$ source process_analyse_locally_auto.sh 
