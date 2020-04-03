@@ -28,8 +28,6 @@
  *   Plots are saved in directory structure
  *    e.g.
  *     ./Plots/Dark 
- *   which must be created prior to running.
- *   ( see make_plot_directories.sh)
  * 
  * Dependencies
  *  root.cern - a working version of root is required
