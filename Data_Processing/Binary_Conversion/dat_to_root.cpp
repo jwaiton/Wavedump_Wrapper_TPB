@@ -17,13 +17,13 @@
  *
  * How to run
  *  Option 1: 
- *  $ ./dat_to_root inputFile
+ *  $ ./dat_to_root wave_0.dat
  * 
  * Input - 
  *  binary file written by CAEN's 
  *  wavedump software
  * 
- * Output - a root file containing
+ * Output - a root file (e.g. wave_0.dat.root) containing
  *  unsigned int HEAD[6]  6 * 32 bits = 24  bytes 
  *  std::vector<short> ADC(N)  N * 16 bits = 16N bytes (N = No. samples) 
  * 
