@@ -35,3 +35,6 @@ Have a read through $WM_CODE/process_analyse_locally_auto.sh
 Example using file /my/path/to/parent/data/folder/RUN000001/PMT0130/Nominal/wave_0.dat
 $ cd /my/path/to/parent/data/folder/RUN000001/PMT0130/Nominal/
 $ source process_analyse_locally_auto.sh 
+
+Wiki
+https://github.com/Watchman-PMT/Wavedump_Wrapper/wiki
