@@ -4,7 +4,7 @@
  *
  * Author 
  *  gary.smith@ed.ac.uk
- *  15 10 2019
+ *  03 04 2020 (last modified)
  *
  * Purpose
  *  This program reads in a TTree
@@ -16,36 +16,39 @@
  * Setting Up
  *   The environment should first be set using 
  *   the WM.sh script - located in ../../
- * 
- * How to build
+ *    
+ * How to build 
  *  $ make 
  *
  * How to run 
- *  e.g. (test parameters are extracted from the file path)
- * $ cook_raw /path/to/RUN000001/PMT0130/SPEtest/wave_0.dat.root
  *
- * Input
- *  A .root file that was created using dat_to_root
+ *   [ NB some test parameters will be extracted from the file path
+ *     which requires the file path name to follow some conventions,
+ *     specifically it must contain:
+ *     /RUN000XXX    (XXX is the run number, zeros are optional) 
+ *     /PMT0YYY      (YYY pmt number, leading zero is required)
+ *     /TestName     (TestName must start with D - Dark Count, N - Nominal, S - SPE, A - Afterpulsing, G - Gain)
+ *     ( full details in $WM_COMMON/FileNameParser.C and $WM_COMMON/testFileNameParser.C ) ]
  * 
+ * $ cook_raw /my/path/to/RUN000001/PMT0130/Nominal/wave_0.dat.root
+ * 
+ * Input
+ *  A .root file that was created using dat_to_root 
+ *  (or desktop_dat_to_root)
+ *
  * Output
  *  A root file containing: 
  *      a cooked variables TTree  
  *      a meta data TTree 
- *  Monitoring Plots (optional)
- *  in the following folders:
+ *  Monitoring plots in 
  *     ./Plots/DAQ 
- *     ./Plots/Baseline
- *     ./Plots/Waveforms
- *   these folders must be created prior to running.
- *    (the script make_plot_directories.sh is 
- *       provided to automate this) 
- *
+ * 
  * Dependencies
  *  root.cern - a working version of root is required
  *
- *  WATCHMAN common tools
+ *  WATCHMAN common tools (see $WM_COMMON folder)
  *    wmStyle.C - TStyle class settings for WATCHMAN visualisation
- *    FileNameParser.h - class for extracting file ID variables 
+ *    FileNameParser.C - class for extracting file ID variables 
  * 
  */ 
 
@@ -118,7 +121,7 @@ int main(int argc, char * argv[]){
     // Optional method:
     // reduce event loop for faster code testing
     // NB no check that this is lower that nentries
-    int user_nentries = 100000; 
+    //int user_nentries = 100000; 
     //cooker->SetTestMode(user_nentries);
 
     // Apply Equipment 
@@ -126,7 +129,7 @@ int main(int argc, char * argv[]){
 
     float amp_gain = 10.;
     //amp_gain = 1.;
-    short firstMaskBin = -1;
+    short firstMaskBin = -1; // -1 means no mask
     //firstMaskBin = 1000;
     //firstMaskBin = 988;
     

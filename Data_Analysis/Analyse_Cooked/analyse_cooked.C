@@ -112,7 +112,7 @@ int main(int argc, char * argv[]){
       // Save a new root file with charge hist
       cooked_analyser->Make_hQ_Fixed();
 
-     //-------------
+      //-------------
       // Pulse fitting test
       gSystem->Exec("mkdir -p ./Plots/PulseFit");
       
@@ -120,8 +120,6 @@ int main(int argc, char * argv[]){
       //TF1 * fWave = cooked_analyser->Fit_Pulse();
       
     }
-    
-    
     
   }// end of: for( int iFile = 1 ;
 
