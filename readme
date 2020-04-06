@@ -18,6 +18,11 @@ Instructions:
 $ export WM_PARENT=/my/path/to/repository/parent/folder/
 $ source ${WM_PARENT}/Wavedump_Wrapper/WM.sh
 
+Now several environment variables have been set. The environment variables 
+generally start with 'WM_'. For example try:
+
+$ clear ; echo $WM_CODE; echo ' '; ls -lrth $WM_CODE ; echo ' ';
+
 3) Build all the binaries
   ( requires root to be installed and its usual environment set ). 
 $ cd $WM_CODE 
