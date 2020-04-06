@@ -18,6 +18,11 @@ Instructions:
 $ export WM_PARENT=/my/path/to/repository/parent/folder/
 $ source ${WM_PARENT}/Wavedump_Wrapper/WM.sh
 
+Now several environment variables have been set. The environment variables 
+generally start with 'WM_'. For example try:
+
+$ clear ; echo $WM_CODE; echo ' '; ls -lrth $WM_CODE ; echo ' ';
+
 3) Build all the binaries
   ( requires root to be installed and its usual environment set ). 
 $ cd $WM_CODE 
@@ -35,3 +40,6 @@ Have a read through $WM_CODE/process_analyse_locally_auto.sh
 Example using file /my/path/to/parent/data/folder/RUN000001/PMT0130/Nominal/wave_0.dat
 $ cd /my/path/to/parent/data/folder/RUN000001/PMT0130/Nominal/
 $ source process_analyse_locally_auto.sh 
+
+Wiki
+https://github.com/Watchman-PMT/Wavedump_Wrapper/wiki
