@@ -259,8 +259,8 @@ void TCookedAnalyser::Noise(){
   noise_rate_low = noise_rate_low/Length_ns * 1.0e9;
   
   printf("\n Mean voltage %.2f mV \n",peak_mean_mV);
-  printf("\n Noise Rate @ %.2f mV  %.2f Hz \n",noise_th_low_mV,noise_rate_low);
-  printf("\n Noise Rate @ %.2f mV  %.2f Hz \n",noise_thresh_mV,noise_rate);
+  printf("\n Rate @ %.2f mV  %.2f Hz \n",noise_th_low_mV,noise_rate_low);
+  printf("\n Rate @ %.2f mV  %.2f Hz \n",noise_thresh_mV,noise_rate);
 
   SaveNoise();
 
@@ -565,15 +565,17 @@ void TCookedAnalyser::Waveform(char option){
   // Plotting Loop
   while ( answer!='X' ){
     
-    printf("\n Which entry to plot? \n");
-    printf("\n F - First entry \n");
-    printf("\n N - Next \n");
-    printf("\n P - Previous \n");
-    printf("\n R - Random selection \n");
-    printf("\n X - eXit \n");
-    
-    // note deliberate use of whitespace before %c
-    scanf(" %c", &answer);
+    if(option!='d'){
+      printf("\n Which entry to plot? \n");
+      printf("\n F - First entry \n");
+      printf("\n N - Next \n");
+      printf("\n P - Previous \n");
+      printf("\n R - Random selection \n");
+      printf("\n X - eXit \n");
+      
+      // note deliberate use of whitespace before %c
+      scanf(" %c", &answer);
+    }
     
     switch(answer){
     case('F'):
@@ -615,11 +617,29 @@ void TCookedAnalyser::Waveform(char option){
       break;
     case('f'):
       outPath += "hFFT.pdf";
-      SaveFFT(outPath,1);
+      SaveFFT(outPath);
+      //SaveFFT(outPath,1); // SetLogx() option
       break;
     case('b'):
       outPath += "hWaveFFT.pdf";
       SaveWaveFFT(outPath);
+      break;
+    case('d'):
+      // make default plots
+      outPath = "./Plots/Waveforms/";
+      outPath += "hWave.pdf";
+      SaveWaveform(outPath);
+      
+      outPath = "./Plots/Waveforms/";
+      outPath += "hFFT.pdf";
+      SaveFFT(outPath);
+      //SaveFFT(outPath,1); // SetLogx() option
+      
+      outPath = "./Plots/Waveforms/";
+      outPath += "hWaveFFT.pdf";
+      SaveWaveFFT(outPath);
+      
+      answer='X';
       break;
     default:
       break;

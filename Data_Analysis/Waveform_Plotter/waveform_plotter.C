@@ -25,8 +25,7 @@
  * 
  * Output
  *   Plots can be saved in directory structure
- *     ./Plots/Dark 
- *   which must be created prior to running.
+ *     ./Plots/Waveforms 
  * 
  * Dependencies
  *  root.cern - a working version of root is required
@@ -68,10 +67,15 @@ int main(int argc, char * argv[]){
   // Meta Data 
   
   wave_plotter->PrintMetaData();
-  
+
+  // prepare default plots
+  gSystem->Exec("mkdir -p ./Plots/Waveforms/");
+  string outPath = "./Plots/Waveforms/";
+
+  wave_plotter->Waveform('d');
+
   // ----
   // Waveform plotting
-  // [To Do:inherit from executePMTAnalysis.C]
   char aChar = 'b';
   
   printf("\n Plot waveform? ");
@@ -81,10 +85,8 @@ int main(int argc, char * argv[]){
   printf("\n  'f' - FFT ");
   printf("\n  'b' - 'w' and 'f' \n");
   scanf("%c",&aChar);
-
-  gSystem->Exec("mkdir -p ./Plots/Waveforms/");
-  string outPath = "./Plots/Waveforms/";
   
+
   switch(aChar){
   case('w'):
     outPath += "hWave.pdf";
@@ -99,9 +101,7 @@ int main(int argc, char * argv[]){
     break;
   }
 
-  string sysCommand = "touch ";
-  sysCommand += outPath;
-  system(sysCommand.c_str());
+  string sysCommand = "";
   
 #ifdef  __linux__  
   sysCommand = "evince ";
