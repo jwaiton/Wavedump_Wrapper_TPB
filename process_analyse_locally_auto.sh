@@ -1,11 +1,10 @@
 #!/bin/bash
 
-echo " ------------------------------"
+echo " -------------------------------"
 date  
-echo " ------------------------------"
-
-echo " Enter full path to binary file, e.g.: " 
-echo "/home/user1/Watchman/Wavedump_Wrapper/Data_Storage/Binary_Data/Setup/RUN000002/PMT0015/Nominal/" 
+echo " running "
+echo " process_analyse_locally_auto.sh "
+echo " -------------------------------"
 
 DIR_PATH=${PWD}/
 
