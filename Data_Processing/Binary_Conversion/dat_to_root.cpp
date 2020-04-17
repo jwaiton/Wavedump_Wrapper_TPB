@@ -14,7 +14,11 @@
  *
  * How to build
  *  $ make dat_to_root
- *
+ * 
+ * or
+ * 
+ * make -f ./Build_Options/Makefile_clang++ dat_to_root
+ * 
  * How to run
  *  Option 1: 
  *  $ ./dat_to_root wave_0.dat
