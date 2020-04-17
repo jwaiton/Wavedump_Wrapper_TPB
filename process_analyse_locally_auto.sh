@@ -2,7 +2,7 @@
 
 echo " -------------------------------"
 date  
-echo " running "
+echo " running  "
 echo " process_analyse_locally_auto.sh "
 echo " -------------------------------"
 
