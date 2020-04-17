@@ -31,7 +31,7 @@ void TCookedAnalyser::Make_hQ_Fixed(){
   
   // Does 70 ns give 10^7 gain?
   float gate_width = 50.; 
-
+  
   string fileName = "hQ_Fixed_";
   string histName = "hQ_Fixed_";
   
@@ -43,7 +43,7 @@ void TCookedAnalyser::Make_hQ_Fixed(){
   printf("\n  %s \n",fileName.c_str());
   
   TFile * outFile = new TFile(fileName.c_str(),"RECREATE",fileName.c_str()); 
-
+  
   int   nBins = 100.;
   float minQ  = -100.0;
   float maxQ  = 900.0;
@@ -51,13 +51,12 @@ void TCookedAnalyser::Make_hQ_Fixed(){
   TH1F * hQ_Fixed = new TH1F(histName.c_str(),"hQ_Fixed;Charge (mV ns);Counts",
 			     nBins,minQ,maxQ);
 
-  
   float wave_mV = 0.0;
   float time_ns = 0.0;
 
   int   nSigSamps = 0;
   int   nBasSamps = 0;
-
+  
   float sig_volts = 0;
   float bas_volts = 0;
 
@@ -66,7 +65,7 @@ void TCookedAnalyser::Make_hQ_Fixed(){
 
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     cookedTree->GetEntry(iEntry);
-
+    
     // zero at start of event
     sig_volts = 0.0;
     bas_volts = 0.0;

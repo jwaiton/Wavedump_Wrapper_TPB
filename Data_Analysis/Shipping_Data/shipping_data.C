@@ -16,7 +16,11 @@
  *   the WM.sh script - located in ../../
  * 
  * How to build
- *  $ make 
+ *  $ make
+ * 
+ *  OR 
+ *  
+ *  $ make -f ./Build_Options/Makefile_clang++ 
  *
  * How to run 
  * $ ./shipping_data PMT <data>
