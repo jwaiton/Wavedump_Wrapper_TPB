@@ -68,7 +68,7 @@ LDFLAGS      += $(ROOTLDFLAGS)
 LIBS         += $(ROOTLIBS) $(SYSLIBS)  
 GLIBS        += $(ROOTGLIBS) $(SYSLIBS)
 
-MAKEDEPEND    = gcc
+MAKEDEPEND    = clang
 
 ifdef WITH_DEBUG
 CXXFLAGS     += -DWITH_DEBUG
