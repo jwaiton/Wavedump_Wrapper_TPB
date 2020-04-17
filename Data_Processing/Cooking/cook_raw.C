@@ -19,6 +19,9 @@
  *    
  * How to build 
  *  $ make 
+ * 
+ *  or
+ * make -f ./Build_Options/Makefile_clang++
  *
  * How to run 
  *
