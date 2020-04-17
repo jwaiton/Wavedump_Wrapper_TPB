@@ -8,6 +8,11 @@ cd $WM_CONVERT
 pwd
 make clean ; make -f ./Build_Options/Makefile_clang++ dat_to_root
 
+# convert binary to basic root version
+cd $WM_CONVERT/DT_Version
+pwd
+make clean ; make -f ../Build_Options/Makefile_clang++ desktop_dat_to_root
+
 # 'cook' basic root file 
 #  o/p includes: ADC, basic variables, Meta data 
 cd $WM_COOK
