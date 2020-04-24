@@ -86,10 +86,13 @@ int main(int argc, char * argv[]){
   // 'N' for non-inverting amp
   char polarity  = 'N';
 
+  float amp_gain = 10.;
+
   for ( int i=2; i<argc; i=i+2 ) {
     if     ( string(argv[i]) == "-d" ) digitiser = *argv[i+1];
     else if( string(argv[i]) == "-s" ) sampling  = *argv[i+1];
     else if( string(argv[i]) == "-p" ) polarity  = *argv[i+1];
+    else if( string(argv[i]) == "-g" ) amp_gain  = stoi(argv[i+1]);
     else {
       PrintUsage();
       return 1;
@@ -157,7 +160,7 @@ int main(int argc, char * argv[]){
     // Apply Equipment 
     // Specific Settings
 
-    float amp_gain = 10.;
+
     //amp_gain = 1.;
     short firstMaskBin = -1; // -1 means no mask
     //firstMaskBin = 1000;
