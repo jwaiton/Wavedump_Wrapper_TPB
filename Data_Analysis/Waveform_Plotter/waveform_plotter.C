@@ -19,7 +19,6 @@
  *  or
  *
  *  $ make -f ./Build_Options/Makefile_clang++
-
  *
  * How to run 
  *  e.g.
@@ -151,4 +150,3 @@ bool Welcome(int argc){
   
   
 }
-

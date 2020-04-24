@@ -78,6 +78,15 @@ int main(int argc, char * argv[]){
 
     //int user_nentries = 10; 
     //cooked_analyser->SetTestMode(user_nentries);
+
+//     //!!!!!
+//     // here
+//     wave_plotter->Waveform('d');
+    
+    
+    
+//     //
+//     //!!!!!!
     
     //-------------------
     //-------------------

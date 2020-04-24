@@ -23,6 +23,8 @@ class TCookedAnalyser {
   FileNameParser * fnp = nullptr;
   TFile * inFile = nullptr;
 
+  TFile * outFile = nullptr; 
+
   // meta data tree for 
   // storing constants
   TTree * metaTree;
