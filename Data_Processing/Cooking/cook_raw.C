@@ -67,6 +67,7 @@
 #include "FileNameParser.h"
 
 bool Welcome(int argc);
+void PrintUsage();
 bool IsFileReady(TFile *, char *);
 
 int main(int argc, char * argv[]){
@@ -74,6 +75,27 @@ int main(int argc, char * argv[]){
   if( !Welcome(argc) )
     return -1;
   
+  // default to VME digitiser
+  char digitiser = 'V';  
+  // CAENs frequency setting system 
+  // only used for digitiser = 'D' 
+  // default '2' = 1 GHz (for desktop digi)
+  char sampling  = '2';  
+  
+  // pulse polarity
+  // 'N' for non-inverting amp
+  char polarity  = 'N';
+
+  for ( int i=2; i<argc; i=i+2 ) {
+    if     ( string(argv[i]) == "-d" ) digitiser = *argv[i+1];
+    else if( string(argv[i]) == "-s" ) sampling  = *argv[i+1];
+    else if( string(argv[i]) == "-p" ) polarity  = *argv[i+1];
+    else {
+      PrintUsage();
+      return 1;
+    }
+  }
+
   TFile * inFile  = nullptr;
   TTree * tree    = nullptr;
 
@@ -82,14 +104,20 @@ int main(int argc, char * argv[]){
   // object used to cook 
   // raw (root) data
   TCooker * cooker = nullptr;
-
+  
   // object used for extracting file ID info 
   // from argv[], namely:
   //  Run, PMT, Test, Location, 
   FileNameParser * fNP =  nullptr;
   
   for( int iFile = 1 ; iFile < argc ; iFile++){
-
+    
+    if(string(argv[iFile]) == "-d" ||
+       string(argv[iFile]) == "-s") {
+      iFile = iFile + 2;
+      continue;
+    }
+       
     //-------------------
     //-------------------
     // Setting Up
@@ -109,10 +137,9 @@ int main(int argc, char * argv[]){
     
     // initalise TCooker object using 
     // tree from input file
-    cooker = new TCooker(tree);
-    //cooker = new TCooker(tree,'D','2','P');// desktop digi, inverting amp
-    //cooker = new TCooker(tree,'D','2','N');// desktop digi, no amp
-       
+    cooker = new TCooker(tree,
+			 digitiser,sampling,polarity); // optional
+    
     // set the cooker object FileID using the
     // FileNameParser object member function
     cooker->SetFileID(fNP->GetFileID());
@@ -151,8 +178,11 @@ int main(int argc, char * argv[]){
     // DAQ info
     //  Print mean trigger rate
     //  Save: rate,timing and event plots
-    gSystem->Exec("mkdir -p ./Plots/DAQ");
-    cooker->DAQ();
+    //  (desktop digitiser not yet implemented)
+    if(digitiser=='V'){
+      gSystem->Exec("mkdir -p ./Plots/DAQ");
+      cooker->DAQ();
+    }
     
     //-------------------
     //-------------------
@@ -185,26 +215,30 @@ bool Welcome(int argc){
 
   printf("\n ------------------------------ \n");
   
-  if(argc == 2){
-    printf("\n  Processing single file \n");
-    printf("\n ------------------------------ \n");
-    return true;
-  }
-  else if  (argc > 2){
-    printf("\n  Processing %d files \n",argc-1);
+  if(argc > 1){
+    printf("\n  Processing file/s \n");
     printf("\n ------------------------------ \n");
     return true;
   }
   else{
     printf("\n  enter file as argument \n");
     printf("\n  e.g. \n");
-    printf("\n  ./cook_raw ./wave_0.dat.root \n\n");
+    printf("\n  ./cook_raw /path/to/wave_0.dat.root \n\n");
     printf("\n ------------------------------ \n");
     return false;
   }
-  
-  
 }
+
+void PrintUsage() {
+  cerr << " Usage: " << endl;
+  cerr << " cook_raw /path/to/file.dat.root [-d desktop character ] [-s sample setting]  "
+       << endl;
+  cerr << " -d options for digitiser: 'V' VME digitiser (default), 'D' Desktop digitiser " 
+       << endl;
+  cerr << " -s options for sample setting (desktop digitiser only): 0 - 5 GHz, 1 - 2.5 GHz, 2 - 1 GHz (default), 3 - .75 GHz "
+       << endl;
+}
+
 
 
 bool IsFileReady(TFile * inFile, char * arg){

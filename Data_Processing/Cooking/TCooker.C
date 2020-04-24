@@ -744,6 +744,7 @@ void TCooker::PrintConstants(){
   meanRate = meanRate/nentries;
   
   //printf("\n mean event rate = %.2f kHz \n",meanRate);
+
   printf("\n Mean trigger frequency is %.2f kHz \n\n",hTrigFreq->GetMean());
   
   SaveDAQ();
