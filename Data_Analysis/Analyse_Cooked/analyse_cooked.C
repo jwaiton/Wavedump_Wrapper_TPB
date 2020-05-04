@@ -36,7 +36,6 @@
  * Dependencies
  *  root.cern - a working version of root is required
  *
- *  FileNameParser
  *  TCookedAnalyser
  */ 
 #include <iostream>

@@ -13,14 +13,12 @@
 #include <vector>
 #include <limits.h>
 
-#include "FileNameParser.h"
 
 using namespace std;
 
 class TCookedAnalyser {
  public :
 
-  FileNameParser * fnp = nullptr;
   TFile * inFile = nullptr;
 
   TFile * outFile = nullptr; 
@@ -38,19 +36,29 @@ class TCookedAnalyser {
   float  Length_ns;
   short  FirstMaskBin;
   float  AmpGain;
-  char   FileID_char[128]; 
-  string FileID; 
+  char   FileID[128]; 
   
-  TBranch * b_SampFreq  = 0;
-  TBranch * b_NSamples  = 0;
-  TBranch * b_NADCBins  = 0;
-  TBranch * b_Range_V   = 0;
-  TBranch * b_nsPerSamp = 0;
-  TBranch * b_mVPerBin  = 0;
-  TBranch * b_Length_ns = 0;
-  TBranch * b_AmpGain   = 0;
+  int    Run;
+  int    PMT;
+  int    Loc;
+  char   Test;
+  int    HVStep;
+
+  TBranch * b_SampFreq     = 0;
+  TBranch * b_NSamples     = 0;
+  TBranch * b_NADCBins     = 0;
+  TBranch * b_Range_V      = 0;
+  TBranch * b_nsPerSamp    = 0;
+  TBranch * b_mVPerBin     = 0;
+  TBranch * b_Length_ns    = 0;
+  TBranch * b_AmpGain      = 0;
   TBranch * b_FirstMaskBin = 0;
-  //TBranch * b_FileID    = 0;
+  TBranch * b_FileID       = 0;
+  TBranch * b_Run          = 0;
+  TBranch * b_PMT          = 0;
+  TBranch * b_Loc          = 0;
+  TBranch * b_Test         = 0;
+  TBranch * b_HVStep       = 0;
 
   //--------------------
   // cooked data
@@ -112,7 +120,10 @@ class TCookedAnalyser {
   
   TH2F * hMin_Peak_Cooked = nullptr;
   
+  void  SetTest(char Test);
   char  GetTest();
+
+  void  SetRun(int Run);
   int   GetRun();
   
   void  Noise();
@@ -204,11 +215,7 @@ TCookedAnalyser::TCookedAnalyser(string path)
     fprintf(stderr,"\n Error, Check File: %s \n",path.c_str());
     return;
   }
-  
-  // set FileID using inFile path
-  fnp = new FileNameParser(path);  
-  FileID = fnp->GetFileID();
-  
+
   Init();
 }
 
@@ -269,13 +276,24 @@ void TCookedAnalyser::InitMeta(){
   metaTree->SetBranchAddress("Length_ns",&Length_ns,&b_Length_ns);
   metaTree->SetBranchAddress("AmpGain",&AmpGain,&b_AmpGain);
   metaTree->SetBranchAddress("FirstMaskBin",&FirstMaskBin,&b_FirstMaskBin);
-
-  //metaTree->SetBranchAddress("FileID",FileID_char,&b_FileID);
+  metaTree->SetBranchAddress("FileID",&FileID,&b_FileID);
   
-  //sprintf(FileID,"%s",FileID_char);
+  metaTree->SetBranchAddress("Run",&Run,&b_Run);
+  metaTree->SetBranchAddress("PMT",&PMT,&b_PMT);
+  metaTree->SetBranchAddress("Loc",&Loc,&b_Loc);
+  metaTree->SetBranchAddress("Test",&Test,&b_Test);
+  metaTree->SetBranchAddress("HVStep",&HVStep,&b_HVStep);
 
   metaTree->GetEntry(0);
   
+  printf("\n ------------------------------ \n");
+  printf("\n FileID = %s ",FileID);
+  printf("\n Run    = %d ",Run);
+  printf("\n PMT    = %d ",PMT);
+  printf("\n Loc    = %d ",Loc);
+  printf("\n Test   = %c ",Test);
+  printf("\n HVStep = %d \n",HVStep);
+
   fLED_Delay = 100.;
   IsTimingDistFitted = false;
   
@@ -327,21 +345,20 @@ void TCookedAnalyser::InitCooked(){
   return;
 }
 
+void TCookedAnalyser::SetTest(char userTest ){
+  Test = userTest;
+}
+
 char TCookedAnalyser::GetTest(){
-  
-  if(fnp)
-    return fnp->GetTest();
-  else
-    return 'E';
+  return Test;
+}
+
+void TCookedAnalyser::SetRun(int userRun ){
+  Run = userRun;
 }
 
 int TCookedAnalyser::GetRun(){
-
-  if(fnp)
-    return fnp->GetRun();
-  else
-    return -1;
+  return Run;
 }
-
 
 #endif // #ifdef TCookedAnalyser_cxx

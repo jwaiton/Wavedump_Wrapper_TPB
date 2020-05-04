@@ -8,11 +8,16 @@
 #include "wmStyle.C"
 
 string TCookedAnalyser::GetCookedTreeID(){
-  return "Cooked_" + FileID;  
+  string CookedTreeID = FileID;
+  return "Cooked_" + CookedTreeID;
 }
 
+// string TCookedAnalyser::GetMetaTreeID(){
+//   return "Meta_" + FileID_str;  
+// }
+
 string TCookedAnalyser::GetMetaTreeID(){
-  return "Meta_" + FileID;  
+  return "Meta_Data";
 }
 
 string TCookedAnalyser::GetFileID(){
