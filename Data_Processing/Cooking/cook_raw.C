@@ -147,6 +147,14 @@ int main(int argc, char * argv[]){
     // FileNameParser object member function
     cooker->SetFileID(fNP->GetFileID());
     
+    //
+    cooker->SetRun(fNP->GetRun());
+    cooker->SetPMT(fNP->GetPMT());
+    cooker->SetLoc(fNP->GetLoc());
+    cooker->SetTest(fNP->GetTest());
+    cooker->SetHVStep(fNP->GetHVStep());
+    //
+
     // Set output file directory 
     // to same as input file directory
     cooker->SetDir(fNP->GetDir());
@@ -154,8 +162,8 @@ int main(int argc, char * argv[]){
     // Optional method:
     // reduce event loop for faster code testing
     // NB no check that this is lower that nentries
-    //int user_nentries = 100000; 
-    //cooker->SetTestMode(user_nentries);
+    // int user_nentries = 100000; 
+    // cooker->SetTestMode(user_nentries);
 
     // Apply Equipment 
     // Specific Settings

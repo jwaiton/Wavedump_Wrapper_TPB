@@ -109,8 +109,10 @@ void TCooker::InitCookedDataTree(){
 
 void TCooker::InitMetaDataTree(){
   
-  string treeName = "Meta_";
-  treeName += GetFileID();
+  string treeName = "Meta_Data";
+
+  //string treeName = "Meta_";
+  //treeName += GetFileID();
 
   metaTree = new TTree(treeName.c_str(),treeName.c_str());
   
@@ -122,9 +124,16 @@ void TCooker::InitMetaDataTree(){
   metaTree->Branch("mVPerBin",&f_mVPerBin,"mVPerBin/F");
   metaTree->Branch("Length_ns",&fLength_ns,"Length_ns/F");
   metaTree->Branch("AmpGain",&fAmpGain,"AmpGain/F");
-  metaTree->Branch("FirstMaskBin",&fFirstMaskBin,"FirstMaskBin/S");
+  metaTree->Branch("FirstMaskBin",&fFirstMaskBin,"FirstMaskBin/S");  
   metaTree->Branch("FileID",FileID,"FileID/C");
-  
+
+  //
+  metaTree->Branch("Run",&fRun,"Run/I");  
+  metaTree->Branch("PMT",&fPMT,"PMT/I");  
+  metaTree->Branch("Loc",&fLoc,"Loc/I");  
+  metaTree->Branch("Test",&fTest,"Test/C");  
+  metaTree->Branch("HVStep",&fHVStep,"HVStep/I");  
+  //
 }
 
 void TCooker::DoCooking(){
@@ -201,11 +210,9 @@ void TCooker::DoCooking(){
 }
 
 
-void TCooker::SetFileID(){
-
-  f_fileID = "fileID";
-
-}
+// void TCooker::SetFileID(){
+//   f_fileID = "fileID";
+// }
 
 void TCooker::SetFileID(string userFileID){
   
@@ -216,6 +223,7 @@ void TCooker::SetFileID(string userFileID){
   
 }
 
+
 void TCooker::SetDir(string userFileDir){
   
   f_fileDir = userFileDir;
@@ -223,6 +231,32 @@ void TCooker::SetDir(string userFileDir){
   printf("\n TCooker object FileDir set to: ");
   printf("\n  %s \n ",f_fileDir.c_str());
   
+}
+
+//
+void TCooker::SetRun(int userRun){
+  
+  fRun = userRun;
+  
+  printf("\n TCooker object Run set to: ");
+  printf("\n  %d \n ",fRun);
+  
+}
+
+void TCooker::SetPMT(int userPMT){
+  fPMT = userPMT;
+}
+
+void TCooker::SetLoc(int userLoc){
+  fLoc = userLoc;
+}
+
+void TCooker::SetTest(char userTest){
+  fTest = userTest;
+}
+
+void TCooker::SetHVStep(int userHVStep){
+  fHVStep = userHVStep;
 }
 
 string TCooker::GetFileID(){
