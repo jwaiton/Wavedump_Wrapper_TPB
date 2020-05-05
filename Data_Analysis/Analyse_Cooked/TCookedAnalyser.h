@@ -264,6 +264,7 @@ void TCookedAnalyser::InitMeta(){
   
   if (!metaTree){
     fprintf( stderr, "\n Error: no meta tree  \n ");
+    fprintf( stderr, "\n Was this file created with the latest cook_raw ? \n ");
     return;
   }
 

@@ -78,22 +78,13 @@ int main(int argc, char * argv[]){
     //int user_nentries = 10; 
     //cooked_analyser->SetTestMode(user_nentries);
 
-//     //!!!!!
-//     // here
-//     wave_plotter->Waveform('d');
-    
-    
-    
-//     //
-//     //!!!!!!
-    
     //-------------------
     //-------------------
     // Monitoring
     
     cooked_analyser->PrintMetaData();
 
-    gSystem->Exec("mkdir -p ./Plots/Noise");
+    
     cooked_analyser->Noise();
     
     //-------------------
@@ -104,7 +95,6 @@ int main(int argc, char * argv[]){
     
     switch(test){
     case('D'):
-      gSystem->Exec("mkdir -p ./Plots/Dark");
       cooked_analyser->Dark();
       break;
     default:
