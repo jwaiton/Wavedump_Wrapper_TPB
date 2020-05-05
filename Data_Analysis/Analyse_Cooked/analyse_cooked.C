@@ -41,7 +41,6 @@
 #include <iostream>
 
 #include <string>
-#include "TSystem.h"
 #include "TCookedAnalyser.h"
 
 #include "TF1.h"
@@ -84,7 +83,6 @@ int main(int argc, char * argv[]){
     
     cooked_analyser->PrintMetaData();
 
-    
     cooked_analyser->Noise();
     
     //-------------------
@@ -100,22 +98,17 @@ int main(int argc, char * argv[]){
     default:
       //-------------
       // Timing
-      gSystem->Exec("mkdir -p ./Plots/Timing");
       
       // Mean LED pulse peak time
       cooked_analyser->Fit_Peak_Time_Dist();
       
       //-------------
       // Charge
-      gSystem->Exec("mkdir -p ./Plots/Charge");
-      
       // Save a new root file with charge hist
       cooked_analyser->Make_hQ_Fixed();
 
       //-------------
       // Pulse fitting test
-      gSystem->Exec("mkdir -p ./Plots/PulseFit");
-      
       // towards rise and fall time extraction
       //TF1 * fWave = cooked_analyser->Fit_Pulse();
       
