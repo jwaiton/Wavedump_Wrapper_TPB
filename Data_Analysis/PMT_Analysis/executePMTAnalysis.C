@@ -1,6 +1,10 @@
 /*****************************************************
  * A program to process raw root files from wavedump
  *
+ * NB This program is replaced by analyse_cooked
+ * but is kept to preserve routines not yet migrated
+ * across
+ *
  * Author 
  *  gary.smith@ed.ac.uk
  *  01 01 2019
