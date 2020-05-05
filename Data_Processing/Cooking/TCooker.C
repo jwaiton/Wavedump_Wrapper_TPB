@@ -131,7 +131,7 @@ void TCooker::InitMetaDataTree(){
   metaTree->Branch("Run",&fRun,"Run/I");  
   metaTree->Branch("PMT",&fPMT,"PMT/I");  
   metaTree->Branch("Loc",&fLoc,"Loc/I");  
-  metaTree->Branch("Test",&fTest,"Test/b");  
+  metaTree->Branch("Test",&fTest,"Test/B");  
   metaTree->Branch("HVStep",&fHVStep,"HVStep/I");  
   //
 }
