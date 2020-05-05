@@ -325,11 +325,6 @@ void TCookedAnalyser::SaveNoise(string outPath){
   sys_command += outPath;
   gSystem->Exec(sys_command.c_str());
   
-  cout << sys_command << endl;
-  cout << sys_command << endl;
-  cout << sys_command << endl;
- 
-
   printf("\n Saving Noise Monitoring Plots \n\n");
 
   InitCanvas();
