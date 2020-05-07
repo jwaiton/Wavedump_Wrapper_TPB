@@ -94,7 +94,7 @@ int main(int argc, char * argv[]){
     switch(test){
     case('D'):
       cooked_analyser->Dark();
-      break;
+      //break;
     default:
       //-------------
       // Timing
