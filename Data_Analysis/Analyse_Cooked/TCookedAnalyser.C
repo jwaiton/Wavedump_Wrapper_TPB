@@ -188,6 +188,12 @@ void TCookedAnalyser::Fit_Peak_Time_Dist(){
   hPeakTime->GetFunction("gaus")->SetLineColor(kBlue);
 
   hPeakTime->Draw();  
+
+  string outPath = "./Plots/Timing/";
+  string sys_command = "mkdir -p ";
+  sys_command += outPath;
+  gSystem->Exec(sys_command.c_str());
+
   canvas->SaveAs("./Plots/Timing/hPeakTime.pdf");
  
   DeleteCanvas();
