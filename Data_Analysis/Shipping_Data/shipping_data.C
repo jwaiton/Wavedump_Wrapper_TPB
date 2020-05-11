@@ -38,19 +38,30 @@
  */ 
 
 #include <iostream>
+#include <ctype.h>
 #include <string>
 #include "ShippingData.h"
 
 using namespace std;
 
 void Welcome();
-
+void getData();
 int main(int argc, char * argv[]){
   
   char   chrPMT[20];//, chrDat;
   string strPMT, strDat;
   int    pmt = 130;
+  //TODO: Validate the input
+  //TODO: Use getopt to get command flags
   
+
+  if (c != -1) {
+    char *value = NULL;
+    value = optarg;
+    printf("argument: %s\n", value);
+  }
+  printf("%d", c);
+
   if( argc == 1 ){
       Welcome();
     printf("\n Which PMT? ");
@@ -66,7 +77,7 @@ int main(int argc, char * argv[]){
   //strDat = argv[2];
   //chrDat = strDat[0];
   //}    
-    
+      
   pmt = stoi(strPMT);
 
   ShippingData * ship_data = new ShippingData(pmt);
@@ -82,6 +93,29 @@ void Welcome(){
   printf("\n      --------------------    ");
   printf("\n      --------------------  \n");
   printf("\n ------------------------------ \n");
+}
 
-  
+void getData(){
+
+  printf("I haven't actually made this function yet\n");
+  printf("Please come back later.\n");
+  while (c = getopt(argc, argv, "padgn:") != -1) {
+    switch (c) {
+      case 'p':
+        //peak to valley
+        break;
+      case 'a':
+        //afterpulsing
+        break;
+      case 'd':
+        //dark rate
+      case 'g':
+        //gain
+        break;
+      case 'n':
+        //nominal voltage
+        break;
+    }
+
+  }
 }
