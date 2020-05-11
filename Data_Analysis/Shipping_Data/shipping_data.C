@@ -45,22 +45,17 @@
 using namespace std;
 
 void Welcome();
-void getData();
+void GetData(int argc, char * argv[]);
 int main(int argc, char * argv[]){
   
   char   chrPMT[20];//, chrDat;
   string strPMT, strDat;
   int    pmt = 130;
   //TODO: Validate the input
-  //TODO: Use getopt to get command flags
-  
 
-  if (c != -1) {
-    char *value = NULL;
-    value = optarg;
-    printf("argument: %s\n", value);
-  }
-  printf("%d", c);
+  //TODO: Use getopt to get command flags:
+  //GetData(argc, argv);
+
 
   if( argc == 1 ){
       Welcome();
@@ -95,26 +90,38 @@ void Welcome(){
   printf("\n ------------------------------ \n");
 }
 
-void getData(){
+void GetData(int argc, char *argv[]){
+  int c; 
 
   printf("I haven't actually made this function yet\n");
   printf("Please come back later.\n");
-  while (c = getopt(argc, argv, "padgn:") != -1) {
+
+  while ((c = getopt(argc, argv, "padgn:")) != -1) {
     switch (c) {
       case 'p':
         //peak to valley
+        printf("Peak to Valley: \n");
         break;
       case 'a':
         //afterpulsing
+        printf("After pulsing: \n");
         break;
       case 'd':
         //dark rate
+        printf("Dark Noise Rate: \n");
       case 'g':
         //gain
+        printf("Factory Gain: \n");
         break;
       case 'n':
+        printf("Nominal Voltage: \n");
         //nominal voltage
         break;
+      case '?':
+        printf("Unknown input\n");
+        break;
+      default:
+        abort();
     }
 
   }
