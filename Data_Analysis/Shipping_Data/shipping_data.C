@@ -145,6 +145,14 @@ void GetData(int argc, char *argv[]){
         printf("PTV: %f\n", ship_data->GetPTV());
       case 'a':
         //Prints all of the above
+        printf("Sk: %fuA/Im\n", ship_data->GetSk());
+        printf("Skb: %f\n", ship_data->GetSkb());
+        printf("Sp: %fA/Im\n", ship_data->GetSp());
+        printf("Idb: %fnA\n", ship_data->GetIdb());
+        printf("EBB: %dV\n", ship_data->GetEBB());
+        printf("DR: %dcps \n", ship_data->GetDR());
+        printf("TTS: %fns\n", ship_data->GetTTS());
+        printf("PTV: %f\n", ship_data->GetPTV());
         break;
       /*
       case 'T':
@@ -183,6 +191,7 @@ ShippingData * MakeShipData(int pmt){
 void DeleteShipData(ShippingData * ship_data) {
   delete ship_data;
 }
+
 void HelpFunction(){
   /*
   HelpFunction prints a brief description of how to use the program
