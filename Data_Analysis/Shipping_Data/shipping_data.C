@@ -54,7 +54,7 @@ int main(int argc, char * argv[]){
   int    pmt = 130; //default pmt
 
   //Some scenarios under which code won't work properly
-  if (argc == 3){
+  if (argc > 2){
     //If flags are entered, use flags
     if (argc < 3) HelpFunction(); //make sure a pmt number is entered
     else GetData(argc, argv); //get data using the flags
@@ -64,8 +64,8 @@ int main(int argc, char * argv[]){
     HelpFunction();
   }
   else if (argc == 2){
-    pmt = atoi(argv[1]);
-    if (pmt == 0) printf("Please specify a PMT.\n");
+    pmt = atoi(argv[argc-1]);
+    if (pmt == 0) HelpFunction();
     else {
       ShippingData *ship_data = MakeShipData(pmt);
       DeleteShipData(ship_data);
@@ -78,7 +78,7 @@ int main(int argc, char * argv[]){
 
 void GetData(int argc, char *argv[]){
   int c; 
-  int pmt = atoi(argv[2]);//pmt should be last option
+  int pmt = atoi(argv[argc-1]);//pmt should be last option
   int i = 0; //counts how many times the loop executes
   //TODO: Add a check to make sure the above option is valid.
   ShippingData *ship_data = MakeShipData(pmt);
