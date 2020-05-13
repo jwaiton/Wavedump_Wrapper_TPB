@@ -53,7 +53,6 @@ int main(int argc, char * argv[]){
 
   int    pmt = 130; //default pmt
 
-  //Some scenarios under which code won't work properly
   if (argc > 2){
     //If flags are entered, use flags
     if (argc < 3) HelpFunction(); //make sure a pmt number is entered
@@ -79,8 +78,11 @@ int main(int argc, char * argv[]){
 void GetData(int argc, char *argv[]){
   int c; 
   int pmt = atoi(argv[argc-1]);//pmt should be last option
+  if (pmt == 0) {
+    HelpFunction();
+    return;
+  }
   int i = 0; //counts how many times the loop executes
-  //TODO: Add a check to make sure the above option is valid.
   ShippingData *ship_data = MakeShipData(pmt);
 
   while ((c = getopt(argc, argv, "(kbsIedtphaT):")) != -1) {
@@ -130,8 +132,8 @@ void GetData(int argc, char *argv[]){
         break;
       */
       case 'h':
-        printf("Help I need an adult \n");
-        //TODO: Write a function to display help options
+        HelpFunction();
+        break;
       case '?': //unknown input
         HelpFunction();
         break;
