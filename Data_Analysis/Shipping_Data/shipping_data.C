@@ -44,7 +44,6 @@
 
 using namespace std;
 
-void Welcome();
 void GetData(int argc, char * argv[]);
 ShippingData * MakeShipData(int pmt);
 void DeleteShipData(ShippingData * ship_data);
@@ -52,9 +51,7 @@ void HelpFunction();
 
 int main(int argc, char * argv[]){
 
-  char   chrPMT[20];//, chrDat;
-  string strPMT, strDat;
-  int    pmt = 130;
+  int    pmt = 130; //default pmt
 
   //Some scenarios under which code won't work properly
   if (argc == 3){
@@ -63,48 +60,20 @@ int main(int argc, char * argv[]){
     else GetData(argc, argv); //get data using the flags
 
   }
+  else if (argc == 2 && ((string)argv[1] == "-h" || (string)argv[1] == "-H")){
+    HelpFunction();
+  }
   else if (argc == 2){
-    //assume that a PMT has been entered
     pmt = atoi(argv[1]);
-    //TODO: print all the shipping data for the value
-    ShippingData *ship_data = MakeShipData(pmt);
-    DeleteShipData(ship_data);
+    if (pmt == 0) printf("Please specify a PMT.\n");
+    else {
+      ShippingData *ship_data = MakeShipData(pmt);
+      DeleteShipData(ship_data);
+    }
   }
   else HelpFunction();
   
-
-/*
-  if( argc == 1 ){
-      Welcome();
-    printf("\n Which PMT? ");
-    scanf("%s",chrPMT);    
-    strPMT = chrPMT;
-  }
-  else if( argc == 2 ){
-    Welcome();
-    strPMT = argv[1];
-  }
-  //else if( argc == 3 ){
-  //strPMT = argv[1];
-  //strDat = argv[2];
-  //chrDat = strDat[0];
-  //}    
-      
-  pmt = stoi(strPMT);
-
-  ShippingData * ship_data = new ShippingData(pmt);
-*/
   return 1;
-}
-
-void Welcome(){
-
-  printf("\n      --------------------    ");
-  printf("\n      --------------------  \n");
-  printf("\n         shipping_data      \n");
-  printf("\n      --------------------    ");
-  printf("\n      --------------------  \n");
-  printf("\n ------------------------------ \n");
 }
 
 void GetData(int argc, char *argv[]){
@@ -150,7 +119,7 @@ void GetData(int argc, char *argv[]){
         printf("Sp: %fA/Im\n", ship_data->GetSp());
         printf("Idb: %fnA\n", ship_data->GetIdb());
         printf("EBB: %dV\n", ship_data->GetEBB());
-        printf("DR: %dcps \n", ship_data->GetDR());
+        printf("Dark Count: %dcps \n", ship_data->GetDR());
         printf("TTS: %fns\n", ship_data->GetTTS());
         printf("PTV: %f\n", ship_data->GetPTV());
         break;
