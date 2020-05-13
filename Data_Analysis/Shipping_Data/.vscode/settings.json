@@ -2,6 +2,7 @@
     "files.associations": {
         "shipping_data.C": "cpp",
         "analyse_cooked.C": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "ShippingData.C": "cpp"
     }
 }
