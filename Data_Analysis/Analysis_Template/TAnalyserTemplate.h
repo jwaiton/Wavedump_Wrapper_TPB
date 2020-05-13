@@ -118,9 +118,8 @@ class TAnalyserTemplate {
 
   //--------------------
   // PMT DATA
-  // (file specific constants)
 
-  // The TTree is an ntuple containing
+  // This TTree is an ntuple containing
   // the digitiser data.
   TTree * cookedTree;
   
@@ -132,7 +131,7 @@ class TAnalyserTemplate {
   vector <short> * ADC = 0;   
   
   // 'Cooked' variables
-  // event level variables
+  //  (event level)
   float peak_mV;
   short peak_samp;
   float min_mV;
