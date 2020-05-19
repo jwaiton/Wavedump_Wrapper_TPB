@@ -88,7 +88,7 @@ int main(int argc, char * argv[]){
 
   float amp_gain = 10.;
 
-  for ( int i=2; i<argc; i=i+2 ) {
+  for ( int i = 2; i < argc ; i = i+2 ) {
     if     ( string(argv[i]) == "-d" ) digitiser = *argv[i+1];
     else if( string(argv[i]) == "-s" ) sampling  = *argv[i+1];
     else if( string(argv[i]) == "-p" ) polarity  = *argv[i+1];

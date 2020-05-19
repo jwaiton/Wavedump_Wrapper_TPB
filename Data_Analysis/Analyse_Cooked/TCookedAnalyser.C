@@ -116,7 +116,6 @@ void TCookedAnalyser::Make_hQ_Fixed(){
   
   gPad->SetLogy(false);
   
-
   outFile->cd();
   outFile->Write();
   outFile->Delete();
