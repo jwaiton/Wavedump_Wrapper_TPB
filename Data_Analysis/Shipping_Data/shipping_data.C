@@ -100,6 +100,7 @@ void GetData(int argc, char *argv[]){
       case 's':
         //Sp
         printf("Sp: %fA/Im\n", ship_data->GetSp());
+	break;
       case 'I':
         //Idb 
         printf("Idb: %fnA\n", ship_data->GetIdb());
@@ -116,6 +117,7 @@ void GetData(int argc, char *argv[]){
         break;
       case 'p':
         printf("PTV: %f\n", ship_data->GetPTV());
+	break;
       case 'a':
         //Prints all of the above
         printf("Sk: %fuA/Im\n", ship_data->GetSk());
