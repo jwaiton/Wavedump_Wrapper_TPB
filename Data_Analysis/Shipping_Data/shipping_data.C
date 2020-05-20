@@ -52,12 +52,13 @@ void DeleteShipData(ShippingData * ship_data);
 void HelpFunction();
 
 int main(int argc, char * argv[]){
-  
+
   int    pmt = 130; //default pmt
+  //Decide what to show the user;
 
   if (argc > 2){
     //If flags are entered, use flags
-    if (argc < 3) HelpFunction(); //make sure a pmt number is entered
+    if (argc < 3) HelpFunction(); //make sure a pmt number is entered; I've just realised this will never be called.
     else GetData(argc, argv); //get data using the flags
 
   }
@@ -69,6 +70,16 @@ int main(int argc, char * argv[]){
     if (pmt == 0) HelpFunction();
     else {
       ShippingData *ship_data = MakeShipData(pmt);
+      //TODO: Make showing the units optional.
+        printf("Information for PMT %d:\n", pmt);
+        printf("Sk: %fuA/Im\n", ship_data->GetSk());
+        printf("Skb: %f\n", ship_data->GetSkb());
+        printf("Sp: %fA/Im\n", ship_data->GetSp());
+        printf("Idb: %fnA\n", ship_data->GetIdb());
+        printf("EBB: %dV\n", ship_data->GetEBB());
+        printf("Dark Count: %dcps \n", ship_data->GetDR());
+        printf("TTS: %fns\n", ship_data->GetTTS());
+        printf("PTV: %f\n", ship_data->GetPTV());
       DeleteShipData(ship_data);
     }
   }
@@ -80,54 +91,72 @@ int main(int argc, char * argv[]){
 void GetData(int argc, char *argv[]){
   int c; 
   int pmt = atoi(argv[argc-1]);//pmt should be last option
+
   if (pmt == 0) {
     HelpFunction();
     return;
   }
   int i = 0; //counts how many times the loop executes
   ShippingData *ship_data = MakeShipData(pmt);
+  //potential alternative: use a map to hold the following data
+  bool showunits = false;
+  bool showsk = false;
+  bool showskb = false;
+  bool showsp = false;
+  bool showidb = false;
+  bool showebb = false;
+  bool showdr = false;
+  bool showtts =false;
+  bool showptv = false;
 
-  while ((c = getopt(argc, argv, "(kbsIedtphaT):")) != -1) {
+  while ((c = getopt(argc, argv, "(kbsIedtphaTu):")) != -1) {
     switch (c) {
       case 'k':
         //Sk:
-        printf("Sk: %fuA/Im\n", ship_data->GetSk());
+        //printf("Sk: %fuA/Im\n", ship_data->GetSk());
+        showsk = true;
         break;
       case 'b':
         //Skb
-        printf("Skb: %f\n", ship_data->GetSkb());
+        //printf("Skb: %f\n", ship_data->GetSkb());
+        showskb = true;
         break;
       case 's':
         //Sp
-        printf("Sp: %fA/Im\n", ship_data->GetSp());
-	break;
+        //printf("Sp: %fA/Im\n", ship_data->GetSp());
+        showsp = true;
+	      break;
       case 'I':
         //Idb 
-        printf("Idb: %fnA\n", ship_data->GetIdb());
+        //printf("Idb: %fnA\n", ship_data->GetIdb());
+        showidb = true;
         break;
       case 'e':
-        printf("EBB: %dV\n", ship_data->GetEBB());
+        showebb = true;
         //nominal voltage?
         break;
       case 'd':
-        printf("Dark Count: %dcps \n", ship_data->GetDR());
+        showdr = true;
         break;
       case 't':
-        printf("TTS: %fns\n", ship_data->GetTTS());
+        showtts = true;
         break;
       case 'p':
-        printf("PTV: %f\n", ship_data->GetPTV());
-	break;
+        showptv = true;
+        break;
+      case 'u':
+        showunits = true;
+        break;
       case 'a':
         //Prints all of the above
-        printf("Sk: %fuA/Im\n", ship_data->GetSk());
-        printf("Skb: %f\n", ship_data->GetSkb());
-        printf("Sp: %fA/Im\n", ship_data->GetSp());
-        printf("Idb: %fnA\n", ship_data->GetIdb());
-        printf("EBB: %dV\n", ship_data->GetEBB());
-        printf("Dark Count: %dcps \n", ship_data->GetDR());
-        printf("TTS: %fns\n", ship_data->GetTTS());
-        printf("PTV: %f\n", ship_data->GetPTV());
+        showsk = true;
+        showskb = true;
+        showsp = true;
+        showidb = true;
+        showebb = true;
+        showdr = true;
+        showtts = true;
+        showptv = true;
         break;
       /*
       case 'T':
@@ -147,7 +176,22 @@ void GetData(int argc, char *argv[]){
     }//exit switch 
     i += 1;
   }//exit while loop
-  if (i == 0) HelpFunction();
+
+  if (i == 0) {
+    HelpFunction();
+    return;
+  }
+  
+  //I'm only using the ternary (?) operator because I wanted to seem clever.
+  if (showsk) printf("Sk: %f %s\n", ship_data->GetSk(), showunits ? "uA/Im" : "");
+  if (showskb) printf("Skb: %f\n", ship_data->GetSkb());
+  if (showsp) printf("Sp: %f %s\n", ship_data->GetSp(), showunits ? "A/Im" : "");
+  if (showidb) printf("Idb: %f %s\n", ship_data->GetIdb(), showunits ? "nA" : "");
+  if (showebb) printf("EBB: %d %s\n", ship_data->GetEBB(), showunits ? "V" : "");
+  if (showdr) printf("DR: %d %s\n", ship_data->GetDR(), showunits ? "cps" : "");
+  if (showtts) printf("TTS: %f %s\n", ship_data->GetTTS(), showunits ? "ns" : "");
+  if (showptv) printf("PTV: %f\n", ship_data->GetPTV());
+
   DeleteShipData(ship_data);
 }
 int WhichPMT(){
