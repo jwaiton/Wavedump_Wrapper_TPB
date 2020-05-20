@@ -42,6 +42,8 @@
 #include <string>
 #include "ShippingData.h"
 
+#include <unistd.h>
+
 using namespace std;
 
 void GetData(int argc, char * argv[]);
@@ -156,7 +158,7 @@ int WhichPMT(){
   return stoi(sPMT);
 }
 ShippingData * MakeShipData(int pmt){
-  ShippingData *ship_data = new ShippingData(pmt);
+  ShippingData *ship_data = new ShippingData(pmt,0);
   return ship_data;
 }
 void DeleteShipData(ShippingData * ship_data) {
