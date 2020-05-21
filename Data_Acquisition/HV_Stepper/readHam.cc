@@ -1,4 +1,4 @@
-#include "./include/PMTParser.h"
+#include "PMTParser.h"
 #include <vector>
 #include <string>
 #include <iostream>
@@ -11,9 +11,7 @@
 #include "TMath.h"
 
 // command line parsing
-#include "./include/cxxopts.hpp" 
-//./include/... is a temporary way of getting some file organisation.
-
+#include "cxxopts.hpp" 
 
 
 const double alpha = 6.9;
