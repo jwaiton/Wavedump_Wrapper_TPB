@@ -50,6 +50,8 @@ void GetData(int argc, char * argv[]);
 ShippingData * MakeShipData(int pmt);
 void DeleteShipData(ShippingData * ship_data);
 void HelpFunction();
+void ShowData(int pmt, bool showsk, bool showskb, bool showsp, bool showidb, bool showebb, 
+bool showdr, bool showtts, bool showptv, bool showname, bool showunits);
 
 int main(int argc, char * argv[]){
 
@@ -69,18 +71,7 @@ int main(int argc, char * argv[]){
     pmt = atoi(argv[argc-1]);
     if (pmt == 0) HelpFunction();
     else {
-      ShippingData *ship_data = MakeShipData(pmt);
-      //TODO: Make showing the units optional.
-        printf("Information for PMT %d:\n", pmt);//comment
-        printf("Sk: %fuA/Im\n", ship_data->GetSk());
-        printf("Skb: %f\n", ship_data->GetSkb());
-        printf("Sp: %fA/Im\n", ship_data->GetSp());
-        printf("Idb: %fnA\n", ship_data->GetIdb());
-        printf("EBB: %dV\n", ship_data->GetEBB());
-        printf("Dark Count: %dcps \n", ship_data->GetDR());
-        printf("TTS: %fns\n", ship_data->GetTTS());
-        printf("PTV: %f\n", ship_data->GetPTV());
-      DeleteShipData(ship_data);
+      ShowData(pmt, true, true, true, true, true, true, true, true, false, false);
     }
   }
   else HelpFunction();
@@ -97,7 +88,7 @@ void GetData(int argc, char *argv[]){
     return;
   }
   int i = 0; //counts how many times the loop executes
-  ShippingData *ship_data = MakeShipData(pmt);
+  //ShippingData *ship_data = MakeShipData(pmt);
   //potential alternative: use a map to hold the following data
   bool showunits = false;
   bool showsk = false;
@@ -108,8 +99,9 @@ void GetData(int argc, char *argv[]){
   bool showdr = false;
   bool showtts =false;
   bool showptv = false;
+  bool showname = false;
 
-  while ((c = getopt(argc, argv, "(kbsIedtphaTu):")) != -1) {
+  while ((c = getopt(argc, argv, "(kbsIedtphaTun):")) != -1) {
     switch (c) {
       case 'k':
         //Sk:
@@ -147,6 +139,9 @@ void GetData(int argc, char *argv[]){
       case 'u':
         showunits = true;
         break;
+      case 'n':
+        showname = true;
+        break;
       case 'a':
         //Prints all of the above
         showsk = true;
@@ -182,7 +177,21 @@ void GetData(int argc, char *argv[]){
     return;
   }
   
-  //I'm only using the ternary (?) operator because I wanted to seem clever.
+  //show units/names with no other options selected?
+  /*
+  if ((showname || showunits) && (!showsk && !showskb && !showsp && !showidb && !showebb && !showdr && !showtts && !showptv)) {
+    //I'm so sorry for this if statement
+    showsk = showskb = showsp = showidb = showebb = showdr = showtts = showptv = true;
+  }
+  */
+
+  ShowData(pmt, showsk, showskb, showsp, showidb, showebb, showdr, showtts, showptv, showname, showunits);
+
+}
+
+void ShowData(int pmt, bool showsk, bool showskb, bool showsp, bool showidb, bool showebb, 
+bool showdr, bool showtts, bool showptv, bool showname, bool showunits){
+  ShippingData *ship_data = MakeShipData(pmt);
   if (showsk) printf("Sk: %f %s\n", ship_data->GetSk(), showunits ? "uA/Im" : "");
   if (showskb) printf("Skb: %f\n", ship_data->GetSkb());
   if (showsp) printf("Sp: %f %s\n", ship_data->GetSp(), showunits ? "A/Im" : "");
@@ -191,7 +200,6 @@ void GetData(int argc, char *argv[]){
   if (showdr) printf("DR: %d %s\n", ship_data->GetDR(), showunits ? "cps" : "");
   if (showtts) printf("TTS: %f %s\n", ship_data->GetTTS(), showunits ? "ns" : "");
   if (showptv) printf("PTV: %f\n", ship_data->GetPTV());
-
   DeleteShipData(ship_data);
 }
 int WhichPMT(){
@@ -214,7 +222,6 @@ void DeleteShipData(ShippingData * ship_data) {
 void HelpFunction(){
   /*
   HelpFunction prints a brief description of how to use the program
-  TODO: Add units
   */
   printf("Usage:\n");
   printf("shipping_data <options> [pmt number]\n\n");
