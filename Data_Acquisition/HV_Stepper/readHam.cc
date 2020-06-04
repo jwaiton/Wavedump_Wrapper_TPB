@@ -1,4 +1,3 @@
-#include "PMTParser.h"
 #include <vector>
 #include <string>
 #include <iostream>
@@ -8,99 +7,48 @@
 #include <cmath>
 #include <utility>
 
-#include "TMath.h"
-
+#include "VoltageSteps.h"
 // command line parsing
 #include "cxxopts.hpp" 
 
+void createTree(std::string filename, PMTs& data);
 
-const double alpha = 6.9;
-const double minGain = 0.3;
-const double maxGain = 2;
+int main(int argc, char* argv[]){
 
-double toHV(double gain, double v){
-  return v*std::pow(gain, 1/alpha); 
-}
+  // set up command line parser
+  cxxopts::Options options("readHam", "Reader of Hammatsu files");
+  options.add_options()
+    ("i,input", "Input File name", cxxopts::value<std::string>()->default_value("PMTdata.csv"))
+    ("o,output","Output File name", cxxopts::value<std::string>()->default_value("HVScan-new.txt"))
+    ("r,recreate","recreate", cxxopts::value<bool>()->default_value("false"))
+    ("g,flatGain","flat gain", cxxopts::value<bool>()->default_value("false"))
+    ;
+  auto result = options.parse(argc, argv);
 
-std::pair<double,double> hvRange(double vnom){
-
-  double minHV = toHV(minGain,vnom); 
-  double maxHV = toHV(maxGain,vnom); 
-  maxHV  = std::min(2000.,maxHV); // PMT only goes to 2000
-  return std::make_pair(minHV,maxHV);
-}
-
-int INTV(double val){
-  // convert double voltage to int
-  return 10*TMath::Nint<double>(val/10.);
-}
-
-const double nStep = 5;
-
-void hvSteps(std::pair<double,double> hv,std::vector<int>& voltages){
-
-  // hv steps flat in HV
-  double stepSize = (hv.second -hv.first)/float(nStep - 1);
-  for (int i = 0; i < nStep; ++i){
-    int v = INTV(hv.first + stepSize*i);
-    voltages.push_back(v);
-  }
-}
-
-void gainSteps(std::vector<double>& gains){
-  double stepSize = (maxGain -minGain)/float(nStep - 1);
-  for (int i = 0; i < nStep; ++i){
-    gains.push_back(minGain + stepSize*i);
-  }
-}
-
-void gainsToHV(std::vector<int>& voltages, double v){
-
-  std::vector<double> gains;
-  gainSteps(gains);
-  for (auto step: gains){
-    voltages.push_back(INTV(toHV(step,v)));
-  }
-}
-
-
-void createHVScanFile(std::string filename, PMTs& data, bool flatGain,bool recreate){
-
-  std::ofstream myfile;
-  if (recreate){
-    myfile.open(filename, std::ios_base::out);
-  }
-  else {
-     myfile.open(filename,std::ios_base::app | std::ios_base::out);
-  }
+  // get the options we parse
+  std::string inputfile =   result["i"].as<std::string>();
+  std::string outputfile =  result["o"].as<std::string>();
+  bool flatGain = result["g"].as<bool>();
+  bool recreate=  result["r"].as<bool>();
   
-  for (auto pmt: data){
+  PMTs data;
+  fillPMTData(inputfile,data);
 
-    std::vector<int> voltage;
-    if (flatGain == false){
-      // flat HV
-      std::pair<double,double> hv = hvRange(pmt.workingVoltage());
-      hvSteps(hv,voltage);
-    }
-    else {
-      gainsToHV(voltage,pmt.workingVoltage());      
-    }
-    // nominal
-    voltage.push_back(int(pmt.workingVoltage()));
-    
-    std::stringstream stream;
-    stream << pmt.serial();
-    for (auto i = 0; i< voltage.size();++i){
-      stream << "," << voltage[i];
-    }
-    stream << std::endl;
-    myfile << stream.str();
-  }
-  myfile.close();
-}
+  // example of printing out
+  //  for (auto pmt : data){
+  //  std::cout << pmt << std::endl;
+  // }
+  
+  // making a scan file
+  VoltageSteps VoltageStep;
+  VoltageStep.createHVScanFile(outputfile,data,flatGain,recreate);
+  
+  // making a tree
+  //createTree("PMTData.root",data);
+  
+  return 1;
 
-#include "TTree.h"
-#include "TFile.h"
+}//main
 
 void createTree(std::string filename, PMTs& data){
 
@@ -132,43 +80,3 @@ void createTree(std::string filename, PMTs& data){
   file->Close();
 }
 
-
-/* g++ -std=c++11  -I/Users/needham/cern/root-build/include readHam.cc -o readHam -L/Users/needham/cern/root-build/lib -Wl,-rpath,/Users/needham/cern/root-build/lib -lCore -lRIO -lRooFit -lRooFitCore -lRooStats -lHist -lTree -lMatrix -lPhysics -lMathCore */
-
-
-
-int main(int argc, char* argv[]){
-
-  // set up command line parser
-  cxxopts::Options options("readHam", "Reader of Hammatsu files");
-  options.add_options()
-    ("i,input", "Input File name", cxxopts::value<std::string>()->default_value("PMTdata.csv"))
-    ("o,output","Output File name", cxxopts::value<std::string>()->default_value("HVScan-new.txt"))
-    ("r,recreate","recreate", cxxopts::value<bool>()->default_value("false"))
-    ("g,flatGain","flat gain", cxxopts::value<bool>()->default_value("false"))
-    ;
-  auto result = options.parse(argc, argv);
-
-  // get the options we parse
-  std::string inputfile =   result["i"].as<std::string>();
-  std::string outputfile =  result["o"].as<std::string>();
-  bool flatGain = result["g"].as<bool>();
-  bool recreate=  result["r"].as<bool>();
-  
-  PMTs data;
-  fillPMTData(inputfile,data);
-
-  // example of printing out
-  //  for (auto pmt : data){
-  //  std::cout << pmt << std::endl;
-  // }
-  
-  // making a scan file
-  createHVScanFile(outputfile,data,flatGain,recreate);
-  
-  // making a tree
-  //createTree("PMTData.root",data);
-  
-  return 1;
-
-}
