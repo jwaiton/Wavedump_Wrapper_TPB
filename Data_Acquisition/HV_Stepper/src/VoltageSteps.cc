@@ -1,10 +1,11 @@
 #include "VoltageSteps.h"
 
+/*
 VoltageSteps::VoltageSteps(){
     //constructor, just to see if it works.
     std::cout << "Hello There" << std::endl;
 }
-
+*/
 double VoltageSteps::toHV(double gain, double v){
   return v*std::pow(gain, 1/alpha); 
 }

@@ -32,7 +32,7 @@ public:
     void createHVScanFile(std::string filename, 
     PMTs& data, bool flatGain,bool recreate);
     void createTree(std::string filename, PMTs& data);
-    VoltageSteps();
+    //VoltageSteps(); Not used
     //TODO: Create the tree in the constructor.
 
 };
