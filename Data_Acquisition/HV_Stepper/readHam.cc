@@ -12,7 +12,7 @@
 #include "cxxopts.hpp" 
 
 void createTree(std::string filename, PMTs& data);
-
+void ShowOpts();
 int main(int argc, char* argv[]){
 
   // set up command line parser
@@ -25,6 +25,10 @@ int main(int argc, char* argv[]){
     ;
   auto result = options.parse(argc, argv);
 
+  if (argc == 1) {
+    ShowOpts();
+    return -1;
+  }
   // get the options we parse
   std::string inputfile =   result["i"].as<std::string>();
   std::string outputfile =  result["o"].as<std::string>();
@@ -78,5 +82,16 @@ void createTree(std::string filename, PMTs& data){
   }
   tree->Write();
   file->Close();
+}
+
+void ShowOpts() {
+  //Shows options if no input is entered
+  std::printf("readHam: Reader of Hamamatsu PMT's.\n");
+  std::printf("./readHam <options> [Arguments]\n");
+  std::printf("Options:\n");
+  std::printf("i, input: input filename. Default: PMTdata.csv\n");
+  std::printf("o, output: The output filename. Default: HVScan-new.txt\n");
+  std::printf("r, recreate: The output file is recreated.\n");
+  std::printf("g, flatgain: The solution will create steps flat in gain.\n");
 }
 
