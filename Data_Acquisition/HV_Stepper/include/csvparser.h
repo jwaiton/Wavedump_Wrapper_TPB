@@ -20,6 +20,7 @@ class CSVParser {
 
 public:
 
+  //constructor takes string reference as argument.
   CSVParser(const std::string& sIn);
 
   ~CSVParser(){}
@@ -44,7 +45,7 @@ inline CSVParser::CSVParser(const std::string& sIn):
 m_sData(sIn),
 m_nPos(0)
 {
- // constructer 
+ // constructor 
 }
 
 template <class TYPE>
@@ -73,6 +74,7 @@ inline CSVParser& CSVParser::operator >> (std::string& out)  {
   size_type pos = 0;
   while (pos < tmp.size() && tmp[pos] != ' ') ++pos;
   out = tmp.substr(0,pos); 
+  std::cout << out << std::endl;
   return *this;    
 }
 
@@ -86,7 +88,7 @@ inline std::string CSVParser::next(){
   // next token 
   SkipSpaces();
   size_type pos = m_sData.find(CSVConst::separator,m_nPos); 
-  std::string tStr = m_sData.substr(m_nPos,pos-m_nPos); 
+  std::string tStr = m_sData.substr(m_nPos,pos-m_nPos);
   m_nPos = pos+1;
 
   return tStr;  

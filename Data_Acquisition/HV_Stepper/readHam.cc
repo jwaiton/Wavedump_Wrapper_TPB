@@ -25,10 +25,12 @@ int main(int argc, char* argv[]){
     ;
   auto result = options.parse(argc, argv);
 
+  std::cout << result["i"].as<std::string>() << std::endl;
+  /*
   if (argc == 1) {
     ShowOpts();
     return -1;
-  }
+  }*/
   // get the options we parse
   std::string inputfile =   result["i"].as<std::string>();
   std::string outputfile =  result["o"].as<std::string>();
