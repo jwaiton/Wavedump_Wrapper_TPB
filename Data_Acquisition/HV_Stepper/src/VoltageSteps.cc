@@ -3,7 +3,6 @@
 /*
 VoltageSteps::VoltageSteps(){
     //constructor, just to see if it works.
-    std::cout << "Hello There" << std::endl;
 }
 */
 double VoltageSteps::toHV(double gain, double v){

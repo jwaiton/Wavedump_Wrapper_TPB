@@ -74,3 +74,7 @@ Data_Acquisition/HV_Stepper/ShippingData_AllPMTs.csv
 Data_Acquisition/HV_Stepper/ShippingData_BoulbyPMTs.csv
 Data_Acquisition/HV_Stepper/HVScan-new.txt
 Data_Acquisition/HV_Stepper/.~lock.ShippingData_AllPMTs.csv#
+Data_Acquisition/HV_Stepper/.vscode/launch.json
+Data_Acquisition/HV_Stepper/.vscode/tasks.json
+Data_Acquisition/HV_Stepper/HVScan-new.txt
+Data_Acquisition/HV_Stepper/new.txt

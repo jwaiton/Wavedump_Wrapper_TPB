@@ -25,7 +25,6 @@ int main(int argc, char* argv[]){
     ;
   auto result = options.parse(argc, argv);
 
-  std::cout << result["i"].as<std::string>() << std::endl;
   /*
   if (argc == 1) {
     ShowOpts();
@@ -49,9 +48,7 @@ int main(int argc, char* argv[]){
   VoltageSteps VoltageStep;
   VoltageStep.createHVScanFile(outputfile,data,flatGain,recreate);
   
-  // making a tree
   //createTree("PMTData.root",data);
-  
   return 1;
 
 }//main

@@ -27,13 +27,12 @@ void readdata(std::string file, std::vector<std::string>& lines){
   
   // read it;
   std::string line;
-  while(getline(in,line, '\n')){
+  while(getline(in,line)){
     if (dataLine(line)){
-      //reads only the last line, for some reason
-      std::cout << line << std::endl;
       lines.push_back(line);
     } 
   }
+  in.close();
 }
 
 // get the PMT data

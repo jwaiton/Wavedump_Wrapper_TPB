@@ -54,7 +54,7 @@ inline CSVParser& CSVParser::operator >> (TYPE& out)  {
   // stream 
   std::string str = next(); 
   std::istringstream (str) >> out;
- 
+
   /*try{
     out = boost::lexical_cast<TYPE>(str);
   }
@@ -74,7 +74,6 @@ inline CSVParser& CSVParser::operator >> (std::string& out)  {
   size_type pos = 0;
   while (pos < tmp.size() && tmp[pos] != ' ') ++pos;
   out = tmp.substr(0,pos); 
-  std::cout << out << std::endl;
   return *this;    
 }
 

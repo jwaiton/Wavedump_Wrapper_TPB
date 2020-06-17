@@ -117,16 +117,8 @@ inline double PMTData::peakToValley() const{
 }
 
 inline void PMTData::stream(CSVParser& parser){
-  parser >> m_serial; 
-  parser >> m_sk; 
-  parser >> m_skb;
-  parser >> m_sp;
-  parser >> m_idb;
-  parser >> m_wV;
-  parser >> m_dark;
-  parser >> m_tts;
-  parser >> m_peakToValley;
-  std::printf("m_serial: %s\nm_sk: %f\n");
+  parser >> m_serial >> m_sk >> m_skb >> m_sp >> m_idb >> m_wV >> m_dark >> m_tts >> m_peakToValley;
+  std::cout << m_wV << std::endl;
 }
 
 inline std::ostream& PMTData::fillStream(std::ostream& s) const{
