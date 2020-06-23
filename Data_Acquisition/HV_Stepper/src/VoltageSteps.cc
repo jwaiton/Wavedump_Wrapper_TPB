@@ -40,6 +40,33 @@ void VoltageSteps::gainsToHV(std::vector<int>& voltages, double v){
   }
 }
 
+bool VoltageSteps::fExists(std::string &filename) {
+  return (access(filename.c_str(), F_OK ) != -1);
+}
+
+bool VoltageSteps::askUser(std::string &filename) {
+  //check if user wants to overwrite file.
+  std::string response;
+  bool repeat = true;
+  bool ok;
+  std::cout << "\"" << filename << "\" already exists" << std::endl;
+  std::cout << "Would you like to recreate it? (y/n): " << std::endl;
+
+  do {
+    std::cin >> response;
+    if (response == 'y' || response == 'Y') {
+      ok = true;
+      repeat = false;
+    }
+    else if (response == 'n' || response == 'N') {
+      ok = false;
+      repeat = false;
+    }
+    else {std::cout << "Invalid response. (y/n): " << std::endl;}
+  } while(repeat);
+
+  return ok;
+}
 void VoltageSteps::createHVScanFile(std::string filename,
   bool flatGain,bool recreate){
 
@@ -53,10 +80,16 @@ void VoltageSteps::createHVScanFile(std::string filename,
   if (recreate){
     myfile.open(filename, std::ios_base::out);
   }
+  else if (fExists(filename)) {
+    if (askUser(filename)) myfile.open(filename, std::ios_base::out);
+    }
   else {
      myfile.open(filename,std::ios_base::app | std::ios_base::out);
   }
   
+  //write column titles to file
+  myfile << "Serial,gainV0,gainV1,gainV2,gainV3,gainv4,nomV\n";
+
   for (auto pmt: PMTs){
 
     std::vector<int> voltage;

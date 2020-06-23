@@ -29,6 +29,8 @@ private:
   void hvSteps(std::pair<double,double> hv,std::vector<int>& voltages);
   void gainSteps(std::vector<double>& gains);
   void gainsToHV(std::vector<int>& voltages, double v);
+  bool fExists(std::string &filename);
+  bool askUser(std::string &filename);
 
 public:
   void createHVScanFile(std::string filename,
