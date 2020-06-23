@@ -1,10 +1,5 @@
 #include "VoltageSteps.h"
 
-/*
-VoltageSteps::VoltageSteps(){
-    //constructor, just to see if it works.
-}
-*/
 double VoltageSteps::toHV(double gain, double v){
   return v*std::pow(gain, 1/alpha); 
 }
@@ -45,7 +40,7 @@ void VoltageSteps::gainsToHV(std::vector<int>& voltages, double v){
   }
 }
 
-void VoltageSteps::createHVScanFile(std::string filename, PMTs& data, 
+void VoltageSteps::createHVScanFile(std::string filename,
   bool flatGain,bool recreate){
 
   /* createHVScanFile
@@ -62,7 +57,7 @@ void VoltageSteps::createHVScanFile(std::string filename, PMTs& data,
      myfile.open(filename,std::ios_base::app | std::ios_base::out);
   }
   
-  for (auto pmt: data){
+  for (auto pmt: PMTs){
 
     std::vector<int> voltage;
     if (flatGain == false){
@@ -78,8 +73,8 @@ void VoltageSteps::createHVScanFile(std::string filename, PMTs& data,
     
     std::stringstream stream;
     stream << pmt.serial();
-    for (auto i = 0; i< voltage.size();++i){
-      stream << "," << voltage[i];
+    for (auto v: voltage){
+      stream << "," << v;
     }
     stream << std::endl;
     myfile << stream.str();
