@@ -22,9 +22,9 @@ The command to use this program is as follows:
   
 Options:
 
--i <filepath>: the path to the input file
--o <filepath>: the path to the output file
--r <no argument>: recreate the program.
--g <no argument>: create voltage steps flat in gain rather than voltage.
+-i <filepath>: the path to the input file  
+-o <filepath>: the path to the output file  
+-r <no argument>: recreate the program.  
+-g <no argument>: create voltage steps flat in gain rather than voltage.  
 
 
