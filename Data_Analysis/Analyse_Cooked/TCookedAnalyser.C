@@ -6,6 +6,7 @@
 #include <TF1.h>
 #include <math.h>
 #include <limits.h>
+#include <fstream>
 
 #include "wmStyle.C"
 
@@ -398,6 +399,18 @@ void TCookedAnalyser::Dark(float thresh_mV){
   
   InitDark();
   
+  float darkRate = 0;
+  float darkRateErr = 0;
+  float darkRate_noise = 0;
+  float darkRateErr_noise = 0;
+  
+  TFile* results = new TFile("dark_results.root","RECREATE");  
+  TTree* Dark = new TTree("Dark","Dark");
+  Dark->Branch("darkRate",&darkRate,"darkRate/F");
+  Dark->Branch("darkRateErr",&darkRateErr,"darkRateErr/F");
+  Dark->Branch("darkRate_noise",&darkRate_noise,"darkRate/F");
+  Dark->Branch("darkRateErr_noise",&darkRateErr_noise,"darkRateErr/F");
+  
   int nDark = 0;
   int nDark_noise = 0;
 
@@ -422,22 +435,44 @@ void TCookedAnalyser::Dark(float thresh_mV){
     
     nDark++;
     
-  }// end: for (int iEntry 
+  }
 
-  float darkRate = (float)nDark/nentries;
+  float darkErr = sqrt(nDark);
+
+  darkRate = (float)nDark/nentries;
   darkRate = darkRate/Length_ns * 1.0e9;
+  darkRateErr = darkErr/nDark * darkRate;
   
   printf("\n \n nentries = %d \n",nentries);
-  printf("\n dark counts (noise rejected) = %d \n",nDark);
-  printf("\n dark rate   (noise rejected) = %.0f \n",darkRate);
+  printf("\n dark counts (noise rejected) = %d +/- %.0f \n",nDark,darkErr);
+  printf("\n dark rate   (noise rejected) = %.0f +/- %.0f Hz \n",darkRate,darkRateErr);
   
-  darkRate = (float)nDark_noise/nentries;
-  darkRate = darkRate/Length_ns * 1.0e9;
+  std::ofstream dark_results;
+  dark_results.open ("dark_results.txt");
+  dark_results << "dark counts (noise rejected) = " << nDark << " +/- " << darkErr << "\n";
+  dark_results << "dark noise (noise rejected) = " << darkRate << " +/- " << darkRateErr << " Hz\n";
+  dark_results.close();
   
-  printf("\n dark counts (with noise)     = %d \n",nDark_noise);
-  printf("\n dark rate   (with noise)     = %.0f \n\n",darkRate);
-
+  float darkErr_noise = sqrt(nDark_noise);
+  
+  darkRate_noise = (float)nDark_noise/nentries;
+  darkRate_noise = darkRate_noise/Length_ns * 1.0e9;
+  darkRateErr_noise = darkErr_noise/nDark_noise * darkRate_noise;
+  
+  printf("\n dark counts (with noise) = %d +/- %.0f \n",nDark_noise,darkErr_noise);
+  printf("\n dark rate   (with noise) = %.0f +/- %.0f Hz\n\n",darkRate_noise,darkRateErr_noise);
+  
+  std::ofstream dark_results_noise;
+  dark_results_noise.open ("dark_results.txt", std::ios_base::app);
+  dark_results_noise << "dark counts (noise) = " << nDark_noise << " +/- " << darkErr_noise << "\n";
+  dark_results_noise << "dark noise (noise) = " << darkRate_noise << " +/- " << darkRateErr_noise << " Hz\n";
+  dark_results_noise.close();
+  
   SaveDark();
+  
+  Dark->Fill();
+  Dark->Write();
+  results->Close();
   
 }
 
@@ -535,6 +570,24 @@ void TCookedAnalyser::SaveDark(string outPath){
   gPad->SetLogz(false);
 
   DeleteCanvas();
+  
+  //string TCookedAnalyser::GetMetaTreeID(){
+  //return "Meta_Data";
+  
+  /*TFile* results = new TFile("dark_results.root");
+  //TTree* meta = new TTree("meta","meta data");
+  //meta->Fill(metaTree);
+  
+  TTree* Dark = new TTree("Dark","Dark");
+  Dark->Branch("DarkRate",&DarkRate,"DarkRate/F");
+  Dark->Branch("DarkRateErr",&DarkRateErr,"DarkRateErr/F");
+  DarkRate->Fill(darkRate);
+  DarkRateErr->Fill(darkRateErr);
+  
+  metaTree->Write();
+  Dark->Write();
+  results->Close();*/
+  
 }
 
 float TCookedAnalyser::ADC_To_Wave(short ADC){

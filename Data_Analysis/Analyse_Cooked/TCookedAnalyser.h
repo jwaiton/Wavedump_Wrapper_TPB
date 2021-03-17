@@ -152,7 +152,7 @@ class TCookedAnalyser {
   TH1F * hD_Peak = nullptr;
   TH2F * hD_Min_Peak = nullptr;
 
-  void  Dark(float thresh_mV = 10.);
+  void  Dark(float thresh_mV = 10.); //try 40, default is 10
   void  InitDark();
   void  SaveDark(string outFolder = "./Plots/Dark/");
 
