@@ -413,7 +413,8 @@ void TCookedAnalyser::Dark(float thresh_mV){
   
   int nDark = 0;
   int nDark_noise = 0;
-
+  int nwaveforms_reject = 0;
+  
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     cookedTree->GetEntry(iEntry);
      
@@ -426,20 +427,46 @@ void TCookedAnalyser::Dark(float thresh_mV){
     
     if( peak_mV < -2*min_mV && peak_mV > thresh_mV )
       continue;
+      
+    if( peak_mV < 2*min_mV && peak_mV > thresh_mV )
+      continue;
+      
+    //if( min_mV < -3 )
+    //  continue;
     
+    //if( base_mV - min_mV > -2 && peak_mV < thresh_mV)
+    //  continue;
+      
+    //if( base_mV - min_mV < 2 && peak_mV < thresh_mV)
+    //  continue;
+    
+    if( base_mV > 3)
+      nwaveforms_reject++;
+      //continue;
+    
+    if( base_mV > 3)
+      //nwaveforms_reject++;
+      continue;
+      
     hD_Peak->Fill(peak_mV);
     hD_Min_Peak->Fill(min_mV,peak_mV);
+    //hD_Min_Peak->Fill(min_mV,base_mV);
     
     if( peak_mV < thresh_mV)
       continue;
+      
+    //if( peak_mV > 80)
+    //  continue;
     
     nDark++;
     
   }
 
+  printf("\nnumber of waveforms rejected due to baseline = %i\n",nwaveforms_reject);
+
   float darkErr = sqrt(nDark);
 
-  darkRate = (float)nDark/nentries;
+  darkRate = (float)nDark/(nentries-nwaveforms_reject);
   darkRate = darkRate/Length_ns * 1.0e9;
   darkRateErr = darkErr/nDark * darkRate;
   
