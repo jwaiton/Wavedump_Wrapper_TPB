@@ -415,6 +415,8 @@ void TCookedAnalyser::Dark(float thresh_mV){
   int nDark_noise = 0;
   int nwaveforms_reject = 0;
   
+  std::vector<int> rejected_waveforms;
+  
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     cookedTree->GetEntry(iEntry);
      
@@ -440,23 +442,17 @@ void TCookedAnalyser::Dark(float thresh_mV){
     //if( base_mV - min_mV < 2 && peak_mV < thresh_mV)
     //  continue;
     
-    if( base_mV > 3)
+    if( base_mV > 3){
       nwaveforms_reject++;
+      rejected_waveforms.push_back(iEntry);
       //continue;
-    
-    if( base_mV > 3)
-      //nwaveforms_reject++;
-      continue;
+      }
       
     hD_Peak->Fill(peak_mV);
     hD_Min_Peak->Fill(min_mV,peak_mV);
-    //hD_Min_Peak->Fill(min_mV,base_mV);
     
     if( peak_mV < thresh_mV)
       continue;
-      
-    //if( peak_mV > 80)
-    //  continue;
     
     nDark++;
     
