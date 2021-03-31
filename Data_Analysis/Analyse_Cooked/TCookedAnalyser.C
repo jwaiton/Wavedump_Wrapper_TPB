@@ -458,7 +458,7 @@ void TCookedAnalyser::Dark(float thresh_mV){
     
   }
 
-  printf("\nnumber of waveforms rejected due to baseline = %i\n",nwaveforms_reject);
+  //printf("\nnumber of waveforms rejected due to baseline = %i\n",nwaveforms_reject);
 
   float darkErr = sqrt(nDark);
 
