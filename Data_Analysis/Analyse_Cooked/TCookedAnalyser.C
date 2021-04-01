@@ -564,7 +564,7 @@ void TCookedAnalyser::Waveform(char option){
   
   switch(option){
   case('w'):
-    InitWaveform();
+    InitFFT();// inc Waveform
     break;
   case('f'):
     InitFFT();// inc Waveform
@@ -573,7 +573,7 @@ void TCookedAnalyser::Waveform(char option){
     InitFFT();// inc Waveform
     break;
   default:
-    InitWaveform();
+    //InitWaveform();
     InitFFT();
     break;
   }
@@ -631,7 +631,7 @@ void TCookedAnalyser::Waveform(char option){
     
     cookedTree->GetEntry(entry);
     
-    // single or intial instance
+    // single or initial instance
     for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
       hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
     
@@ -759,7 +759,8 @@ void TCookedAnalyser::SaveWaveform(string outPath ){
   
   canvas->SaveAs(outPath.c_str());
 
-  hWave->Delete();
+  //hWave->Delete();
+  //  hFFT->Delete();
   DeleteCanvas();
   
 }
@@ -778,9 +779,9 @@ void TCookedAnalyser::SaveFFT(string outPath, int option){
   
   canvas->SaveAs(outPath.c_str());
   
-  hFFT->Delete();
+  //  hWave->Delete();
+  //hFFT->Delete();
   DeleteCanvas();
-
   
 }
 
@@ -801,6 +802,8 @@ void TCookedAnalyser::SaveWaveFFT(string outPath){
   
   canvas->SaveAs(outPath.c_str());
 
+  //hWave->Delete();
+  //hFFT->Delete();
   DeleteCanvas();
   
 }
