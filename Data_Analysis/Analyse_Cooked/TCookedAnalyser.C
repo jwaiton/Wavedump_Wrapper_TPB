@@ -29,6 +29,7 @@ string TCookedAnalyser::GetFileID(){
 void TCookedAnalyser::Make_hQ_Fixed(){
 
   float gate_start = Get_LED_Delay() - 15;
+
   
   float gate_width = 50.; 
   
@@ -45,8 +46,9 @@ void TCookedAnalyser::Make_hQ_Fixed(){
   outFile = new TFile(fileName.c_str(),"RECREATE",fileName.c_str()); 
   
   int   nBins = 100.;
-  float minQ  = -100.0;
-  float maxQ  = 900.0;
+  //float minQ  = -100.0;
+  float minQ  = -1000.0;
+  float maxQ  = 1000.0;
 
   TH1F * hQ_Fixed = new TH1F(histName.c_str(),"hQ_Fixed;Charge (mV ns);Counts",
 			     nBins,minQ,maxQ);
@@ -89,21 +91,20 @@ void TCookedAnalyser::Make_hQ_Fixed(){
 	nSigSamps++;
       }// baseline subtraction
       else if( time_ns <   gate_start   &&
-	       time_ns >= (gate_start - gate_width ) ){ 
-	bas_volts += wave_mV;
-	nBasSamps++;
+      	       time_ns >= (gate_start - gate_width ) ){ 
+      	bas_volts += wave_mV;
+      	nBasSamps++;
       }
       
       volts = sig_volts - (bas_volts*(float)nSigSamps/nBasSamps);
-      
     }
     
     // Convert ADC to units of charge then
     // fill histogram 
     charge = volts*nsPerSamp;
-    
+
     //if(HasLowNoise(min_mV,peak_mV))
-      hQ_Fixed->Fill(charge);
+    hQ_Fixed->Fill(charge);
   
   }
   
@@ -639,7 +640,7 @@ void TCookedAnalyser::Waveform(char option){
   
   switch(option){
   case('w'):
-    InitWaveform();
+    InitFFT();// inc Waveform
     break;
   case('f'):
     InitFFT();// inc Waveform
@@ -648,7 +649,7 @@ void TCookedAnalyser::Waveform(char option){
     InitFFT();// inc Waveform
     break;
   default:
-    InitWaveform();
+    //InitWaveform();
     InitFFT();
     break;
   }
@@ -706,7 +707,7 @@ void TCookedAnalyser::Waveform(char option){
     
     cookedTree->GetEntry(entry);
     
-    // single or intial instance
+    // single or initial instance
     for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
       hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
     
@@ -755,7 +756,11 @@ void TCookedAnalyser::Waveform(char option){
     //outFile->Delete();
 
     string outPath = "./Plots/Waveforms/";
-    
+
+    string sys_command = "mkdir -p ";
+    sys_command += outPath;
+    gSystem->Exec(sys_command.c_str());
+
     switch(option){
     case('w'):
       outPath += "hWave.pdf";
@@ -821,9 +826,6 @@ void TCookedAnalyser::InitFFT(){
 
 void TCookedAnalyser::SaveWaveform(string outPath ){
 
-  string sys_command = "mkdir -p ";
-  sys_command += outPath;
-  gSystem->Exec(sys_command.c_str());
 
   printf("\n Saving Waveform Plot \n\n");
   
@@ -833,16 +835,13 @@ void TCookedAnalyser::SaveWaveform(string outPath ){
   
   canvas->SaveAs(outPath.c_str());
 
-  hWave->Delete();
+  //hWave->Delete();
+  //  hFFT->Delete();
   DeleteCanvas();
   
 }
 
 void TCookedAnalyser::SaveFFT(string outPath, int option){
-
-  string sys_command = "mkdir -p ";
-  sys_command += outPath;
-  gSystem->Exec(sys_command.c_str());
   
   printf("\n Saving FFT Plot \n\n");
   
@@ -856,17 +855,13 @@ void TCookedAnalyser::SaveFFT(string outPath, int option){
   
   canvas->SaveAs(outPath.c_str());
   
-  hFFT->Delete();
+  //  hWave->Delete();
+  //hFFT->Delete();
   DeleteCanvas();
-
   
 }
 
 void TCookedAnalyser::SaveWaveFFT(string outPath){
-  
-  string sys_command = "mkdir -p ";
-  sys_command += outPath;
-  gSystem->Exec(sys_command.c_str());
   
   printf("\n Saving Waveform and FFT Plots \n\n");
   
@@ -883,6 +878,8 @@ void TCookedAnalyser::SaveWaveFFT(string outPath){
   
   canvas->SaveAs(outPath.c_str());
 
+  //hWave->Delete();
+  //hFFT->Delete();
   DeleteCanvas();
   
 }
