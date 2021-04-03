@@ -414,9 +414,11 @@ void TCookedAnalyser::Dark(float thresh_mV){
   
   int nDark = 0;
   int nDark_noise = 0;
-  int nwaveforms_reject = 0;
   
-  std::vector<int> rejected_waveforms;
+  std::vector<int> dark_waves;
+  std::ofstream dark_csv;
+  dark_csv.open ("dark_hits.csv");
+  dark_csv << "Count at entry\n";
   
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     cookedTree->GetEntry(iEntry);
@@ -433,37 +435,25 @@ void TCookedAnalyser::Dark(float thresh_mV){
       
     if( peak_mV < 2*min_mV && peak_mV > thresh_mV )
       continue;
-      
-    //if( min_mV < -3 )
-    //  continue;
     
-    //if( base_mV - min_mV > -2 && peak_mV < thresh_mV)
-    //  continue;
-      
-    //if( base_mV - min_mV < 2 && peak_mV < thresh_mV)
-    //  continue;
-    
-    if( base_mV > 3){
-      nwaveforms_reject++;
-      rejected_waveforms.push_back(iEntry);
-      //continue;
-      }
-      
     hD_Peak->Fill(peak_mV);
     hD_Min_Peak->Fill(min_mV,peak_mV);
     
     if( peak_mV < thresh_mV)
       continue;
     
+    dark_waves.push_back(iEntry);
+    dark_csv << iEntry << "\n";
+    
     nDark++;
     
   }
 
-  //printf("\nnumber of waveforms rejected due to baseline = %i\n",nwaveforms_reject);
+  dark_csv.close();
 
   float darkErr = sqrt(nDark);
 
-  darkRate = (float)nDark/(nentries-nwaveforms_reject);
+  darkRate = (float)nDark/(nentries);
   darkRate = darkRate/Length_ns * 1.0e9;
   darkRateErr = darkErr/nDark * darkRate;
   
@@ -595,23 +585,6 @@ void TCookedAnalyser::SaveDark(string outPath){
 
   DeleteCanvas();
   
-  //string TCookedAnalyser::GetMetaTreeID(){
-  //return "Meta_Data";
-  
-  /*TFile* results = new TFile("dark_results.root");
-  //TTree* meta = new TTree("meta","meta data");
-  //meta->Fill(metaTree);
-  
-  TTree* Dark = new TTree("Dark","Dark");
-  Dark->Branch("DarkRate",&DarkRate,"DarkRate/F");
-  Dark->Branch("DarkRateErr",&DarkRateErr,"DarkRateErr/F");
-  DarkRate->Fill(darkRate);
-  DarkRateErr->Fill(darkRateErr);
-  
-  metaTree->Write();
-  Dark->Write();
-  results->Close();*/
-  
 }
 
 float TCookedAnalyser::ADC_To_Wave(short ADC){
@@ -667,6 +640,7 @@ void TCookedAnalyser::Waveform(char option){
       printf("\n P - Previous \n");
       printf("\n R - Random selection \n");
       printf("\n A - Accumulate All \n");
+      printf("\n I - Index of waveform \n");
       printf("\n X - eXit \n");
       
       // note deliberate use of whitespace before %c
@@ -688,6 +662,11 @@ void TCookedAnalyser::Waveform(char option){
       break;
     case('A'):
       entry = 0;
+      break;
+    case('I'):
+      //output and input here
+      std::cout << "Entry to plot: \n" << endl;
+      std::cin >> entry;
       break;
     default:
       entry = -1;
