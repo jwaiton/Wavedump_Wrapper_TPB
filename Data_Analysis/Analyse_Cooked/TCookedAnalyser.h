@@ -13,6 +13,8 @@
 #include <vector>
 #include <limits.h>
 
+#include <numeric>
+
 
 using namespace std;
 
@@ -152,6 +154,7 @@ class TCookedAnalyser {
   TH1F * hD_Peak = nullptr;
   TH2F * hD_Min_Peak = nullptr;
 
+  double base_average(int iEntry);
   void  Dark(float thresh_mV = 10); //try 40, default is 10
   void  InitDark();
   void  SaveDark(string outFolder = "./Plots/Dark/");

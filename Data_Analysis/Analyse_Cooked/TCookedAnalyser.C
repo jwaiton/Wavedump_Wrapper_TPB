@@ -395,6 +395,19 @@ void TCookedAnalyser::SaveNoise(string outPath){
   
 }
 
+double TCookedAnalyser::base_average(int iEntry){
+
+  std::vector<double> amplitude;
+
+  for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
+    amplitude.push_back(ADC_To_Wave(ADC->at(iSamp)));
+    
+  double sum = std::accumulate(amplitude.begin(), amplitude.end(), 0.0);
+  double mean = sum/NSamples;
+
+  return mean;
+
+}
 
 void TCookedAnalyser::Dark(float thresh_mV){
   
@@ -415,9 +428,15 @@ void TCookedAnalyser::Dark(float thresh_mV){
   int nDark = 0;
   int nDark_noise = 0;
   
+  int rejected = 0;
+  
+  std::ofstream rejected_waveforms;
+  rejected_waveforms.open("rejected_waveforms.csv");
+  rejected_waveforms << "Rejected waveform at entry\n";
+
   std::ofstream dark_csv;
   dark_csv.open ("dark_hits.csv");
-  dark_csv << "Count at entry\n";
+  dark_csv << "Count at entry" << "," << "Average amplitude\n";
   
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     cookedTree->GetEntry(iEntry);
@@ -441,17 +460,30 @@ void TCookedAnalyser::Dark(float thresh_mV){
     if( peak_mV < thresh_mV)
       continue;
     
-    dark_csv << iEntry << "\n";
+    double average = base_average(iEntry);
+    
+    if( average < -10){
+      rejected_waveforms << iEntry << "\n";
+      rejected++;
+      continue;}
+      
+    if( peak_mV > 100){
+      rejected_waveforms << iEntry << "\n";
+      rejected++;
+      continue;}
+    
+    dark_csv << iEntry << "," << average << "\n";
     
     nDark++;
     
   }
 
+  rejected_waveforms.close();
   dark_csv.close();
 
   float darkErr = sqrt(nDark);
 
-  darkRate = (float)nDark/(nentries);
+  darkRate = (float)nDark/(nentries-rejected);
   darkRate = darkRate/Length_ns * 1.0e9;
   darkRateErr = darkErr/nDark * darkRate;
   
