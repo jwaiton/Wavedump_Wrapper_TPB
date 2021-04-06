@@ -25,10 +25,15 @@ string TCookedAnalyser::GetFileID(){
 //----------
 //   
 
-void TCookedAnalyser::Make_hQ_Fixed(){
-
-  float gate_start = Get_LED_Delay() - 15;
+void TCookedAnalyser::Make_hQ_Fixed(float delay){
   
+  float gate_start = -15.;
+  
+  if(delay > 0.0)
+    gate_start += delay;
+  else 
+    gate_start += Get_LED_Delay();
+    
   float gate_width = 50.; 
   
   string fileName = "hQ_Fixed_";
@@ -102,8 +107,8 @@ void TCookedAnalyser::Make_hQ_Fixed(){
     charge = volts*nsPerSamp;
     
     //if(HasLowNoise(min_mV,peak_mV))
-      hQ_Fixed->Fill(charge);
-  
+    hQ_Fixed->Fill(charge);
+    
   }
   
   hQ_Fixed->Draw();

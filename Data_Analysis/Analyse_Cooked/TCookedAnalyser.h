@@ -134,7 +134,7 @@ class TCookedAnalyser {
   float Wave_To_Amp_Scaled_Wave(float wave);
 
   //----
-  void  Make_hQ_Fixed();
+  void  Make_hQ_Fixed(float delay = -1.0);
   
   bool  HasLowNoise(float min_mV,float peak_mV,
 		    float thresh_mV = 10.);
@@ -340,6 +340,7 @@ void TCookedAnalyser::InitCooked(){
   else
     nentries = (int)nentries64_t;
   
+  // printf("\n nentries = %d",nentries);
   
   printf("\n ------------------------------ \n");
   
