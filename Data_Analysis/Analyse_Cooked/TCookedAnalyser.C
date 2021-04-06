@@ -415,7 +415,6 @@ void TCookedAnalyser::Dark(float thresh_mV){
   int nDark = 0;
   int nDark_noise = 0;
   
-  std::vector<int> dark_waves;
   std::ofstream dark_csv;
   dark_csv.open ("dark_hits.csv");
   dark_csv << "Count at entry\n";
@@ -442,7 +441,6 @@ void TCookedAnalyser::Dark(float thresh_mV){
     if( peak_mV < thresh_mV)
       continue;
     
-    dark_waves.push_back(iEntry);
     dark_csv << iEntry << "\n";
     
     nDark++;
