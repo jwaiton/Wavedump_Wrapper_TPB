@@ -2,7 +2,7 @@
 
 MAIN = readHam
 CXX=g++ #compiler
-CXXFLAGS = -std=c++11 #compiler flags
+CXXFLAGS = -Wall -std=c++11 #compiler flags
 ROOTLIB = ${ROOTSYS}/lib
 INCLUDES= -I$(ROOTLIB) -Iinclude
 LFLAGS = -L$(ROOTLIB)
@@ -21,12 +21,12 @@ $(MAIN): $(OBJ)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -o $@ $(LFLAGS) $(LDFLAGS) $(LDLIBS) 
     
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
-	$(CXX) $(INCLUDES) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(INCLUDES) $(CXXFLAGS) $(SRC) -c $< -o $@
     
 $(OBJ_DIR):
 	mkdir $@
     
 clean:
-	rm -f $(MAIN)
+	@rm -f $(MAIN)
     
 .PHONY: all clean

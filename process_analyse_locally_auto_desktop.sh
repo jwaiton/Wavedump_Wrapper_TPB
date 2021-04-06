@@ -1,10 +1,10 @@
 #!/bin/bash
 
-echo " -------------------------------"
+echo " ----------------------------------------"
 date  
 echo " running  "
-echo " process_analyse_locally_auto.sh "
-echo " -------------------------------"
+echo " process_analyse_locally_auto_desktop.sh "
+echo " ----------------------------------------"
 
 DIR_PATH=${PWD}/
 
