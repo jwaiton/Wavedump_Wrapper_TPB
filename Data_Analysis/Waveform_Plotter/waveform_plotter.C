@@ -87,7 +87,8 @@ int main(int argc, char * argv[]){
   printf("\n  'n' - No ");
   printf("\n  'w' - Waveform ");
   printf("\n  'f' - FFT ");
-  printf("\n  'b' - 'w' and 'f' \n");
+  printf("\n  'b' - 'w' and 'f'");
+  printf("\n  'D' - Dark count ");
   scanf("%c",&aChar);
   
 
@@ -101,6 +102,8 @@ int main(int argc, char * argv[]){
   case('b'):
     outPath += "hWaveFFT.pdf";
     break;
+  case('D'):
+    break;
   default:
     break;
   }
@@ -112,13 +115,17 @@ int main(int argc, char * argv[]){
 #else
   sysCommand = "open ";
 #endif   
-
+  if(aChar!='D'){
   sysCommand += outPath;
   sysCommand += " &";
   system(sysCommand.c_str());
+  }
 
-  if(aChar!='N' && aChar!='n'){
+  if(aChar!='N' && aChar!='n' && aChar!='D'){
     wave_plotter->Waveform(aChar);
+  }
+  else if(aChar == 'D'){
+    wave_plotter->DarkPlot(aChar);
   }
   
   return 1;

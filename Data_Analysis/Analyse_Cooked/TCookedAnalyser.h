@@ -158,6 +158,8 @@ class TCookedAnalyser {
   void  Dark(float thresh_mV = 10.);
   void  InitDark();
   void  SaveDark(string outFolder = "./Plots/Dark/");
+  
+  void DarkPlot(char option = 'D');
 
   //---
   // Monitor Waveforms

@@ -436,7 +436,7 @@ void TCookedAnalyser::Dark(float thresh_mV){
 
   std::ofstream dark_csv;
   dark_csv.open ("dark_hits.csv");
-  dark_csv << "Count at entry" << "," << "Average amplitude\n";
+  dark_csv << "Count at entry\n";
   
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     cookedTree->GetEntry(iEntry);
@@ -467,12 +467,17 @@ void TCookedAnalyser::Dark(float thresh_mV){
       rejected++;
       continue;}
       
+    if( average > 10){
+      rejected_waveforms << iEntry << "\n";
+      rejected++;
+      continue;}
+      
     if( peak_mV > 100){
       rejected_waveforms << iEntry << "\n";
       rejected++;
       continue;}
     
-    dark_csv << iEntry << "," << average << "\n";
+    dark_csv << iEntry << "\n";
     
     nDark++;
     
@@ -633,6 +638,128 @@ float TCookedAnalyser::Wave_To_Amp_Scaled_Wave(float wave){
 }
 
 
+void TCookedAnalyser::DarkPlot(char option){
+
+  char answer = 'D';
+  
+  printf("\n D - All dark waveforms \n");
+  printf("\n R - All rejected dark waveforms \n");
+  // note deliberate use of whitespace before %c
+  scanf(" %c", &answer);
+
+  if(answer == 'D'){
+
+    string fileName = "hWaveDark_";
+    fileName += GetFileID();
+    fileName += ".root";
+    printf("\n  %s \n",fileName.c_str());
+    outFile = new TFile(fileName.c_str(),"RECREATE",fileName.c_str());
+  
+    InitFFT();
+    
+    std::ifstream file ("dark_hits.csv");
+    std::string line;
+    std::getline(file,line); //remove first line
+    std::vector<int> indices;
+        
+    while(std::getline(file,line))
+    {
+      std::string line_value;   
+      std::stringstream ss(line);
+      while(std::getline(ss,line_value,','))
+      {
+        indices.push_back(stoi(line_value));
+        
+      }
+    }
+    
+        
+    string outPath = "./Plots/Waveforms/Dark/Kept/";
+
+    string sys_command = "mkdir -p ";
+    sys_command += outPath;
+    gSystem->Exec(sys_command.c_str());
+        
+    int nWaveforms = indices.size();
+    
+    for (int i = 0; i < nWaveforms ; i++){
+      cookedTree->GetEntry(indices[i]);
+      
+      for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
+        hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
+          
+      string outPathfile = outPath;
+      outPathfile += "hWave_";
+      outPathfile += to_string(indices[i]);
+      outPathfile += ".png";
+      SaveWaveform(outPathfile);
+      
+    }
+
+    outFile->Write();
+    
+  }
+  
+  if(answer == 'R'){
+    string fileName = "hWaveDarkRejected_";
+    fileName += GetFileID();
+    fileName += ".root";
+    printf("\n  %s \n",fileName.c_str());
+    outFile = new TFile(fileName.c_str(),"RECREATE",fileName.c_str());
+  
+    InitFFT();
+    
+    std::ifstream file ("rejected_waveforms.csv");
+    std::string line;
+    std::getline(file,line); //remove first line
+    std::vector<int> indices;
+        
+    while(std::getline(file,line))
+    {
+      std::string line_value;   
+      std::stringstream ss(line);
+      while(std::getline(ss,line_value,','))
+      {
+        indices.push_back(stoi(line_value));
+        
+      }
+    }
+    
+    string outPath = "./Plots/Waveforms/Dark/Rejected/";
+
+    string sys_command = "mkdir -p ";
+    sys_command += outPath;
+    gSystem->Exec(sys_command.c_str());
+        
+    int nWaveforms = indices.size();
+    
+    for (int i = 0; i < nWaveforms ; i++){
+      cookedTree->GetEntry(indices[i]);
+      
+      for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
+        hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
+          
+      string outPathfile = outPath;
+      outPathfile += "hWave_";
+      outPathfile += to_string(indices[i]);
+      outPathfile += ".png";
+      SaveWaveform(outPathfile);
+      
+    }
+
+    outFile->Write();
+    
+  }
+  
+  //choose option (do this first?)
+  //read in csv files (+ add checks)
+  //loop over events
+  //plot all events (batch mode?)
+  //add events to root file
+  //call this function in waveform_plotter.C
+
+}
+
 void TCookedAnalyser::Waveform(char option){
 
   string fileName = "hWave_";
@@ -694,7 +821,6 @@ void TCookedAnalyser::Waveform(char option){
       entry = 0;
       break;
     case('I'):
-      //output and input here
       std::cout << "Entry to plot: \n" << endl;
       std::cin >> entry;
       break;
