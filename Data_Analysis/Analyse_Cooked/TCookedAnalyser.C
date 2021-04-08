@@ -409,6 +409,31 @@ double TCookedAnalyser::base_average(int iEntry){
 
 }
 
+int TCookedAnalyser::peak_rise(float thresh_mV){
+
+  double thresh = base_mV + thresh_mV;
+  
+  std::vector<double> amplitude;
+
+  for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
+    amplitude.push_back(ADC_To_Wave(ADC->at(iSamp)));
+    
+  int bins = 0;
+    
+  for( int iSamp_peak = peak_samp; iSamp_peak > peak_samp - 6; iSamp_peak--){
+    if(amplitude[iSamp_peak] > thresh)
+      bins++;
+    else
+      break;
+  }
+    
+  if(bins == 6)
+    return 0;
+  else
+    return 1;
+  
+}
+
 void TCookedAnalyser::Dark(float thresh_mV){
   
   InitDark();
@@ -453,14 +478,14 @@ void TCookedAnalyser::Dark(float thresh_mV){
       
     if( peak_mV < 2*min_mV && peak_mV > thresh_mV )
       continue;
-    
+      
     hD_Peak->Fill(peak_mV);
     hD_Min_Peak->Fill(min_mV,peak_mV);
     
     if( peak_mV < thresh_mV)
       continue;
     
-    double average = base_average(iEntry);
+    average = base_average(iEntry);
     
     if( average < -10){
       rejected_waveforms << iEntry << "\n";
@@ -475,6 +500,13 @@ void TCookedAnalyser::Dark(float thresh_mV){
     if( peak_mV > 100){
       rejected_waveforms << iEntry << "\n";
       rejected++;
+      continue;}
+    
+    int rise = peak_rise();
+    
+    if(!rise){
+      rejected_waveforms << iEntry << "\n";
+      //rejected++;
       continue;}
     
     dark_csv << iEntry << "\n";
@@ -493,6 +525,7 @@ void TCookedAnalyser::Dark(float thresh_mV){
   darkRateErr = darkErr/nDark * darkRate;
   
   printf("\n \n nentries = %d \n",nentries);
+  printf("\n %i rejected 'dark counts'\n",rejected);
   printf("\n dark counts (noise rejected) = %d +/- %.0f \n",nDark,darkErr);
   printf("\n dark rate   (noise rejected) = %.0f +/- %.0f Hz \n",darkRate,darkRateErr);
   
@@ -639,6 +672,8 @@ float TCookedAnalyser::Wave_To_Amp_Scaled_Wave(float wave){
 
 
 void TCookedAnalyser::DarkPlot(char option){
+
+  //fix FFT, add option to cycle through dark and rejected plots rather than plotting all
 
   char answer = 'D';
   
