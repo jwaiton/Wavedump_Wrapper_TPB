@@ -642,20 +642,33 @@ void TCookedAnalyser::DarkPlot(char option){
 
   char answer = 'D';
   
+  printf("\n What to plot? \n");
   printf("\n D - All dark waveforms \n");
   printf("\n R - All rejected dark waveforms \n");
+  printf("\n X - eXit \n");
   // note deliberate use of whitespace before %c
   scanf(" %c", &answer);
+  
+  char plot = 'b';
+  
+  printf("\n How to save plots? \n");
+  printf("\n p - png \n");
+  printf("\n r - root \n");
+  printf("\n b - 'p' and 'r' \n");
+  scanf(" %c", &plot);
 
   if(answer == 'D'){
 
-    string fileName = "hWaveDark_";
-    fileName += GetFileID();
-    fileName += ".root";
-    printf("\n  %s \n",fileName.c_str());
-    outFile = new TFile(fileName.c_str(),"RECREATE",fileName.c_str());
+    if (plot!='p'){
+      string fileName = "hWaveDark_";
+      fileName += GetFileID();
+      fileName += ".root";
+      printf("\n  %s \n",fileName.c_str());
+      outFile = new TFile(fileName.c_str(),"RECREATE",fileName.c_str());
+    }
   
-    InitFFT();
+    //InitFFT();
+    InitWaveform();
     
     std::ifstream file ("dark_hits.csv");
     std::string line;
@@ -672,14 +685,7 @@ void TCookedAnalyser::DarkPlot(char option){
         
       }
     }
-    
-        
-    string outPath = "./Plots/Waveforms/Dark/Kept/";
-
-    string sys_command = "mkdir -p ";
-    sys_command += outPath;
-    gSystem->Exec(sys_command.c_str());
-        
+           
     int nWaveforms = indices.size();
     
     for (int i = 0; i < nWaveforms ; i++){
@@ -687,27 +693,54 @@ void TCookedAnalyser::DarkPlot(char option){
       
       for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
         hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
-          
-      string outPathfile = outPath;
-      outPathfile += "hWave_";
-      outPathfile += to_string(indices[i]);
-      outPathfile += ".png";
-      SaveWaveform(outPathfile);
       
+      if(plot == 'p'){
+        
+        string outPath = "./Plots/Waveforms/Dark/Kept/";
+        string sys_command = "mkdir -p ";
+        sys_command += outPath;
+        gSystem->Exec(sys_command.c_str());
+      
+        string outPathfile = outPath;
+        outPathfile += "hWave_";
+        outPathfile += to_string(indices[i]);
+        outPathfile += ".png";
+        SaveWaveform(outPathfile);
+      }
+      else if(plot == 'r'){
+        outFile->Write();
+      }
+      else{
+        
+        string outPath = "./Plots/Waveforms/Dark/Kept/";
+        string sys_command = "mkdir -p ";
+        sys_command += outPath;
+        gSystem->Exec(sys_command.c_str());
+        
+        string outPathfile = outPath;
+        outPathfile += "hWave_";
+        outPathfile += to_string(indices[i]);
+        outPathfile += ".png";
+        SaveWaveform(outPathfile);
+        
+        outFile->Write();
+      }
     }
-
-    outFile->Write();
     
   }
   
   if(answer == 'R'){
-    string fileName = "hWaveDarkRejected_";
-    fileName += GetFileID();
-    fileName += ".root";
-    printf("\n  %s \n",fileName.c_str());
-    outFile = new TFile(fileName.c_str(),"RECREATE",fileName.c_str());
   
-    InitFFT();
+    if(plot!='p'){
+      string fileName = "hWaveDarkRejected_";
+      fileName += GetFileID();
+      fileName += ".root";
+      printf("\n  %s \n",fileName.c_str());
+      outFile = new TFile(fileName.c_str(),"RECREATE",fileName.c_str());
+    }
+    
+    //InitFFT();
+    InitWaveform();
     
     std::ifstream file ("rejected_waveforms.csv");
     std::string line;
@@ -725,12 +758,6 @@ void TCookedAnalyser::DarkPlot(char option){
       }
     }
     
-    string outPath = "./Plots/Waveforms/Dark/Rejected/";
-
-    string sys_command = "mkdir -p ";
-    sys_command += outPath;
-    gSystem->Exec(sys_command.c_str());
-        
     int nWaveforms = indices.size();
     
     for (int i = 0; i < nWaveforms ; i++){
@@ -739,24 +766,40 @@ void TCookedAnalyser::DarkPlot(char option){
       for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
         hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
           
-      string outPathfile = outPath;
-      outPathfile += "hWave_";
-      outPathfile += to_string(indices[i]);
-      outPathfile += ".png";
-      SaveWaveform(outPathfile);
+      if(plot == 'p'){
       
+        string outPath = "./Plots/Waveforms/Dark/Rejected/";
+        string sys_command = "mkdir -p ";
+        sys_command += outPath;
+        gSystem->Exec(sys_command.c_str());
+      
+        string outPathfile = outPath;
+        outPathfile += "hWave_";
+        outPathfile += to_string(indices[i]);
+        outPathfile += ".png";
+        SaveWaveform(outPathfile);
+      }
+      else if(plot == 'r'){
+        outFile->Write();
+      }
+      else{
+      
+        string outPath = "./Plots/Waveforms/Dark/Rejected/";
+        string sys_command = "mkdir -p ";
+        sys_command += outPath;
+        gSystem->Exec(sys_command.c_str());
+      
+        string outPathfile = outPath;
+        outPathfile += "hWave_";
+        outPathfile += to_string(indices[i]);
+        outPathfile += ".png";
+        SaveWaveform(outPathfile);
+      
+        outFile->Write();
+      }
     }
-
-    outFile->Write();
     
   }
-  
-  //choose option (do this first?)
-  //read in csv files (+ add checks)
-  //loop over events
-  //plot all events (batch mode?)
-  //add events to root file
-  //call this function in waveform_plotter.C
 
 }
 
