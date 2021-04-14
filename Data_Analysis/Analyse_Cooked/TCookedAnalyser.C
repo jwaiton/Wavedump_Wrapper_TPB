@@ -455,6 +455,12 @@ void TCookedAnalyser::Dark(float thresh_mV){
   
   int rejected = 0;
   
+  int rise_rej = 0;
+  int av_neg_rej = 0;
+  int av_pos_rej = 0;
+  int peak_low = 0;
+  int peak_high = 0;
+  
   std::ofstream rejected_waveforms;
   rejected_waveforms.open("rejected_waveforms.csv");
   rejected_waveforms << "Rejected waveform at entry\n";
@@ -482,24 +488,28 @@ void TCookedAnalyser::Dark(float thresh_mV){
     hD_Peak->Fill(peak_mV);
     hD_Min_Peak->Fill(min_mV,peak_mV);
     
-    if( peak_mV < thresh_mV)
-      continue;
+    if( peak_mV < thresh_mV){
+      peak_low++;
+      continue;}
     
     average = base_average(iEntry);
     
     if( average < -10){
       rejected_waveforms << iEntry << "\n";
       rejected++;
+      av_neg_rej++;
       continue;}
       
     if( average > 10){
       rejected_waveforms << iEntry << "\n";
       rejected++;
+      av_pos_rej++;
       continue;}
       
     if( peak_mV > 100){
       rejected_waveforms << iEntry << "\n";
       rejected++;
+      peak_high++;
       continue;}
     
     int rise = peak_rise();
@@ -507,6 +517,7 @@ void TCookedAnalyser::Dark(float thresh_mV){
     if(!rise){
       rejected_waveforms << iEntry << "\n";
       //rejected++;
+      rise_rej++;
       continue;}
     
     dark_csv << iEntry << "\n";
@@ -517,6 +528,12 @@ void TCookedAnalyser::Dark(float thresh_mV){
 
   rejected_waveforms.close();
   dark_csv.close();
+  
+  std::ofstream rej_count;
+  rej_count.open("rejected_types.csv");
+  rej_count << "peak_low,av_neg_rej,av_pos_rej,peak_high,rise_rej\n";
+  rej_count << peak_low << "," << av_neg_rej << "," << av_pos_rej << "," << peak_high << "," << rise_rej;
+  rej_count.close();
 
   float darkErr = sqrt(nDark);
 
