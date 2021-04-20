@@ -409,9 +409,9 @@ double TCookedAnalyser::base_average(int iEntry){
 
 }
 
-int TCookedAnalyser::peak_rise(float thresh_mV){
+int TCookedAnalyser::peak_rise(float thresh_mV, int nbins){
 
-  double thresh = base_mV + thresh_mV;
+  double thresh = base_mV+0.5*peak_mV;//base_mV + thresh_mV;
   
   std::vector<double> amplitude;
 
@@ -420,17 +420,21 @@ int TCookedAnalyser::peak_rise(float thresh_mV){
     
   int bins = 0;
     
-  for( int iSamp_peak = peak_samp; iSamp_peak > peak_samp - 6; iSamp_peak--){
+  for( int iSamp_peak = peak_samp; iSamp_peak > peak_samp - nbins; iSamp_peak--){
     if(amplitude[iSamp_peak] > thresh)
       bins++;
     else
       break;
   }
     
-  if(bins == 6)
+  if(bins == 0)
+    return 0;  
+  else if(bins == nbins)
     return 0;
   else
     return 1;
+    
+  //first analysis uses 6 bins, base_mV + thresh_mV, 10 mV thresh, no bins == 0 condition
   
 }
 
