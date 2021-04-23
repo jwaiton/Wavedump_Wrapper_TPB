@@ -94,7 +94,6 @@ int main(int argc, char * argv[]){
     switch(test){
     case('D'):
       cooked_analyser->Dark();
-      cooked_analyser->Make_hQ_Fixed(58.8);
       break;
     default:
       //-------------

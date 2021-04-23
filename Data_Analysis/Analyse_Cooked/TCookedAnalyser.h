@@ -134,7 +134,7 @@ class TCookedAnalyser {
   float Wave_To_Amp_Scaled_Wave(float wave);
 
   //----
-  void  Make_hQ_Fixed(float delay = -1.0);
+  void  Make_hQ_Fixed();
   
   bool  HasLowNoise(float min_mV,float peak_mV,
 		    float thresh_mV = 10.);
