@@ -71,7 +71,7 @@ int main(int argc, char * argv[]){
   TFile * inFile  = nullptr;
   TTree * tree    = nullptr;
 
-  gSystem->Exec("mkdir ./Plots/");
+  gSystem->Exec("mkdir -p ./Plots/");
 
   // object used to cook 
   // raw (root) data
@@ -104,7 +104,7 @@ int main(int argc, char * argv[]){
     // initalise TCooker object using 
     // tree from input file
     cooker = new TCooker(tree);
-    // cooker = new TCooker(tree,'D','2','P');// desktop digi, inverting amp
+    //cooker = new TCooker(tree,'D','2','P');// desktop digi, inverting amp
     //cooker = new TCooker(tree,'D','2','N');// desktop digi, no amp
        
     // set the cooker object FileID using the
@@ -128,7 +128,7 @@ int main(int argc, char * argv[]){
     //amp_gain = 1.;
     short firstMaskBin = -1;
     //firstMaskBin = 1000;
-    // firstMaskBin = 988;
+    //firstMaskBin = 988;
     
     // scale amplitudes to 
     // match 10x preamp gain   
@@ -145,7 +145,7 @@ int main(int argc, char * argv[]){
     // DAQ info
     //  Print mean trigger rate
     //  Save: rate,timing and event plots
-    gSystem->Exec("mkdir ./Plots/DAQ");
+    gSystem->Exec("mkdir -p ./Plots/DAQ");
     cooker->DAQ();
     
     //-------------------

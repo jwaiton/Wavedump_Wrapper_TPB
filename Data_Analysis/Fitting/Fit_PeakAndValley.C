@@ -298,7 +298,7 @@ Result* Fit_PeakAndValley(TH1F*  fhisto){
   
   std::string name = std::string(fhisto->GetName()) + ".png" ;
 
-  gSystem->Exec("mkdir ./Plots/");
+  gSystem->Exec("mkdir -p ./Plots/");
 
   name = "./Plots/" + name;
   

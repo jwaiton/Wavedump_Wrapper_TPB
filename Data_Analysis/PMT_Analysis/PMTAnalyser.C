@@ -1141,6 +1141,9 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
 
   TString fName = "";
 
+  // "crystalball" defined here
+  //https://root.cern.ch/root/html608/TFormula_8cxx_source.html
+
   if(negPulsePol)
     fName = "[0]-crystalball(1)";
   else 
@@ -1230,6 +1233,8 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
     cout << endl;
     cout << " Fitting pulse number " << nPulses <<  endl;
 	
+    
+    
     // Base, Const, Mean, Sigma, Alpha, N
     fWave->SetParameters(floorADC,10,peakT,10,-10,10);
     
@@ -1261,6 +1266,7 @@ void PMTAnalyser::RiseFallTime(int   totPulses = 10,
     float fPeakT = fWave->GetX(fPeak,0,waveformDuration);    
     cout << endl;
     cout << " fPeakT = " << fPeakT << endl;
+
 
     float fBase = fWave->GetParameter(0);
     
