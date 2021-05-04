@@ -110,9 +110,14 @@ void TCookedAnalyser::Make_hQ_Fixed(){
   hQ_Fixed->Draw();
   gPad->SetLogy();
   
+  string outPath = "./Plots/Charge/";
+  string sys_command = "mkdir -p ";
+  sys_command += outPath;
+  gSystem->Exec(sys_command.c_str());
+
   histName = "./Plots/Charge/" + histName;
   histName += ".pdf";
-  
+
   gPad->SaveAs(histName.c_str());
   
   gPad->SetLogy(false);
