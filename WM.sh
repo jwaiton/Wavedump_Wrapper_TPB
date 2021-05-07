@@ -2,8 +2,6 @@
 
 echo " Setting Watchman PMT Testing Environment "
 
-export WM_PARENT=/home/stw4198/Documents/WATCHMAN/software/
-
 # pmt testing code
 export WM_CODE=${WM_PARENT}Wavedump_Wrapper/
 
