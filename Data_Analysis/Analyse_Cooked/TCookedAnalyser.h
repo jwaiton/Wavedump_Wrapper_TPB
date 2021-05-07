@@ -13,6 +13,8 @@
 #include <vector>
 #include <limits.h>
 
+#include <numeric>
+
 
 using namespace std;
 
@@ -152,9 +154,14 @@ class TCookedAnalyser {
   TH1F * hD_Peak = nullptr;
   TH2F * hD_Min_Peak = nullptr;
 
+  double base_average(int iEntry);
+  double average;
+  int peak_rise(float thesh_mV = 10., int nbins = 10);
   void  Dark(float thresh_mV = 10.);
   void  InitDark();
   void  SaveDark(string outFolder = "./Plots/Dark/");
+  
+  void DarkPlot(char option = 'D');
 
   //---
   // Monitor Waveforms
