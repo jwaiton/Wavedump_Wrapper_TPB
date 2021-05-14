@@ -99,10 +99,12 @@ cook_raw:	cook_raw.o $(LIBCONRAW)
 
 clean:
 		rm -f *.o *.d *.so $(PROGRAMS)
+		rm -f ${COMMON}*.o ${COMMON}*.d ${COMMON}*.so
 
 realclean:	clean
 		rm -f *.d *~ core
 		rm -f cook_rawDict.* *.pcm
+		rm -f ${COMMON}*.pcm ${COMMON}_C*
 
 cook_rawDict.C: 	$(HDR) CookRaw_LinkDef.h
 		@echo "Generating dictionary cook_rawDict..."
