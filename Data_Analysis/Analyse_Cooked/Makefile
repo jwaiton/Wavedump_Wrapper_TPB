@@ -78,7 +78,7 @@ endif
 
 COMMON        = ../../Common_Tools/
 
-SRC           = TCookedAnalyser.C ${COMMON}FileNameParser.C
+SRC           = TCookedAnalyser.C 
 
 OBJ           = $(SRC:.C=.o)
 HDR           = $(SRC:.C=.h)
