@@ -2,9 +2,6 @@
 
 echo " Setting Watchman PMT Testing Environment "
 
-# if not set in .bashrc then set here
-# export WM_PARENT=/path/to/
-
 # pmt testing code
 export WM_CODE=${WM_PARENT}Wavedump_Wrapper/
 

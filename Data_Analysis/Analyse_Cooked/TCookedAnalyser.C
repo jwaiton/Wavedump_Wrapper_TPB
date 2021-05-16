@@ -6,6 +6,7 @@
 #include <TF1.h>
 #include <math.h>
 #include <limits.h>
+#include <fstream>
 
 #include "wmStyle.C"
 
@@ -399,51 +400,196 @@ void TCookedAnalyser::SaveNoise(string outPath){
   
 }
 
+double TCookedAnalyser::base_average(int iEntry){
+
+  std::vector<double> amplitude;
+
+  for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
+    amplitude.push_back(ADC_To_Wave(ADC->at(iSamp)));
+    
+  double sum = std::accumulate(amplitude.begin(), amplitude.end(), 0.0);
+  double mean = sum/NSamples;
+
+  return mean;
+
+}
+
+int TCookedAnalyser::peak_rise(float thresh_mV, int nbins){
+
+  double thresh = base_mV+0.5*peak_mV;//base_mV + thresh_mV;
+  
+  std::vector<double> amplitude;
+
+  for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
+    amplitude.push_back(ADC_To_Wave(ADC->at(iSamp)));
+    
+  int bins = 0;
+    
+  for( int iSamp_peak = peak_samp; iSamp_peak > peak_samp - nbins; iSamp_peak--){
+    if(amplitude[iSamp_peak] > thresh)
+      bins++;
+    else
+      break;
+  }
+    
+  if(bins == 0)
+    return 0;  
+  else if(bins == nbins)
+    return 0;
+  else
+    return 1;
+    
+  //first analysis uses 6 bins, base_mV + thresh_mV, 10 mV thresh, no bins == 0 condition
+  
+}
 
 void TCookedAnalyser::Dark(float thresh_mV){
   
   InitDark();
   
+  float darkRate = 0;
+  float darkRateErr = 0;
+  float darkRate_noise = 0;
+  float darkRateErr_noise = 0;
+  
+  TFile* results = new TFile("dark_results.root","RECREATE");  
+  TTree* Dark = new TTree("Dark","Dark");
+  Dark->Branch("darkRate",&darkRate,"darkRate/F");
+  Dark->Branch("darkRateErr",&darkRateErr,"darkRateErr/F");
+  Dark->Branch("darkRate_noise",&darkRate_noise,"darkRate/F");
+  Dark->Branch("darkRateErr_noise",&darkRateErr_noise,"darkRateErr/F");
+  
   int nDark = 0;
   int nDark_noise = 0;
+  
+  int rejected = 0;
+  
+  int rise_rej = 0;
+  int av_neg_rej = 0;
+  int av_pos_rej = 0;
+  int peak_low = 0;
+  int peak_high = 0;
+  
+  std::ofstream rejected_waveforms;
+  rejected_waveforms.open("rejected_waveforms.csv");
+  rejected_waveforms << "Rejected waveform at entry\n";
 
+  std::ofstream dark_csv;
+  dark_csv.open ("dark_hits.csv");
+  dark_csv << "Count at entry\n";
+  
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     cookedTree->GetEntry(iEntry);
      
     if(peak_mV > thresh_mV)
       nDark_noise++;
 
+    //
     // Noise Rejection 
-    if( min_mV < -2.5 && peak_mV < thresh_mV)
-      continue;
     
+    // Remove events with noise below dark rate threshold 
+    // if( min_mV < -2.5 && peak_mV < thresh_mV)
+    //   continue;
+    
+    // Remove oscillatory noise with amplitudes above dark rate threshold   
     if( peak_mV < -2*min_mV && peak_mV > thresh_mV )
       continue;
-    
+      
+    // ? TBD - Remove events with baseline above 0 ? 
+    // if( peak_mV < 2*min_mV && peak_mV > thresh_mV )
+    //   continue;
+      
     hD_Peak->Fill(peak_mV);
     hD_Min_Peak->Fill(min_mV,peak_mV);
     
-    if( peak_mV < thresh_mV)
-      continue;
+    if( peak_mV < thresh_mV){
+      peak_low++;
+      continue;}
+    
+    //------------------------------------------
+    // Gary - Something below TBD removes all events
+    // for Edinburgh data
+
+    // average = base_average(iEntry);
+    
+    // if( average < -10){
+    //   rejected_waveforms << iEntry << "\n";
+    //   rejected++;
+    //   av_neg_rej++;
+    //   continue;}
+      
+    // if( average > 10){
+    //   rejected_waveforms << iEntry << "\n";
+    //   rejected++;
+    //   av_pos_rej++;
+    //   continue;}
+      
+    // if( peak_mV > 100){
+    //   rejected_waveforms << iEntry << "\n";
+    //   rejected++;
+    //   peak_high++;
+    //   continue;}
+    
+    // int rise = peak_rise();
+    
+    // if(!rise){
+    //   rejected_waveforms << iEntry << "\n";
+    //   //rejected++;
+    //   rise_rej++;
+    //   continue;}
+    
+    // dark_csv << iEntry << "\n";
     
     nDark++;
     
-  }// end: for (int iEntry 
+  }
 
-  float darkRate = (float)nDark/nentries;
+  rejected_waveforms.close();
+  dark_csv.close();
+  
+  std::ofstream rej_count;
+  rej_count.open("rejected_types.csv");
+  rej_count << "peak_low,av_neg_rej,av_pos_rej,peak_high,rise_rej\n";
+  rej_count << peak_low << "," << av_neg_rej << "," << av_pos_rej << "," << peak_high << "," << rise_rej;
+  rej_count.close();
+
+  float darkErr = sqrt(nDark);
+
+  darkRate = (float)nDark/(nentries-rejected);
   darkRate = darkRate/Length_ns * 1.0e9;
+  darkRateErr = darkErr/nDark * darkRate;
   
   printf("\n \n nentries = %d \n",nentries);
-  printf("\n dark counts (noise rejected) = %d \n",nDark);
-  printf("\n dark rate   (noise rejected) = %.0f \n",darkRate);
+  printf("\n %i rejected 'dark counts'\n",rejected);
+  printf("\n dark counts (noise rejected) = %d +/- %.0f \n",nDark,darkErr);
+  printf("\n dark rate   (noise rejected) = %.0f +/- %.0f Hz \n",darkRate,darkRateErr);
   
-  darkRate = (float)nDark_noise/nentries;
-  darkRate = darkRate/Length_ns * 1.0e9;
+  std::ofstream dark_results;
+  dark_results.open ("dark_results.txt");
+  dark_results << "dark counts (noise rejected) = " << nDark << " +/- " << darkErr << "\n";
+  dark_results << "dark noise (noise rejected) = " << darkRate << " +/- " << darkRateErr << " Hz\n";
+  dark_results.close();
   
-  printf("\n dark counts (with noise)     = %d \n",nDark_noise);
-  printf("\n dark rate   (with noise)     = %.0f \n\n",darkRate);
-
+  float darkErr_noise = sqrt(nDark_noise);
+  
+  darkRate_noise = (float)nDark_noise/nentries;
+  darkRate_noise = darkRate_noise/Length_ns * 1.0e9;
+  darkRateErr_noise = darkErr_noise/nDark_noise * darkRate_noise;
+  
+  printf("\n dark counts (with noise) = %d +/- %.0f \n",nDark_noise,darkErr_noise);
+  printf("\n dark rate   (with noise) = %.0f +/- %.0f Hz\n\n",darkRate_noise,darkRateErr_noise);
+  
+  std::ofstream dark_results_noise;
+  dark_results_noise.open ("dark_results.txt", std::ios_base::app);
+  dark_results_noise << "dark counts (noise) = " << nDark_noise << " +/- " << darkErr_noise << "\n";
+  dark_results_noise << "dark noise (noise) = " << darkRate_noise << " +/- " << darkRateErr_noise << " Hz\n";
+  dark_results_noise.close();
+  
   SaveDark();
+  
+  Dark->Fill();
+  Dark->Write();
+  results->Close();
   
 }
 
@@ -541,6 +687,7 @@ void TCookedAnalyser::SaveDark(string outPath){
   gPad->SetLogz(false);
 
   DeleteCanvas();
+  
 }
 
 float TCookedAnalyser::ADC_To_Wave(short ADC){
@@ -558,6 +705,173 @@ float TCookedAnalyser::Wave_To_Amp_Scaled_Wave(float wave){
   return wave/AmpGain*10.;
 }
 
+
+void TCookedAnalyser::DarkPlot(char option){
+
+  //fix FFT, add option to cycle through dark and rejected plots rather than plotting all
+
+  char answer = 'D';
+  
+  printf("\n What to plot? \n");
+  printf("\n D - All dark waveforms \n");
+  printf("\n R - All rejected dark waveforms \n");
+  printf("\n X - eXit \n");
+  // note deliberate use of whitespace before %c
+  scanf(" %c", &answer);
+  
+  char plot = 'b';
+  
+  printf("\n How to save plots? \n");
+  printf("\n p - png \n");
+  printf("\n r - root \n");
+  printf("\n b - 'p' and 'r' \n");
+  scanf(" %c", &plot);
+
+  if(answer == 'D'){
+
+    if (plot!='p'){
+      string fileName = "hWaveDark_";
+      fileName += GetFileID();
+      fileName += ".root";
+      printf("\n  %s \n",fileName.c_str());
+      outFile = new TFile(fileName.c_str(),"RECREATE",fileName.c_str());
+    }
+  
+    //InitFFT();
+    InitWaveform();
+    
+    std::ifstream file ("dark_hits.csv");
+    std::string line;
+    std::getline(file,line); //remove first line
+    std::vector<int> indices;
+        
+    while(std::getline(file,line))
+    {
+      std::string line_value;   
+      std::stringstream ss(line);
+      while(std::getline(ss,line_value,','))
+      {
+        indices.push_back(stoi(line_value));
+        
+      }
+    }
+           
+    int nWaveforms = indices.size();
+    
+    for (int i = 0; i < nWaveforms ; i++){
+      cookedTree->GetEntry(indices[i]);
+      
+      for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
+        hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
+      
+      if(plot == 'p'){
+        
+        string outPath = "./Plots/Waveforms/Dark/Kept/";
+        string sys_command = "mkdir -p ";
+        sys_command += outPath;
+        gSystem->Exec(sys_command.c_str());
+      
+        string outPathfile = outPath;
+        outPathfile += "hWave_";
+        outPathfile += to_string(indices[i]);
+        outPathfile += ".png";
+        SaveWaveform(outPathfile);
+      }
+      else if(plot == 'r'){
+        outFile->Write();
+      }
+      else{
+        
+        string outPath = "./Plots/Waveforms/Dark/Kept/";
+        string sys_command = "mkdir -p ";
+        sys_command += outPath;
+        gSystem->Exec(sys_command.c_str());
+        
+        string outPathfile = outPath;
+        outPathfile += "hWave_";
+        outPathfile += to_string(indices[i]);
+        outPathfile += ".png";
+        SaveWaveform(outPathfile);
+        
+        outFile->Write();
+      }
+    }
+    
+  }
+  
+  if(answer == 'R'){
+  
+    if(plot!='p'){
+      string fileName = "hWaveDarkRejected_";
+      fileName += GetFileID();
+      fileName += ".root";
+      printf("\n  %s \n",fileName.c_str());
+      outFile = new TFile(fileName.c_str(),"RECREATE",fileName.c_str());
+    }
+    
+    //InitFFT();
+    InitWaveform();
+    
+    std::ifstream file ("rejected_waveforms.csv");
+    std::string line;
+    std::getline(file,line); //remove first line
+    std::vector<int> indices;
+        
+    while(std::getline(file,line))
+    {
+      std::string line_value;   
+      std::stringstream ss(line);
+      while(std::getline(ss,line_value,','))
+      {
+        indices.push_back(stoi(line_value));
+        
+      }
+    }
+    
+    int nWaveforms = indices.size();
+    
+    for (int i = 0; i < nWaveforms ; i++){
+      cookedTree->GetEntry(indices[i]);
+      
+      for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
+        hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
+          
+      if(plot == 'p'){
+      
+        string outPath = "./Plots/Waveforms/Dark/Rejected/";
+        string sys_command = "mkdir -p ";
+        sys_command += outPath;
+        gSystem->Exec(sys_command.c_str());
+      
+        string outPathfile = outPath;
+        outPathfile += "hWave_";
+        outPathfile += to_string(indices[i]);
+        outPathfile += ".png";
+        SaveWaveform(outPathfile);
+      }
+      else if(plot == 'r'){
+        outFile->Write();
+      }
+      else{
+      
+        string outPath = "./Plots/Waveforms/Dark/Rejected/";
+        string sys_command = "mkdir -p ";
+        sys_command += outPath;
+        gSystem->Exec(sys_command.c_str());
+      
+        string outPathfile = outPath;
+        outPathfile += "hWave_";
+        outPathfile += to_string(indices[i]);
+        outPathfile += ".png";
+        SaveWaveform(outPathfile);
+      
+        outFile->Write();
+      }
+    }
+    
+  }
+
+}
 
 void TCookedAnalyser::Waveform(char option){
 
@@ -596,6 +910,7 @@ void TCookedAnalyser::Waveform(char option){
       printf("\n P - Previous \n");
       printf("\n R - Random selection \n");
       printf("\n A - Accumulate All \n");
+      printf("\n I - Index of waveform \n");
       printf("\n X - eXit \n");
       
       // note deliberate use of whitespace before %c
@@ -617,6 +932,10 @@ void TCookedAnalyser::Waveform(char option){
       break;
     case('A'):
       entry = 0;
+      break;
+    case('I'):
+      std::cout << "Entry to plot: \n" << endl;
+      std::cin >> entry;
       break;
     default:
       entry = -1;
