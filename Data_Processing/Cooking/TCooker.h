@@ -24,7 +24,7 @@ class TCooker {
   int   treeNumber;
 
   // raw root data tree variables
-  uint HEAD[6];
+  unsigned int HEAD[6];
   vector<short> * ADC = 0;     // reading
   vector<short>   ADC_buff;    // writing
   

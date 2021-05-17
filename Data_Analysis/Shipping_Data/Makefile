@@ -39,6 +39,10 @@ SOFLAGS       = -shared
 endif
 
 ifeq ($(ARCH),macosx64)
+
+#PATH  := /usr/bin/:$(PATH)
+#SHELL := env PATH=$(PATH) /bin/bash
+
 # MacOS X >= 10.4 with gcc 64 bit mode (GNU gcc 4.*)
 # Only specific option (-m64) comes from root-config
 MACOSX_MINOR := $(shell sw_vers | sed -n 's/ProductVersion://p' | cut -d . -f 2)
@@ -99,10 +103,12 @@ shipping_data:	shipping_data.o $(LIBCONRAW)
 
 clean:
 		rm -f *.o *.d *.so $(PROGRAMS)
+		rm -f $(COMMON)*.o $(COMMON)*.d $(COMMON)*.so 
 
 realclean:	clean
 		rm -f *.d *~ core
-		rm -f *.pcm ship_*Dict.C 
+		rm -f *.pcm ship_*Dict.C
+		rm -f $(COMMON)*.pcm $(COMMON)ShippingData_C*
 
 ship_datDict.C: 	$(HDR) ShipData_LinkDef.h
 		@echo "Generating dictionary ship_datDict..."

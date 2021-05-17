@@ -925,8 +925,8 @@ short TCooker::SetNSamples(){
   
   rawTree->GetEntry(0);   
   
-  uint hdrByts = 24;
-  uint smpByts = HEAD[0] - hdrByts;
+  unsigned int hdrByts = 24;
+  unsigned int smpByts = HEAD[0] - hdrByts;
 
   if(fDigitiser=='V')
     return smpByts/2; // shorts

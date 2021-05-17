@@ -5,6 +5,5 @@
 #pragma link off all functions;
 
 #pragma link C++ class TCookedAnalyser;
-#pragma link C++ class FileNameParser;
 
 #endif

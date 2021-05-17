@@ -2,9 +2,6 @@
 
 echo " Setting Watchman PMT Testing Environment "
 
-# if not set in .bashrc then set here
-# export WM_PARENT=/path/to/
-
 # pmt testing code
 export WM_CODE=${WM_PARENT}Wavedump_Wrapper/
 
@@ -32,6 +29,7 @@ export WM_WAVE_PLOT=${WM_ANALYSE}Waveform_Plotter/
 
 # header files
 export CPATH=${CPATH}:${WM_COMMON}
+export CPATH=${CPATH}:${WM_FITTING}
 export CPATH=${CPATH}:${WM_COOK}
 export CPATH=${CPATH}:${WM_ANALYSE_COOKED}
 

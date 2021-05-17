@@ -50,8 +50,10 @@ void GetData(int argc, char * argv[]);
 ShippingData * MakeShipData(int pmt);
 void DeleteShipData(ShippingData * ship_data);
 void HelpFunction();
-void ShowData(int pmt, bool showsk, bool showskb, bool showsp, bool showidb, bool showebb, 
-bool showdr, bool showtts, bool showptv, bool showname, bool showunits);
+void ShowData(int pmt,
+	      bool showsk, bool showskb, bool showsp, bool showidb, bool showebb, 
+	      bool showdr,bool showdrt, bool showtts, bool showptv, bool showname,
+	      bool showunits);
 
 int main(int argc, char * argv[]){
 
@@ -71,7 +73,10 @@ int main(int argc, char * argv[]){
     pmt = atoi(argv[argc-1]);
     if (pmt == 0) HelpFunction();
     else {
-      ShowData(pmt, true, true, true, true, true, true, true, true, false, false);
+      ShowData(pmt,
+	       true, true,  true, true, true,
+	       true, false, true, true, false,
+	       false);
     }
   }
   else HelpFunction();
@@ -97,81 +102,85 @@ void GetData(int argc, char *argv[]){
   bool showidb = false;
   bool showebb = false;
   bool showdr = false;
+  bool showdrt = false;
   bool showtts =false;
   bool showptv = false;
   bool showname = false;
 
-  while ((c = getopt(argc, argv, "(kbsIedtphaTun):")) != -1) {
+  while ((c = getopt(argc, argv, "(kbsIedDtphaTun):")) != -1) {
     switch (c) {
-      case 'k':
-        //Sk:
-        //printf("Sk: %fuA/Im\n", ship_data->GetSk());
-        showsk = true;
-        break;
-      case 'b':
-        //Skb
-        //printf("Skb: %f\n", ship_data->GetSkb());
-        showskb = true;
-        break;
-      case 's':
-        //Sp
-        //printf("Sp: %fA/Im\n", ship_data->GetSp());
-        showsp = true;
-	      break;
-      case 'I':
-        //Idb 
-        //printf("Idb: %fnA\n", ship_data->GetIdb());
-        showidb = true;
-        break;
-      case 'e':
-        showebb = true;
-        //nominal voltage?
-        break;
-      case 'd':
-        showdr = true;
-        break;
-      case 't':
-        showtts = true;
-        break;
-      case 'p':
-        showptv = true;
-        break;
-      case 'u':
-        showunits = true;
-        break;
-      case 'n':
-        showname = true;
-        break;
-      case 'a':
-        //Prints all of the above
-        showsk = true;
-        showskb = true;
-        showsp = true;
-        showidb = true;
-        showebb = true;
-        showdr = true;
-        showtts = true;
-        showptv = true;
-        break;
+    case 'k':
+      //Sk:
+      //printf("Sk: %fuA/Im\n", ship_data->GetSk());
+      showsk = true;
+      break;
+    case 'b':
+      //Skb
+      //printf("Skb: %f\n", ship_data->GetSkb());
+      showskb = true;
+      break;
+    case 's':
+      //Sp
+      //printf("Sp: %fA/Im\n", ship_data->GetSp());
+      showsp = true;
+      break;
+    case 'I':
+      //Idb 
+      //printf("Idb: %fnA\n", ship_data->GetIdb());
+      showidb = true;
+      break;
+    case 'e':
+      showebb = true;
+      //nominal voltage?
+      break;
+    case 'd':
+      showdr = true;
+      break;
+    case 'D':
+      showdrt = true;
+      break;
+    case 't':
+      showtts = true;
+      break;
+    case 'p':
+      showptv = true;
+      break;
+    case 'u':
+      showunits = true;
+      break;
+    case 'n':
+      showname = true;
+      break;
+    case 'a':
+      //Prints all of the above
+      showsk = true;
+      showskb = true;
+      showsp = true;
+      showidb = true;
+      showebb = true;
+      showdr = true;
+      showtts = true;
+      showptv = true;
+      break;
       /*
-      case 'T':
+	case 'T':
         //Test case
         printf("PMT number: %f\n", MakeShipData(pmt)->GetPMT());
         break;
       */
-      case 'h':
-        HelpFunction();
-        break;
-      case '?': //unknown input
-        HelpFunction();
-        break;
-      default:
-        printf("Aborting...\n");
-        abort();
+    case 'h':
+      HelpFunction();
+      break;
+    case '?': //unknown input
+      HelpFunction();
+      break;
+    default:
+      printf("Aborting...\n");
+      abort();
     }//exit switch 
     i += 1;
   }//exit while loop
-
+  
   if (i == 0) {
     HelpFunction();
     return;
@@ -179,30 +188,39 @@ void GetData(int argc, char *argv[]){
   
   //show units/names with no other options selected?
   /*
-  if ((showname || showunits) && (!showsk && !showskb && !showsp && !showidb && !showebb && !showdr && !showtts && !showptv)) {
+    if ((showname || showunits) && (!showsk && !showskb && !showsp && !showidb && !showebb && !showdr && !showtts && !showptv)) {
     //I'm so sorry for this if statement
     showsk = showskb = showsp = showidb = showebb = showdr = showtts = showptv = true;
-  }
+    }
   */
-
-  ShowData(pmt, showsk, showskb, showsp, showidb, showebb, showdr, showtts, showptv, showname, showunits);
-
+  
+  ShowData(pmt,
+	   showsk, showskb, showsp, showidb, showebb,
+	   showdr, showdrt, showtts, showptv, showname,
+	   showunits);
+  
 }
 
-void ShowData(int pmt, bool showsk, bool showskb, bool showsp, bool showidb, bool showebb, 
-bool showdr, bool showtts, bool showptv, bool showname, bool showunits){
-
+void ShowData(int pmt,
+	      bool showsk, bool showskb, bool showsp, bool showidb, bool showebb, 
+	      bool showdr, bool showdrt,bool showtts, bool showptv, bool showname,
+	      bool showunits){
+  
   /*
-  ShowData: A helper function that prints out the data. Defined as a function to prevent repeated code.
-  Takes the options generated by GetData or from the user, and prints appropriate data.
+    ShowData: A helper function that prints out the data. Defined as a function to prevent repeated code.
+    Takes the options generated by GetData or from the user, and prints appropriate data.
   */
   ShippingData *ship_data = MakeShipData(pmt);
-
-  if ((showname || showunits) && (!showsk && !showskb && !showsp && !showidb && !showebb && !showdr && !showtts && !showptv)) {
+  
+  if ( (showname || showunits) &&
+       (!showsk && !showskb && !showsp && !showidb && !showebb &&
+	!showdr && !showdrt && !showtts && !showptv)) {
     //I'm so sorry for this if statement
     showsk = showskb = showsp = showidb = showebb = showdr = showtts = showptv = true;
   }
 
+  float temp = 25;
+  
   if (showsk) printf("%s%f %s\n", showname ? "Sk: " : "", ship_data->GetSk(), showunits ? "uA/Im" : "");
   if (showskb) printf("%s%f\n", showname ? "Skb: " : "", ship_data->GetSkb());
   if (showsp) printf("%s%f %s\n", showname ? "Sp: " : "", ship_data->GetSp(), showunits ? "A/Im" : "");
@@ -211,7 +229,12 @@ bool showdr, bool showtts, bool showptv, bool showname, bool showunits){
   if (showdr) printf("%s%d %s\n", showname ? "DR: " : "", ship_data->GetDR(), showunits ? "cps" : "");
   if (showtts) printf("%s%f %s\n", showname ? "TTS: " : "", ship_data->GetTTS(), showunits ? "ns" : "");
   if (showptv) printf("%s%f\n", showname ? "PTV: " : "", ship_data->GetPTV());
-
+  if (showdrt) {
+    printf(" what temperature? ");
+    cin >> temp;
+    printf("%s%d %s\n", showname ? "DR: " : "", ship_data->GetDR(temp), showunits ? "cps" : "");
+  }
+  
   DeleteShipData(ship_data);
 }
 
@@ -225,7 +248,7 @@ void DeleteShipData(ShippingData * ship_data) {
 
 void HelpFunction(){
   /*
-  HelpFunction prints a brief description of how to use the program
+    HelpFunction prints a brief description of how to use the program
   */
   printf("Usage:\n");
   printf("shipping_data <options> [pmt number]\n\n");
@@ -233,7 +256,9 @@ void HelpFunction(){
   printf("-h: Prints this message.\n");
   printf("-a: Prints all shipping data for a single PMT.\n");
   printf("-b: Prints the Skb value for a single PMT. \n");
-  printf("-d: Prints the Dark Count for a single PMT. \n");
+  printf("-d: Prints the Dark rate for a single PMT. \n");
+  printf("-D: Prints the Dark rate at a specified temperature \n");
+  printf("-t: Prints the TTS value for a single PMT. \n");
   printf("-e: Prints the EBB value for a single PMT. \n");
   printf("-I: Prints the Idb value for a single PMT. \n");
   printf("-k: Prints the Sk value for a single PMT. \n");
