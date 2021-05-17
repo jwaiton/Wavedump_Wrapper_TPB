@@ -1,4 +1,4 @@
-10th December 2019 
+2nd April 2020 
 WATCHMAN UK PMT Performance Testing 
 
 Repository for Watchman-PMT data taking, processing and analysis framework.
@@ -7,19 +7,39 @@ Email issues and suggestions to:
  gary.smith@ed.ac.uk
 
 Instructions:
+( tested on Mac OS 10.13.6, CentOS7, Scientific Linux 7.6, Ubuntu )
 
-1) Modify and execute the following lines to set up the environment,
-  ( e.g. add them to your .bashrc file )
+1) Access the Code. Clone this repository on your local machine 
+(Fork if planning to contribute). 
 
-$ export WM_PARENT=/path/to/
+2) Set up the environment. Modify and execute the following lines 
+  ( recommended to add them to your .bashrc file ) :
+
+$ export WM_PARENT=/my/path/to/repository/parent/folder/
 $ source ${WM_PARENT}/Wavedump_Wrapper/WM.sh
 
-2) build all the binaries
-  ( requires root to be installed ) 
+Now several environment variables have been set. The environment variables 
+generally start with 'WM_'. For example try:
+
+$ clear ; echo $WM_CODE; echo ' '; ls -lrth $WM_CODE ; echo ' ';
+
+3) Build all the binaries
+  ( requires root to be installed and its usual environment set ). 
+$ cd $WM_CODE 
 $ ./making.sh
 
-3) run file conversion and basic analysis
-  ( creates files and folders in the local directory )
-$ cp process_analyse_locally.sh /path/to/binary/RUN00000X/PMT00YY/TestName/
-$ cd /path/to/binary/RUN00000X/PMT00YY/TestName/
-$ ./process_analyse_locally.sh   
+4) Run file conversion and basic analysis to generate the analysis files and folders in the local directory. 
+
+Have a read through $WM_CODE/process_analyse_locally_auto.sh
+
+    [ NB the cooking stage requires that the data files are stored in a specific folder naming scheme with
+    /RUN000XXX containing a run number (e.g. XXX=001), /PMT0YYY containing the PMT number (e.g YYY=005) with
+    the leading 0 required, /TestName beginning with e.g. D (Dark Rate), N (Nominal), S (SPE) or G (Gain),
+    and the channel number in the file name: e.g /wave_0.dat for DAQ channel 0 (underscore required)]
+
+Example using file /my/path/to/parent/data/folder/RUN000001/PMT0130/Nominal/wave_0.dat
+$ cd /my/path/to/parent/data/folder/RUN000001/PMT0130/Nominal/
+$ source process_analyse_locally_auto.sh 
+
+Wiki
+https://github.com/Watchman-PMT/Wavedump_Wrapper/wiki

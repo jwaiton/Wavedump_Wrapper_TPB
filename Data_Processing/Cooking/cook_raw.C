@@ -4,7 +4,7 @@
  *
  * Author 
  *  gary.smith@ed.ac.uk
- *  15 10 2019
+ *  03 04 2020 (last modified)
  *
  * Purpose
  *  This program reads in a TTree
@@ -16,36 +16,42 @@
  * Setting Up
  *   The environment should first be set using 
  *   the WM.sh script - located in ../../
- * 
- * How to build
+ *    
+ * How to build 
  *  $ make 
+ * 
+ *  or
+ * make -f ./Build_Options/Makefile_clang++
  *
  * How to run 
- *  e.g. (test parameters are extracted from the file path)
- * $ cook_raw /path/to/RUN000001/PMT0130/SPEtest/wave_0.dat.root
  *
- * Input
- *  A .root file that was created using dat_to_root
+ *   [ NB some test parameters will be extracted from the file path
+ *     which requires the file path name to follow some conventions,
+ *     specifically it must contain:
+ *     /RUN000XXX    (XXX is the run number, zeros are optional) 
+ *     /PMT0YYY      (YYY pmt number, leading zero is required)
+ *     /TestName     (TestName must start with D - Dark Count, N - Nominal, S - SPE, A - Afterpulsing, G - Gain)
+ *     ( full details in $WM_COMMON/FileNameParser.C and $WM_COMMON/testFileNameParser.C ) ]
  * 
+ * $ cook_raw /my/path/to/RUN000001/PMT0130/Nominal/wave_0.dat.root
+ * 
+ * Input
+ *  A .root file that was created using dat_to_root 
+ *  (or desktop_dat_to_root)
+ *
  * Output
  *  A root file containing: 
  *      a cooked variables TTree  
  *      a meta data TTree 
- *  Monitoring Plots (optional)
- *  in the following folders:
+ *  Monitoring plots in 
  *     ./Plots/DAQ 
- *     ./Plots/Baseline
- *     ./Plots/Waveforms
- *   these folders must be created prior to running.
- *    (the script make_plot_directories.sh is 
- *       provided to automate this) 
- *
+ * 
  * Dependencies
  *  root.cern - a working version of root is required
  *
- *  WATCHMAN common tools
+ *  WATCHMAN common tools (see $WM_COMMON folder)
  *    wmStyle.C - TStyle class settings for WATCHMAN visualisation
- *    FileNameParser.h - class for extracting file ID variables 
+ *    FileNameParser.C - class for extracting file ID variables 
  * 
  */ 
 
@@ -61,6 +67,7 @@
 #include "FileNameParser.h"
 
 bool Welcome(int argc);
+void PrintUsage();
 bool IsFileReady(TFile *, char *);
 
 int main(int argc, char * argv[]){
@@ -68,6 +75,30 @@ int main(int argc, char * argv[]){
   if( !Welcome(argc) )
     return -1;
   
+  // default to VME digitiser
+  char digitiser = 'V';  
+  // CAENs frequency setting system 
+  // only used for digitiser = 'D' 
+  // default '2' = 1 GHz (for desktop digi)
+  char sampling  = '2';  
+  
+  // pulse polarity
+  // 'N' for non-inverting amp
+  char polarity  = 'N';
+
+  float amp_gain = 10.;
+
+  for ( int i = 2; i < argc ; i = i+2 ) {
+    if     ( string(argv[i]) == "-d" ) digitiser = *argv[i+1];
+    else if( string(argv[i]) == "-s" ) sampling  = *argv[i+1];
+    else if( string(argv[i]) == "-p" ) polarity  = *argv[i+1];
+    else if( string(argv[i]) == "-g" ) amp_gain  = stoi(argv[i+1]);
+    else {
+      PrintUsage();
+      return 1;
+    }
+  }
+
   TFile * inFile  = nullptr;
   TTree * tree    = nullptr;
 
@@ -76,14 +107,20 @@ int main(int argc, char * argv[]){
   // object used to cook 
   // raw (root) data
   TCooker * cooker = nullptr;
-
+  
   // object used for extracting file ID info 
   // from argv[], namely:
   //  Run, PMT, Test, Location, 
   FileNameParser * fNP =  nullptr;
   
   for( int iFile = 1 ; iFile < argc ; iFile++){
-
+    
+    if(string(argv[iFile]) == "-d" ||
+       string(argv[iFile]) == "-s") {
+      iFile = iFile + 2;
+      continue;
+    }
+       
     //-------------------
     //-------------------
     // Setting Up
@@ -103,14 +140,21 @@ int main(int argc, char * argv[]){
     
     // initalise TCooker object using 
     // tree from input file
-    cooker = new TCooker(tree);
-    //cooker = new TCooker(tree,'D','2','P');// desktop digi, inverting amp
-    //cooker = new TCooker(tree,'D','2','N');// desktop digi, no amp
-       
+    cooker = new TCooker(tree,
+			 digitiser,sampling,polarity); // optional
+    
     // set the cooker object FileID using the
     // FileNameParser object member function
     cooker->SetFileID(fNP->GetFileID());
     
+    //
+    cooker->SetRun(fNP->GetRun());
+    cooker->SetPMT(fNP->GetPMT());
+    cooker->SetLoc(fNP->GetLoc());
+    cooker->SetTest(fNP->GetTest());
+    cooker->SetHVStep(fNP->GetHVStep());
+    //
+
     // Set output file directory 
     // to same as input file directory
     cooker->SetDir(fNP->GetDir());
@@ -118,15 +162,15 @@ int main(int argc, char * argv[]){
     // Optional method:
     // reduce event loop for faster code testing
     // NB no check that this is lower that nentries
-    int user_nentries = 100000; 
-    //cooker->SetTestMode(user_nentries);
+    // int user_nentries = 100000; 
+    // cooker->SetTestMode(user_nentries);
 
     // Apply Equipment 
     // Specific Settings
 
-    float amp_gain = 10.;
+
     //amp_gain = 1.;
-    short firstMaskBin = -1;
+    short firstMaskBin = -1; // -1 means no mask
     //firstMaskBin = 1000;
     //firstMaskBin = 988;
     
@@ -145,8 +189,11 @@ int main(int argc, char * argv[]){
     // DAQ info
     //  Print mean trigger rate
     //  Save: rate,timing and event plots
-    gSystem->Exec("mkdir -p ./Plots/DAQ");
-    cooker->DAQ();
+    //  (desktop digitiser not yet implemented)
+    if(digitiser=='V'){
+      gSystem->Exec("mkdir -p ./Plots/DAQ");
+      cooker->DAQ();
+    }
     
     //-------------------
     //-------------------
@@ -179,26 +226,30 @@ bool Welcome(int argc){
 
   printf("\n ------------------------------ \n");
   
-  if(argc == 2){
-    printf("\n  Processing single file \n");
-    printf("\n ------------------------------ \n");
-    return true;
-  }
-  else if  (argc > 2){
-    printf("\n  Processing %d files \n",argc-1);
+  if(argc > 1){
+    printf("\n  Processing file/s \n");
     printf("\n ------------------------------ \n");
     return true;
   }
   else{
     printf("\n  enter file as argument \n");
     printf("\n  e.g. \n");
-    printf("\n  ./cook_raw ./wave_0.dat.root \n\n");
+    printf("\n  ./cook_raw /path/to/wave_0.dat.root \n\n");
     printf("\n ------------------------------ \n");
     return false;
   }
-  
-  
 }
+
+void PrintUsage() {
+  cerr << " Usage: " << endl;
+  cerr << " cook_raw /path/to/file.dat.root [-d desktop character ] [-s sample setting]  "
+       << endl;
+  cerr << " -d options for digitiser: 'V' VME digitiser (default), 'D' Desktop digitiser " 
+       << endl;
+  cerr << " -s options for sample setting (desktop digitiser only): 0 - 5 GHz, 1 - 2.5 GHz, 2 - 1 GHz (default), 3 - .75 GHz "
+       << endl;
+}
+
 
 
 bool IsFileReady(TFile * inFile, char * arg){

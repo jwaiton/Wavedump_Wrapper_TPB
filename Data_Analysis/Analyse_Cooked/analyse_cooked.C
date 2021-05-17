@@ -16,6 +16,10 @@
  * 
  * How to build
  *  $ make 
+ * 
+ * or 
+ * 
+ *  $ make -f ./Build_Options/Makefile_clang++
  *
  * How to run 
  *  e.g.
@@ -28,19 +32,15 @@
  *   Plots are saved in directory structure
  *    e.g.
  *     ./Plots/Dark 
- *   which must be created prior to running.
- *   ( see make_plot_directories.sh)
  * 
  * Dependencies
  *  root.cern - a working version of root is required
  *
- *  FileNameParser
  *  TCookedAnalyser
  */ 
 #include <iostream>
 
 #include <string>
-#include "TSystem.h"
 #include "TCookedAnalyser.h"
 
 #include "TF1.h"
@@ -76,14 +76,13 @@ int main(int argc, char * argv[]){
 
     //int user_nentries = 10; 
     //cooked_analyser->SetTestMode(user_nentries);
-    
+
     //-------------------
     //-------------------
     // Monitoring
     
     cooked_analyser->PrintMetaData();
 
-    gSystem->Exec("mkdir -p ./Plots/Noise");
     cooked_analyser->Noise();
     
     //-------------------
@@ -94,34 +93,26 @@ int main(int argc, char * argv[]){
     
     switch(test){
     case('D'):
-      gSystem->Exec("mkdir -p ./Plots/Dark");
       cooked_analyser->Dark();
       break;
     default:
       //-------------
       // Timing
-      gSystem->Exec("mkdir -p ./Plots/Timing");
       
       // Mean LED pulse peak time
       cooked_analyser->Fit_Peak_Time_Dist();
       
       //-------------
       // Charge
-      gSystem->Exec("mkdir -p ./Plots/Charge");
-      
       // Save a new root file with charge hist
       cooked_analyser->Make_hQ_Fixed();
 
-     //-------------
+      //-------------
       // Pulse fitting test
-      gSystem->Exec("mkdir -p ./Plots/PulseFit");
-      
       // towards rise and fall time extraction
       //TF1 * fWave = cooked_analyser->Fit_Pulse();
       
     }
-    
-    
     
   }// end of: for( int iFile = 1 ;
 

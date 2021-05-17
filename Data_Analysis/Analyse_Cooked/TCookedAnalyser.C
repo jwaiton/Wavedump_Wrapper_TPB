@@ -1,5 +1,7 @@
 #define TCookedAnalyser_cxx
 #include "TCookedAnalyser.h"
+
+#include "TSystem.h"
 #include <TH2.h>
 #include <TF1.h>
 #include <math.h>
@@ -8,11 +10,12 @@
 #include "wmStyle.C"
 
 string TCookedAnalyser::GetCookedTreeID(){
-  return "Cooked_" + FileID;  
+  string CookedTreeID = FileID;
+  return "Cooked_" + CookedTreeID;
 }
 
 string TCookedAnalyser::GetMetaTreeID(){
-  return "Meta_" + FileID;  
+  return "Meta_Data";
 }
 
 string TCookedAnalyser::GetFileID(){
@@ -24,14 +27,10 @@ string TCookedAnalyser::GetFileID(){
 
 void TCookedAnalyser::Make_hQ_Fixed(){
 
-  // See $BinToRoot/BinToRoot.cpp
-  // for existing methods
-
   float gate_start = Get_LED_Delay() - 15;
-  
-  // Does 70 ns give 10^7 gain?
-  float gate_width = 80.; 
 
+  float gate_width = 50.; 
+  
   string fileName = "hQ_Fixed_";
   string histName = "hQ_Fixed_";
   
@@ -42,11 +41,12 @@ void TCookedAnalyser::Make_hQ_Fixed(){
   
   printf("\n  %s \n",fileName.c_str());
   
-  TFile * outFile = new TFile(fileName.c_str(),"RECREATE",fileName.c_str()); 
-
+  outFile = new TFile(fileName.c_str(),"RECREATE",fileName.c_str()); 
+  
   int   nBins = 100.;
-  float minQ  = -100.0;
-  float maxQ  = 900.0;
+  //float minQ  = -100.0;
+  float minQ  = -1000.0;
+  float maxQ  = 1000.0;
 
   TH1F * hQ_Fixed = new TH1F(histName.c_str(),"hQ_Fixed;Charge (mV ns);Counts",
 			     nBins,minQ,maxQ);
@@ -55,7 +55,7 @@ void TCookedAnalyser::Make_hQ_Fixed(){
 
   int   nSigSamps = 0;
   int   nBasSamps = 0;
-
+  
   float sig_volts = 0;
   float bas_volts = 0;
 
@@ -64,7 +64,7 @@ void TCookedAnalyser::Make_hQ_Fixed(){
 
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     cookedTree->GetEntry(iEntry);
-
+    
     // zero at start of event
     sig_volts = 0.0;
     bas_volts = 0.0;
@@ -88,21 +88,20 @@ void TCookedAnalyser::Make_hQ_Fixed(){
 	nSigSamps++;
       }// baseline subtraction
       else if( time_ns <   gate_start   &&
-	       time_ns >= (gate_start - gate_width ) ){ 
-	bas_volts += wave_mV;
-	nBasSamps++;
+      	       time_ns >= (gate_start - gate_width ) ){ 
+      	bas_volts += wave_mV;
+      	nBasSamps++;
       }
       
       volts = sig_volts - (bas_volts*(float)nSigSamps/nBasSamps);
-      
     }
     
     // Convert ADC to units of charge then
     // fill histogram 
     charge = volts*nsPerSamp;
-    
+
     //if(HasLowNoise(min_mV,peak_mV))
-      hQ_Fixed->Fill(charge);
+    hQ_Fixed->Fill(charge);
   
   }
   
@@ -115,9 +114,10 @@ void TCookedAnalyser::Make_hQ_Fixed(){
   gPad->SaveAs(histName.c_str());
   
   gPad->SetLogy(false);
-
+  
   outFile->cd();
   outFile->Write();
+  outFile->Delete();
 
 }
 
@@ -186,6 +186,12 @@ void TCookedAnalyser::Fit_Peak_Time_Dist(){
   hPeakTime->GetFunction("gaus")->SetLineColor(kBlue);
 
   hPeakTime->Draw();  
+
+  string outPath = "./Plots/Timing/";
+  string sys_command = "mkdir -p ";
+  sys_command += outPath;
+  gSystem->Exec(sys_command.c_str());
+
   canvas->SaveAs("./Plots/Timing/hPeakTime.pdf");
  
   DeleteCanvas();
@@ -257,8 +263,8 @@ void TCookedAnalyser::Noise(){
   noise_rate_low = noise_rate_low/Length_ns * 1.0e9;
   
   printf("\n Mean voltage %.2f mV \n",peak_mean_mV);
-  printf("\n Noise Rate @ %.2f mV  %.2f Hz \n",noise_th_low_mV,noise_rate_low);
-  printf("\n Noise Rate @ %.2f mV  %.2f Hz \n",noise_thresh_mV,noise_rate);
+  printf("\n Rate @ %.2f mV  %.2f Hz \n",noise_th_low_mV,noise_rate_low);
+  printf("\n Rate @ %.2f mV  %.2f Hz \n",noise_thresh_mV,noise_rate);
 
   SaveNoise();
 
@@ -317,8 +323,12 @@ void TCookedAnalyser::InitNoise(){
 }
 
 
-void TCookedAnalyser::SaveNoise(string outFolder){
+void TCookedAnalyser::SaveNoise(string outPath){
 
+  string sys_command = "mkdir -p ";
+  sys_command += outPath;
+  gSystem->Exec(sys_command.c_str());
+  
   printf("\n Saving Noise Monitoring Plots \n\n");
 
   InitCanvas();
@@ -329,20 +339,20 @@ void TCookedAnalyser::SaveNoise(string outFolder){
   hMean_Cooked->SetMinimum(0.1);
   hMean_Cooked->Draw();
 
-  string outName = outFolder + "hMean_Cooked.pdf";
+  string outName = outPath + "hMean_Cooked.pdf";
   canvas->SaveAs(outName.c_str());  
   
   hPPV_Cooked->SetAxisRange(-5.0, 145.,"X");
   hPPV_Cooked->SetMinimum(0.1);
   hPPV_Cooked->Draw();
   
-  outName = outFolder + "hPPV_Cooked.pdf";
+  outName = outPath + "hPPV_Cooked.pdf";
   canvas->SaveAs(outName.c_str());
   
   hPeak_Cooked->SetAxisRange(-20.,80.,"X");
   hPeak_Cooked->SetMinimum(0.1);
   hPeak_Cooked->Draw();
-  outName = outFolder + "hPeak_Cooked.pdf";
+  outName = outPath + "hPeak_Cooked.pdf";
   canvas->SaveAs(outName.c_str());
   
   
@@ -362,7 +372,7 @@ void TCookedAnalyser::SaveNoise(string outFolder){
   l_th_low->SetLineWidth(2);
   l_th_low->Draw();
   
-  outName = outFolder + "hMin_Cooked.pdf";
+  outName = outPath + "hMin_Cooked.pdf";
   canvas->SaveAs(outName.c_str());
   
   gPad->SetLogy(false);
@@ -373,7 +383,7 @@ void TCookedAnalyser::SaveNoise(string outFolder){
   
   hMin_Peak_Cooked->Draw("colz");
 
-  outName = outFolder + "hMin_Peak_Cooked.pdf";
+  outName = outPath + "hMin_Peak_Cooked.pdf";
   canvas->SaveAs(outName.c_str());
 
   gPad->SetLogz(false);
@@ -466,7 +476,11 @@ void TCookedAnalyser::InitDark(){
 }
 
 
-void TCookedAnalyser::SaveDark(string outFolder){
+void TCookedAnalyser::SaveDark(string outPath){
+
+  string sys_command = "mkdir -p ";
+  sys_command += outPath;
+  gSystem->Exec(sys_command.c_str());
 
   InitCanvas();
 
@@ -489,7 +503,7 @@ void TCookedAnalyser::SaveDark(string outFolder){
   lVert->SetLineStyle(2);
   lVert->Draw();
 
-  string outName = outFolder + "hD_Peak.pdf";
+  string outName = outPath + "hD_Peak.pdf";
   canvas->SaveAs(outName.c_str());
 
   gPad->SetLogy(false);
@@ -500,7 +514,7 @@ void TCookedAnalyser::SaveDark(string outFolder){
 //   hBase_Peak->Draw("col");
   
   
-//   outName = outFolder + "hBase_Peak.pdf";
+//   outName = outPath + "hBase_Peak.pdf";
 //   canvas->SaveAs(outName.c_str());
 
   gPad->SetLogz();
@@ -512,7 +526,7 @@ void TCookedAnalyser::SaveDark(string outFolder){
   
   gPad->SetLogz();
   
-  outName = outFolder + "hD_Min_Peak.pdf";
+  outName = outPath + "hD_Min_Peak.pdf";
   canvas->SaveAs(outName.c_str());
 
   gPad->SetGrid(0,0);
@@ -537,22 +551,27 @@ float TCookedAnalyser::Wave_To_Amp_Scaled_Wave(float wave){
   return wave/AmpGain*10.;
 }
 
-//------------------------------
+
 void TCookedAnalyser::Waveform(char option){
 
+  string fileName = "hWave_";
+  fileName += GetFileID();
+  fileName += ".root";
+  printf("\n  %s \n",fileName.c_str());
+  outFile = new TFile(fileName.c_str(),"RECREATE",fileName.c_str()); 
+  
   switch(option){
   case('w'):
-    InitWaveform();
+    InitFFT();// inc Waveform
     break;
   case('f'):
-    InitFFT();
+    InitFFT();// inc Waveform
     break;
   case('b'):
-    InitWaveform();
-    InitFFT();
+    InitFFT();// inc Waveform
     break;
   default:
-    InitWaveform();
+    //InitWaveform();
     InitFFT();
     break;
   }
@@ -563,15 +582,18 @@ void TCookedAnalyser::Waveform(char option){
   // Plotting Loop
   while ( answer!='X' ){
     
-    printf("\n Which entry to plot? \n");
-    printf("\n F - First entry \n");
-    printf("\n N - Next \n");
-    printf("\n P - Previous \n");
-    printf("\n R - Random selection \n");
-    printf("\n X - eXit \n");
-    
-    // note deliberate use of whitespace before %c
-    scanf(" %c", &answer);
+    if(option!='d'){
+      printf("\n Which entry to plot? \n");
+      printf("\n F - First entry \n");
+      printf("\n N - Next \n");
+      printf("\n P - Previous \n");
+      printf("\n R - Random selection \n");
+      printf("\n A - Accumulate All \n");
+      printf("\n X - eXit \n");
+      
+      // note deliberate use of whitespace before %c
+      scanf(" %c", &answer);
+    }
     
     switch(answer){
     case('F'):
@@ -586,12 +608,20 @@ void TCookedAnalyser::Waveform(char option){
     case('P'):
       entry--;
       break;
+    case('A'):
+      entry = 0;
+      break;
     default:
       entry = -1;
     }
     
     if(entry > -1)
-      printf("\n plotting entry %d \n",entry);
+      
+      if( answer=='A' )
+	printf("\n averaging all entries \n");
+      else
+	printf("\n plotting entry %d \n",entry);
+    
     else{
       printf("\n exiting waveform plotting \n");
       return;
@@ -599,13 +629,60 @@ void TCookedAnalyser::Waveform(char option){
     
     cookedTree->GetEntry(entry);
     
+    // single or initial instance
     for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
       hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
     
     hWave->FFT(hFFT ,"MAG");
     
-    string outPath = "./Plots/Waveforms/";
+    // accumulate
+    int nWaveforms = 1;
     
+    if(answer == 'A' )
+      nWaveforms  = nentries;
+    
+    TH1F * hWave_temp = nullptr; 
+    TH1F * hFFT_temp  = nullptr;
+
+    for (int i = (entry+1); i < nWaveforms ; i++){
+      cookedTree->GetEntry(i);
+
+      if( i%100000 == 0 )
+	printf("\n entry %d/%d \n",i,nWaveforms );
+      
+      hWave_temp = (TH1F*)hWave->Clone();
+      hFFT_temp  = (TH1F*)hFFT->Clone();
+      
+      for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
+	hWave_temp->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
+      
+      hWave_temp->FFT(hFFT_temp ,"MAG");
+      
+      hWave->Add(hWave_temp);
+      hFFT->Add(hFFT_temp);
+      
+      hWave_temp->Delete();
+      hFFT_temp->Delete();
+    }
+
+    hFFT->SetBinContent(1,0.);
+
+    double_t norm = 1;
+    hFFT->Scale(norm/hFFT->Integral(),"width");
+
+    hFFT->SetMaximum(0.1);
+    hFFT->SetMinimum(0.0001);
+
+    //outFile->cd();
+    outFile->Write();
+    //outFile->Delete();
+
+    string outPath = "./Plots/Waveforms/";
+
+    string sys_command = "mkdir -p ";
+    sys_command += outPath;
+    gSystem->Exec(sys_command.c_str());
+
     switch(option){
     case('w'):
       outPath += "hWave.pdf";
@@ -613,11 +690,29 @@ void TCookedAnalyser::Waveform(char option){
       break;
     case('f'):
       outPath += "hFFT.pdf";
-      SaveFFT(outPath,1);
+      SaveFFT(outPath);
+      //SaveFFT(outPath,1); // SetLogx() option
       break;
     case('b'):
       outPath += "hWaveFFT.pdf";
       SaveWaveFFT(outPath);
+      break;
+    case('d'):
+      // make default plots
+      outPath = "./Plots/Waveforms/";
+      outPath += "hWaveFFT.pdf";
+      SaveWaveFFT(outPath);
+      
+      outPath = "./Plots/Waveforms/";
+      outPath += "hWave.pdf";
+      SaveWaveform(outPath);
+      
+      outPath = "./Plots/Waveforms/";
+      outPath += "hFFT.pdf";
+      SaveFFT(outPath);
+      //SaveFFT(outPath,1); // SetLogx() option    
+     
+      answer='X';
       break;
     default:
       break;
@@ -630,7 +725,7 @@ void TCookedAnalyser::Waveform(char option){
 void TCookedAnalyser::InitWaveform(){
   
   printf("\n ------------------------------ \n");
-  printf("\n Init hWave \n\n");
+  printf("\n Init Wave \n\n");
   
   hWave = new TH1F("hWave","Waveform;Time (ns); Amplitude (mV)",
 		   NSamples, 0.,Length_ns);
@@ -638,10 +733,10 @@ void TCookedAnalyser::InitWaveform(){
 }
 
 void TCookedAnalyser::InitFFT(){
-  
-  printf("\n ------------------------------ \n");
-  printf("\n Init hFFT \n\n");
 
+  printf("\n ------------------------------ \n");
+  printf("\n Init FFT \n\n");
+  
   hWave = new TH1F("hWave","Waveform;Time (ns); Amplitude (mV)",
 		   NSamples, 0.,Length_ns);
 
@@ -653,6 +748,7 @@ void TCookedAnalyser::InitFFT(){
 
 void TCookedAnalyser::SaveWaveform(string outPath ){
 
+
   printf("\n Saving Waveform Plot \n\n");
   
   InitCanvas();
@@ -661,30 +757,34 @@ void TCookedAnalyser::SaveWaveform(string outPath ){
   
   canvas->SaveAs(outPath.c_str());
 
+  //hWave->Delete();
+  //  hFFT->Delete();
   DeleteCanvas();
   
 }
 
 void TCookedAnalyser::SaveFFT(string outPath, int option){
-
+  
   printf("\n Saving FFT Plot \n\n");
   
   InitCanvas();
   
-  hFFT->SetBinContent(1,0.);
+  
   hFFT->SetAxisRange(5,450.,"X");
   gPad->SetLogx(option);
   //gPad->SetLogy(option);
-  hFFT->Draw();
+  hFFT->Draw("hist");
   
   canvas->SaveAs(outPath.c_str());
   
+  //  hWave->Delete();
+  //hFFT->Delete();
   DeleteCanvas();
   
 }
 
 void TCookedAnalyser::SaveWaveFFT(string outPath){
-
+  
   printf("\n Saving Waveform and FFT Plots \n\n");
   
   InitCanvas(1600.);
@@ -696,10 +796,12 @@ void TCookedAnalyser::SaveWaveFFT(string outPath){
   
   canvas->cd(2);
   hFFT->SetBinContent(1,0.);
-  hFFT->Draw();
+  hFFT->Draw("hist");
   
   canvas->SaveAs(outPath.c_str());
-  
+
+  //hWave->Delete();
+  //hFFT->Delete();
   DeleteCanvas();
   
 }
@@ -800,6 +902,10 @@ bool TCookedAnalyser::IsGoodPulseFit(TF1 * f1){
 }
 
 void TCookedAnalyser::SavePulseFit(string outPath ){
+  
+  string sys_command = "mkdir -p ";
+  sys_command += outPath;
+  gSystem->Exec(sys_command.c_str());
 
   printf("\n Saving Pulse Fit Plot \n\n");
   

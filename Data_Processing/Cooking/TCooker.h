@@ -65,13 +65,21 @@ class TCooker {
 		  float h = 800.);
   void DeleteCanvas();
   
-  void   SetFileID();
+  //void   SetFileID();
   void   SetFileID(string userFileID);
   string GetFileID();
   
   void   SetDir(string userFileDir);
   string GetDir();
   
+  ///
+  void   SetRun(int);
+  void   SetPMT(int);
+  void   SetLoc(int);
+  void   SetTest(char);
+  void   SetHVStep(int);
+  ///
+
   string GetCookedTreeID();
   
   void  PrintConstants();
@@ -143,7 +151,13 @@ class TCooker {
   
   string f_fileID;
   string f_fileDir;
-  char   FileID[128]; 
+  char   FileID[128];   
+
+  int    fRun;
+  int    fPMT;
+  int    fLoc;
+  char   fTest;
+  int    fHVStep;
   
   // default or user input
   char   fDigitiser;        
@@ -241,7 +255,7 @@ TCooker::TCooker(TTree *tree,
   SetAmpGain(10);
   SetFirstMaskBin(-1);
 
-  SetFileID();
+  //SetFileID();
   
   if (tree == 0){
     fprintf( stderr, "\n Warning: No input tree");

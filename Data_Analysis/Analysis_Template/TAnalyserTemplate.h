@@ -1,30 +1,82 @@
-#ifndef TCookedAnalyser_h
-#define TCookedAnalyser_h
+/*
+
+ TAnalyserTemplate 
+
+ gary.smith@ed.ac.uk
+ 13 05 2020
+
+ Purpose:
+   A program to assist in developing PMT data analyses.
+
+   Copy this folder and use the template class to create 
+   your own analysis methods.
+   
+   This class has the same format as TCookedAnalyser
+   so routines developed here can be easily migrated.
+
+ Input 
+    This class reads in data created using cook_raw
+     - see $WM_COOK
+
+ How to run:
+
+ Option 1 
+     Load program in root to be run in interpreted mode
+     $ root
+     [0] .L TAnalyserTemplate.C
+     // Create an object 'analyser' of type TAnalyserTemplate
+     // NB change filename (path) to one you have ready in this folder (elsewhere)
+     [1] TAnalyserTemplate * analyser = new TAnalyserTemplate("./Run_1_PMT_29_Loc_3_Test_D.root"); 
+     // Run Pulse Height method (outputs pdf)
+     [2] analyser->Pulse_Height()
+     // list contents of current directory in root
+     [3] .ls
+     // set the y axis to log scale using the global object gPad
+     [4] gPad->SetLogy()
+     // Plot histogram in root
+     [5] hPulse_Height->Draw()
+     // Limit number of entries included in analysis to 100
+     [6] analyser->SetTestMode(100)
+     // print sample-by-sample
+     [7] analyser->Loop_Over_Samples()
+     // print event-by-event
+     [8] analyser->Loop_Over_Samples(1)
+
+*/
+
+#ifndef TAnalyserTemplate_h
+#define TAnalyserTemplate_h
 
 #include <TROOT.h>
+
 #include <TTree.h>
 #include <TFile.h>
-#include <TH2.h>
-#include <TCanvas.h>
+
 #include <TStyle.h>
+#include <TCanvas.h>
+#include <TH2.h>
 #include <TLegend.h>
-#include <TRandom3.h>
 
 #include <vector>
 #include <limits.h>
 
-
 using namespace std;
 
-class TCookedAnalyser {
+class TAnalyserTemplate {
  public :
+
+  // Most of the data members are public.
+  // Really they should be private with
+  // with public Getter methods implemented
+  // for accessing them.
 
   TFile * inFile = nullptr;
 
-  TFile * outFile = nullptr; 
-
-  // meta data tree for 
-  // storing constants
+  //-------------------------
+  // META DATA
+  // File specific constants that
+  // were added at the cooking stage
+  
   TTree * metaTree;
   
   short  SampFreq;
@@ -59,13 +111,27 @@ class TCookedAnalyser {
   TBranch * b_Loc          = 0;
   TBranch * b_Test         = 0;
   TBranch * b_HVStep       = 0;
+  
+  // END OF META DATA
+  //-------------------------
+  
 
   //--------------------
-  // cooked data
+  // PMT DATA
+
+  // This TTree is an ntuple containing
+  // the digitiser data.
   TTree * cookedTree;
   
-  // Input 
+  // Raw ADC data  
+  // NB ADC pulses are set to positive
+  // polarity at the (previous) cooking stage
+  // Vector elements are the samples
+  // - see Loop_Over_Samples()
   vector <short> * ADC = 0;   
+  
+  // 'Cooked' variables
+  //  (event level)
   float peak_mV;
   short peak_samp;
   float min_mV;
@@ -73,6 +139,7 @@ class TCookedAnalyser {
   float start_s;
   float base_mV;
 
+  // for connecting to the tree
   TBranch * b_ADC = 0;
   TBranch * b_peak_mV  = 0;  
   TBranch * b_peak_samp = 0;  
@@ -81,8 +148,11 @@ class TCookedAnalyser {
   TBranch * b_start_s = 0;  
   TBranch * b_base_mV = 0;  
   
-  TCookedAnalyser(string path);
-  ~TCookedAnalyser();
+  // END PMT DATA
+  //--------------------
+  
+  TAnalyserTemplate(string path = "./Run_1_PMT_29_Loc_3_Test_D.root");
+  ~TAnalyserTemplate();
   int  GetEntry(int entry);
   void Init();
 
@@ -103,89 +173,24 @@ class TCookedAnalyser {
   // limit entries for faster testing
   void  SetTestMode(int);
   
-  //---
-  // Monitor Noise
-  // Noise
-  
-  float  thresh_mV;
-  float  th_low_mV;
-  float  noise_thresh_mV;
-  float  noise_th_low_mV;
-  
-  TH1F * hMean_Cooked = nullptr;
-  TH1F * hPPV_Cooked  = nullptr;
-  
-  TH1F * hMin_Cooked = nullptr;
-  TH1F * hPeak_Cooked = nullptr;
-  
-  TH2F * hMin_Peak_Cooked = nullptr;
-  
   void  SetTest(char Test);
   char  GetTest();
 
   void  SetRun(int Run);
   int   GetRun();
   
-  void  Noise();
-  void  InitNoise();
-  void  SaveNoise(string outFolder = "./Plots/Noise/");
-  
   float ADC_To_Wave(short ADC);
   float Wave_To_Amp_Scaled_Wave(float wave);
 
   //----
-  void  Make_hQ_Fixed();
-  
-  bool  HasLowNoise(float min_mV,float peak_mV,
-		    float thresh_mV = 10.);
-
-  //----
-  // LED data  
-
-  void  Fit_Peak_Time_Dist();
-  void  Set_LED_Delay(float LED_delay);
-  float Get_LED_Delay();
-  
-  //----
+  void  Loop_Over_Samples(int verbosity);
   // Dark Counts
 
-  TH1F * hD_Peak = nullptr;
-  TH2F * hD_Min_Peak = nullptr;
-
-  void  Dark(float thresh_mV = 10.);
-  void  InitDark();
-  void  SaveDark(string outFolder = "./Plots/Dark/");
-
-  //---
-  // Monitor Waveforms
-
-  TH1F * hWave = nullptr;   
-  TH1F * hFFT = nullptr;
+  TH1F * hPulse_Height = nullptr;
   
-  TRandom3 * rand3 = nullptr;
-
-  void  Waveform(char option = 'f');
-  
-  void  InitWaveform();
-  void  SaveWaveform(string outPath = "./Plots/Waveforms/");
-  
-  void  InitFFT();
-  void  SaveFFT(string outPath = "./Plots/Waveforms/",
-		int    option  = 0);
-  
-  void  SaveWaveFFT(string outPath = "./Plots/Waveforms/");
-
-  void  SavePulseFit(string outPath = "./Plots/PulseFit/");
-
-  //--- 
-  // Rise and Fall Times
-   
-  TF1 * Fit_Pulse(int entry = -1);
-  
-  bool IsGoodPulseFit(TF1* f1);
-  
-/*   float Get_Pulse_Rise_Time(); */
-/*   float Get_Pulse_Fall_Time(); */
+  void  Pulse_Height(float thresh_mV = 10.);
+  void  Init_Pulse_Height();
+  void  Save_Pulse_Height(string outFolder = "./Plots/");
   
  private:
   
@@ -198,15 +203,13 @@ class TCookedAnalyser {
    void  Set_THF_Params(float *,float *,float *, int *);
    
    void  SetStyle();
-   float fLED_Delay;
-   bool IsTimingDistFitted;
    
 };
 
 #endif
 
-#ifdef TCookedAnalyser_cxx
-TCookedAnalyser::TCookedAnalyser(string path) 
+#ifdef TAnalyserTemplate_cxx
+TAnalyserTemplate::TAnalyserTemplate(string path) 
 {
 
   inFile = new TFile(path.c_str(),"READ");
@@ -219,42 +222,46 @@ TCookedAnalyser::TCookedAnalyser(string path)
   Init();
 }
 
-TCookedAnalyser::~TCookedAnalyser()
+TAnalyserTemplate::~TAnalyserTemplate()
 { 
   delete cookedTree;
   delete metaTree;
   delete inFile;
 }
 
-int TCookedAnalyser::GetEntry(int entry)
+int TAnalyserTemplate::GetEntry(int entry)
 {
 // Read contents of entry.
    if (!cookedTree) return 0;
    return cookedTree->GetEntry(entry);
 }
 
-void TCookedAnalyser::SetTestMode(int user_nentries = 1000000){
+void TAnalyserTemplate::SetTestMode(int user_nentries = 1000000){
 
-  nentries = user_nentries;  
-  printf("\n Warning: \n ");
-  printf("  nentries set to %d for testing \n",nentries);
-  
+  nentries = (int)nentries64_t;
+  if(user_nentries == 0 || user_nentries > nentries){
+    printf("  nentries set to TTree value \n");
+    return;
+  }
+  else{
+    nentries = user_nentries;  
+    printf("\n Warning: \n ");
+    printf("  nentries set to %d for testing \n",nentries);
+  }
 }
 
-void TCookedAnalyser::Init()
+void TAnalyserTemplate::Init()
 {
 
   InitMeta();
   InitCooked();
   
-  rand3 = new TRandom3(0);
-
   SetStyle();  
   InitCanvas();
   
 }
 
-void TCookedAnalyser::InitMeta(){
+void TAnalyserTemplate::InitMeta(){
   
   printf("\n ------------------------------ \n");
   printf("\n Initialising Meta Data \n");
@@ -294,15 +301,12 @@ void TCookedAnalyser::InitMeta(){
   printf("\n Loc    = %d ",Loc);
   printf("\n Test   = %c ",Test);
   printf("\n HVStep = %d \n",HVStep);
-
-  fLED_Delay = 100.;
-  IsTimingDistFitted = false;
   
   printf("\n ------------------------------ \n");
 
 }
 
-void TCookedAnalyser::InitCooked(){
+void TAnalyserTemplate::InitCooked(){
   
   inFile->GetObject(GetCookedTreeID().c_str(),cookedTree);
   
@@ -346,20 +350,20 @@ void TCookedAnalyser::InitCooked(){
   return;
 }
 
-void TCookedAnalyser::SetTest(char userTest ){
+void TAnalyserTemplate::SetTest(char userTest ){
   Test = userTest;
 }
 
-char TCookedAnalyser::GetTest(){
+char TAnalyserTemplate::GetTest(){
   return Test;
 }
 
-void TCookedAnalyser::SetRun(int userRun ){
+void TAnalyserTemplate::SetRun(int userRun ){
   Run = userRun;
 }
 
-int TCookedAnalyser::GetRun(){
+int TAnalyserTemplate::GetRun(){
   return Run;
 }
 
-#endif // #ifdef TCookedAnalyser_cxx
+#endif // #ifdef TAnalyserTemplate_cxx

@@ -1,10 +1,10 @@
 #!/bin/bash
 
-echo " -------------------------------"
+echo " ----------------------------------------"
 date  
 echo " running  "
-echo " process_analyse_locally_auto.sh "
-echo " -------------------------------"
+echo " process_analyse_locally_auto_desktop.sh "
+echo " ----------------------------------------"
 
 DIR_PATH=${PWD}/
 
@@ -12,7 +12,8 @@ FILE_NAME=$(find . -maxdepth 1 -name "wave_*.dat" )
 
 FILE_PATH=${DIR_PATH}${FILE_NAME}
 
-dat_to_root ${FILE_PATH}
+
+desktop_dat_to_root ${FILE_PATH} 
 
 echo " ------------------------------"
 date 
@@ -20,7 +21,9 @@ echo " ------------------------------"
 
 mkdir -p ./Plots/DAQ/
 
-cook_raw ${FILE_PATH}.root
+# must specify desktop at runtime
+# other argument options available - see $WM_COOK/cook_raw.C
+cook_raw ${FILE_PATH}.root -d D 
 
 echo " ------------------------------"
 date 
