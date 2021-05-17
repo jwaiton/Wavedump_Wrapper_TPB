@@ -12,7 +12,10 @@
 
 #include "wmStyle.C"
 
+// Common tools
 #include "dark_rate_at_temp.h"
+#include "ShippingData.h"
+#include "ShippingData.C"
 
 using namespace std;
 
@@ -20,7 +23,7 @@ using namespace std;
 float N25(int pmt = 15){
   
   double pmts[8]           = {15,  16,  82,  107, 131, 148, 166, 171};
-  double dark_rates_HPK[8] = {2200,2000,2700,3900,2400,2100,2300,2500};
+  double DRs_HPK[8] = {2200,2000,2700,3900,2400,2100,2300,2500};
   
   int i = 0;
   for (; i < 8 ; i++ ){
@@ -28,16 +31,18 @@ float N25(int pmt = 15){
       break;
   }
   
-  return dark_rates_HPK[i];
+  return DRs_HPK[i];
 }
 
-void dark(){
+void analyse_dark(){
 
   gDirectory->DeleteAll();
 
   while(gPad!=nullptr){
     gPad->Close();
   }
+
+  ShippingData * sD = new ShippingData(15);
   
   TStyle * wmStyle = GetwmStyle();
   gROOT->SetStyle("wmStyle");
@@ -50,45 +55,47 @@ void dark(){
   int nPMTs = 8;
   double pmts[8] = {15,  16,  82,  107, 131, 148, 166,171};
   
-  double dark_rates_HPK_L[8];
-  double dark_rates_HPK_H[8];
-  double dark_rates_HPK_err[8];
-  double dark_rates_HPK[8] = {2200,2000,2700,3900,2400,2100,2300,2500};
-    
-  double dark_rates_v1[8]     = {2098,1387,1906,2752,1885,1162,1299,1435};
-  double dark_rates_v1_err[8] = {100,100,100,100,100,100,100,100};
+  double DRs_HPK_L[8];
+  double DRs_HPK_H[8];
+  double DRs_HPK_err[8];
+  double DRs_HPK[8] = {};
+  
+  double DRs_v1[8] = {2098,1387,1906,2752,1885,1162,1299,1435};
+  double DRs_v1_err[8] = {100,100,100,100,100,100,100,100};
   
   TH1D * hDarkH = new TH1D("hDarkH","hDarkH;PMT ;Dark Rate (Hz)",100,0,200);
   TH1D * hDark1 = new TH1D("hDark1","hDark1;PMT ;Dark Rate (Hz)",100,0,200);
   double maxi = 0;
   
   for (int i = 0 ; i < nPMTs ; i++){
-    
-    dark_rates_HPK_L[i] = dark_rate_at_temp(N25(pmts[i]),22.5);
-    dark_rates_HPK[i]   = dark_rate_at_temp(N25(pmts[i]),23.0);
-    dark_rates_HPK_H[i] = dark_rate_at_temp(N25(pmts[i]),23.5);
+
+    sD->SetNewPMT(pmts[i]);
+        
+    DRs_HPK_L[i] = dark_rate_at_temp(sD->GetDR(),22.5);
+    DRs_HPK[i]   = dark_rate_at_temp(sD->GetDR(),23.0);
+    DRs_HPK_H[i] = dark_rate_at_temp(sD->GetDR(),23.5);
    
-    dark_rates_HPK_err[i]= TMath::Max(abs(dark_rates_HPK_L[i]-dark_rates_HPK[i]),
-				      abs(dark_rates_HPK_H[i]-dark_rates_HPK[i]));
+    DRs_HPK_err[i]= TMath::Max(abs(DRs_HPK_L[i]-DRs_HPK[i]),
+				      abs(DRs_HPK_H[i]-DRs_HPK[i]));
     
-    hDarkH->Fill(pmts[i],dark_rates_HPK[i]);
-    hDark1->Fill(pmts[i],dark_rates_v1[i]);
+    hDarkH->Fill(pmts[i],DRs_HPK[i]);
+    hDark1->Fill(pmts[i],DRs_v1[i]);
   }
 
   for (int i = 0 ; i < nPMTs ; i++){
-    hDark1->SetBinError(hDark1->FindBin(pmts[i]),dark_rates_v1_err[i]);
-    hDarkH->SetBinError(hDarkH->FindBin(pmts[i]),dark_rates_HPK_err[i]);
+    hDark1->SetBinError(hDark1->FindBin(pmts[i]),DRs_v1_err[i]);
+    hDarkH->SetBinError(hDarkH->FindBin(pmts[i]),DRs_HPK_err[i]);
 
     
     /* cout << " BinError (pmt " << pmts[i] << ") = " */
-    /* 	      << dark_rates_v1_err[i] << endl; */
+    /* 	      << DRs_v1_err[i] << endl; */
     /* cout << " BinError (pmt " << pmts[i] << ") = " */
     /* 	      << hDark1->GetBinError(hDark1->FindBin(pmts[i])) << endl; */
     /* cout << " HPK Error (pmt " << pmts[i] << ") = " */
     /* 	      << hDarkH->GetBinError(hDarkH->FindBin(pmts[i])) << endl; */
     
-    maxi = TMath::Max(maxi,dark_rates_HPK[i]);
-    maxi = TMath::Max(maxi,dark_rates_v1[i]);
+    maxi = TMath::Max(maxi,DRs_HPK[i]);
+    maxi = TMath::Max(maxi,DRs_v1[i]);
     
   }
   
@@ -106,8 +113,8 @@ void dark(){
   TCanvas * c2 = new TCanvas("c2","c2",1000,350,400,300); 
   
   TGraphErrors * g1 = new TGraphErrors(nPMTs,
-				       dark_rates_HPK,    dark_rates_v1,
-				       dark_rates_HPK_err,dark_rates_v1_err); 
+				       DRs_HPK,    DRs_v1,
+				       DRs_HPK_err,DRs_v1_err); 
 
   
   TLatex *latex[7];
@@ -189,10 +196,12 @@ void dark(){
 
   TGraph * g = new TGraph(8,pmts,lambda_R_arr);
 
+  g->SetTitle(";PMT; #lambda");
+
   g->Draw("AP");
   
 }    
 
-
-  
-
+void dark(){
+  analyse_dark();
+}
