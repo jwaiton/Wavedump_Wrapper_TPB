@@ -510,35 +510,35 @@ void TCookedAnalyser::Dark(float thresh_mV){
     // Gary - Something below TBD removes all events
     // for Edinburgh data
 
-    // average = base_average(iEntry);
+    average = base_average(iEntry);
     
-    // if( average < -10){
-    //   rejected_waveforms << iEntry << "\n";
-    //   rejected++;
-    //   av_neg_rej++;
-    //   continue;}
+    if( average < -10){
+      rejected_waveforms << iEntry << "\n";
+      rejected++;
+      av_neg_rej++;
+      continue;}
       
-    // if( average > 10){
-    //   rejected_waveforms << iEntry << "\n";
-    //   rejected++;
-    //   av_pos_rej++;
-    //   continue;}
+    if( average > 10){
+      rejected_waveforms << iEntry << "\n";
+      rejected++;
+      av_pos_rej++;
+      continue;}
       
-    // if( peak_mV > 100){
-    //   rejected_waveforms << iEntry << "\n";
-    //   rejected++;
-    //   peak_high++;
-    //   continue;}
+    if( peak_mV > 100){
+      rejected_waveforms << iEntry << "\n";
+      rejected++;
+      peak_high++;
+      continue;}
     
-    // int rise = peak_rise();
+    int rise = peak_rise();
     
-    // if(!rise){
-    //   rejected_waveforms << iEntry << "\n";
-    //   //rejected++;
-    //   rise_rej++;
-    //   continue;}
+    if(!rise){
+      rejected_waveforms << iEntry << "\n";
+      //rejected++;
+      rise_rej++;
+      continue;}
     
-    // dark_csv << iEntry << "\n";
+    dark_csv << iEntry << "\n";
     
     nDark++;
     
