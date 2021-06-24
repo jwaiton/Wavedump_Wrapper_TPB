@@ -29,6 +29,7 @@ export WM_WAVE_PLOT=${WM_ANALYSE}Waveform_Plotter/
 
 # header files
 export CPATH=${CPATH}:${WM_COMMON}
+export CPATH=${CPATH}:${WM_FITTING}
 export CPATH=${CPATH}:${WM_COOK}
 export CPATH=${CPATH}:${WM_ANALYSE_COOKED}
 

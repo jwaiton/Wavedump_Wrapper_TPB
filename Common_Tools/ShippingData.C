@@ -7,6 +7,8 @@
 #include <TStyle.h>
 #include <TCanvas.h>
 
+#include "dark_rate_at_temp.h"
+
 using namespace std;
 
 void ShippingData::PrintAll(){
@@ -79,6 +81,9 @@ Int_t   ShippingData::GetEBB(){
 }
 Int_t   ShippingData::GetDR(){
   return userDR;
+}
+Int_t   ShippingData::GetDR(float temp){
+  return dark_rate_at_temp(userDR,temp);
 }
 Float_t ShippingData::GetTTS(){
   return userTTS;

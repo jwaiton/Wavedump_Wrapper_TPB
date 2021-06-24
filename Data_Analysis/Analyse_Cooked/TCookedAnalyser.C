@@ -30,7 +30,7 @@ string TCookedAnalyser::GetFileID(){
 void TCookedAnalyser::Make_hQ_Fixed(){
 
   float gate_start = Get_LED_Delay() - 15;
-    
+
   float gate_width = 50.; 
   
   string fileName = "hQ_Fixed_";
@@ -52,7 +52,6 @@ void TCookedAnalyser::Make_hQ_Fixed(){
 
   TH1F * hQ_Fixed = new TH1F(histName.c_str(),"hQ_Fixed;Charge (mV ns);Counts",
 			     nBins,minQ,maxQ);
-
   float wave_mV = 0.0;
   float time_ns = 0.0;
 
