@@ -27,8 +27,8 @@ done
 # for a full run in separate sub shells 
 # - see $WM_CODE/run_process_analyse_locally_auto_on_full_run.sh
  
-# cd $PARENT
-# source run_process_analyse_locally_auto_on_full_run.sh
+cd $PARENT
+source run_process_analyse_locally_auto_on_full_run.sh
 
 
 

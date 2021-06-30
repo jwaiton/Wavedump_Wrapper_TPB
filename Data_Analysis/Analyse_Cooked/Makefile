@@ -65,7 +65,7 @@ INCLUDES      = $(ROOTCFLAGS)
 
 CXXFLAGS     += $(INCLUDES)
 LDFLAGS      += $(ROOTLDFLAGS)
-LIBS         += $(ROOTLIBS) $(SYSLIBS)  
+LIBS         += $(ROOTLIBS) $(SYSLIBS)
 GLIBS        += $(ROOTGLIBS) $(SYSLIBS)
 
 MAKEDEPEND    = gcc
@@ -76,8 +76,9 @@ endif
 
 #-------------------------------------------------------------------------
 
-COMMON        = ../../Common_Tools/
+#FITS        = ../../Data_Analysis/Fitting/
 
+#SRC           = TCookedAnalyser.C ${FITS}mu_From_Hist.C
 SRC           = TCookedAnalyser.C 
 
 OBJ           = $(SRC:.C=.o)

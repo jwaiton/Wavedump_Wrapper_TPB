@@ -1,5 +1,5 @@
 
-void run_mu_From_Histo(int pmt=15, int loc=4, int run=40){
+void run_mu_From_Hist(int pmt=15, int loc=4, int run=40){
   
   string rootFileName;
   rootFileName =  "hQ_Fixed_Run_";
@@ -25,6 +25,6 @@ void run_mu_From_Histo(int pmt=15, int loc=4, int run=40){
   pathToData += std::to_string(pmt);
   pathToData += "/Nominal/";
 
-  mu_From_Histo(rootFileName,pathToData);
+  mu_From_Hist(rootFileName,pathToData);
   
 }
