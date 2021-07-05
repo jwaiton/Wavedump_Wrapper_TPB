@@ -31,7 +31,8 @@ void TCookedAnalyser::Make_hQ_Fixed(){
 
   float gate_start = Get_LED_Delay() - 15;
 
-  float gate_width = 50.; 
+  //float gate_width = 50.; 
+  float gate_width = 70.; 
   
   string fileName = "hQ_Fixed_";
   string histName = "hQ_Fixed_";

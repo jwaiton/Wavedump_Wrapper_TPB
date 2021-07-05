@@ -11,7 +11,7 @@
 
 #include <TLatex.h>
 
-#include "wmStyle.C"
+//#include "wmStyle.C"
 
 using namespace std;
 
@@ -27,12 +27,12 @@ float Prob_zero_from_TH1F(TH1F * hQ,
   return prob;
 }
 
-float mu_From_Histo(TString rootFileName = "hQ_Fixed_Run_30_PMT_133_Loc_3_Test_S",string pathToData = "./"){
+float mu_From_Hist(TString rootFileName = "hQ_Fixed_Run_30_PMT_133_Loc_3_Test_S",string pathToData = "./"){
   
-  TStyle *wmStyle = GetwmStyle();
+  //TStyle *wmStyle = GetwmStyle();
   //gStyle->SetOptTitle(0);
-  gROOT->SetStyle("wmStyle");
-  gROOT->ForceStyle();
+  //gROOT->SetStyle("wmStyle");
+  //gROOT->ForceStyle();
 
   Result * result = GetPeakToValley(rootFileName,
 				    pathToData);

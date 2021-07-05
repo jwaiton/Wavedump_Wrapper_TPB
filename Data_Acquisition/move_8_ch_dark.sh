@@ -25,5 +25,7 @@ do
     mv ./wave${i}.dat ${FOLDER}wave_${i}.dat 
 done
 
+cd $PARENT
+source run_process_analyse_locally_auto_on_full_run.sh
     
 

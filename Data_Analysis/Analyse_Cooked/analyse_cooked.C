@@ -52,6 +52,14 @@ int main(int argc, char * argv[]){
   if( !Welcome(argc) )
     return -1;
       
+  bool analyseNoise  = true;
+  bool analyseDark   = true;
+  bool fitTiming     = true;
+  bool analyseCharge = true;
+
+  if(!fitTiming)
+    analyseCharge = false;
+
   TCookedAnalyser * cooked_analyser = nullptr;
 
   string path;
@@ -83,7 +91,8 @@ int main(int argc, char * argv[]){
     
     cooked_analyser->PrintMetaData();
 
-    cooked_analyser->Noise();
+    if(analyseNoise)
+      cooked_analyser->Noise();
     
     //-------------------
     //-------------------
@@ -93,20 +102,31 @@ int main(int argc, char * argv[]){
     
     switch(test){
     case('D'):
+      
+      if(analyseDark)
       cooked_analyser->Dark();
+      
       break;
     default:
       //-------------
       // Timing
       
       // Mean LED pulse peak time
-      cooked_analyser->Fit_Peak_Time_Dist();
+      if(fitTiming)
+	cooked_analyser->Fit_Peak_Time_Dist();
       
       //-------------
       // Charge
       // Save a new root file with charge hist
-      cooked_analyser->Make_hQ_Fixed();
-
+      if(analyseCharge)
+	cooked_analyser->Make_hQ_Fixed();
+      
+      string filenameHist = "hQ_Fixed_";
+      filenameHist += cooked_analyser->GetFileID();
+      
+      cout << " filenameHist = " << filenameHist << endl;
+      
+     
       //-------------
       // Pulse fitting test
       // towards rise and fall time extraction
