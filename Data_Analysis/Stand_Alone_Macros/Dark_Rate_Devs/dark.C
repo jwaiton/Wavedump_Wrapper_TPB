@@ -22,7 +22,7 @@ using namespace std;
 // To do: change to use shipping data
 float N25(int pmt = 15){
   
-  double pmts[8]           = {15,  16,  82,  107, 131, 148, 166, 171};
+  double pmts[8] = {15,  16,  82,  107, 131, 148, 166, 171};
   double DRs_HPK[8] = {2200,2000,2700,3900,2400,2100,2300,2500};
   
   int i = 0;

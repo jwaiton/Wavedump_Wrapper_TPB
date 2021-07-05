@@ -28,6 +28,8 @@
 #include "TFitResult.h"
 #include "TFitResultPtr.h"
 
+#include "RooAbsArg.h"
+
 // Result
 
 typedef struct {

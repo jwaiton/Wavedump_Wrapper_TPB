@@ -88,7 +88,7 @@ int main(int argc, char * argv[]){
   printf("\n  'w' - Waveform ");
   printf("\n  'f' - FFT ");
   printf("\n  'b' - 'w' and 'f'");
-  printf("\n  'D' - Dark count ");
+  printf("\n  'D' - Dark count \n");
   scanf("%c",&aChar);
   
 
