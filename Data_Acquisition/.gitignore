@@ -4,3 +4,5 @@ ED_DB_DT5742_100s_SPE_Text_File_Output.sh
 ED_DB_Moving.sh
 *.dat
 .vscode/
+PMTs.txt
+run_list.txt

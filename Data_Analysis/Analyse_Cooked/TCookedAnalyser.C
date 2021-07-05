@@ -30,8 +30,9 @@ string TCookedAnalyser::GetFileID(){
 void TCookedAnalyser::Make_hQ_Fixed(){
 
   float gate_start = Get_LED_Delay() - 15;
-    
-  float gate_width = 50.; 
+
+  //float gate_width = 50.; 
+  float gate_width = 70.; 
   
   string fileName = "hQ_Fixed_";
   string histName = "hQ_Fixed_";
@@ -52,7 +53,6 @@ void TCookedAnalyser::Make_hQ_Fixed(){
 
   TH1F * hQ_Fixed = new TH1F(histName.c_str(),"hQ_Fixed;Charge (mV ns);Counts",
 			     nBins,minQ,maxQ);
-
   float wave_mV = 0.0;
   float time_ns = 0.0;
 
@@ -510,35 +510,35 @@ void TCookedAnalyser::Dark(float thresh_mV){
     // Gary - Something below TBD removes all events
     // for Edinburgh data
 
-    // average = base_average(iEntry);
+    average = base_average(iEntry);
     
-    // if( average < -10){
-    //   rejected_waveforms << iEntry << "\n";
-    //   rejected++;
-    //   av_neg_rej++;
-    //   continue;}
+    if( average < -10){
+      rejected_waveforms << iEntry << "\n";
+      rejected++;
+      av_neg_rej++;
+      continue;}
       
-    // if( average > 10){
-    //   rejected_waveforms << iEntry << "\n";
-    //   rejected++;
-    //   av_pos_rej++;
-    //   continue;}
+    if( average > 10){
+      rejected_waveforms << iEntry << "\n";
+      rejected++;
+      av_pos_rej++;
+      continue;}
       
-    // if( peak_mV > 100){
-    //   rejected_waveforms << iEntry << "\n";
-    //   rejected++;
-    //   peak_high++;
-    //   continue;}
+    if( peak_mV > 100){
+      rejected_waveforms << iEntry << "\n";
+      rejected++;
+      peak_high++;
+      continue;}
     
-    // int rise = peak_rise();
+    int rise = peak_rise();
     
-    // if(!rise){
-    //   rejected_waveforms << iEntry << "\n";
-    //   //rejected++;
-    //   rise_rej++;
-    //   continue;}
+    if(!rise){
+      rejected_waveforms << iEntry << "\n";
+      //rejected++;
+      rise_rej++;
+      continue;}
     
-    // dark_csv << iEntry << "\n";
+    dark_csv << iEntry << "\n";
     
     nDark++;
     
