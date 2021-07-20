@@ -3,7 +3,6 @@
 # compile command line programs 
 # (after first cleaning folders)
 
-#
 # convert binary to basic root version
 cd $WM_CONVERT
 pwd
