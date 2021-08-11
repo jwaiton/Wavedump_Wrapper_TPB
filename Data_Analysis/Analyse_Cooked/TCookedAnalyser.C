@@ -4,9 +4,11 @@
 #include "TSystem.h"
 #include <TH2.h>
 #include <TF1.h>
+#include <TLine.h>
 #include <math.h>
 #include <limits.h>
 #include <fstream>
+#include <sstream>
 
 #include "wmStyle.C"
 
