@@ -107,7 +107,7 @@ realclean:	clean
 
 ana_cookedDict.C: 	$(HDR) CookedAnalyser_LinkDef.h
 		@echo "Generating dictionary ana_cookedDict..."
-		$(ROOTSYS)/bin/rootcint -f $@ -c $(INCLUDES) $(HDR) \
+		$(ROOTSYS)/bin/rootcint -f $@ -c  $(HDR) \
 		 CookedAnalyser_LinkDef.h
 
 #-------------------------------------------------------------------------
