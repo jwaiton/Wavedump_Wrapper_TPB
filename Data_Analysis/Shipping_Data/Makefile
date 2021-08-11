@@ -112,7 +112,7 @@ realclean:	clean
 
 ship_datDict.C: 	$(HDR) ShipData_LinkDef.h
 		@echo "Generating dictionary ship_datDict..."
-		$(ROOTSYS)/bin/rootcint -f $@ -c $(INCLUDES) $(HDR) \
+		$(ROOTSYS)/bin/rootcint -f $@ -c  $(HDR) \
 		 ShipData_LinkDef.h
 
 #-------------------------------------------------------------------------
