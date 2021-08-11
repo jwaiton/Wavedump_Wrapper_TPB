@@ -106,7 +106,7 @@ realclean:	clean
 
 wave_plotDict.C: 	$(HDR) WavePlotter_LinkDef.h
 		@echo "Generating dictionary wave_plotDict..."
-		$(ROOTSYS)/bin/rootcint -f $@ -c $(INCLUDES) $(HDR) \
+		$(ROOTSYS)/bin/rootcint -f $@ -c  $(HDR) \
 		 WavePlotter_LinkDef.h
 
 #-------------------------------------------------------------------------
