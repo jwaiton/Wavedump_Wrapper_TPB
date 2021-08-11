@@ -1,6 +1,7 @@
 #define TCooker_cxx
 #include "TCooker.h"
 #include <TH2.h>
+#include <TLine.h>
 #include <math.h>
 #include <limits.h>
 
