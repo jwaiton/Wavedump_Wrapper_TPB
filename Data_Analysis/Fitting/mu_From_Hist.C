@@ -11,7 +11,7 @@
 
 #include <TLatex.h>
 
-//#include "wmStyle.C"
+#include "wmStyle.C"
 
 using namespace std;
 
@@ -29,12 +29,19 @@ float Prob_zero_from_TH1F(TH1F * hQ,
 
 float mu_From_Hist(string rootFileName = "hQ_Fixed_Run_30_PMT_133_Loc_3_Test_S",string pathToData = "./"){
   
-  //TStyle *wmStyle = GetwmStyle();
-  //gStyle->SetOptTitle(0);
-  //gROOT->SetStyle("wmStyle");
-  //gROOT->ForceStyle();
+  TStyle *wmStyle = GetwmStyle();
+  gStyle->SetOptTitle(0);
+  gROOT->SetStyle("wmStyle");
+  gROOT->ForceStyle();
 
-  Result * result = GetPeakToValley(rootFileName,
+  //TString hName = "hQ_Fixed_" + rootFileName;
+  string hName = rootFileName;
+  
+  if (!hName.empty()) {
+    hName.resize(hName.size() - 5);
+  }
+  
+  Result * result = GetPeakToValley(hName,
 				    pathToData);
   
   float valley_Q = result->valley.value;
@@ -44,10 +51,7 @@ float mu_From_Hist(string rootFileName = "hQ_Fixed_Run_30_PMT_133_Loc_3_Test_S",
   cout << " charge at valley is " << setprecision(3) << valley_Q << " mVns " << endl;  
   cout << " charge at peak is   " << setprecision(3) << peak_Q   << " mVns " << endl;  
   
-  //TString hName = "hQ_Fixed_" + rootFileName;
-  string hName = rootFileName;
-  
-  rootFileName = rootFileName + ".root";
+  //rootFileName = rootFileName + ".root";
 
   rootFileName = pathToData + rootFileName;
 
@@ -59,7 +63,9 @@ float mu_From_Hist(string rootFileName = "hQ_Fixed_Run_30_PMT_133_Loc_3_Test_S",
   
   cout << endl;
   cout << " Poisson P(O) is " << setprecision(4) << P0*100 << " %" <<endl;  
-  
+
+  hQ_Fixed->SetMinimum(1000);
+  hQ_Fixed->GetXaxis()->SetRangeUser(-100,900);
   
   hQ_Fixed->Draw();
   gPad->SetLogy();
@@ -81,28 +87,28 @@ float mu_From_Hist(string rootFileName = "hQ_Fixed_Run_30_PMT_133_Loc_3_Test_S",
   
   TLatex * latex = new TLatex(); 
   latex->SetNDC();
-  latex->SetTextSize(0.03);;
+  latex->SetTextSize(0.04);;
   
   char text_ptv[64];
-  sprintf(text_ptv," p:v     %.2f",
+  sprintf(text_ptv," p:v \t\t %.2f",
 	  result->peakToValley.value);
 
   char text_mu[64];
-  sprintf(text_mu," mu      %.2f p.e.",
+  sprintf(text_mu," mu \t\t %.2f p.e.",
 	  result->mu.value);
 
   char text_valley[64];
-  sprintf(text_valley," valley  %.0f mVns",
+  sprintf(text_valley," valley \t %.0f mVns",
 	  result->valley.value);
 
   char text_peak[64];
-  sprintf(text_peak," peak    %.0f mVns",
+  sprintf(text_peak," peak \t\t %.0f mVns",
 	  result->peak.value);
   
   float gain = result->peak.value/400.;
 
   char text_gain[64];
-  sprintf(text_gain," gain    %.2f #times 10^{7}",
+  sprintf(text_gain," gain \t\t %.2f #times 10^{7}",
 	  gain); 
 
   latex->DrawLatex(0.6,0.85,text_ptv);
