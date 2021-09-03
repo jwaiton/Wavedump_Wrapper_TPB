@@ -34,9 +34,9 @@ float mu_From_Hist(string rootFileName = "hQ_Fixed_Run_30_PMT_133_Loc_3_Test_S",
   gROOT->SetStyle("wmStyle");
   gROOT->ForceStyle();
 
-  //TString hName = "hQ_Fixed_" + rootFileName;
   string hName = rootFileName;
-  
+
+  // strip away the .root extension
   if (!hName.empty()) {
     hName.resize(hName.size() - 5);
   }
@@ -50,8 +50,6 @@ float mu_From_Hist(string rootFileName = "hQ_Fixed_Run_30_PMT_133_Loc_3_Test_S",
   cout << endl;
   cout << " charge at valley is " << setprecision(3) << valley_Q << " mVns " << endl;  
   cout << " charge at peak is   " << setprecision(3) << peak_Q   << " mVns " << endl;  
-  
-  //rootFileName = rootFileName + ".root";
 
   rootFileName = pathToData + rootFileName;
 
