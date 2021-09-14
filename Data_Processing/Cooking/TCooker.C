@@ -14,8 +14,11 @@ void TCooker::Cook(){
 
   // create variables in standard units
   // and find waveform peak
-  DoCooking();
-
+  if(fPMT > 0)
+    DoCooking();
+  else // pulser signal
+    DoTriggerAnalysis();
+  
   SaveMetaData();
   SaveCookedData();
   outFile->Close();
@@ -104,7 +107,8 @@ void TCooker::InitCookedDataTree(){
   cookedTree->Branch("min_mV",&min_mV,"min_mV/F");
   cookedTree->Branch("mean_mV",&mean_mV,"mean_mV/F");
   cookedTree->Branch("start_s",&start_s,"start_s/F");
-  cookedTree->Branch("base_mV",&base_mV,"base_mV/F"); 
+  cookedTree->Branch("base_mV",&base_mV,"base_mV/F");
+  cookedTree->Branch("trig_s",&trig_s,"trig_s/F"); 
   
 }
 
@@ -135,6 +139,77 @@ void TCooker::InitMetaDataTree(){
   metaTree->Branch("Test",&fTest,"Test/B");  
   metaTree->Branch("HVStep",&fHVStep,"HVStep/I");  
   //
+}
+
+
+void TCooker::DoTriggerAnalysis(){
+
+  float tB4 = 0.0;
+  float tAf = 0.0;
+  float vB4 = 0.0;
+  float vAf = 0.0;
+
+  float m  = 0.;
+  float c  = 0.;
+  float tX = 0.0;
+
+  float volt = -1.0;
+  
+  wave_mV.clear(), ADC_buff.clear();
+  
+    for (int iEntry = 0; iEntry < nentries; iEntry++) {
+      rawTree->GetEntry(iEntry);
+
+      tB4 = 0.0;
+      tAf = 0.0;
+      vB4 = 0.0;
+      vAf = 0.0;
+      
+      m  = 0.;
+      c  = 0.;
+      tX = 0.0;
+
+      volt = -1.0;
+      
+      if(iEntry >  100) 
+	break; 
+      
+      for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
+
+	wave_mV.push_back(ADC_To_Wave(ADC->at(iSamp)));
+	volt = ADC_To_Wave(ADC->at(iSamp));
+	  
+	// ignore beginning of waveform
+	if(iSamp*SampleToTime() < 50 )
+	  continue;
+	
+	//printf("\n (iSamp,wave_mV) = (%d, %f) ",iSamp, volt);
+	
+	if(volt < 0.){
+	  vB4 = volt;
+	  tB4 = iSamp*SampleToTime();
+	}
+	if(volt > 0.){
+	  vAf  = volt;
+	  tAf  = iSamp*SampleToTime();;
+	  break;
+	}
+	
+      }
+
+      // what is x when y = 0?
+      // y = mx + c
+      // m = (y2 - y1) / (x2 - x1)
+      m  = ( vAf - vB4 )/( tAf - tB4);
+      // c = y - mx
+      c = vAf - m*tAf;
+      // x[y=0] = -c/m  
+      tX = -c/m; 
+      
+      printf("\n tX =  %f",tX);
+      
+    }
+
 }
 
 void TCooker::DoCooking(){
