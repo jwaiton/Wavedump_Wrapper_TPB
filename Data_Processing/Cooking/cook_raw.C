@@ -146,6 +146,7 @@ int main(int argc, char * argv[]){
     // set the cooker object FileID using the
     // FileNameParser object member function
     cooker->SetFileID(fNP->GetFileID());
+
     
     //
     cooker->SetRun(fNP->GetRun());
@@ -185,6 +186,7 @@ int main(int argc, char * argv[]){
     
     cooker->PrintConstants();
 
+    
     //-------------------
     // DAQ info
     //  Print mean trigger rate
@@ -205,6 +207,10 @@ int main(int argc, char * argv[]){
     
     // Save meta data tree
     // Save cooked data tree
+
+    // Pulse signal data (PMT0000)
+    // is also processed.
+    
     cooker->Cook();
     
     inFile->Delete();
