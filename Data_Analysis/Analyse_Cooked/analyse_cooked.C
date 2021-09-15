@@ -43,7 +43,7 @@
 #include <string>
 #include "TCookedAnalyser.h"
 
-#include "TF1.h"
+//#include "TF1.h"
 
 bool Welcome(int argc);
 
