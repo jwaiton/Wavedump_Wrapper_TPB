@@ -762,6 +762,7 @@ void TCookedAnalyser::DarkPlot(char option){
     
     for (int i = 0; i < nWaveforms ; i++){
       cookedTree->GetEntry(indices[i]);
+
       
       for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
         hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
@@ -956,6 +957,8 @@ void TCookedAnalyser::Waveform(char option){
     }
     
     cookedTree->GetEntry(entry);
+
+    printf("\n trig_s = %f \n",trig_s);
     
     // single or initial instance
     for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
@@ -983,6 +986,7 @@ void TCookedAnalyser::Waveform(char option){
       
       for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
 	hWave_temp->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
+
       
       hWave_temp->FFT(hFFT_temp ,"MAG");
       
@@ -1080,13 +1084,27 @@ void TCookedAnalyser::SaveWaveform(string outPath ){
   printf("\n Saving Waveform Plot \n\n");
   
   InitCanvas();
-  
+
   hWave->Draw();
-  
+
+  // trigger time
+  if(PMT==0){
+    TLine * lTrig = new TLine(trig_s,-500,trig_s,500);
+    lTrig->SetLineStyle(2);
+    lTrig->SetLineColor(kRed+2);
+    lTrig->SetLineWidth(2);
+    TLine * lZero = new TLine(0,0,Length_ns,0);
+    lZero->SetLineStyle(2);
+    lZero->SetLineWidth(2);    
+
+    lTrig->Draw("same");
+    lZero->Draw("same");
+  }
+
   canvas->SaveAs(outPath.c_str());
 
   //hWave->Delete();
-  //  hFFT->Delete();
+  //hFFT->Delete();
   DeleteCanvas();
   
 }

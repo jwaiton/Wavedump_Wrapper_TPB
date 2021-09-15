@@ -74,14 +74,16 @@ class TCookedAnalyser {
   float mean_mV;
   float start_s;
   float base_mV;
-
+  float trig_s;
+  
   TBranch * b_ADC = 0;
   TBranch * b_peak_mV  = 0;  
   TBranch * b_peak_samp = 0;  
   TBranch * b_min_mV  = 0;  
   TBranch * b_mean_mV = 0;  
   TBranch * b_start_s = 0;  
-  TBranch * b_base_mV = 0;  
+  TBranch * b_base_mV = 0;
+  TBranch * b_trig_s  = 0;  
   
   TCookedAnalyser(string path);
   ~TCookedAnalyser();
@@ -335,6 +337,7 @@ void TCookedAnalyser::InitCooked(){
   cookedTree->SetBranchAddress("mean_mV",&mean_mV, &b_mean_mV);
   cookedTree->SetBranchAddress("start_s",&start_s, &b_start_s);
   cookedTree->SetBranchAddress("base_mV",&base_mV, &b_base_mV);
+  cookedTree->SetBranchAddress("trig_s",&trig_s, &b_trig_s);
   
   nentries64_t = cookedTree->GetEntriesFast();
   
