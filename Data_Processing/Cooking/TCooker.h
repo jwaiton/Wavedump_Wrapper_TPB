@@ -104,7 +104,6 @@ class TCooker {
   void  CloseCookedData();
   
   void  DoCooking();
-  void  DoTriggerAnalysis();
   
   void  SaveMetaData();
   void  SaveCookedData();
@@ -237,6 +236,8 @@ class TCooker {
   void  Set_THF_Params(float *,float *,float *, int *);
   
   void  SetStyle();
+
+  bool  IsPulserData();
   
 };
 
