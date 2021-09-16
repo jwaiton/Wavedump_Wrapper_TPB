@@ -25,15 +25,36 @@ string TCookedAnalyser::GetFileID(){
   return FileID;
 }
 
+string TCookedAnalyser::GetTrigFileID(){
+
+  string trigFileID = "Run_";
+  trigFileID += to_string(GetRun());
+  trigFileID += "_PMT_0_Loc_8_Test_";
+  trigFileID += GetTest();
+  trigFileID += ".root";
+  return trigFileID;
+
+}
+
+string TCookedAnalyser::GetTrigTreeID(){
+
+  //Run_105_PMT_0_Loc_8_Test_N
+  string trigTreeID = "Run_";
+  trigTreeID += to_string(GetRun());
+  trigTreeID += "_PMT_0_Loc_8_Test_";
+  trigTreeID += string(1,GetTest());
+  return "Cooked_" + trigTreeID;
+}
+
 //----------
 //   
 
 
 void TCookedAnalyser::Make_hQ_Fixed(){
-
+  
   float gate_start = Get_LED_Delay() - 15;
 
-  //float gate_width = 50.; 
+  //float gate_width = 60.; 
   float gate_width = 70.; 
   
   string fileName = "hQ_Fixed_";
@@ -75,6 +96,12 @@ void TCookedAnalyser::Make_hQ_Fixed(){
     bas_volts = 0.0;
     nSigSamps = 0;
     nBasSamps = 0;
+
+    if(useTrig){
+      gate_start = Get_LED_Delay() - 15;
+      gate_start += trig_s;
+      gate_start -= 170;
+    }
     
     for( short iSamp = 0 ; iSamp < NSamples; iSamp++){
       
@@ -151,8 +178,9 @@ void TCookedAnalyser::Fit_Peak_Time_Dist(){
   printf("\n ------------------------------ \n");
   printf("\n Getting LED delay   \n");
 
+  useTrig = InitTrig();
+  
   InitCanvas();
-    
   float binWidth = nsPerSamp;
   float hist_min_time = 0.0;
   float hist_max_time = 200.0;  
@@ -175,6 +203,11 @@ void TCookedAnalyser::Fit_Peak_Time_Dist(){
     cookedTree->GetEntry(iEntry);
     
     peak_time = peak_samp * nsPerSamp;
+
+    if(useTrig){
+      peak_time -= trig_s;
+      peak_time += 170;
+    }
     
     if(peak_mV > thresh_mV)
       hPeakTime->Fill(peak_time);
@@ -759,11 +792,11 @@ void TCookedAnalyser::DarkPlot(char option){
     }
            
     int nWaveforms = indices.size();
+
     
     for (int i = 0; i < nWaveforms ; i++){
       cookedTree->GetEntry(indices[i]);
 
-      
       for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
         hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
       
@@ -955,9 +988,12 @@ void TCookedAnalyser::Waveform(char option){
       printf("\n exiting waveform plotting \n");
       return;
     }
+
+    if(!useTrig)
+      useTrig = InitTrig();
     
     cookedTree->GetEntry(entry);
-
+    
     printf("\n trig_s = %f \n",trig_s);
     
     // single or initial instance
@@ -1088,8 +1124,14 @@ void TCookedAnalyser::SaveWaveform(string outPath ){
   hWave->Draw();
 
   // trigger time
-  if(PMT==0){
-    TLine * lTrig = new TLine(trig_s,-500,trig_s,500);
+  if(useTrig){
+
+    //float gate_start = 87.9 - 15 + trig_s - 170;
+    float gate_start = 87.9 - 10 + trig_s - 170;
+    float gate_width = 60.;
+    float gate_end   = gate_start + gate_width;
+    
+    TLine * lTrig = new TLine(gate_start,10,gate_end,10);
     lTrig->SetLineStyle(2);
     lTrig->SetLineColor(kRed+2);
     lTrig->SetLineWidth(2);

@@ -71,7 +71,7 @@ int main(int argc, char * argv[]){
     // Setting Up
 
     path = argv[iFile];
-    
+
     printf("\n ------------------------------ \n");
     printf("\n  Input File:       ");
     printf("\n    %s  \n",path.c_str());    
@@ -82,8 +82,8 @@ int main(int argc, char * argv[]){
     // reduce event loop for faster code testing
     // NB no check that this is lower that nentries
 
-    //int user_nentries = 10; 
-    //cooked_analyser->SetTestMode(user_nentries);
+    /* int user_nentries = 10;  */
+    /* cooked_analyser->SetTestMode(user_nentries); */
 
     //-------------------
     //-------------------
@@ -126,7 +126,6 @@ int main(int argc, char * argv[]){
       
       cout << " filenameHist = " << filenameHist << endl;
       
-     
       //-------------
       // Pulse fitting test
       // towards rise and fall time extraction

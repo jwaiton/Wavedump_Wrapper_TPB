@@ -22,6 +22,7 @@ class TCookedAnalyser {
  public :
 
   TFile * inFile = nullptr;
+  TFile * trigFile = nullptr;
 
   TFile * outFile = nullptr; 
 
@@ -74,7 +75,6 @@ class TCookedAnalyser {
   float mean_mV;
   float start_s;
   float base_mV;
-  float trig_s;
   
   TBranch * b_ADC = 0;
   TBranch * b_peak_mV  = 0;  
@@ -83,7 +83,12 @@ class TCookedAnalyser {
   TBranch * b_mean_mV = 0;  
   TBranch * b_start_s = 0;  
   TBranch * b_base_mV = 0;
-  TBranch * b_trig_s  = 0;  
+
+  //--------------------
+  // trigger data
+  TTree * trigTree;
+  float   trig_s;
+  TBranch * b_trig_s  = 0;
   
   TCookedAnalyser(string path);
   ~TCookedAnalyser();
@@ -92,15 +97,21 @@ class TCookedAnalyser {
 
   void  InitMeta();
   void  InitCooked();
+
+  bool  useTrig;
+  bool  InitTrig();
    
   void InitCanvas(float w = 1000.,
 		  float h = 800.);
   void DeleteCanvas();
   
   string GetFileID();
-  
+
   string GetCookedTreeID();
   string GetMetaTreeID();
+
+  string GetTrigFileID();
+  string GetTrigTreeID();
   
   void  PrintMetaData();
   
@@ -255,6 +266,8 @@ void TCookedAnalyser::Init()
 
   InitMeta();
   InitCooked();
+
+  useTrig = false;
   
   rand3 = new TRandom3(0);
 
@@ -329,7 +342,7 @@ void TCookedAnalyser::InitCooked(){
   }
 
   cookedTree->SetMakeClass(1);
-  
+
   cookedTree->SetBranchAddress("ADC",&ADC, &b_ADC);
   cookedTree->SetBranchAddress("peak_mV",&peak_mV, &b_peak_mV);
   cookedTree->SetBranchAddress("peak_samp",&peak_samp, &b_peak_samp);
@@ -337,7 +350,7 @@ void TCookedAnalyser::InitCooked(){
   cookedTree->SetBranchAddress("mean_mV",&mean_mV, &b_mean_mV);
   cookedTree->SetBranchAddress("start_s",&start_s, &b_start_s);
   cookedTree->SetBranchAddress("base_mV",&base_mV, &b_base_mV);
-  cookedTree->SetBranchAddress("trig_s",&trig_s, &b_trig_s);
+
   
   nentries64_t = cookedTree->GetEntriesFast();
   
@@ -356,6 +369,51 @@ void TCookedAnalyser::InitCooked(){
   
   return;
 }
+
+bool TCookedAnalyser::InitTrig(){
+
+  string trigFileName = GetTrigFileID();
+
+  
+  trigFile = new TFile(trigFileName.c_str(),"READ");
+  
+  if ( !trigFile || !trigFile->IsOpen()) {
+    fprintf(stderr,"\n Error, Check File: %s \n",trigFileName.c_str());
+    return false;
+  }
+  
+  string trigTreeName = GetTrigTreeID();
+  trigFile->GetObject(trigTreeName.c_str(),trigTree);  
+
+  if (!trigTree){
+    fprintf( stderr, "\n Error: no trig tree %s \n ",trigTreeName.c_str());
+    fprintf( stderr, "\n Was this file created with the latest cook_raw ? \n ");
+    return false;
+  }
+
+  printf("\n ------------------------------ \n");
+  printf("\n Initialising Trig Data \n");
+  printf("\n   %s \n",trigTreeName.c_str());
+
+  trigTree->SetBranchAddress("trig_s",&trig_s, &b_trig_s);  
+
+  int nentriesTrig = (int)trigTree->GetEntriesFast();
+  
+  printf("\n %d trig tree entries \n",nentriesTrig);
+
+  if( nentriesTrig != nentries ){
+    printf("\n Warning: not using trig data \n");
+    printf("\n %d cooked tree entries \n",nentries);
+    return false;
+  }
+  
+  printf("\n ------------------------------ \n");
+
+  cookedTree->AddFriend(trigTree);
+  
+  return true;
+}
+
 
 void TCookedAnalyser::SetTest(char userTest ){
   Test = userTest;
