@@ -21,7 +21,7 @@ using namespace std;
 class TCookedAnalyser {
  public :
 
-  TFile * inFile = nullptr;
+  TFile * inFile   = nullptr;
   TFile * trigFile = nullptr;
 
   TFile * outFile = nullptr; 
@@ -89,6 +89,8 @@ class TCookedAnalyser {
   TTree * trigTree;
   float   trig_s;
   TBranch * b_trig_s  = 0;
+
+  double fTrigMean;
   
   TCookedAnalyser(string path);
   ~TCookedAnalyser();
@@ -100,7 +102,10 @@ class TCookedAnalyser {
 
   bool  useTrig;
   bool  InitTrig();
-   
+  void  SetTrigMeanTime();
+  float GetTrigMeanTime();
+  short TimeCorrectSample(short sample);
+  
   void InitCanvas(float w = 1000.,
 		  float h = 800.);
   void DeleteCanvas();
@@ -112,7 +117,7 @@ class TCookedAnalyser {
 
   string GetTrigFileID();
   string GetTrigTreeID();
-  
+ 
   void  PrintMetaData();
   
   // limit entries for faster testing
@@ -149,7 +154,8 @@ class TCookedAnalyser {
   float Wave_To_Amp_Scaled_Wave(float wave);
 
   //----
-  void  Make_hQ_Fixed();
+  void  Make_hQ_Fixed(float gate_width  = 70.,
+		      float gate_offset = 15);
   
   bool  HasLowNoise(float min_mV,float peak_mV,
 		    float thresh_mV = 10.);
@@ -167,14 +173,14 @@ class TCookedAnalyser {
   TH1F * hD_Peak = nullptr;
   TH2F * hD_Min_Peak = nullptr;
 
-  double base_average(int iEntry);
+  double base_average();
   double average;
-  int peak_rise(float thesh_mV = 10., int nbins = 10);
+  int   peak_rise(int nbins = 10);
   void  Dark(float thresh_mV = 10.);
   void  InitDark();
   void  SaveDark(string outFolder = "./Plots/Dark/");
   
-  void DarkPlot(char option = 'D');
+  void DarkPlot();
 
   //---
   // Monitor Waveforms
@@ -187,7 +193,8 @@ class TCookedAnalyser {
   void  Waveform(char option = 'f');
   
   void  InitWaveform();
-  void  SaveWaveform(string outPath = "./Plots/Waveforms/");
+  void  SaveWaveform(string outPath = "./Plots/Waveforms/",
+		     char option = 'w');
   
   void  InitFFT();
   void  SaveFFT(string outPath = "./Plots/Waveforms/",
@@ -220,7 +227,9 @@ class TCookedAnalyser {
    void  SetStyle();
    float fLED_Delay;
    bool IsTimingDistFitted;
-   
+
+  bool  IsTestMode;
+  
 };
 
 #endif
@@ -258,6 +267,8 @@ void TCookedAnalyser::SetTestMode(int user_nentries = 1000000){
   nentries = user_nentries;  
   printf("\n Warning: \n ");
   printf("  nentries set to %d for testing \n",nentries);
+
+  IsTestMode = true;
   
 }
 
@@ -362,6 +373,8 @@ void TCookedAnalyser::InitCooked(){
   }
   else
     nentries = (int)nentries64_t;
+
+  IsTestMode = false;
   
   // printf("\n nentries = %d",nentries);
   
@@ -370,11 +383,33 @@ void TCookedAnalyser::InitCooked(){
   return;
 }
 
+void TCookedAnalyser::SetTrigMeanTime(){
+
+  double trig_mean = 0;
+  
+  for ( int iEntry = 0 ; iEntry < nentries ; iEntry++){
+    cookedTree->GetEntry(iEntry); 
+    trig_mean += trig_s;
+    //printf("\n trig_s    = %f \n",trig_s);
+    //printf("\n fTrigMean = %f \n",fTrigMean);
+  }
+
+  //printf("\n fTrigMean = %f \n",fTrigMean);
+  trig_mean /= (double)nentries;
+  //printf("\n nentries = %d \n",nentries);
+  //printf("\n fTrigMean = %lf \n",fTrigMean);
+
+  fTrigMean = (float)trig_mean;
+}
+
+float TCookedAnalyser::GetTrigMeanTime(){
+  return fTrigMean;
+}
+
 bool TCookedAnalyser::InitTrig(){
 
   string trigFileName = GetTrigFileID();
 
-  
   trigFile = new TFile(trigFileName.c_str(),"READ");
   
   if ( !trigFile || !trigFile->IsOpen()) {
@@ -401,6 +436,9 @@ bool TCookedAnalyser::InitTrig(){
   
   printf("\n %d trig tree entries \n",nentriesTrig);
 
+  if(IsTestMode)
+    nentriesTrig = nentries;
+  
   if( nentriesTrig != nentries ){
     printf("\n Warning: not using trig data \n");
     printf("\n %d cooked tree entries \n",nentries);
@@ -410,10 +448,29 @@ bool TCookedAnalyser::InitTrig(){
   printf("\n ------------------------------ \n");
 
   cookedTree->AddFriend(trigTree);
+
+  SetTrigMeanTime();
   
   return true;
 }
 
+short TCookedAnalyser::TimeCorrectSample(short sample){
+
+  //printf("\n sample = %d \n", sample);
+
+  short sample_new = sample;
+  
+  if(useTrig)
+    sample_new = sample + (short)(trig_s - fTrigMean)/nsPerSamp;
+  //sample = sample + 50;
+
+  // if( (sample_new < 0) || (sample_new > (NSamples-1)) ){
+  //   printf("\n sample     = %hi \n", sample);
+  //   printf("\n sample_new = %hi \n", sample_new);
+  // }
+  
+  return sample_new;
+}
 
 void TCookedAnalyser::SetTest(char userTest ){
   Test = userTest;
