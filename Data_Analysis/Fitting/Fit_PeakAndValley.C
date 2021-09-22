@@ -226,8 +226,10 @@ Result* Fit_PeakAndValley(TH1F*  fhisto){
   TF1* f2 = fhisto->GetFunction("pol2");
   double a = f2->GetParameter(2); double b = f2->GetParameter(1);
   double xmin = -b/(2*a);
-  
-  TFitResultPtr pres= fhisto->Fit("pol2", "S", "",xmin - 30 , xmin +50);
+
+  double x_low_range = 50, x_high_range = 50;
+  //TFitResultPtr pres= fhisto->Fit("pol2", "S", "",xmin - 30 , xmin +50);
+  TFitResultPtr pres= fhisto->Fit("pol2", "S", "",xmin - x_low_range , xmin + x_high_range);
   TFitResult* polres = pres.Get();
   double ea = polres->Error(2); double eb = polres->Error(1);
 
