@@ -184,8 +184,8 @@ void TCookedAnalyser::Fit_Peak_Time_Dist(){
   printf("\n ------------------------------ \n");
   printf("\n Getting LED delay   \n");
 
-  /* if(!useTrig)  */
-  /*   useTrig = InitTrig();  */
+  if(!useTrig)
+    useTrig = InitTrig();
   
   InitCanvas();
   float binWidth = nsPerSamp;
