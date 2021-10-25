@@ -10,12 +10,14 @@ Result * GetPeakToValley(TString rootFileName = "Run_30_PMT_133_Loc_3_Test_S",st
   
   //TString hName = "hQ_Fixed_" + rootFileName;
   TString hName = rootFileName;
-      
+  
+  
   rootFileName = rootFileName + ".root";
 
-  rootFileName = pathToData + rootFileName;
+  TString rootFilePath = pathToData;
+  rootFilePath += rootFileName;
   
-  TFile * rootFile = new TFile(rootFileName);
+  TFile * rootFile = new TFile(rootFilePath);
   
   Result * result = Fit_PeakAndValley((TH1F*)rootFile->Get(hName));
   

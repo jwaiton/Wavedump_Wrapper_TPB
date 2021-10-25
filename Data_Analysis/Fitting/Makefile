@@ -39,10 +39,6 @@ SOFLAGS       = -shared
 endif
 
 ifeq ($(ARCH),macosx64)
-
-#PATH  := /usr/bin/:$(PATH)
-#SHELL := env PATH=$(PATH) /bin/bash
-
 # MacOS X >= 10.4 with gcc 64 bit mode (GNU gcc 4.*)
 # Only specific option (-m64) comes from root-config
 MACOSX_MINOR := $(shell sw_vers | sed -n 's/ProductVersion://p' | cut -d . -f 2)
@@ -65,12 +61,15 @@ ifeq ($(CXX),)
 $(error $(ARCH) invalid architecture)
 endif
 
+#SPEC         = -lSpectrum
+
 INCLUDES      = $(ROOTCFLAGS)
 
 CXXFLAGS     += $(INCLUDES)
 LDFLAGS      += $(ROOTLDFLAGS)
-LIBS         += $(ROOTLIBS) $(SYSLIBS)  
+LIBS         += $(ROOTLIBS) $(SYSLIBS)
 GLIBS        += $(ROOTGLIBS) $(SYSLIBS)
+#GLIBS        += ${SPEC}
 
 MAKEDEPEND    = gcc
 
@@ -80,17 +79,15 @@ endif
 
 #-------------------------------------------------------------------------
 
-COMMON        = ../../Common_Tools/
-
-SRC           =  ${COMMON}ShippingData.C
+SRC           = mu_From_Hist.C
 
 OBJ           = $(SRC:.C=.o)
 HDR           = $(SRC:.C=.h)
 DEP           = $(SRC:.C=.d)
-OBJS          = $(OBJ) ship_datDict.o
+OBJS          = $(OBJ) ana_cookedDict.o
 
-LIBCONRAW     = libShipData.so
-PROGRAMS      = shipping_data
+LIBCONRAW     = libCookedAnalyser.so
+PROGRAMS      = peak_to_valley
 
 all:            $(PROGRAMS)
 
@@ -98,22 +95,20 @@ $(LIBCONRAW):	$(OBJS)
 		$(LD) $(LDFLAGS) $(SOFLAGS) -o $@ $^
 		@echo "$@ done"
 
-shipping_data:	shipping_data.o $(LIBCONRAW)
-		$(LD) $(LDFLAGS) shipping_data.o -L$(CURDIR) -lShipData $(GLIBS) -o $@
+peak_to_valley:	peak_to_valley.o $(LIBCONRAW)
+		$(LD) $(LDFLAGS) peak_to_valley.o -L$(CURDIR) -lCookedAnalyser $(GLIBS) -o $@
 
 clean:
 		rm -f *.o *.d *.so $(PROGRAMS)
-		rm -f $(COMMON)*.o $(COMMON)*.d $(COMMON)*.so 
 
 realclean:	clean
 		rm -f *.d *~ core
-		rm -f *.pcm ship_*Dict.C
-		rm -f $(COMMON)*.pcm $(COMMON)ShippingData_C*
+		rm -f *.pcm ana_*Dict.C 
 
-ship_datDict.C: 	$(HDR) ShipData_LinkDef.h
-		@echo "Generating dictionary ship_datDict..."
+ana_cookedDict.C: 	$(HDR) CookedAnalyser_LinkDef.h
+		@echo "Generating dictionary ana_cookedDict..."
 		$(ROOTSYS)/bin/rootcint -f $@ -c  $(HDR) \
-		 ShipData_LinkDef.h
+		 CookedAnalyser_LinkDef.h
 
 #-------------------------------------------------------------------------
 

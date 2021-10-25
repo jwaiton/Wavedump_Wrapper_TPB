@@ -21,7 +21,8 @@ using namespace std;
 class TCookedAnalyser {
  public :
 
-  TFile * inFile = nullptr;
+  TFile * inFile   = nullptr;
+  TFile * trigFile = nullptr;
 
   TFile * outFile = nullptr; 
 
@@ -74,14 +75,22 @@ class TCookedAnalyser {
   float mean_mV;
   float start_s;
   float base_mV;
-
+  
   TBranch * b_ADC = 0;
   TBranch * b_peak_mV  = 0;  
   TBranch * b_peak_samp = 0;  
   TBranch * b_min_mV  = 0;  
   TBranch * b_mean_mV = 0;  
   TBranch * b_start_s = 0;  
-  TBranch * b_base_mV = 0;  
+  TBranch * b_base_mV = 0;
+
+  //--------------------
+  // trigger data
+  TTree * trigTree;
+  float   trig_s;
+  TBranch * b_trig_s  = 0;
+
+  double fTrigMean;
   
   TCookedAnalyser(string path);
   ~TCookedAnalyser();
@@ -90,16 +99,25 @@ class TCookedAnalyser {
 
   void  InitMeta();
   void  InitCooked();
-   
+
+  bool  useTrig;
+  bool  InitTrig();
+  void  SetTrigMeanTime();
+  float GetTrigMeanTime();
+  short TimeCorrectSample(short sample);
+  
   void InitCanvas(float w = 1000.,
 		  float h = 800.);
   void DeleteCanvas();
   
   string GetFileID();
-  
+
   string GetCookedTreeID();
   string GetMetaTreeID();
-  
+
+  string GetTrigFileID();
+  string GetTrigTreeID();
+ 
   void  PrintMetaData();
   
   // limit entries for faster testing
@@ -136,7 +154,8 @@ class TCookedAnalyser {
   float Wave_To_Amp_Scaled_Wave(float wave);
 
   //----
-  void  Make_hQ_Fixed();
+  void  Make_hQ_Fixed(float gate_width  = 70.,
+		      float gate_offset = 15);
   
   bool  HasLowNoise(float min_mV,float peak_mV,
 		    float thresh_mV = 10.);
@@ -154,14 +173,14 @@ class TCookedAnalyser {
   TH1F * hD_Peak = nullptr;
   TH2F * hD_Min_Peak = nullptr;
 
-  double base_average(int iEntry);
+  double base_average();
   double average;
-  int peak_rise(float thesh_mV = 10., int nbins = 10);
+  int   peak_rise(int nbins = 10);
   void  Dark(float thresh_mV = 10.);
   void  InitDark();
   void  SaveDark(string outFolder = "./Plots/Dark/");
   
-  void DarkPlot(char option = 'D');
+  void DarkPlot();
 
   //---
   // Monitor Waveforms
@@ -174,7 +193,8 @@ class TCookedAnalyser {
   void  Waveform(char option = 'f');
   
   void  InitWaveform();
-  void  SaveWaveform(string outPath = "./Plots/Waveforms/");
+  void  SaveWaveform(string outPath = "./Plots/Waveforms/",
+		     char option = 'w');
   
   void  InitFFT();
   void  SaveFFT(string outPath = "./Plots/Waveforms/",
@@ -207,7 +227,9 @@ class TCookedAnalyser {
    void  SetStyle();
    float fLED_Delay;
    bool IsTimingDistFitted;
-   
+
+  bool  IsTestMode;
+  
 };
 
 #endif
@@ -245,6 +267,8 @@ void TCookedAnalyser::SetTestMode(int user_nentries = 1000000){
   nentries = user_nentries;  
   printf("\n Warning: \n ");
   printf("  nentries set to %d for testing \n",nentries);
+
+  IsTestMode = true;
   
 }
 
@@ -253,6 +277,8 @@ void TCookedAnalyser::Init()
 
   InitMeta();
   InitCooked();
+
+  useTrig = false;
   
   rand3 = new TRandom3(0);
 
@@ -327,7 +353,7 @@ void TCookedAnalyser::InitCooked(){
   }
 
   cookedTree->SetMakeClass(1);
-  
+
   cookedTree->SetBranchAddress("ADC",&ADC, &b_ADC);
   cookedTree->SetBranchAddress("peak_mV",&peak_mV, &b_peak_mV);
   cookedTree->SetBranchAddress("peak_samp",&peak_samp, &b_peak_samp);
@@ -335,6 +361,7 @@ void TCookedAnalyser::InitCooked(){
   cookedTree->SetBranchAddress("mean_mV",&mean_mV, &b_mean_mV);
   cookedTree->SetBranchAddress("start_s",&start_s, &b_start_s);
   cookedTree->SetBranchAddress("base_mV",&base_mV, &b_base_mV);
+
   
   nentries64_t = cookedTree->GetEntriesFast();
   
@@ -346,12 +373,103 @@ void TCookedAnalyser::InitCooked(){
   }
   else
     nentries = (int)nentries64_t;
+
+  IsTestMode = false;
   
   // printf("\n nentries = %d",nentries);
   
   printf("\n ------------------------------ \n");
   
   return;
+}
+
+void TCookedAnalyser::SetTrigMeanTime(){
+
+  double trig_mean = 0;
+  
+  for ( int iEntry = 0 ; iEntry < nentries ; iEntry++){
+    cookedTree->GetEntry(iEntry); 
+    trig_mean += trig_s;
+    //printf("\n trig_s    = %f \n",trig_s);
+    //printf("\n fTrigMean = %f \n",fTrigMean);
+  }
+
+  //printf("\n fTrigMean = %f \n",fTrigMean);
+  trig_mean /= (double)nentries;
+  //printf("\n nentries = %d \n",nentries);
+  //printf("\n fTrigMean = %lf \n",fTrigMean);
+
+  fTrigMean = (float)trig_mean;
+}
+
+float TCookedAnalyser::GetTrigMeanTime(){
+  return fTrigMean;
+}
+
+bool TCookedAnalyser::InitTrig(){
+
+  string trigFileName = GetTrigFileID();
+
+  trigFile = new TFile(trigFileName.c_str(),"READ");
+  
+  if ( !trigFile || !trigFile->IsOpen()) {
+    fprintf(stderr,"\n Error, Check File: %s \n",trigFileName.c_str());
+    return false;
+  }
+  
+  string trigTreeName = GetTrigTreeID();
+  trigFile->GetObject(trigTreeName.c_str(),trigTree);  
+
+  if (!trigTree){
+    fprintf( stderr, "\n Error: no trig tree %s \n ",trigTreeName.c_str());
+    fprintf( stderr, "\n Was this file created with the latest cook_raw ? \n ");
+    return false;
+  }
+
+  printf("\n ------------------------------ \n");
+  printf("\n Initialising Trig Data \n");
+  printf("\n   %s \n",trigTreeName.c_str());
+
+  trigTree->SetBranchAddress("trig_s",&trig_s, &b_trig_s);  
+
+  int nentriesTrig = (int)trigTree->GetEntriesFast();
+  
+  printf("\n %d trig tree entries \n",nentriesTrig);
+
+  if(IsTestMode)
+    nentriesTrig = nentries;
+  
+  if( nentriesTrig != nentries ){
+    printf("\n Warning: not using trig data \n");
+    printf("\n %d cooked tree entries \n",nentries);
+    return false;
+  }
+  
+  printf("\n ------------------------------ \n");
+
+  cookedTree->AddFriend(trigTree);
+
+  SetTrigMeanTime();
+  
+  return true;
+}
+
+short TCookedAnalyser::TimeCorrectSample(short sample){
+
+  //printf("\n sample = %d \n", sample);
+
+  short sample_new = sample;
+  
+  if(useTrig)
+    sample_new = sample + (short)(trig_s - fTrigMean)/nsPerSamp;
+  //sample = sample + 50;
+
+  // if( (sample_new < 0) || (sample_new > (NSamples-1)) ){
+  //   printf("\n sample     = %hi \n", sample);
+  //   printf("\n sample_new = %hi \n", sample_new);
+  // }
+  
+  return sample_new;
 }
 
 void TCookedAnalyser::SetTest(char userTest ){

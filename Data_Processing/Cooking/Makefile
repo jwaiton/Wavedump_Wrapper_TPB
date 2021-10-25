@@ -108,7 +108,7 @@ realclean:	clean
 
 cook_rawDict.C: 	$(HDR) CookRaw_LinkDef.h
 		@echo "Generating dictionary cook_rawDict..."
-		$(ROOTSYS)/bin/rootcint -f $@ -c $(INCLUDES) $(HDR) \
+		$(ROOTSYS)/bin/rootcint -f $@ -c  $(HDR) \
 		 CookRaw_LinkDef.h
 
 #-------------------------------------------------------------------------
