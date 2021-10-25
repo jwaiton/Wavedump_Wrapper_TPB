@@ -119,6 +119,8 @@ int main(int argc, char * argv[]){
       // Charge
       // Save a new root file with charge hist
       if(analyseCharge)
+
+
 	cooked_analyser->Make_hQ_Fixed();
       
       string filenameHist = "hQ_Fixed_";
