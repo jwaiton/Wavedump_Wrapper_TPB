@@ -161,6 +161,9 @@ void TCooker::DoCooking(){
   float t1 = 0.0, t2 = 0.0, v1 = 0.0, v2 = 0.0;
   float m  = 0., c  = 0.;
   bool  foundCrossing = false;
+  // ignore the samples before the negative 
+  // to positive step 
+  bool  ignoreSample  = true;
 
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     rawTree->GetEntry(iEntry);
@@ -177,7 +180,8 @@ void TCooker::DoCooking(){
 
     t1 = 0.0, t2 = 0.0, v1 = 0.0, v2 = 0.0;
     m  = 0.,c  = 0.,trig_s = 0.0;
-    foundCrossing = false;
+    foundCrossing = false; 
+    ignoreSample  = true; 
     
     // first loop - find baseline, set wave_mV
     for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
@@ -191,20 +195,20 @@ void TCooker::DoCooking(){
       
       // ---trig time from pulser---
       // ignore beginning of waveform
-      // !! need better method here !!
-      //if(iSamp*SampleToTime() > 50 &&
-      if(iSamp*SampleToTime() > 150 &&
-	 !foundCrossing){
+      // and skip if trig time already found
+      if( (wave_mV.at(iSamp) > 0 && ignoreSample) || 
+	  foundCrossing)
+	continue;
 	
-	if(wave_mV.at(iSamp) < 0.){
-	  v1 = wave_mV.at(iSamp);
-	  t1 = iSamp*SampleToTime();
-	}
-	else{
-	  v2  = wave_mV.at(iSamp);
-	  t2  = iSamp*SampleToTime();
-	  foundCrossing = true;
-	}
+      if(wave_mV.at(iSamp) < 0.){
+	v1 = wave_mV.at(iSamp);
+	t1 = iSamp*SampleToTime();
+	ignoreSample = false;
+      }
+      else{
+	v2  = wave_mV.at(iSamp);
+	t2  = iSamp*SampleToTime();
+	foundCrossing = true;
       }
       
     }
