@@ -146,8 +146,7 @@ void FileNameParser::Init(int userOption){
   Test   = 'A';  
   HVStep = -1;
   
-  option = userOption;
-  
+  option = userOption;  
 
 }
     
