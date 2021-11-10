@@ -1,10 +1,10 @@
 /*****************************************************
  * A program to process raw root files produced  
- * using dat_to_root
+ * using dat_to_root (or desktop_dat_to_root)
  *
  * Author 
  *  gary.smith@ed.ac.uk
- *  03 04 2020 (last modified)
+ *  10 11 2021 (last modified)
  *
  * Purpose
  *  This program reads in a TTree
@@ -20,10 +20,17 @@
  * How to build 
  *  $ make 
  * 
- *  or
- * make -f ./Build_Options/Makefile_clang++
- *
  * How to run 
+ * 
+ * Option 1: Meta Data User Input
+ * 
+ * cook_raw wave_0.dat.root
+ *
+ * The user is asked to input the PMT, Run, Loc etc. 
+ * 
+ * -- OR --
+ *
+ * Option 2: Extract Meta Data from file path
  *
  *   [ NB some test parameters will be extracted from the file path
  *     which requires the file path name to follow some conventions,
@@ -51,7 +58,7 @@
  *
  *  WATCHMAN common tools (see $WM_COMMON folder)
  *    wmStyle.C - TStyle class settings for WATCHMAN visualisation
- *    FileNameParser.C - class for extracting file ID variables 
+ *    FileNameParser.C - class for extracting meta data  
  * 
  */ 
 
@@ -114,13 +121,7 @@ int main(int argc, char * argv[]){
   FileNameParser * fNP =  nullptr;
   
   for( int iFile = 1 ; iFile < argc ; iFile++){
-    
-    if(string(argv[iFile]) == "-d" ||
-       string(argv[iFile]) == "-s") {
-      iFile = iFile + 2;
-      continue;
-    }
-       
+
     //-------------------
     //-------------------
     // Setting Up
@@ -130,11 +131,25 @@ int main(int argc, char * argv[]){
     if( !IsFileReady(inFile,argv[iFile]) )
       continue;
     
-    // argv should be full path to data file
+    // argv[iFile] should either be
+    // The raw root file name (e.g. wave_0.root)
+    // (option 2 is for use with this format)
+    // OR
+    // The full path to data file
     // in standard WATCHMAN PMT Testing format
     // (option 1 is for use with this format)
-    fNP = new FileNameParser(argv[iFile],1);
-    
+
+    if     ( argv[iFile][0]=='w' )
+      fNP = new FileNameParser(argv[iFile],2);
+    else if( argv[iFile][0]=='/')
+      fNP = new FileNameParser(argv[iFile],1);
+    else{
+      printf(" argv[iFile] = %s \n is not a valid file path", argv[iFile]);
+      printf(" The file path must start with                  \n");
+      printf(" '/' (full path to raw root file provided), or  \n");
+      printf(" 'w' (raw root file name onlyl)                 \n");
+      return -1;
+    }
     // Get raw data tree, which is always called 'T'
     inFile->GetObject("T",tree); 
     
