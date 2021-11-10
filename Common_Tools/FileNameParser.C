@@ -161,8 +161,13 @@ void FileNameParser::Print_Data(){
 }
 
 string FileNameParser::GetTreeName(string filePath, int option = 0){
+
+  string treeName;
   
-  string treeName = "Events_" + GetFileID(GetFileName(filePath));
+  if(option!=0)
+    treeName  = "Events_" + GetFileID(GetFileName(filePath));
+  else
+    treeName  = "Cooked_" + GetFileID(GetFileName(filePath));
   
   return treeName; 
 }
