@@ -62,7 +62,10 @@ float mu_From_Hist(string rootFileName = "hQ_Fixed_Run_30_PMT_133_Loc_3_Test_S.r
   cout << endl;
   cout << " Poisson P(O) is " << setprecision(4) << P0*100 << " %" <<endl;  
 
-  hQ_Fixed->SetMinimum(1000);
+  float minimum = 1000;
+  minimum = hQ_Fixed->GetMaximum()*0.001;
+  
+  hQ_Fixed->SetMinimum(minimum);
   hQ_Fixed->GetXaxis()->SetRangeUser(-100,900);
   
   hQ_Fixed->Draw();
