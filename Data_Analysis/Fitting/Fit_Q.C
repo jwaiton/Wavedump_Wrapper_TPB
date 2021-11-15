@@ -1,10 +1,10 @@
-#include<iostream>
-#include<fstream>
-#include<vector>
-#include"TMath.h"
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include "TMath.h"
 
-#include"TFile.h"
-#include"TTree.h"
+#include "TFile.h"
+#include "TTree.h"
 #include "TH1F.h"
 #include "TROOT.h"
 #include "TStyle.h"
@@ -17,6 +17,8 @@
 #include "RooFitResult.h"
 #include "RooPlot.h"
 #include "RooDerivative.h"
+#include "RooFormulaVar.h"
+
 #include "TF1.h"
 #include "TSpectrum.h"
 #include "TCanvas.h"
