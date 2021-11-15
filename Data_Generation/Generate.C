@@ -4,17 +4,85 @@
 #include <string.h>
 #include <TCanvas.h>
 #include <TROOT.h>
-#include <TRandom.h>
-//#include <../Data_Analysis/Fitting/Poisson.C>
+#include <TRandom3.h>
 
 #include "wmStyle.C"
 
 void SetStyle();
 void Set_THF_Params(float *, float *, float *, int *);
-
 TH1F * Generate_Waveform(float npe   = 1.,
 			 float width = 5.,
-			 float mean  = 100.){
+			 float mean  = 100.);
+TH1F * Generate_Charge_Dist(float npe_mu       = 0.15, // Poisson
+			    float charge_sigma = 0.25, // Gaussian
+			    float charge_decay = 0.02,
+			    float noise_sigma  = 15,
+			    float gain         = 1.0);
+
+void Generate(float mu = 0.15){
+  
+  TCanvas * canvas = new TCanvas(); 
+  canvas->SetWindowSize(500,500);
+  canvas->SetWindowPosition(1000,500);
+    
+  TH1F *hW1, *hQ1;
+
+  //float npe = 1;
+  //hW1 = Generate_Waveform(npe);
+  
+  hQ1 = Generate_Charge_Dist(mu);
+  
+  SetStyle();
+  gPad->SetLogy();
+  
+  //hW1->Draw("HIST");
+  hQ1->Draw();
+
+  hQ1->SetMinimum(hQ1->GetMaximum()*0.001);
+  
+  hQ1->SaveAs("hQ_Gen.root");
+  
+}
+
+TH1F * Generate_Charge_Dist(float npe_mu, 
+			    float charge_sigma,
+			    float charge_decay,
+			    float noise_sigma,
+			    float gain){ 
+  
+  TH1F * hQ = new TH1F("hQ_Gen",
+		       "hQ_Gen;Charge (mV ns);Counts",
+		       101,-100,900);
+  
+  TRandom3 * rand1 = new TRandom3(1); 
+  TRandom3 * rand2 = new TRandom3(2);
+  
+  float Q1  = 400., Q = 400; // mVns
+  int   npe = 0;
+  
+  int nEvents = 6647355;
+  for ( int i = 0 ; i < nEvents ; i++ ){
+
+    
+    npe = rand1->Poisson(npe_mu);
+    Q = Q1*gain*npe;
+
+    if   (Q < 1.0e-12 ){
+      Q += rand2->Gaus(0,noise_sigma);
+      Q += rand2->Exp(charge_decay*Q1);
+    }
+    else 
+      Q += rand2->Gaus(0,charge_sigma*Q);
+    
+    hQ->Fill(Q);
+  }
+  
+  return hQ;
+}
+
+
+TH1F * Generate_Waveform(float npe,float width,
+			 float mean){
   
   int   NSamples = 0;
   float minX = 0., maxX = 298., nsPerSample = 2.;
@@ -25,10 +93,6 @@ TH1F * Generate_Waveform(float npe   = 1.,
 		       "Waveform;Time (ns); Voltage (mV)",
 		       NSamples, minX, maxX);
   TF1 * f = nullptr;
-  
-  // Generate charge from Poisson distn. here
-  // Set mu = 0.15
-  // then n = 1 is 400 mVns
   
   char buffer [50];
   
@@ -43,61 +107,6 @@ TH1F * Generate_Waveform(float npe   = 1.,
     hW->Fill(bin*nsPerSample,f->Eval(bin*nsPerSample));
   
   return hW;
-}
-
-TH1F * Generate_Charge_Dist(float mu    = 0.15, // Poisson
-			    float mean  = 0.,   // Gaussian
-			    float sigma = 0.4){ // Gaussian
-  
-  TH1F * hQ = new TH1F("hQ_Gen",
-		       "hQ_Gen;Charge (mV ns);Counts",
-		       101,-100,1900);
-  
-  TRandom * rand1 = new TRandom(1); 
-  TRandom * rand2 = new TRandom(2);
-  
-  float Q   = 400.; // mVns
-  int   npe = 0;
-  
-  int nEvents = 6647355;
-  for ( int i = 0 ; i < nEvents ; i++ ){
-
-    npe = rand1->Poisson(mu);
-
-    Q = 400*npe;
-    //cout << " Q = " << Q << endl;
-    
-    if   (Q < 1.0e-12 )
-      Q += rand2->Gaus(0,25.);
-    else 
-      Q += rand2->Gaus(0,sigma*Q);
-    
-    hQ->Fill(Q);
-  }
-  
-  return hQ;
-}
-
-void Generate(float mu = 0.15){
-  
-  TCanvas * canvas = new TCanvas(); 
-  canvas->SetWindowSize(1000,800);
-  
-  TH1F *hW1, *hQ1;
-
-  float npe = 1;
-  
-  hW1 = Generate_Waveform(npe);
-  
-  hQ1 = Generate_Charge_Dist(mu);
-  
-  SetStyle();
-  
-  hW1->Draw("HIST");
-  hQ1->Draw();
-
-  hQ1->SaveAs("hQ_Gen.root");
-  
 }
 
 void SetStyle(){
