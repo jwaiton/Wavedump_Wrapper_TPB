@@ -43,7 +43,7 @@
 #include <string>
 #include "TCookedAnalyser.h"
 
-#include "TF1.h"
+//#include "TF1.h"
 
 bool Welcome(int argc);
 
@@ -52,8 +52,8 @@ int main(int argc, char * argv[]){
   if( !Welcome(argc) )
     return -1;
       
-  bool analyseNoise  = true;
-  bool analyseDark   = true;
+  bool analyseNoise  = false;
+  bool analyseDark   = false;
   bool fitTiming     = true;
   bool analyseCharge = true;
 
@@ -71,7 +71,7 @@ int main(int argc, char * argv[]){
     // Setting Up
 
     path = argv[iFile];
-    
+
     printf("\n ------------------------------ \n");
     printf("\n  Input File:       ");
     printf("\n    %s  \n",path.c_str());    
@@ -82,8 +82,8 @@ int main(int argc, char * argv[]){
     // reduce event loop for faster code testing
     // NB no check that this is lower that nentries
 
-    //int user_nentries = 10; 
-    //cooked_analyser->SetTestMode(user_nentries);
+    /* int user_nentries = 1000000; */
+    /* cooked_analyser->SetTestMode(user_nentries); */
 
     //-------------------
     //-------------------
@@ -118,14 +118,22 @@ int main(int argc, char * argv[]){
       //-------------
       // Charge
       // Save a new root file with charge hist
-      if(analyseCharge)
-	cooked_analyser->Make_hQ_Fixed();
-      
-      string filenameHist = "hQ_Fixed_";
-      filenameHist += cooked_analyser->GetFileID();
-      
-      cout << " filenameHist = " << filenameHist << endl;
-      
+      if(analyseCharge){
+
+	float gate_width  = 70; 
+	float gate_offset = 15; 
+
+	cooked_analyser->Make_hQ_Fixed(gate_width,gate_offset);
+	
+      /* 	for(int i = 0 ; i < 10 ; i++){ */
+      /* 	  for(int j = 0 ; j < 5 ; j++){ */
+      /* 	    cooked_analyser->Make_hQ_Fixed(gate_width,gate_offset); */
+      /* 	    gate_offset += 5; */
+      /* 	  } */
+      /* 	  gate_width += 10; */
+      /* 	  gate_offset = 15; */
+      /* 	} */
+      }
      
       //-------------
       // Pulse fitting test
@@ -134,9 +142,9 @@ int main(int argc, char * argv[]){
       
     }
     
-  }// end of: for( int iFile = 1 ;
-
-  return 1;
+  }  // end of: for( int iFile = 1 ;
+    
+    return 1;
 }
 
 

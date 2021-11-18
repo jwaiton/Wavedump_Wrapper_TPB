@@ -50,7 +50,8 @@ class TCooker {
   float mean_mV;
   short peak_samp;
   float start_s; // event start time
-
+  float trig_s; // trigger offset
+  
   TCooker(TTree *tree=0,
 	  char digitiser='V', // Program default is VME 1730
 	  char sampSet='2',   // variable only used for digitiser='D'
@@ -90,6 +91,7 @@ class TCooker {
   //--------------------------
   // Cooking 
   void  Cook();
+
   
   void  InitCooking();
   void  InitCookedDataFile(string option = "RECREATE");
@@ -234,6 +236,8 @@ class TCooker {
   void  Set_THF_Params(float *,float *,float *, int *);
   
   void  SetStyle();
+
+  bool  IsPulserData();
   
 };
 

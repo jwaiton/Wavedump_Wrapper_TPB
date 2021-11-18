@@ -25,23 +25,48 @@ string TCookedAnalyser::GetFileID(){
   return FileID;
 }
 
+string TCookedAnalyser::GetTrigFileID(){
+
+  string trigFileID = "../../PMT0000/Nominal/Run_";
+  trigFileID += to_string(GetRun());
+  trigFileID += "_PMT_0_Loc_8_Test_";
+  trigFileID += GetTest();
+  trigFileID += ".root";
+  return trigFileID;
+
+}
+
+string TCookedAnalyser::GetTrigTreeID(){
+
+  //Run_105_PMT_0_Loc_8_Test_N
+  string trigTreeID = "Run_";
+  trigTreeID += to_string(GetRun());
+  trigTreeID += "_PMT_0_Loc_8_Test_";
+  trigTreeID += string(1,GetTest());
+  return "Cooked_" + trigTreeID;
+}
+
 //----------
 //   
 
 
-void TCookedAnalyser::Make_hQ_Fixed(){
-
-  float gate_start = Get_LED_Delay() - 15;
-
-  //float gate_width = 50.; 
-  float gate_width = 70.; 
+void TCookedAnalyser::Make_hQ_Fixed(float gate_width,
+				    float gate_offset){
+  
+  float gate_start = Get_LED_Delay() - gate_offset;
   
   string fileName = "hQ_Fixed_";
   string histName = "hQ_Fixed_";
-  
-  fileName += GetFileID();
+
   histName += GetFileID();
-  
+  // histName += "_minus_";
+  // histName += to_string((int)roundf(gate_offset));
+  // histName += "_ns_to_";
+  // histName += to_string((int)roundf(gate_width));
+  // histName += "_ns";
+
+  fileName = histName ;
+    
   fileName += ".root";
   
   printf("\n  %s \n",fileName.c_str());
@@ -53,7 +78,8 @@ void TCookedAnalyser::Make_hQ_Fixed(){
   float minQ  = -1000.0;
   float maxQ  = 1000.0;
 
-  TH1F * hQ_Fixed = new TH1F(histName.c_str(),"hQ_Fixed;Charge (mV ns);Counts",
+  TH1F * hQ_Fixed = new TH1F(histName.c_str(),
+			     "hQ_Fixed;Charge (mV ns);Counts",
 			     nBins,minQ,maxQ);
   float wave_mV = 0.0;
   float time_ns = 0.0;
@@ -69,12 +95,19 @@ void TCookedAnalyser::Make_hQ_Fixed(){
 
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     cookedTree->GetEntry(iEntry);
+
+    gate_start = Get_LED_Delay() - gate_offset;
     
     // zero at start of event
     sig_volts = 0.0;
     bas_volts = 0.0;
     nSigSamps = 0;
     nBasSamps = 0;
+
+    if(useTrig){
+      gate_start -= trig_s;
+      gate_start += GetTrigMeanTime();
+    }
     
     for( short iSamp = 0 ; iSamp < NSamples; iSamp++){
       
@@ -92,8 +125,8 @@ void TCookedAnalyser::Make_hQ_Fixed(){
 	sig_volts += wave_mV; 
 	nSigSamps++;
       }// baseline subtraction
-      else if( time_ns <   gate_start   &&
-      	       time_ns >= (gate_start - gate_width ) ){ 
+      else if( time_ns <   gate_start               &&
+      	       time_ns >= (gate_start - gate_width) ){ 
       	bas_volts += wave_mV;
       	nBasSamps++;
       }
@@ -151,8 +184,10 @@ void TCookedAnalyser::Fit_Peak_Time_Dist(){
   printf("\n ------------------------------ \n");
   printf("\n Getting LED delay   \n");
 
+  if(!useTrig)
+    useTrig = InitTrig();
+  
   InitCanvas();
-    
   float binWidth = nsPerSamp;
   float hist_min_time = 0.0;
   float hist_max_time = 200.0;  
@@ -175,6 +210,11 @@ void TCookedAnalyser::Fit_Peak_Time_Dist(){
     cookedTree->GetEntry(iEntry);
     
     peak_time = peak_samp * nsPerSamp;
+
+    if(useTrig){
+      peak_time -= trig_s;
+      peak_time += GetTrigMeanTime();
+    }
     
     if(peak_mV > thresh_mV)
       hPeakTime->Fill(peak_time);
@@ -402,7 +442,7 @@ void TCookedAnalyser::SaveNoise(string outPath){
   
 }
 
-double TCookedAnalyser::base_average(int iEntry){
+double TCookedAnalyser::base_average(){
 
   std::vector<double> amplitude;
 
@@ -416,7 +456,7 @@ double TCookedAnalyser::base_average(int iEntry){
 
 }
 
-int TCookedAnalyser::peak_rise(float thresh_mV, int nbins){
+int TCookedAnalyser::peak_rise(int nbins){
 
   double thresh = base_mV+0.5*peak_mV;//base_mV + thresh_mV;
   
@@ -512,7 +552,7 @@ void TCookedAnalyser::Dark(float thresh_mV){
     // Gary - Something below TBD removes all events
     // for Edinburgh data
 
-    average = base_average(iEntry);
+    average = base_average();
     
     if( average < -10){
       rejected_waveforms << iEntry << "\n";
@@ -708,7 +748,7 @@ float TCookedAnalyser::Wave_To_Amp_Scaled_Wave(float wave){
 }
 
 
-void TCookedAnalyser::DarkPlot(char option){
+void TCookedAnalyser::DarkPlot(){
 
   //fix FFT, add option to cycle through dark and rejected plots rather than plotting all
 
@@ -759,10 +799,11 @@ void TCookedAnalyser::DarkPlot(char option){
     }
            
     int nWaveforms = indices.size();
+
     
     for (int i = 0; i < nWaveforms ; i++){
       cookedTree->GetEntry(indices[i]);
-      
+
       for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
         hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
       
@@ -882,10 +923,14 @@ void TCookedAnalyser::Waveform(char option){
   fileName += ".root";
   printf("\n  %s \n",fileName.c_str());
   outFile = new TFile(fileName.c_str(),"RECREATE",fileName.c_str()); 
-  
+
   switch(option){
   case('w'):
     InitFFT();// inc Waveform
+    break;
+  case('W'):
+    InitFFT();// inc Waveform
+    Get_LED_Delay();
     break;
   case('f'):
     InitFFT();// inc Waveform
@@ -954,12 +999,25 @@ void TCookedAnalyser::Waveform(char option){
       printf("\n exiting waveform plotting \n");
       return;
     }
+
     
     cookedTree->GetEntry(entry);
     
+    //printf("\n trig_s = %f \n",trig_s);
+    short sample_new = 0;
+      
     // single or initial instance
-    for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
-      hWave->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
+    for( short iSamp = 0 ; iSamp < NSamples; iSamp++){
+
+      hWave->SetBinContent(iSamp+1,0);
+      
+      sample_new = TimeCorrectSample(iSamp);
+      
+      if(sample_new >= -1 && sample_new < (NSamples-1) ) 
+	hWave->SetBinContent(iSamp+1,
+			     (ADC_To_Wave(ADC->at(sample_new+1))));
+      
+    }
     
     hWave->FFT(hFFT ,"MAG");
     
@@ -971,7 +1029,7 @@ void TCookedAnalyser::Waveform(char option){
     
     TH1F * hWave_temp = nullptr; 
     TH1F * hFFT_temp  = nullptr;
-
+    
     for (int i = (entry+1); i < nWaveforms ; i++){
       cookedTree->GetEntry(i);
 
@@ -980,9 +1038,20 @@ void TCookedAnalyser::Waveform(char option){
       
       hWave_temp = (TH1F*)hWave->Clone();
       hFFT_temp  = (TH1F*)hFFT->Clone();
+
+      sample_new = 0;
       
-      for( short iSamp = 0 ; iSamp < NSamples; iSamp++)
-	hWave_temp->SetBinContent(iSamp+1,(ADC_To_Wave(ADC->at(iSamp))));
+      for( short iSamp = 0 ; iSamp < NSamples; iSamp++){
+	
+	hWave_temp->SetBinContent(iSamp+1,0);
+	
+	sample_new = TimeCorrectSample(iSamp);
+	
+	if(sample_new >= -1 && sample_new < (NSamples-1) ) 
+	  hWave_temp->SetBinContent(iSamp+1,
+				    (ADC_To_Wave(ADC->at(sample_new+1))));
+	
+      }
       
       hWave_temp->FFT(hFFT_temp ,"MAG");
       
@@ -1015,6 +1084,10 @@ void TCookedAnalyser::Waveform(char option){
     case('w'):
       outPath += "hWave.pdf";
       SaveWaveform(outPath);
+      break;
+    case('W'):
+      outPath += "hWave.pdf";
+      SaveWaveform(outPath,option);
       break;
     case('f'):
       outPath += "hFFT.pdf";
@@ -1063,7 +1136,7 @@ void TCookedAnalyser::InitWaveform(){
 void TCookedAnalyser::InitFFT(){
 
   printf("\n ------------------------------ \n");
-  printf("\n Init FFT \n\n");
+  printf("\n Init Wave and FFT \n");
   
   hWave = new TH1F("hWave","Waveform;Time (ns); Amplitude (mV)",
 		   NSamples, 0.,Length_ns);
@@ -1074,7 +1147,7 @@ void TCookedAnalyser::InitFFT(){
 }
 
 
-void TCookedAnalyser::SaveWaveform(string outPath ){
+void TCookedAnalyser::SaveWaveform(string outPath, char option){
 
 
   printf("\n Saving Waveform Plot \n\n");
@@ -1082,11 +1155,37 @@ void TCookedAnalyser::SaveWaveform(string outPath ){
   InitCanvas();
   
   hWave->Draw();
+
+  if(option=='W'){
+    //!!! hard coded values - need to automate !!
+    float gate_st = Get_LED_Delay() - 15 ;
+    
+    float gate_wid = 70.;
+    float gate_end = gate_st + gate_wid;
+
+    float gate_height = hWave->GetMaximum()/2;
+    
+    TLine * lTrigSt = new TLine(gate_st,-2,gate_st,gate_height);
+    TLine * lTrigFn = new TLine(gate_end,-2,gate_end,gate_height);
+    lTrigSt->SetLineColor(kRed+2);
+    lTrigSt->SetLineWidth(2);
+    lTrigFn->SetLineColor(kRed+2);
+    lTrigFn->SetLineWidth(2);
+    
+    TLine * lZero = new TLine(0,0,Length_ns,0);
+    lZero->SetLineStyle(2);
+    lZero->SetLineWidth(2);    
+    
+    lTrigSt->Draw("same");
+    lTrigFn->Draw("same");
+
+    lZero->Draw("same");
+  }
   
   canvas->SaveAs(outPath.c_str());
-
+  
   //hWave->Delete();
-  //  hFFT->Delete();
+  //hFFT->Delete();
   DeleteCanvas();
   
 }

@@ -66,7 +66,9 @@ int main(int argc, char * argv[]){
   
   // initalise object from class with Waveform() method 
   wave_plotter = new TCookedAnalyser(path);
-  
+
+  /* int user_nentries = 1000; */
+  /* wave_plotter->SetTestMode(user_nentries); */
   //-------------------
   // Meta Data 
   
@@ -86,6 +88,7 @@ int main(int argc, char * argv[]){
   printf("\n  options:  ");
   printf("\n  'n' - No ");
   printf("\n  'w' - Waveform ");
+  printf("\n  'W' - Waveform with gate");
   printf("\n  'f' - FFT ");
   printf("\n  'b' - 'w' and 'f'");
   printf("\n  'D' - Dark count \n");
@@ -94,6 +97,9 @@ int main(int argc, char * argv[]){
 
   switch(aChar){
   case('w'):
+    outPath += "hWave.pdf";
+    break;
+  case('W'):
     outPath += "hWave.pdf";
     break;
   case('f'):
@@ -125,7 +131,7 @@ int main(int argc, char * argv[]){
     wave_plotter->Waveform(aChar);
   }
   else if(aChar == 'D'){
-    wave_plotter->DarkPlot(aChar);
+    wave_plotter->DarkPlot();
   }
   
   return 1;

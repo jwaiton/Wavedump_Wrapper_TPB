@@ -14,7 +14,7 @@ PARENT=${PARENT}RUN${RUN}/
 
 echo $PARENT
 
-for i in 0 1 2 3 4 5 6 7 
+for i in 0 1 2 3 4 5 6 7
 do
     #echo 'PMT for wave' $i ' ? (e.g. 0052)'
     FOLDER=${PARENT}PMT${PMTs[$i]}/Nominal/

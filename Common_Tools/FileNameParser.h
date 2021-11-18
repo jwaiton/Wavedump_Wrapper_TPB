@@ -114,10 +114,68 @@ FileNameParser::FileNameParser(string rawFilePath,
 			       int userOption){
   Init(userOption);
 
-  PMT  = pmtID(rawFilePath);
-  Run  = run(rawFilePath);
-  Loc  = location(rawFilePath);
-  Test = test(rawFilePath);
+  if     (option == 1){
+    
+    PMT  = pmtID(rawFilePath);
+    Run  = run(rawFilePath);
+    Loc  = location(rawFilePath);
+    Test = test(rawFilePath);
+
+  }
+  else if(option == 2){
+
+    char K = 'N';
+
+    while( K!='Y' && K!='y'){
+
+      printf(" \n Enter PMT number: ");
+      scanf(" %d",&PMT);  
+      
+      printf(" PMT = %d \n ",PMT);
+      
+      printf("\n Okay? (Enter:Y/N) \n ");
+      scanf(" %c",&K);
+      
+    }
+
+    K = 'n';
+    
+    while( K!='y' && K!='Y'){
+      printf(" \n Enter Run number: ");
+      scanf(" %d", &Run);  
+      printf(" Run = %d \n Okay? (Enter:Y/N)",Run);
+      scanf(" %c", &K);  
+    }
+
+    K = 'n';
+    
+    while( K!='y' && K!='Y'){
+      printf(" \n Enter Loc number: ");
+      scanf(" %d", &Loc);  
+      printf(" Loc = %d \n Okay? (Enter:Y/N)",Loc);
+      scanf(" %c", &K);  
+    }
+
+    K = 'n';
+    
+    while( K!='y' && K!='Y'){
+      printf(" \n Enter Test type character: ");
+      printf(" \n e.g. 'N','D','A','G': ");
+      scanf(" %c", &Test);  
+      printf(" Test = %c \n Okay? (Enter:Y/N)",Test);
+      scanf(" %c", &K);  
+    }
+
+    K = 'n';
+    
+    while( K!='y' && K!='Y' && Test=='G'){
+      printf(" \n Enter HV step number: ");
+      scanf("%d", &HVStep);  
+      printf(" HVStep = %d \n Okay? (Enter:Y/N)",HVStep);
+      scanf(" %c", &K);  
+    }
+    
+  }
   
   allSet = true;
  
@@ -146,8 +204,7 @@ void FileNameParser::Init(int userOption){
   Test   = 'A';  
   HVStep = -1;
   
-  option = userOption;
-  
+  option = userOption;  
 
 }
     

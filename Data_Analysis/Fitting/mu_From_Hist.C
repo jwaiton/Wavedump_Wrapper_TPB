@@ -27,16 +27,16 @@ float Prob_zero_from_TH1F(TH1F * hQ,
   return prob;
 }
 
-float mu_From_Hist(string rootFileName = "hQ_Fixed_Run_30_PMT_133_Loc_3_Test_S",string pathToData = "./"){
+float mu_From_Hist(string rootFileName = "hQ_Fixed_Run_30_PMT_133_Loc_3_Test_S.root",string pathToData = "./"){
   
   TStyle *wmStyle = GetwmStyle();
   gStyle->SetOptTitle(0);
   gROOT->SetStyle("wmStyle");
   gROOT->ForceStyle();
 
-  //TString hName = "hQ_Fixed_" + rootFileName;
   string hName = rootFileName;
-  
+
+  // strip away the .root extension
   if (!hName.empty()) {
     hName.resize(hName.size() - 5);
   }
@@ -50,8 +50,6 @@ float mu_From_Hist(string rootFileName = "hQ_Fixed_Run_30_PMT_133_Loc_3_Test_S",
   cout << endl;
   cout << " charge at valley is " << setprecision(3) << valley_Q << " mVns " << endl;  
   cout << " charge at peak is   " << setprecision(3) << peak_Q   << " mVns " << endl;  
-  
-  //rootFileName = rootFileName + ".root";
 
   rootFileName = pathToData + rootFileName;
 
@@ -64,7 +62,10 @@ float mu_From_Hist(string rootFileName = "hQ_Fixed_Run_30_PMT_133_Loc_3_Test_S",
   cout << endl;
   cout << " Poisson P(O) is " << setprecision(4) << P0*100 << " %" <<endl;  
 
-  hQ_Fixed->SetMinimum(1000);
+  float minimum = 1000;
+  minimum = hQ_Fixed->GetMaximum()*0.001;
+  
+  hQ_Fixed->SetMinimum(minimum);
   hQ_Fixed->GetXaxis()->SetRangeUser(-100,900);
   
   hQ_Fixed->Draw();

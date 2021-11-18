@@ -7,6 +7,7 @@
 
 #include "wmStyle.C"
 
+
 void TCooker::Cook(){
   
   // initialise trees
@@ -14,8 +15,9 @@ void TCooker::Cook(){
 
   // create variables in standard units
   // and find waveform peak
+  // (or find pulse time)
   DoCooking();
-
+  
   SaveMetaData();
   SaveCookedData();
   outFile->Close();
@@ -98,13 +100,20 @@ void TCooker::InitCookedDataTree(){
 
   cookedTree = new TTree(treeName.c_str(),treeName.c_str());
 
-  cookedTree->Branch("ADC",&ADC_buff);
-  cookedTree->Branch("peak_mV",&peak_mV,"peak_mV/F");
-  cookedTree->Branch("peak_samp",&peak_samp,"peak_samp/S");
-  cookedTree->Branch("min_mV",&min_mV,"min_mV/F");
-  cookedTree->Branch("mean_mV",&mean_mV,"mean_mV/F");
-  cookedTree->Branch("start_s",&start_s,"start_s/F");
-  cookedTree->Branch("base_mV",&base_mV,"base_mV/F"); 
+  if(IsPulserData()){
+    cookedTree->Branch("ADC",&ADC_buff);
+    cookedTree->Branch("start_s",&start_s,"start_s/F");
+    cookedTree->Branch("trig_s",&trig_s,"trig_s/F");
+  }
+  else{
+    cookedTree->Branch("ADC",&ADC_buff);
+    cookedTree->Branch("peak_mV",&peak_mV,"peak_mV/F");
+    cookedTree->Branch("peak_samp",&peak_samp,"peak_samp/S");
+    cookedTree->Branch("min_mV",&min_mV,"min_mV/F");
+    cookedTree->Branch("mean_mV",&mean_mV,"mean_mV/F");
+    cookedTree->Branch("start_s",&start_s,"start_s/F");
+    cookedTree->Branch("base_mV",&base_mV,"base_mV/F");
+  }
   
 }
 
@@ -137,15 +146,25 @@ void TCooker::InitMetaDataTree(){
   //
 }
 
+
 void TCooker::DoCooking(){
   
   printf("\n ------------------------------ \n");
   printf("\n Cooking                       \n");
-  
+
+  // ---waveform start from header---
   int    nBaseSamps;
   double time = 0, prevTime = 0; 
   int    trigCycles = 0;
-    
+
+  // ---trig time from pulser---
+  float t1 = 0.0, t2 = 0.0, v1 = 0.0, v2 = 0.0;
+  float m  = 0., c  = 0.;
+  bool  foundCrossing = false;
+  // ignore the samples before the negative 
+  // to positive step 
+  bool  ignoreSample  = true;
+
   for (int iEntry = 0; iEntry < nentries; iEntry++) {
     rawTree->GetEntry(iEntry);
   
@@ -158,6 +177,11 @@ void TCooker::DoCooking(){
     time = GetElapsedTime(&trigCycles,prevTime);
     prevTime = time; // now set for next entry
     start_s = (float)time; 
+
+    t1 = 0.0, t2 = 0.0, v1 = 0.0, v2 = 0.0;
+    m  = 0.,c  = 0.,trig_s = 0.0;
+    foundCrossing = false; 
+    ignoreSample  = true; 
     
     // first loop - find baseline, set wave_mV
     for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
@@ -168,8 +192,36 @@ void TCooker::DoCooking(){
 	base_mV += wave_mV.at(iSamp);
 	nBaseSamps++;
       }
+      
+      // ---trig time from pulser---
+      // ignore beginning of waveform
+      // and skip if trig time already found
+      if( (wave_mV.at(iSamp) > 0 && ignoreSample) || 
+	  foundCrossing)
+	continue;
+	
+      if(wave_mV.at(iSamp) < 0.){
+	v1 = wave_mV.at(iSamp);
+	t1 = iSamp*SampleToTime();
+	ignoreSample = false;
+      }
+      else{
+	v2  = wave_mV.at(iSamp);
+	t2  = iSamp*SampleToTime();
+	foundCrossing = true;
+      }
+      
     }
     base_mV /= (float)nBaseSamps;
+
+    // ---trig time from pulser---
+    m  = ( v2 - v1 )/( t2 - t1 );
+    // c = y - mx
+    c = v2 - m*t2;
+    // x[y=0] = -c/m
+    trig_s = -c/m;
+
+    //printf("\n trig_s =  %f",trig_s); 
     
     // second loop - apply baseline subtraction, set variables
     for (short iSamp = 0; iSamp < fNSamples; ++iSamp){
@@ -985,4 +1037,12 @@ void TCooker::SetStyle(){
   gROOT->SetStyle("wmStyle");
   gROOT->ForceStyle();
  
+}
+
+
+bool TCooker::IsPulserData(){
+  if(fPMT == 0)
+    return true;
+  else
+    return false;
 }
