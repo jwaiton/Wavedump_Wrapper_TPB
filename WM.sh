@@ -1,6 +1,8 @@
 #!/bin/bash
 
-echo " Setting Watchman PMT Testing Environment "
+echo " ---------------------------------------------- "
+echo " Setting Watchman PMT Testing Environment with  "
+echo " /scratch/Gary/Wavedump_Wrapper/WM.sh "
 
 # pmt testing code
 export WM_CODE=${WM_PARENT}Wavedump_Wrapper/
