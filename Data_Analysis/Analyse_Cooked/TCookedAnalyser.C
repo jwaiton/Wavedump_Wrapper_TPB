@@ -259,13 +259,18 @@ void TCookedAnalyser::Set_LED_Delay(float LED_delay){
   fLED_Delay = LED_delay;
 }
 
+// Special case - use with care
+void TCookedAnalyser::SetIsTimingDistFitted(bool isTrue){
+  IsTimingDistFitted = isTrue;
+}
+
 float TCookedAnalyser::Get_LED_Delay(){
   
   if(IsTimingDistFitted)
     return fLED_Delay;
   else {
     Fit_Peak_Time_Dist();
-    return Get_LED_Delay();
+    return Get_LED_Delay(); // this is a bit silly 
   }
 }
 
