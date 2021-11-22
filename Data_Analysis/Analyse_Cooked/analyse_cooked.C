@@ -54,11 +54,8 @@ int main(int argc, char * argv[]){
       
   bool analyseNoise  = false;
   bool analyseDark   = false;
-  bool fitTiming     = true;
-  bool analyseCharge = true;
-
-  if(!fitTiming)
-    analyseCharge = false;
+  bool fitTiming     = true; // default trigger time is 100 ns
+  bool analyseCharge = true; // usually only with fitTiming
 
   TCookedAnalyser * cooked_analyser = nullptr;
 
@@ -114,7 +111,9 @@ int main(int argc, char * argv[]){
       // Mean LED pulse peak time
       if(fitTiming)
 	cooked_analyser->Fit_Peak_Time_Dist();
-      
+      else
+	cooked_analyser->SetIsTimingDistFitted(true); // set to 100 ns
+
       //-------------
       // Charge
       // Save a new root file with charge hist
