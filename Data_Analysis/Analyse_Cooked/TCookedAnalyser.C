@@ -249,7 +249,14 @@ void TCookedAnalyser::Fit_Peak_Time_Dist(){
   LED_delay   = hPeakTime->GetFunction("gaus")->GetParameter(1);
   delay_width = hPeakTime->GetFunction("gaus")->GetParameter(2);
   
-  printf("\n delay = %.1f (%.1f) \n", LED_delay, delay_width);
+  // write peaktime and delay width to file in the run directory, use separate bash to move
+  std::ofstream xy_results;
+  xy_results.open ("xy_fit_results.txt");
+  xy_results << "LED delay = " << LED_delay << "\n";
+  xy_results << "delay width = " << delay_width << "\n";
+  xy_results.close(); 
+
+  printf("\n delay = %.1f (%.1f) \n", LED_delay, delay_width); 
 
   IsTimingDistFitted = true;
   Set_LED_Delay(LED_delay);
@@ -259,13 +266,18 @@ void TCookedAnalyser::Set_LED_Delay(float LED_delay){
   fLED_Delay = LED_delay;
 }
 
+// Special case - use with care
+void TCookedAnalyser::SetIsTimingDistFitted(bool isTrue){
+  IsTimingDistFitted = isTrue;
+}
+
 float TCookedAnalyser::Get_LED_Delay(){
   
   if(IsTimingDistFitted)
     return fLED_Delay;
   else {
     Fit_Peak_Time_Dist();
-    return Get_LED_Delay();
+    return Get_LED_Delay(); // this is a bit silly 
   }
 }
 

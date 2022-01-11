@@ -182,6 +182,8 @@ class TCookedAnalyser {
   
   void DarkPlot();
 
+  void SetIsTimingDistFitted(bool isTrue = false);
+
   //---
   // Monitor Waveforms
 
@@ -413,7 +415,8 @@ bool TCookedAnalyser::InitTrig(){
   trigFile = new TFile(trigFileName.c_str(),"READ");
   
   if ( !trigFile || !trigFile->IsOpen()) {
-    fprintf(stderr,"\n Error, Check File: %s \n",trigFileName.c_str());
+    printf("\n No trigger file: %s \n",trigFileName.c_str());
+    printf("\n I will use a fixed trigger time. \n");
     return false;
   }
   

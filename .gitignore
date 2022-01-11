@@ -81,3 +81,18 @@ Data_Acquisition/HV_Stepper/new.txt
 Data_Acquisition/HV_Stepper/test.cc
 Data_Acquisition/HV_Stepper/test
 Data_Acquisition/HV_Stepper/test.py
+.#run_process_analyse_locally_auto_on_trig (copy).sh
+.root
+Old_Scripts/run_process_analyse_locally_auto_on_trig_loopfail.sh
+#Makefile#
+Data_Acquisition/test_cases.txt
+Data_Acquisition/#.root#
+Data_Acquisition/.root
+Data_Acquisition/Example_Code/.root
+Data_Acquisition/LostNFound/
+Data_Acquisition/test_cases.txt
+Data_Analysis/.root
+Data_Processing/.root
+Data_Acquisition/PMTs_Run_100.txt
+Data_Analysis/Waveform_Plotter/*.root
+Data_Processing/Cooking/#Makefile#
