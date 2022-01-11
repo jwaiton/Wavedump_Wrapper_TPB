@@ -8,39 +8,51 @@
 
 #include "wmStyle.C"
 
+TRandom3 * rand3 = new TRandom3(0);
+
 void SetStyle();
+
 void Set_THF_Params(float *, float *, float *, int *);
+
 TH1F * Generate_Waveform(float npe   = 1.,
-			 float width = 5.,
+			 float width = 7.5,
 			 float mean  = 100.);
-TH1F * Generate_Charge_Dist(float npe_mu       = 0.15, // Poisson
-			    float charge_sigma = 0.25, // Gaussian
-			    float charge_decay = 0.02,
-			    float noise_sigma  = 15,
-			    float gain         = 1.0);
+
+TH1F * Generate_Charge_Dist(float npe_mu       = 0.29, // Poisson
+			    float charge_sigma = 0.25, // Gaussian (value from data)
+			    float charge_decay = 0.5, // Exp
+			    float noise_sigma  = 14, // (value from data)
+			    float gain         = 0.8);
+
+TH1F * Gen_Dark_Charge_Dist(float darkRate = 3000,
+			    float waveDuration = 300, //ns
+			    int   nTriggers = 9022667);//6647355);
+
+
 
 void Generate(float mu = 0.15){
   
-  TCanvas * canvas = new TCanvas(); 
-  canvas->SetWindowSize(500,500);
-  canvas->SetWindowPosition(1000,500);
+  TCanvas * canvas = new TCanvas("canvas","canvas",1000,0,550,450); 
+  //canvas->SetWindowSize(550,450);
+  //canvas->SetWindowPosition(1000,500);
     
   TH1F *hW1, *hQ1;
 
-  //float npe = 1;
-  //hW1 = Generate_Waveform(npe);
-  
-  hQ1 = Generate_Charge_Dist(mu);
+  float npe = 1;
+  hW1 = Generate_Waveform(npe);
+  //hQ1 = Gen_Dark_Charge_Dist();
+  //hQ1 = Generate_Charge_Dist(0.29);
   
   SetStyle();
-  gPad->SetLogy();
+  //gPad->SetLogy();
   
-  //hW1->Draw("HIST");
-  hQ1->Draw();
+  hW1->Draw("HIST");
+  //hQ1->Draw("HIST");
 
-  hQ1->SetMinimum(hQ1->GetMaximum()*0.001);
+  //hQ1->SetMinimum(hQ1->GetMaximum()*0.001);
+  //gPad->SetLogy();
   
-  hQ1->SaveAs("hQ_Gen.root");
+  //hQ1->SaveAs("hQ_Gen.root"); 
   
 }
 
@@ -52,27 +64,35 @@ TH1F * Generate_Charge_Dist(float npe_mu,
   
   TH1F * hQ = new TH1F("hQ_Gen",
 		       "hQ_Gen;Charge (mV ns);Counts",
-		       101,-100,900);
-  
-  TRandom3 * rand1 = new TRandom3(1); 
-  TRandom3 * rand2 = new TRandom3(2);
+		       100,-1000,1000);
+
+  // Mimic real data method
+  hQ->GetXaxis()->SetRangeUser(-100,900);
   
   float Q1  = 400., Q = 400; // mVns
   int   npe = 0;
-  
-  int nEvents = 6647355;
+
+  int nEvents = 3033237;
   for ( int i = 0 ; i < nEvents ; i++ ){
 
-    
-    npe = rand1->Poisson(npe_mu);
+    // generate npe
+    npe = rand3->Poisson(npe_mu);
+
+    // convert npe to charge
     Q = Q1*gain*npe;
 
-    if   (Q < 1.0e-12 ){
-      Q += rand2->Gaus(0,noise_sigma);
-      Q += rand2->Exp(charge_decay*Q1);
+    // pedestal and noise (dark, out-of-time pulses)
+    if   ( npe == 0 ){
+      Q += rand3->Gaus(0,noise_sigma); // baseline noise
+      
+      if( (i%10) == 0 ) 
+	Q += rand3->Exp(charge_decay*Q1);
+
     }
-    else 
-      Q += rand2->Gaus(0,charge_sigma*Q);
+    else {
+      //Q = -100;
+      Q += rand3->Gaus(0,charge_sigma*Q);
+    }
     
     hQ->Fill(Q);
   }
@@ -80,10 +100,88 @@ TH1F * Generate_Charge_Dist(float npe_mu,
   return hQ;
 }
 
+TH1F * Gen_Dark_Charge_Dist(float darkRate,
+			    float waveDuration,
+			    int   nTriggers){
+
+  // rate in ns times length of waveform 
+  float probPer_ns  = darkRate * 1.0E-9;
+  int   nSamples    = 150.;
+  float nsPerSample = 2.;
+  
+  float probPerSample = probPer_ns*nsPerSample;
+  float oneIn = 1./probPerSample;
+
+  cout << " oneIn = " << oneIn << endl;
+  
+  TH1F * hQ_D, * hW_D, * hW_D_Acc;
+
+  hQ_D = new TH1F("hQ_Gen",
+		  "hQ_Gen;Charge (mV ns);Counts",
+		  100,-1000,1000);
+
+  srand(time(NULL));
+
+  bool firstTime = true;
+
+  float pulse_width = 7.5; // sigma in ns 
+  float npe = 1.; 
+
+  // start generating pulses so tail just fits in waveform
+  int firstSample = -3.*pulse_width/nsPerSample; 
+  int lastSample  = 3.*pulse_width/nsPerSample+nSamples;  
+  
+  float baseline, signal, charge;
+  for (int iTrig = 0 ; iTrig < nTriggers ; iTrig++){
+    charge = 0;
+
+    for ( int iSample = firstSample ; iSample < lastSample ; iSample++) {
+      
+      if ( rand() % (int)roundf(oneIn) == 0 ){
+
+	//cout << " iTrig,iSamp = " << iTrig << "," << iSample << endl;
+	
+	hW_D = Generate_Waveform(npe,pulse_width,iSample*nsPerSample);
+	
+	baseline = hW_D->Integral(hW_D->GetXaxis()->FindBin(1),
+				  hW_D->GetXaxis()->FindBin(51));
+	
+	signal   = hW_D->Integral(hW_D->GetXaxis()->FindBin(52),
+				  hW_D->GetXaxis()->FindBin(102));
+
+	charge += (signal-baseline);
+	
+	//cout << " charge = " << charge << endl;
+	
+	//hQ_D->Fill(charge);
+	
+	if(firstTime){
+	  hW_D_Acc = (TH1F*)hW_D->Clone();
+	  firstTime = false;
+	}
+	else{
+	  hW_D_Acc->Add(hW_D);
+	}
+	
+	//return hW_D;
+	
+	hW_D->Delete();
+	
+      }
+      
+    }// end of: for ( int iSample = 0 ; iSample < ...
+    
+    charge += rand3->Gaus(0,15); // baseline noise
+    hQ_D->Fill(charge);
+
+  }
+  
+  return hQ_D;
+  //return hW_D_Acc;
+}
 
 TH1F * Generate_Waveform(float npe,float width,
 			 float mean){
-  
   int   NSamples = 0;
   float minX = 0., maxX = 298., nsPerSample = 2.;
   
@@ -97,17 +195,26 @@ TH1F * Generate_Waveform(float npe,float width,
   char buffer [50];
   
   string str_func = "gausn(x,%f,%f,%f)";
+
+  float charge = 400;
+  charge = rand3->Gaus(charge,0.25*charge);
+  charge *= npe * nsPerSample;
+  //cout << " charge = " << charge << endl;
   
-  sprintf(buffer,str_func.c_str(),npe*400,mean,width);
-  
+  sprintf(buffer,str_func.c_str(),charge,mean,width);
+  //printf("\n");
+  //  printf("%s",buffer);
+  //printf("\n");
+    
   f = new TF1("fGauss",buffer,0,300);
-  //f->Draw(); 
+  f->Draw(); 
   
   for( int bin = 1 ; bin <= NSamples ; bin++)
     hW->Fill(bin*nsPerSample,f->Eval(bin*nsPerSample));
   
   return hW;
 }
+
 
 void SetStyle(){
   
