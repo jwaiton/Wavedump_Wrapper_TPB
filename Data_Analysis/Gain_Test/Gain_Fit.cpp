@@ -135,9 +135,9 @@ InitParams initializeFit(TH1F* h){
   std::cout << "found peaks " << nfound << std::endl;
 
   /*** Find the approximate charge at the maximum of the SPE peak ***/
-  Float_t *peaks;
+  double *peaks;
   peaks = spec->GetPositionX();
-  float sigPeak=0; float pedPeak=0;
+  double sigPeak=0; double pedPeak=0;
   std::cout << peaks[0] << " " << peaks[1]  << " " << peaks[2] << std::endl;
   
   /*** Apply workarounds if TSpectrum fails for the varying HV steps ***/
@@ -693,13 +693,13 @@ int main(int argc,char **argv){
     canvas->SaveAs(canvasName);
 	
     /*** get fit results ***/
-    Double_t operatingHV = 1/f14->GetParameter(0);
-    Double_t operatingHVError = f14->GetParError(0);
+    double operatingHV = 1/f14->GetParameter(0);
+    double operatingHVError = f14->GetParError(0);
 
-    Double_t power = f14->GetParameter(1); 
-    Double_t chi2 = f14->GetChisquare();
-    Double_t NDf = f14->GetNDF();
-    Double_t prob = f14->GetProb();
+    double power = f14->GetParameter(1); 
+    double chi2 = f14->GetChisquare();
+    double NDf = f14->GetNDF();
+    double prob = f14->GetProb();
 
     printf("\n\n\n\n\n Operating voltage for 10^7 Gain for PMT%d: %f   \n\n\n\n\n",pmt, operatingHV);
 

@@ -17,6 +17,9 @@
  * and plots of SPE spectrum fits and gain curve fits. 
  * Requires ./Plots and ./Plots/Fit in Gain_Tests directory.
  *
+ * Pre-requisites:
+ * ROOT
+ * gsl library (e.g. sudo apt install libgsl-dev on ubuntu)
  *
  * To build:
  *
@@ -550,13 +553,19 @@ float GainCalc(double mVnsval){
 
 /*********************************************************************/
 
-//int main(int argc,char **argv){	
-int Gain_Fit_singlePMT(int run = 60,
-		       int pmt = 152,
-		       int loc = 0,
-		       TString dir = "~/WATCHMAN/RootData/",
-		       Bool_t useFiltered = kFALSE){	
+int main(int argc,char **argv){	
+//int Gain_Fit_singlePMT(
+//		       int run = 60,
+//		       int pmt = 152,
+//		       int loc = 0,
+//		       TString dir = "~/WATCHMAN/RootData/",
+//		       Bool_t useFiltered = kFALSE){	
   
+  //int run, pmt, loc;
+  int run = -1, pmt = -1, loc = -1;
+  //TString dir = "~/WATCHMAN/RootData/";
+  TString dir = "/Disk/ds-sopa-personal/gsmith23/Watchman/Data_Storage/Retest/Charge/";
+  Bool_t useFiltered = kFALSE;
   
   /*** Read in the HV data ***/
 
@@ -564,7 +573,8 @@ int Gain_Fit_singlePMT(int run = 60,
   int pmtHV[nBins]; //ADDED 5
   char filePath[300]= "";
 
-  string hvfile = "../HVScan.txt";
+  //string hvfile = "../HVScan.txt";
+  string hvfile = "./HVScan.txt";
   ifstream file(hvfile.c_str());
   string hvdat;
  
@@ -640,31 +650,38 @@ int Gain_Fit_singlePMT(int run = 60,
   
   double hvVals[nBins]; double hvValsError[nBins]; double gainVals[nBins]; double gainValsError[nBins]; //ADDED 5 to Four
   
-  TString histoNameTemp = "Run_%d_PMT_%d_Loc_%d_HV_%d";
+  //TString histoNameTemp = "Run_%d_PMT_%d_Loc_%d_HV_%d";
+  TString histoNameTemp = "Run_%d_PMT_%d_Loc_%d_Test_G";
+
   TString histoName     = "";
   TString filePathTemp = "";
 
   for (int r=0;r<nBins;r++){ //ADDED 5 
 
-    int hv = r+1; // gain test number
-    filePathTemp = dir + "/Run_%d_PMT_%d_Loc_%d_HV_%d.root";
-
-    cout << endl;
-    cout << " filePathTemp = " << filePathTemp << endl;
-    
-    sprintf(filePath,filePathTemp,run,pmt,loc,hv); 
-    TFile s(filePath);
-
-    s.ls();
-
-    char root_name[50];
-    
     if(useFiltered)
       histoName = "hQ_Filter_" + histoNameTemp;
     else
       histoName = "hQ_Fixed_" + histoNameTemp;
     
-    sprintf(root_name,histoName,run,pmt,loc,hv);
+    int hv = r+1; // gain test number
+    //filePathTemp = dir + "/Run_%d_PMT_%d_Loc_%d_Test_G.root";
+    filePathTemp = dir + histoName;
+    filePathTemp += ".root";
+
+    cout << endl;
+    cout << " filePathTemp = " << filePathTemp << endl;
+    
+    //sprintf(filePath,filePathTemp,run,pmt,loc,hv); 
+    // Gary - a fudge made to use current file/histo name
+    sprintf(filePath,filePathTemp,hv,pmt,loc); 
+    TFile s(filePath);
+
+    s.ls();
+
+    char root_name[50];
+        
+    //sprintf(root_name,histoName,run,pmt,loc,hv);
+    sprintf(root_name,histoName,hv,pmt,loc);
     
     cout << endl;
     cout << " root_name = " << root_name << endl;
