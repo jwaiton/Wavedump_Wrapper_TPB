@@ -250,11 +250,13 @@ void TCookedAnalyser::Fit_Peak_Time_Dist(){
   delay_width = hPeakTime->GetFunction("gaus")->GetParameter(2);
   
   // write peaktime and delay width to file in the run directory, use separate bash to move
-  std::ofstream xy_results;
-  xy_results.open ("xy_fit_results.txt");
-  xy_results << "LED delay = " << LED_delay << "\n";
-  xy_results << "delay width = " << delay_width << "\n";
-  xy_results.close(); 
+  std::ofstream results;
+  results.open ("fit_results.txt");
+  // New Line to ensure that the CompilePlot2D.c code works as expected
+  results << "\n";
+  results << "LED delay = " << LED_delay <<  " (0) \n";
+  results << "delay width = " << delay_width << " (0) \n";
+  results.close(); 
 
   printf("\n delay = %.1f (%.1f) \n", LED_delay, delay_width); 
 

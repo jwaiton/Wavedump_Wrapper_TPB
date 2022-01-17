@@ -52,8 +52,8 @@ int main(int argc, char * argv[]){
   if( !Welcome(argc) )
     return -1;
       
-  bool analyseNoise  = false;
-  bool analyseDark   = false;
+  bool analyseNoise  = true;
+  bool analyseDark   = true;
   bool fitTiming     = true; // default trigger time is 100 ns
   bool analyseCharge = true; // usually only with fitTiming
 

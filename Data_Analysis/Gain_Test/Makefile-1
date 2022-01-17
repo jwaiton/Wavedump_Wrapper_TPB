@@ -1,6 +1,6 @@
 CFLAGS=`root-config --cflags` -fPIC -g -Wall -Werror
-#LDFLAGS=`root-config --ldflags --glibs` -lRooFit -lRooFitCore -lMinuit 
-LDFLAGS=`root-config --ldflags` -lRooFit -lRooFitCore -lMinuit 
+LDFLAGS=`root-config --ldflags --glibs` -lRooFit -lRooFitCore -lMinuit 
+#LDFLAGS=`root-config --ldflags` -lRooFit -lRooFitCore -lMinuit 
 
 CC=gcc
 MAJOR=0
