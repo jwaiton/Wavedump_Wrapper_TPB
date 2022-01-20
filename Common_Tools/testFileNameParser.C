@@ -16,29 +16,23 @@ void testFileNameParser(){
   printf("\n Example 1: default constructor   ");
   printf("\n ---------------------------------");
   
+  FileNameParser * fnp1 = new FileNameParser();
+
+  printf("\n ---------------------------------");
+  printf("\n Example 2: filename, no option  ");
+  printf("\n ---------------------------------");
+  
   // ------------------------
   // Usage with file name containing IDs
   string filename = "/path/to/Run_102_PMT_152_Loc_0_Test_S.root";
 
-  FileNameParser * fnp1 = new FileNameParser();
-  
   // possible usage but does not set class data members 
-  cout << endl;
-  cout << " run  = " << fnp1->run(filename) << endl;
+  // need to choose option > 0
+  // option 1 read from filename
+  // option 2 user input
 
-  // incorrect usage - need to first give 
-  // filename as argument upon creation
-  // this will produce an error
-  cout << endl;
-  cout << " Wrong usage - error message given: " << endl;
-  cout << " run  = " << fnp1->GetRun() << endl;
+  filename = "/path/to/Run_102_PMT_152_Loc_0_Test_G_Step_3.root";
   
-  // ------------------------
-  // Usage with file name containing IDs
-  printf("\n ---------------------------------");
-  printf("\n Example 2: file name             ");
-  printf("\n ---------------------------------");
-
   FileNameParser * fnp2 = new FileNameParser(filename);
   
   cout << endl;
@@ -59,12 +53,11 @@ void testFileNameParser(){
 
   // ------------------------
   // Usage with raw data path
-  printf("\n ---------------------------------");
-  printf("\n Example 4: binary data path      ");
-  printf("\n ---------------------------------");
+  printf("\n ----------------------------------");
+  printf("\n Example 4: Gain binary data path  ");
+  printf("\n ----------------------------------");
   
-  //filename = "/Data_Storage/Binary_Data/RUN1234/PMT0130/Nominal/wave_0.dat";
-  filename = "/Data_Storage/Binary_Data/RUN1234/PMT0130/Gain/wave_0.dat";
+  filename = "/Data_Storage/Binary_Data/RUN1234/PMT0130/Gain/STEP01/wave_0.dat";
   
   // note usage of option = 1 
   FileNameParser * fnp4 = new FileNameParser(filename,1);

@@ -56,11 +56,11 @@ public:
   void   SetFileID();
   void   SetDir(string filePath);
 
-  int  PMT;   
-  int  Run;   
-  int  Loc;   
-  char Test;  
-  int  HVStep;
+  int    PMT;   
+  int    Run;   
+  int    Loc;   
+  char   Test;  
+  int    HVStep;
   string FileID;
   string Dir;
 
@@ -97,7 +97,8 @@ FileNameParser::FileNameParser(string str_with_ID){
   Run    = run(name);
   Loc    = location(name);
   Test   = test(name);
-  HVStep = hVStep(name); // 0 if Test!='G'
+  if(Test=='G')
+    HVStep = hVStep(name); // 0 if Test!='G'
   
   allSet = true;
 
@@ -114,14 +115,16 @@ FileNameParser::FileNameParser(string rawFilePath,
 			       int userOption){
   Init(userOption);
 
+  // extract meta data from file path
   if     (option == 1){
     
     PMT  = pmtID(rawFilePath);
     Run  = run(rawFilePath);
     Loc  = location(rawFilePath);
     Test = test(rawFilePath);
-
-  }
+    HVStep = hVStep(rawFilePath);
+    
+  } // meta data from user input
   else if(option == 2){
 
     char K = 'N';
