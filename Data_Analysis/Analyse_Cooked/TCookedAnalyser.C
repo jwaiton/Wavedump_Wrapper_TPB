@@ -73,10 +73,10 @@ void TCookedAnalyser::Make_hQ_Fixed(float gate_width,
   
   outFile = new TFile(fileName.c_str(),"RECREATE",fileName.c_str()); 
   
-  int   nBins = 100.;
+  int   nBins = 400.;
   //float minQ  = -100.0;
-  float minQ  = -1000.0;
-  float maxQ  = 1000.0;
+  float minQ  = -200.0;
+  float maxQ  = 1800.0;
 
   TH1F * hQ_Fixed = new TH1F(histName.c_str(),
 			     "hQ_Fixed;Charge (mV ns);Counts",

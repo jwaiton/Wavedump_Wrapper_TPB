@@ -68,7 +68,7 @@ float mu_From_Hist(string rootFileName = "hQ_Fixed_Run_24_PMT_162_Loc_9_Test_N.r
   hQ_Fixed->SetMinimum(minimum);
   hQ_Fixed->GetXaxis()->SetRangeUser(-100,900);
   
-  hQ_Fixed->Draw();OB
+  hQ_Fixed->Draw();
   gPad->SetLogy();
   
   TLine * lV = new TLine(valley_Q,0,valley_Q,result->valleyCounts.value);
