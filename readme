@@ -1,4 +1,4 @@
-2nd April 2020 
+11th Feb 2022 
 WATCHMAN UK PMT Performance Testing 
 
 Repository for Watchman-PMT data taking, processing and analysis framework.
@@ -7,7 +7,7 @@ Email issues and suggestions to:
  gary.smith@ed.ac.uk
 
 Instructions:
-( tested on Mac OS 10.13.6, CentOS7, Scientific Linux 7.6, Ubuntu )
+( tested on Mac OS 10.13.6, 10.15.7, CentOS7, Scientific Linux 7.6, Ubuntu )
 
 1) Access the Code. Clone this repository on your local machine 
 (Fork if planning to contribute). 
@@ -30,16 +30,25 @@ $ ./making.sh
 
 4) Run file conversion and basic analysis to generate the analysis files and folders in the local directory. 
 
-Have a read through $WM_CODE/process_analyse_locally_auto.sh
+Have a read through $WM_CODE/Scripts/process_analyse_locally_auto.sh
 
-    [ NB the cooking stage requires that the data files are stored in a specific folder naming scheme with
-    /RUN000XXX containing a run number (e.g. XXX=001), /PMT0YYY containing the PMT number (e.g YYY=005) with
-    the leading 0 required, /TestName beginning with e.g. D (Dark Rate), N (Nominal), S (SPE) or G (Gain),
-    and the channel number in the file name: e.g /wave_0.dat for DAQ channel 0 (underscore required)]
+NB the cooking stage requires either
+
+A) the user to input meta data, OR
+
+B) the data files are stored in a specific folder naming scheme 
+/RUN000XXX containing a run number (e.g. XXX=001), 
+/PMT0YYY containing the PMT number (e.g YYY=005) with the leading 0 required, 
+/TestName beginning with e.g. D (Dark Rate), N (Nominal), S (SPE) or G (Gain),
+and the channel number in the file name: e.g 
+/wave_0.dat for DAQ channel 0 (underscore required)
 
 Example using file /my/path/to/parent/data/folder/RUN000001/PMT0130/Nominal/wave_0.dat
 $ cd /my/path/to/parent/data/folder/RUN000001/PMT0130/Nominal/
 $ source process_analyse_locally_auto.sh 
+
+Known issues:
+The charge spectrum fits dont compile on Mac OS X but have been found to compile on linux
 
 Wiki
 https://github.com/Watchman-PMT/Wavedump_Wrapper/wiki
