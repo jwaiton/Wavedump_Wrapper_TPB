@@ -1,8 +1,0 @@
-101
-152
-0
-S
-/home/ubuntu/WATCHMAN/BinaryData/Cable_Test/
-/home/ubuntu/WATCHMAN/Wavedump_Wrapper/Data_Analysis/PMT_Analysis/
-D
-1
