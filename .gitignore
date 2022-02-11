@@ -62,7 +62,7 @@ Data/
 RawRootData/
 Code_Fragments/
 BinaryData/
-Data_Storage/
+Storage/
 Documents/
 Data_Analysis/Shipping_Data/.vscode/settings.json
 Data_Analysis/Shipping_Data/.vscode/*

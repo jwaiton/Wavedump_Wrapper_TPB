@@ -1,0 +1,14 @@
+Old_SPE_Root
+SPE_Root
+SPE_Analysis
+06_11_18.png
+SPE_Gen_VX742.cpp
+oldtestdata
+SPE_Root/
+src/
+*.root
+Plots/
+*.so*
+*.pcm
+RooExpWindowDict.cxx
+SPE_Fit_singlePMT_precompilable
