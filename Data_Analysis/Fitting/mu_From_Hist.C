@@ -66,6 +66,8 @@ float mu_From_Hist(string rootFileName = "hQ_Fixed_Run_24_PMT_162_Loc_9_Test_N.r
   minimum = hQ_Fixed->GetMaximum()*0.001;
   
   hQ_Fixed->SetMinimum(minimum);
+  //hQ_Fixed->SetMinimum(999);
+  //hQ_Fixed->SetMaximum(10000001);
   hQ_Fixed->GetXaxis()->SetRangeUser(-100,900);
   
   hQ_Fixed->Draw();
