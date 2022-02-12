@@ -26,7 +26,7 @@ $ clear ; echo $WM_CODE; echo ' '; ls -lrth $WM_CODE ; echo ' ';
 3) Build all the binaries
   ( requires root to be installed and its usual environment set ). 
 $ cd $WM_CODE 
-$ ./making.sh
+$ ./build.sh
 
 4) Run file conversion and basic analysis to generate the analysis files and folders in the local directory. 
 
