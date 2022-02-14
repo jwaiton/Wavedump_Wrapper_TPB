@@ -5,7 +5,7 @@ export -a PMTs=()
 
 source read_pmts.sh
 
-PARENT=/home/user1/Watchman/Wavedump_Wrapper/Data_Storage/Retest/
+PARENT=/home/user1/Watchman/Wavedump_Wrapper/Data_Storage/Retest/Jan18/
 
 echo 'Which RUN ? ( e.g. 000001 )'
 read RUN

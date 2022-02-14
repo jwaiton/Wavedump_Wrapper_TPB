@@ -564,7 +564,9 @@ int main(int argc,char **argv){
   //int run, pmt, loc;
   int run = -1, pmt = -1, loc = -1;
   //TString dir = "~/WATCHMAN/RootData/";
-  TString dir = "/Disk/ds-sopa-personal/gsmith23/Watchman/Data_Storage/Retest/Charge/";
+  //TString dir = "/Disk/ds-sopa-personal/gsmith23/Watchman/Data_Storage/Retest/Charge/";
+  //TString dir = "/home/user1/Watchman/Wavedump_Wrapper/Data_Storage/Retest/Jan12/Histograms/";
+  TString dir = "/home/user1/Watchman/Jan19/Histograms/";
   Bool_t useFiltered = kFALSE;
   
   /*** Read in the HV data ***/

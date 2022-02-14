@@ -40,7 +40,7 @@ mv xy_results.txt $TEXT
 # Move xy_fit results over (produced in TCookedAnalyser.C, in Fit_Peak_Time_Dist)
 # Need to move into the right directory first though.
 cd $FIT
-mv xy_fit_results.txt $TEXT
+mv fit_results.txt $TEXT
 # Move back to $dir
 cd $TEXT
 cd ..

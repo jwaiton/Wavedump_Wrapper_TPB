@@ -197,7 +197,9 @@ Result* Fit_PeakAndValley(TH1F*  fhisto){
   fhisto->GetYaxis()->SetTitle("Counts");
   fhisto->GetYaxis()->SetTitleOffset(1.3);
   fhisto->GetYaxis()->SetTitleFont(132);
+  fhisto->SetAxisRange(-100.,800.,"X");
   
+
   // intial guesses with TSpectrum
   InitParams params = initializeFit(fhisto);
   double valleyPos = std::get<5>(params);
@@ -221,11 +223,17 @@ Result* Fit_PeakAndValley(TH1F*  fhisto){
   f->SetLineWidth(3);
   f->Draw("SAME");
   
-  
+  cout << endl;
+  cout << " valleyPos = " << valleyPos << endl;
+  cout << endl;
+
   fhisto->Fit("pol2", "S", "",valleyPos - 40 , valleyPos +50);
   TF1* f2 = fhisto->GetFunction("pol2");
   double a = f2->GetParameter(2); double b = f2->GetParameter(1);
   double xmin = -b/(2*a);
+  
+  if(xmin < 0 || xmin > 600)
+    xmin = valleyPos;
 
   double x_low_range = 50, x_high_range = 50;
   //TFitResultPtr pres= fhisto->Fit("pol2", "S", "",xmin - 30 , xmin +50);
