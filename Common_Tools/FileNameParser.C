@@ -1,22 +1,32 @@
 #define FileNameParser_cxx
 #include "FileNameParser.h"
 
-int FileNameParser::parseInt(string f, string s1,
-			     int length){
- 
+// extract an integer from a string
+int FileNameParser::parseInt(string f,    // filename or filepath
+			     string s1,   // string to look for
+			     int length){ // length of string to be an integer
+
+  // start string to be an integer
+  // 4 characters in from begining of s1
   int pos = f.find(s1,0) + 4; 
+
+  //cout << " s1 = " << s1 << endl;
     
   string str = f.substr(pos,length);
+
+  //cout << " str = " << str << endl;
 
   return stoi(str);
 }
 
-int FileNameParser::parseInt(string f, string s1, string s2){
+int FileNameParser::parseInt(string f,   // filename or filepath 
+			     string s1,  // string to look for 
+			     string s2){ //
  
-  int pos1 = f.find(s1,0);
-  int pos2 = f.find(s2,pos1);
+  int pos1 = f.find(s1,0);    // find the position of the start of the s1 string in the filename
+  int pos2 = f.find(s2,pos1); // find how far in the filename s2 starts after s1
 
-  // "Test" not found for case "HV"
+  // No "Test" in original gain filename 
   if     (pos1 == -1){
     s1 = "HV";
     pos1 = f.find(s1,0);
@@ -26,7 +36,8 @@ int FileNameParser::parseInt(string f, string s1, string s2){
     pos2 = f.find(s2,pos1);
   }
 
-  string str = f.substr(pos1,pos2 - pos1);
+  // make a str using text between s1 and s2  
+  string str = f.substr(pos1,pos2 - pos1); 
   
   int first = str.find("_");
   int last  = str.size()-1;
@@ -112,9 +123,7 @@ void FileNameParser::SetFileID(string name){
   if(option < 0)
     FileID = name.substr(0,name.size() - 5);
   else{
-    char buff[128];
-    sprintf(buff,"Run_%d_PMT_%d_Loc_%d_Test_%c",Run,PMT,Loc,Test);
-    FileID = buff;
+    SetFileID();
   }
 }
 
@@ -124,7 +133,10 @@ void FileNameParser::SetFileID(){
   
   if(allSet){
     char buff[128];
-    sprintf(buff,"Run_%d_PMT_%d_Loc_%d_Test_%c",Run,PMT,Loc,Test);
+    if(Test=='G')
+      sprintf(buff,"Run_%d_PMT_%d_Loc_%d_Test_%c_Step_%d",Run,PMT,Loc,Test,HVStep);
+    else
+      sprintf(buff,"Run_%d_PMT_%d_Loc_%d_Test_%c",Run,PMT,Loc,Test);
     FileID = buff;
   }
   else{
@@ -153,7 +165,7 @@ void FileNameParser::Print_Data(){
   printf(" \n   Test   = %c", Test);
 
   if(Test=='G')
-    printf(" \n   HVStep   = %d", HVStep);
+    printf(" \n   HVStep = %d", HVStep);
 
   printf(" \n   Dir    = %s", Dir.c_str());  
 
@@ -242,10 +254,19 @@ char FileNameParser::test(string name){
 
 int FileNameParser::hVStep(string name){ 
 
-  if(test(name)=='G')
-    return parseInt(name,"Test_","root");
-  else 
-    return 0;
+  if(Test=='G'){
+    if(option < 0)
+      return parseInt(name,"Step","root");
+    else
+      return parseInt(name,"STEP",2);
+  }
+  else
+    return -1;
+  
+  /* if(test(name)=='G') */
+  /*   return parseInt(name,"Test_","root"); */
+  /* else  */
+  return 0; 
 } 
 
 int    FileNameParser::GetPMT(){
