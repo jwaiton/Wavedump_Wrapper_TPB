@@ -1,0 +1,210 @@
+1//---------------------
+PMT_Testing Instructions 
+  CAEN digitiser versions
+
+Author
+  gary.smith@ed.ac.uk
+   07 11 18
+
+Requirements:
+  root user password
+  (or physical access to pc)     
+
+//---------------------
+Initial Setting Up
+
+A) log on to lab pc 
+
+$ ssh -Y root@[insert ip address]
+
+B) Start HV control software 
+  
+$ su root
+(then enter root password)
+
+$ CAENGECO2020 &
+
+$ ctrl-D
+
+C) make directories
+
+e.g. 
+
+mkdir /home/user1/BinaryData/PMT0081/
+mkdir /home/user1/BinaryData/PMT0081/APTest;
+mkdir /home/user1/BinaryData/PMT0081/DarkRateTest;
+mkdir /home/user1/BinaryData/PMT0081/GainTest ;
+mkdir /home/user1/BinaryData/PMT0081/SPEtest;
+mkdir /home/user1/BinaryData/PMT0081/Nominal;
+
+mkdir /home/user1/BinaryData/PMT0167/ ;
+mkdir /home/user1/BinaryData/PMT0167/APTest;
+mkdir /home/user1/BinaryData/PMT0167/DarkRateTest;
+mkdir /home/user1/BinaryData/PMT0167/GainTest ;
+mkdir /home/user1/BinaryData/PMT0167/SPEtest;
+mkdir /home/user1/BinaryData/PMT0167/Nominal;
+
+mkdir /home/user1/BinaryData/PMT0169/;
+mkdir /home/user1/BinaryData/PMT0169/APTest;
+mkdir /home/user1/BinaryData/PMT0169/DarkRateTest;
+mkdir /home/user1/BinaryData/PMT0169/GainTest ;
+mkdir /home/user1/BinaryData/PMT0169/SPEtest;
+mkdir /home/user1/BinaryData/PMT0169/Nominal;
+
+mkdir /home/user1/BinaryData/PMT0170/;
+mkdir /home/user1/BinaryData/PMT0170/APTest;
+mkdir /home/user1/BinaryData/PMT0170/DarkRateTest;
+mkdir /home/user1/BinaryData/PMT0170/GainTest ;
+mkdir /home/user1/BinaryData/PMT0170/SPEtest;
+mkdir /home/user1/BinaryData/PMT0170/Nominal;
+
+D) look up HV settings 
+
+$ more /home/user1/Wrapper/HVScan.txt
+
+E) navigate to Data folder 
+
+$ cd $DATA_DIR 
+
+
+//---------------------
+Nominal test
+
+1) cd $DATA_DIR
+
+2) set HVs to nominal setting (using GECO)
+
+3) run wavedump with appropriate config file ( 5 mins )
+
+$ wavedump_G_SPE_DR
+
+4) navigate to histogram making code
+
+$ cd $SPE_TEST_DIR   
+
+5) run code
+
+./SPE_Gen
+
+6) copy raw and charge integrated data for storage
+
+mv $DATA_DIR/wave_0.dat /home/user1/BinaryData/PMT0081/Nominal/
+
+mv $DATA_DIR/wave_1.dat /home/user1/BinaryData/PMT0167/Nominal/
+
+mv $DATA_DIR/wave_2.dat /home/user1/BinaryData/PMT0169/Nominal/
+
+mv $DATA_DIR/wave_3.dat /home/user1/BinaryData/PMT0170/Nominal/
+
+//---------------------
+Gain test
+
+
+1) set HVs to first setting (using GECO)
+
+2) run wavedump with appropriate config file ( 5 mins )
+
+$ wavedump_G_SPE_DR
+
+3) navigate to histogram making code
+
+$ cd $GAIN_TEST_DIR   
+
+4) run code
+
+$ ./SPE_Gen
+
+5) mv raw and charge integrated data for storage
+
+mv $DATA_DIR/wave_0.dat /home/user1/BinaryData/PMT0081/GainTest/wave_0_hv1.dat;
+
+mv $DATA_DIR/wave_1.dat /home/user1/BinaryData/PMT0167/GainTest/wave_1_hv1.dat ;
+
+mv $DATA_DIR/wave_2.dat /home/user1/BinaryData/PMT0169/GainTest/wave_2_hv1.dat;
+
+mv $DATA_DIR/wave_3.dat /home/user1/BinaryData/PMT0170/GainTest/wave_3_hv1.dat;
+
+6) cd $DATA_DIR
+
+Repeat at next voltage setting.
+
+//---------------------
+SPE test
+
+1) cd $DATA_DIR
+
+2) set HVs to nominal setting (using GECO)
+
+3) run wavedump with appropriate config file ( 5 mins )
+
+$ wavedump_G_SPE_DR
+
+4) navigate to histogram making code
+
+$ cd $SPE_TEST_DIR   
+
+5) run code
+
+./SPE_Gen
+
+6) copy raw and charge integrated data for storage
+
+mv $DATA_DIR/wave_0.dat /home/user1/BinaryData/PMT0081/SPEtest/
+
+mv $DATA_DIR/wave_1.dat /home/user1/BinaryData/PMT0167/SPEtest/
+
+mv $DATA_DIR/wave_2.dat /home/user1/BinaryData/PMT0169/SPEtest/
+
+mv $DATA_DIR/wave_3.dat /home/user1/BinaryData/PMT0170/SPEtest/
+ 
+//---------------------
+After Pulse test (15 mins)
+
+1) set HVs to nominal setting (using GECO)
+
+2)  
+$ cd $DATA_DIR
+
+3)
+$ wavedump_AP
+
+
+4)
+
+mv $DATA_DIR/wave_0.dat /home/user1/BinaryData/PMT0081/APTest/ ;
+
+mv $DATA_DIR/wave_1.dat /home/user1/BinaryData/PMT0167/APTest/;
+
+mv $DATA_DIR/wave_2.dat /home/user1/BinaryData/PMT0169/APTest/;
+
+mv $DATA_DIR/wave_3.dat /home/user1/BinaryData/PMT0170/APTest/;
+
+
+//---------------------
+Dark rate test
+
+1) set HVs to nominal setting (using GECO)
+
+2) run wavedump with appropriate config file 
+
+$ wavedump_G_SPE_DR
+
+3) navigate to histogram making code
+
+TBD
+
+4) run code
+
+TBD
+
+5) copy raw and charge integrated data for storage
+
+
+mv $DATA_DIR/wave_0.dat /home/user1/BinaryData/PMT0081/DarkRateTest/ ;
+
+mv $DATA_DIR/wave_1.dat /home/user1/BinaryData/PMT0167/DarkRateTest/;
+
+mv $DATA_DIR/wave_2.dat /home/user1/BinaryData/PMT0169/DarkRateTest/;
+
+mv $DATA_DIR/wave_3.dat /home/user1/BinaryData/PMT0170/DarkRateTest/;
+
