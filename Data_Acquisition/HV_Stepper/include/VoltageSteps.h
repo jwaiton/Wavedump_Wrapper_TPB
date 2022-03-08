@@ -9,6 +9,8 @@
 #include <string>
 #include <fstream>
 
+#include "unistd.h"
+
 //root stuff
 #include "TTree.h"
 #include "TFile.h"

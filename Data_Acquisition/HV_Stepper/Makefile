@@ -4,7 +4,8 @@ MAIN = readHam
 CXX=g++ #compiler
 CXXFLAGS = -Wall -std=c++11 #compiler flags
 ROOTLIB = ${ROOTSYS}/lib
-INCLUDES= -I$(ROOTLIB) -Iinclude
+ROOTINC = ${ROOTSYS}/include
+INCLUDES= -I$(ROOTINC) -Iinclude
 LFLAGS = -L$(ROOTLIB)
 LDFLAGS = -Wl,-rpath,$(ROOTLIB)
 LDLIBS = -lCore -lRIO -lRooFit -lRooFitCore -lRooStats -lHist -lTree -lMatrix -lPhysics -lMathCore
