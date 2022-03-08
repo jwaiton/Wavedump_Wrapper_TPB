@@ -53,6 +53,7 @@ typedef struct {
   ValueWithError valley;
   ValueWithError peakCounts;
   ValueWithError valleyCounts;
+  ValueWithError r_peakToValley;
   int id;
   
 } Result;
@@ -205,6 +206,25 @@ Result* Fit_PeakAndValley(TH1F*  fhisto){
   double valleyPos = std::get<5>(params);
   double peakPos = std::get<0>(params)+ std::get<1>(params);
 
+  // Collect rough values for Peak and Valley counts here. Unsure on error calculation
+  // Valley is a bin, peak is not, need to convert to nearest bin
+  //double valleyVals = fhisto->GetBinContent(valleyPos);
+
+  TAxis *xaxis = fhisto->GetXaxis();
+  Int_t peakBin = xaxis->FindBin(peakPos);
+  Int_t valleyBin = xaxis->FindBin(valleyPos);
+  double peakVals = fhisto->GetBinContent(peakBin);
+  double valleyVals = fhisto->GetBinContent(valleyBin);
+
+  double roughPeakToValley = peakVals/valleyVals;
+
+  std::cout << "valley content: " << valleyVals << " peak content: " << peakVals << std::endl;
+  std::cout << "valley pos: " << valleyPos << " peak pos: " << peakPos << std::endl;
+  double peakError = fhisto->GetBinError(peakBin);
+  double valleyError = fhisto->GetBinError(valleyPos);
+
+  double roughPeakToValleyErr = roughPeakToValley*sqrt( std::pow(peakError/peakVals,2)+ std::pow(valleyError/valleyVals,2)); ;
+
   // gaussian fit to max
   TH1F* thisto = (TH1F*)fhisto->Clone("thisto");
   thisto->Fit("gaus", "","", peakPos - 100, peakPos +120 );
@@ -284,7 +304,10 @@ Result* Fit_PeakAndValley(TH1F*  fhisto){
   res->peakToValley.error = ef;
   res->mu.value = -log(pzero);
   res->valley.value = f2->GetMinimumX( valleyPos -50, valleyPos +50);
-  
+
+  res->r_peakToValley.value = roughPeakToValley;
+  res->r_peakToValley.error = roughPeakToValleyErr;
+
   res->valleyCounts.value = vval;
   res->valleyCounts.error = evval;
   res->peakCounts.value   = sval;

@@ -20,6 +20,7 @@ typedef struct {
   // ValueWithError from Fit_PeakAndValley.C to contain the uncertainty	
   ValueWithError mu;
   ValueWithError peakToValley;
+  ValueWithError r_peakToValley;
   ValueWithError efficiency;
   ValueWithError peakTime;
   ValueWithError gain;
@@ -51,6 +52,7 @@ Data* XYanalysis(TString rootFileName = "hQ_Fixed_Run_24_PMT_162_Loc_9_Test_N.ro
 	//Return data
 	data->mu = result->mu;
 	data->peakToValley = result->peakToValley;
+	data->r_peakToValley = result->r_peakToValley;
 	data->gain.value = result->peak.value/400.;
 	data->gain.error = result->peak.error/400.;
 	//

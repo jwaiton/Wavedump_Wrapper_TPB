@@ -27,7 +27,7 @@ float Prob_zero_from_TH1F(TH1F * hQ,
   return prob;
 }
 
-float mu_From_Hist(string rootFileName = "hQ_Fixed_Run_798_PMT_162_Loc_9_Test_N.root",string pathToData = "./"){
+float mu_From_Hist(string rootFileName = "hQ_Fixed_Run_1340_PMT_76_Loc_9_Test_N.root",string pathToData = "./"){
   
   TStyle *wmStyle = GetwmStyle();
   gStyle->SetOptTitle(0);
