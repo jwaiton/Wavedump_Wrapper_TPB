@@ -22,6 +22,7 @@ void XYwrite(TString rootFileName = "hQ_Fixed_Run_23_PMT_162_Loc_9_Test_N.root",
 	xy_results << "Efficiency = " << data->efficiency.value << " (" << data->efficiency.error << ") \n";
 	xy_results << "mu = " << data->mu.value << " (" << data->mu.error << ") \n";
 	xy_results << "gain = " << data->gain.value << "e+07" << " (" << data->gain.error  << ") \n";
+	xy_results << "Rough P:V Ratio = " << data->r_peakToValley.value << " (" << data->r_peakToValley.error  << ") \n";
 	xy_results.close();
 
 

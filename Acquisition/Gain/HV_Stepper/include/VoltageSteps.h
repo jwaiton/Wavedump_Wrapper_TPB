@@ -9,6 +9,8 @@
 #include <string>
 #include <fstream>
 
+#include "unistd.h"
+
 //root stuff
 #include "TTree.h"
 #include "TFile.h"
@@ -18,8 +20,8 @@ class VoltageSteps {
 private:
   
   const double alpha = 6.9;
-  const double minGain = 0.3;
-  const double maxGain = 2;
+  const double minGain = 0.5;//0.3;
+  const double maxGain = 2.2;
   const double nStep = 5;
   std::vector<PMT> PMTs;
   //functions

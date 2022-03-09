@@ -23,7 +23,8 @@ LFOLDER =
 UNAME = $(shell uname)
 
 # Libraries to link to.
-LIBS =  `root-config --glibs` -lSpectrum -lRooFit -lRooFitCore -lgsl -lm ./libRooExpWindow.so
+#LIBS =  `root-config --glibs` -lSpectrum -lRooFit -lRooFitCore -lgsl -lm ./libRooExpWindow.so
+LIBS =  `root-config --glibs` -lSpectrum -lRooFit -lRooFitCore -lm ./libRooExpWindow.so
 # Option flags for all build modes.
 CCOPT = -g -O2 -Wall -pedantic -Wno-long-long  
 

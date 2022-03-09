@@ -450,7 +450,7 @@ TH1F* h2h(TH1D* hold ){
 
 /******************** Carry out the fit ******************************/
 
-Result* fitModel(TH1F* fhisto, int run, int pmt, int hv,
+Result* fitModel(TH1F* fhisto, int run, int pmt, int step,
 		 double minval = -100,
 		 double maxval = 1800,
 		 double max = 10000){
@@ -470,7 +470,7 @@ Result* fitModel(TH1F* fhisto, int run, int pmt, int hv,
 
   /*** fix the start of the exponential fit depending on HV step ***/
   int expvar;
-  if (hv < 4){
+  if (step < 4){
     expvar = 4;
   }
   else {
@@ -519,9 +519,9 @@ Result* fitModel(TH1F* fhisto, int run, int pmt, int hv,
   xachse->SetTitle("Relative Charge");
   //frame->SetMaximum(max);
   frame->Draw();
-//  canvas->SaveAs(Form("./Plots/FullFit/Fit_Run_1_PMT_%d_HV_%d.C",pmt,hv));
+//  canvas->SaveAs(Form("./Plots/FullFit/Fit_Run_1_PMT_%d_HV_%d.C",pmt,step));
   gPad->SetLogy();  
-  canvas->SaveAs(Form("./Plots/Fit/Fit_Run_%d_PMT_%d_HV_%d.png",run,pmt,hv));
+  canvas->SaveAs(Form("./Fit_Run_%d_PMT_%d_STEP_%d.png",run,pmt,step));
   Result* res = propagateAndFill(counts,model,fres);
  
   return res;
@@ -563,9 +563,8 @@ int main(int argc,char **argv){
   
   //int run, pmt, loc;
   int run = -1, pmt = -1, loc = -1;
-  //TString dir = "~/WATCHMAN/RootData/";
-  TString dir = "/Disk/ds-sopa-personal/gsmith23/Watchman/Data_Storage/Retest/Charge/";
-  Bool_t useFiltered = kFALSE;
+
+  TString dir = "./";
   
   /*** Read in the HV data ***/
 
@@ -650,39 +649,29 @@ int main(int argc,char **argv){
   
   double hvVals[nBins]; double hvValsError[nBins]; double gainVals[nBins]; double gainValsError[nBins]; //ADDED 5 to Four
   
-  //TString histoNameTemp = "Run_%d_PMT_%d_Loc_%d_HV_%d";
-  TString histoNameTemp = "Run_%d_PMT_%d_Loc_%d_Test_G";
+  TString histoName = "hQ_Fixed_Run_%d_PMT_%d_Loc_%d_Test_G_Step_%d";
 
-  TString histoName     = "";
   TString filePathTemp = "";
 
   for (int r=0;r<nBins;r++){ //ADDED 5 
 
-    if(useFiltered)
-      histoName = "hQ_Filter_" + histoNameTemp;
-    else
-      histoName = "hQ_Fixed_" + histoNameTemp;
-    
-    int hv = r+1; // gain test number
-    //filePathTemp = dir + "/Run_%d_PMT_%d_Loc_%d_Test_G.root";
+    int step = r+1; 
     filePathTemp = dir + histoName;
     filePathTemp += ".root";
 
     cout << endl;
     cout << " filePathTemp = " << filePathTemp << endl;
-    
-    //sprintf(filePath,filePathTemp,run,pmt,loc,hv); 
-    // Gary - a fudge made to use current file/histo name
-    sprintf(filePath,filePathTemp,hv,pmt,loc); 
+
+    sprintf(filePath,filePathTemp,run,pmt,loc,step); 
+	
     TFile s(filePath);
 
     s.ls();
 
     char root_name[50];
         
-    //sprintf(root_name,histoName,run,pmt,loc,hv);
-    sprintf(root_name,histoName,hv,pmt,loc);
-    
+    sprintf(root_name,histoName,run,pmt,loc,step); 
+      
     cout << endl;
     cout << " root_name = " << root_name << endl;
 
@@ -692,7 +681,7 @@ int main(int argc,char **argv){
     printf("Getting data from SPE spectrum...\n");
 
   	/*** Find the SPE charge output ***/
-    Result * res = fitModel(fhisto,run,pmt,hv);
+    Result * res = fitModel(fhisto,run,pmt,step);
 
     float signal = res->pemean.value - res->ped.value;
     float signalError = res->pemean.error;
@@ -752,7 +741,7 @@ int main(int argc,char **argv){
   Gain->Draw("P same");
   Gain->SetMarkerStyle(24);
 
-  canvasName = "./Plots/";
+  canvasName = "";
   canvasName += canvas->GetName();
   canvasName += ".png";
   canvas->SaveAs(canvasName);
