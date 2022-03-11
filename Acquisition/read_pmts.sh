@@ -14,15 +14,21 @@
 
 input="PMTs.txt"
 
+echo $SHELL
+
 declare -i nPMTs=0 
 
 while IFS= read -r line
 do
   PMTs+=("$line")
-  
+    
+  echo $line
+  echo $nPMTs
+  echo "Channel $nPMTs PMT is ${PMTs[0]}"
   echo "Channel $nPMTs PMT is ${PMTs[$nPMTs]}"
+
   nPMTs=nPMTs+1
 
-done < "$input"
+done <"$input"
 
 

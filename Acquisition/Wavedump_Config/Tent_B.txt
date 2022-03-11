@@ -1,0 +1,54 @@
+# ****************************************************************
+# WaveDump Configuration File
+# ****************************************************************
+
+[COMMON]
+
+OPEN PCI 0 0 0	
+
+GNUPLOT_PATH  "/usr/local/bin/"
+
+RECORD_LENGTH 150
+
+DECIMATION_FACTOR  1
+
+POST_TRIGGER  60
+
+PULSE_POLARITY  POSITIVE
+
+EXTERNAL_TRIGGER  ACQUISITION_ONLY	
+
+FPIO_LEVEL  TTL
+
+OUTPUT_FILE_FORMAT  BINARY
+
+OUTPUT_FILE_HEADER  YES
+
+TEST_PATTERN   NO
+
+ENABLE_INPUT  NO
+
+BASELINE_LEVEL  50
+
+CHANNEL_TRIGGER        DISABLED
+
+[4]
+ENABLE_INPUT           YES
+BASELINE_LEVEL         50
+
+[5]
+ENABLE_INPUT           YES
+BASELINE_LEVEL         50
+
+[6]
+ENABLE_INPUT           YES
+BASELINE_LEVEL         50
+
+[7]
+ENABLE_INPUT           YES
+BASELINE_LEVEL         50
+
+# pulser signal
+[8]
+ENABLE_INPUT           YES
+BASELINE_LEVEL         1
