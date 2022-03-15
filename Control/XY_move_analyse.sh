@@ -22,7 +22,6 @@ do echo $dir
 cd $dir
 # assuming we're using Nominal for all systems here
 cd Nominal
-FIT=$PWD
 mkdir -p ./TextFiles/
 # Will write to this folder
 TEXT=${PWD}/TextFiles/
@@ -37,18 +36,57 @@ FILE=\"$FILE_NAME\"
 root -b -q 'XYwrite.C+('$FILE')'
 # Move .txt file over
 mv xy_results.txt $TEXT
+
+# HEAD was from here...
+
 # Move xy_fit results over (produced in TCookedAnalyser.C, in Fit_Peak_Time_Dist)
 # Need to move into the right directory first though.
 cd $FIT
 mv fit_results.txt $TEXT
+
+#... to here
+
 # Move back to $dir
 cd $TEXT
 cd ..
 cd ..
 done
 
-# Move back to DAQ in normal scenario
-#cd $WM_DAQ
-# Current usage, setup to return at /XYTesting/
-cd $HOME
-cd ..
+# Move back to DAQ
+cd $WM_DAQ
+
+
+# Determine which run/runs we're analysing
+#echo 'Which RUN ? ( e.g. 000001 )'
+#read RUN
+#echo 'How many RUNs? (eg 2 is 000001 and 000002)'
+#read nRUN
+#RUN=`expr $RUN + $nRUN`
+#echo $RUN
+
+
+# OLD CODE
+#PARENT=${PARENT}RUN${RUN}/
+
+#echo $PARENT
+
+#for i in 8 9
+#do
+#    #echo 'PMT for wave' $i ' ? (e.g. 0052)'
+#    FOLDER=${PARENT}PMT${PMTs[$i]}/Nominal/
+#    #echo $FOLDER 
+#    mkdir -pv $FOLDER
+#    mv ./wave${i}.dat ${FOLDER}wave_${i}.dat 
+#done
+
+# the lines below can be used to process all of the files
+# for a full run in separate sub shells 
+# - see $WM_CODE/run_process_analyse_locally_auto_on_full_run.sh
+ 
+#cd $PARENT
+#source run_process_analyse_locally_auto_on_trig.sh
+
+
+
+    
+

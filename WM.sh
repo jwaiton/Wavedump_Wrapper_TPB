@@ -3,7 +3,6 @@
 echo " ---------------------------------------------- "
 echo " Setting Watchman PMT Testing Environment with  "
 
-
 # repository  
 export WM_CODE=${WM_PARENT}Wavedump_Wrapper/
 
@@ -12,6 +11,7 @@ echo " ${WM_CODE}WM.sh"
 # repo subdirs
 export WM_DAQ=${WM_CODE}Acquisition/
 export WM_ANALYSIS=${WM_CODE}Analysis/
+
 export WM_DATA=${WM_CODE}Storage/
 export WM_PROCESS=${WM_CODE}Processing/
 export WM_COMMON=${WM_CODE}Common/

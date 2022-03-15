@@ -12,7 +12,7 @@
 # ... etc
 # put in order of channels/file numbers
 
-input="PMTs.txt"
+input="../PMTs.txt"
 
 echo $SHELL
 

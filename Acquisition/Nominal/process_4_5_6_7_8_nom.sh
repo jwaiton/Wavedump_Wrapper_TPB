@@ -3,9 +3,9 @@
 
 export -a PMTs=()
 
-source read_pmts.sh
+source ../read_pmts.sh
 
-PARENT=/home/user1/Watchman/Wavedump_Wrapper/Data_Storage/Retest/Mar03/
+PARENT=/home/user1/Watchman/Wavedump_Wrapper/Storage/Position2/
 
 echo 'Which RUN ? ( e.g. 000001 )'
 read RUN
@@ -18,12 +18,14 @@ echo $PARENT
 # process trigger data (as PMT0000) 
 HOME=$PWD
 
-FOLDER=${PARENT}PMT0000/Dark/
+# storage of pulser data
+FOLDER=${PARENT}PMT0000/Nominal/
 mkdir -pv $FOLDER
 mv ./wave8.dat ${FOLDER}wave_8.dat
 cd $FOLDER
-# process with no analysis
-process_locally_auto.sh > output.txt
+
+# process pulser data (no analysis)
+# process_locally_auto.sh > output.txt
 
 cd $HOME 
 #--
@@ -32,7 +34,7 @@ cd $HOME
 for i in 4 5 6 7
 do
     #echo 'PMT for wave' $i ' ? (e.g. 0052)'
-    FOLDER=${PARENT}PMT${PMTs[$i]}/Dark/
+    FOLDER=${PARENT}PMT${PMTs[$i]}/Nominal/
     #echo $FOLDER 
     mkdir -pv $FOLDER
     mv ./wave${i}.dat ${FOLDER}wave_${i}.dat 
