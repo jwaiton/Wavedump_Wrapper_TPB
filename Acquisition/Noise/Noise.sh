@@ -6,10 +6,8 @@
 # wavedump settings (including e.g. no. samples per waveform)   
 export config_file="${WM_DAQ}Config/Conf_Dark.txt"
 
-
 #export test="test"
 export test="noise"
-printenv | grep test
 
 # run common acquisition program which
 # will utilise the settings above

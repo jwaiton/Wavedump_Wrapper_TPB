@@ -6,7 +6,8 @@ export -a PMTs=()
 
 source ../read_pmts.sh
 
-PARENT=/home/user1/Watchman/Wavedump_Wrapper/Storage/Position1/
+#PARENT=/home/user1/Watchman/Wavedump_Wrapper/Storage/Position2/
+PARENT=/home/user1/Watchman/Wavedump_Wrapper/Storage/Consistency_Test/
 
 echo 'Which RUN ? ( e.g. 000001 )'
 read RUN
@@ -33,12 +34,4 @@ done
 cd $PARENT
 echo $PWD
 
-#cp $WM_CODE/Scripts/process_analyse_locally_auto.sh .
-#source process_analyse_locally_auto.sh
 source run_process_analyse_locally_auto_on_full_run.sh
-
-
-
-
-    
-

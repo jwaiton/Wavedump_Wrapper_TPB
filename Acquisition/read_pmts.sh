@@ -24,7 +24,6 @@ do
     
   echo $line
   echo $nPMTs
-  echo "Channel $nPMTs PMT is ${PMTs[0]}"
   echo "Channel $nPMTs PMT is ${PMTs[$nPMTs]}"
 
   nPMTs=nPMTs+1

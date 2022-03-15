@@ -14,22 +14,6 @@ PARENT=${PARENT}RUN${RUN}/
 
 echo $PARENT
 
-# --
-# process trigger data (as PMT0000) 
-HOME=$PWD
-
-# storage of pulser data
-FOLDER=${PARENT}PMT0000/Nominal/
-mkdir -pv $FOLDER
-mv ./wave8.dat ${FOLDER}wave_8.dat
-cd $FOLDER
-
-# process pulser data (no analysis)
-# process_locally_auto.sh > output.txt
-
-cd $HOME 
-#--
-
 # process PMT data
 for i in 4 5 6 7
 do
@@ -47,6 +31,21 @@ done
 cd $PARENT
 source run_process_analyse_locally_auto_on_full_run.sh
 
+# --
+# process trigger data (as PMT0000) 
+HOME=$PWD
+
+# storage of pulser data
+FOLDER=${PARENT}PMT0000/Nominal/
+mkdir -pv $FOLDER
+mv ./wave8.dat ${FOLDER}wave_8.dat
+cd $FOLDER
+
+## process pulser data (no analysis)
+# process_locally_auto.sh > output.txt
+
+cd $HOME 
+#--
 
 
     
