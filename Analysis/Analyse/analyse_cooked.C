@@ -96,6 +96,10 @@ int main(int argc, char * argv[]){
     // Analysis 
     
     char  test = cooked_analyser->GetTest();
+
+    cout << endl;
+    cout << " Test = " << test << endl;
+    cout << endl;
     
     switch(test){
     case('D'):
@@ -110,9 +114,9 @@ int main(int argc, char * argv[]){
       
       // Mean LED pulse peak time
       if(fitTiming)
-	cooked_analyser->Fit_Peak_Time_Dist();
+      	cooked_analyser->Fit_Peak_Time_Dist();
       else
-	cooked_analyser->SetIsTimingDistFitted(true); // set to 100 ns
+      	cooked_analyser->SetIsTimingDistFitted(true); // set to 100 ns
 
       //-------------
       // Charge
