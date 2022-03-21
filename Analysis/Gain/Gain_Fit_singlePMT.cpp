@@ -564,26 +564,29 @@ int main(int argc,char **argv){
   //int run, pmt, loc;
   int run = -1, pmt = -1, loc = -1;
 
-  TString dir = "./";
+  char* tmpEnv = getenv("GAIN_HISTODIR"); 
+
+  TString dir(tmpEnv);
   
   /*** Read in the HV data ***/
 
   int nominalHV=0;
   int pmtHV[nBins]; //ADDED 5
   char filePath[300]= "";
-
-  //string hvfile = "../HVScan.txt";
-  string hvfile = "./HVScan.txt";
+  
+  string hvfile = "/home/user1/Watchman/Wavedump_Wrapper/Acquisition/Gain/HV_Stepper/HVScan.txt";
   ifstream file(hvfile.c_str());
   string hvdat;
- 
-  vector<int> PMT_number(125,0), HV(125,0);
+  
+  int nLines = 126;
+
+  vector<int> PMT_number(nLines,0), HV(nLines,0);
   vector< vector <int> > HVstep;
   vector<int> step(nBins,0); //ADDED 5
-  for (int i=0; i<125; i++)
+  for (int i=0; i<nLines; i++)
     HVstep.push_back(step);
   
-  for (int i=0; i<125; i++){
+  for (int i=0; i<nLines; i++){
     for (int j=0; j<(nBins+2); j++){ //ADDED 7
       file >> hvdat;
       int pmt_info =atof(hvdat.c_str());
@@ -622,7 +625,7 @@ int main(int argc,char **argv){
     cout << endl;
   }
 
-  for (int i=0;i<125; i++){
+  for (int i=0;i<nLines; i++){
 
     if (pmt == PMT_number[i]){
       nominalHV = HV[i];

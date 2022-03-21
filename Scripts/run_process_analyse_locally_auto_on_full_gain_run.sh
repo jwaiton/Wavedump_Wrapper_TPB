@@ -17,8 +17,8 @@ do echo $dir
 	 cd $subsubdir
 	 ls
 	 #source process_analyse_locally_auto.sh &
-	 #source process_analyse_locally_auto.sh > output.txt &
-	 source cook_analyse_locally_auto.sh > output.txt &
+	 source process_analyse_locally_auto.sh > output.txt &
+	 #source cook_analyse_locally_auto.sh > output.txt &
 	 cd ../
       done
       cd ../

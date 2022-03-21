@@ -5,7 +5,7 @@ export -a PMTs=()
 
 source read_pmts.sh
 
-PARENT=/home/user1/Watchman/Jan18/
+PARENT=/home/user1/Watchman/TestGain/
 
 echo ' Parent Directory is ' $PARENT
 

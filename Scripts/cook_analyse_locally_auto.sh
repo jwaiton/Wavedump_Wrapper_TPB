@@ -20,7 +20,7 @@ date
 echo " ------------------------------"
 
 #echo ${DIR_PATH}/Run* 
-analyse_cooked  ${DIR_PATH}/Run*
+analyse_cooked  ${DIR_PATH}
 
 echo " ------------------------------"
 date 

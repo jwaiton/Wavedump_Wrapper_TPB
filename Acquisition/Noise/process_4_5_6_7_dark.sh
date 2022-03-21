@@ -3,11 +3,18 @@
 #---- Script to move wavedump files to PMT directories
 
 export -a PMTs=()
-
 source ../read_pmts.sh
 
-#PARENT=/home/user1/Watchman/Wavedump_Wrapper/Storage/Position2/
-PARENT=/home/user1/Watchman/Wavedump_Wrapper/Storage/Consistency_Test/
+export FOLDER_NAME=""
+source ../read_folder_name.sh
+
+echo 'FOLDER_NAME = ' $FOLDER_NAME
+
+
+PARENT=/home/user1/Watchman/Wavedump_Wrapper/Storage/21mar22/
+
+
+echo 'PARENT folder = ' $PARENT
 
 echo 'Which RUN ? ( e.g. 000001 )'
 read RUN

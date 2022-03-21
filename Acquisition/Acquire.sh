@@ -10,25 +10,23 @@
 pause=3s
 
 # length of acquisition, default (spe,dark)
-length=100s
+length=667s
 
 # shorter tests
-#if [ $test == "test" ]
-#then
-#    length=0.1s
-#    pause=0.1s
-#elif [ $test == "noise" | $test == "gain" ]
-#then
-#    length=100s
-#elif [ $test == "after" ]
-#then
-#    length=100s
-#fi
+if [ $test == "test" ]
+then
+    length=0.1s
+    pause=0.1s
+elif [ $test == "noise" ] || [ $test == "gain" ]
+then
+    length=100s
+elif [ $test == "after" ]
+then
+    length=1000s
+fi
 
 input_to_wavedump(){
     # enable writing
-    echo $pause 
-    echo $length
     sleep $pause   && echo "W" && \
     # start acquisition
     sleep $pause   && echo "s" && \
