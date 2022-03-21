@@ -8,7 +8,8 @@ echo " -------------------------------"
 
 DIR_PATH=${PWD}/
 
-FILE_NAME=$(find . -maxdepth 3 -name "wave_*.dat" )
+#FILE_NAME=$(find . -maxdepth 3 -name "wave_*.dat" )
+FILE_NAME=$(find . -maxdepth 1 -name "wave_*.dat" )
 
 for f in $FILE_NAME
 do
@@ -24,7 +25,7 @@ do
      date 
      echo " ------------------------------"
 
-     mkdir -p ./Plots/DAQ/
+     #mkdir -p ./Plots/DAQ/
 
      cook_raw ${FILE_PATH}.root
 
