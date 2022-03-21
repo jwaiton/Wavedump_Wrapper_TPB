@@ -49,6 +49,7 @@
 #include <vector>
 #include <string>
 
+#include "TSystem.h"
 #include "TMath.h"
 #include "TFile.h"
 #include "TTree.h"
@@ -521,7 +522,7 @@ Result* fitModel(TH1F* fhisto, int run, int pmt, int step,
   frame->Draw();
 //  canvas->SaveAs(Form("./Plots/FullFit/Fit_Run_1_PMT_%d_HV_%d.C",pmt,step));
   gPad->SetLogy();  
-  canvas->SaveAs(Form("./Fit_Run_%d_PMT_%d_STEP_%d.png",run,pmt,step));
+  canvas->SaveAs(Form("./Fit_Run_%d_PMT_%d_STEP_%d.pdf",run,pmt,step));
   Result* res = propagateAndFill(counts,model,fres);
  
   return res;
@@ -564,9 +565,14 @@ int main(int argc,char **argv){
   //int run, pmt, loc;
   int run = -1, pmt = -1, loc = -1;
 
-  char* tmpEnv = getenv("GAIN_HISTODIR"); 
+  //const char* tmpEnv = gSystem->Getenv("GAIN_HISTODIR");
 
-  TString dir(tmpEnv);
+  
+  TString dir(argv[1]);
+ 
+  cout << endl;
+  cout << " argv[1] = " << argv[1] << endl;
+  cout << endl;
   
   /*** Read in the HV data ***/
 
@@ -746,7 +752,7 @@ int main(int argc,char **argv){
 
   canvasName = "";
   canvasName += canvas->GetName();
-  canvasName += ".png";
+  canvasName += ".pdf";
   canvas->SaveAs(canvasName);
 
 	
