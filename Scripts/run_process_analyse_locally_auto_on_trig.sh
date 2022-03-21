@@ -3,7 +3,7 @@
 # Setup for trigger jitter setup, doesnt analyse the trigger data 
 
 # setting new home directory to RUN0000NN
-HOME=$PWD
+HERE=$PWD
 
 # First run for PMT0000
 cd PMT0000
@@ -41,5 +41,5 @@ cd ../
 done
 cd ../
 done
-cd $HOME
+cd $HERE
 

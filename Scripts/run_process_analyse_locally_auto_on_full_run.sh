@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-HOME=$PWD
+HERE=$PWD
 
 array=(*/)
 
@@ -16,5 +16,5 @@ do echo "$subdir"
 done
 cd ../
 done
-cd $HOME
+cd $HERE
 

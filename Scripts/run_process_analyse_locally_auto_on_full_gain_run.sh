@@ -2,7 +2,7 @@
 # To run this do:
 # source run_process_analyse_locally_auto_on_full_gain_run.sh
 #
-HOME=$PWD
+HERE=$PWD
 
 array=(*/)
 
@@ -25,5 +25,5 @@ do echo $dir
    done
    cd ../
 done
-cd $HOME
+cd $HERE
 
