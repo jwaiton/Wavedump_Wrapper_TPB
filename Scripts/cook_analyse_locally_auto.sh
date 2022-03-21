@@ -1,5 +1,7 @@
-#!/bin/bash
-
+#
+# To run this do:
+# source cook_analyse_locally_auto.sh
+#
 echo " -------------------------------"
 date  
 echo " running  "
@@ -12,15 +14,20 @@ FILE_NAME=$(find . -maxdepth 1 -name "wave_*.dat.root" )
 
 FILE_PATH=${DIR_PATH}${FILE_NAME}
 
-#echo ${FILE_PATH}
-cook_raw ${FILE_PATH}
+echo "**************************"
+echo $FILE_PATH
+echo $FILE_NAME
+echo "*************************"
+
+cook_raw $FILE_PATH
 
 echo " ------------------------------"
 date 
 echo " ------------------------------"
 
-#echo ${DIR_PATH}/Run* 
-analyse_cooked  ${DIR_PATH}
+echo ${DIR_PATH}Run* 
+
+analyse_cooked  ${DIR_PATH}Run*
 
 echo " ------------------------------"
 date 

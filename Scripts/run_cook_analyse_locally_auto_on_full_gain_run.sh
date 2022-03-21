@@ -1,8 +1,8 @@
 #
 # To run this do:
-# source run_process_analyse_locally_auto_on_full_gain_run.sh
+# source run_cook_analyse_locally_auto_on_full_gain_run.sh
 #
-HOME=$PWD
+HERE=$PWD
 
 array=(*/)
 
@@ -18,12 +18,12 @@ do echo $dir
       do echo "$subsubdir"
 	 cd $subsubdir
 	 ls
-	 source process_analyse_locally_auto.sh > output.txt &
+	 source cook_analyse_locally_auto.sh > output.txt &
 	 cd ../
       done
       cd ../
    done
    cd ../
 done
-cd $HOME
+cd $HERE
 
