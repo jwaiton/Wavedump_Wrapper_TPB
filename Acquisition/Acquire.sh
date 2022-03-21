@@ -22,7 +22,7 @@ then
     length=100s
 elif [ $test == "after" ]
 then
-    length=1000s
+    length=500s
 fi
 
 input_to_wavedump(){
