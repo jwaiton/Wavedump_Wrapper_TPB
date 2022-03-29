@@ -9,9 +9,9 @@ float alpha(){
 
 float A_0(){
 
-  float A_0 = 1.20173E6; // A K^(-2)
+  float a0 = 1.20173E6; // A K^(-2)
 
-  return  A_0/1.60217662E-19; //s^(-1) K^(-2)
+  return  a0/1.60217662E-19; //s^(-1) K^(-2)
 }
 
 float A_G(float n25 = 2000){
