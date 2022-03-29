@@ -10,16 +10,10 @@ source ../read_folder_name.sh
 
 echo 'FOLDER_NAME = ' $FOLDER_NAME
 
-
-PARENT=/home/user1/Watchman/Wavedump_Wrapper/Storage/21mar22/
-
-
-echo 'PARENT folder = ' $PARENT
-
 echo 'Which RUN ? ( e.g. 000001 )'
 read RUN
 
-PARENT=${PARENT}RUN${RUN}/
+PARENT=${FOLDER_NAME}RUN${RUN}/
 
 echo $PARENT
 echo $PMTs
@@ -29,7 +23,7 @@ for i in 4 5 6 7
 do
     echo 'PMT for wave' $i ' ? (e.g. 0052)'
     FOLDER=${PARENT}PMT${PMTs[$i]}/Dark/
-    #echo $FOLDER 
+    echo $FOLDER 
     mkdir -pv $FOLDER
     mv ./wave${i}.dat ${FOLDER}wave_${i}.dat 
 done
