@@ -7,13 +7,13 @@
 
 #include "TCanvas.h"
 #include "TLegend.h"
+#include "TLine.h"
 #include "TH1.h"
 #include "TGraphErrors.h"
 
 #include "wmStyle.C"
 
 // Common tools
-#include "dark_rate_at_temp.h"
 #include "ShippingData.h"
 #include "ShippingData.C"
 
@@ -52,7 +52,7 @@ void analyse_dark(){
 
   c1 = new TCanvas("c1","c1",1000,0,400,300);
 
-  int nPMTs = 8;
+  int    nPMTs = 8;
   double pmts[8] = {15,  16,  82,  107, 131, 148, 166,171};
   
   double DRs_HPK_L[8];
