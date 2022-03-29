@@ -1,14 +1,13 @@
 #include "TFile.h"
 #include "TString.h"
-#include "TH1.h"
+#include "TH2.h"
+#include "TGraph.h"
 #include "TTree.h"
 #include "TCanvas.h"
 
 void CSVToRoot(){
   
   TFile *outFile = new TFile("Dark.root","RECREATE");
-  
-  TH1F *h1 = new TH1F("h1","x distribution",100,0,4000);
   
   TTree *T = new TTree("Dark","Dark counts from CSV file");
   Long64_t nlines;
@@ -39,44 +38,61 @@ void CSVToRoot(){
   T->SetBranchAddress("dV",&dV);
   T->SetBranchAddress("Dark",&Dark);
   
-  //TGraph *g1 = new TGraph(nlines,)
-  
   printf(" Results for %lld PMTs \n",nlines);
 
   Int_t cSize = 500;
   
-  TCanvas * c1 =  new TCanvas("c1","c1",0,0,3*cSize,2*cSize);
-  c1->Divide(3,2);
+  TCanvas * c1 =  new TCanvas("c1","c1",0,0,4*cSize,2*cSize);
+  c1->Divide(4,2);
 
   c1->cd(1);
   T->Draw("Temp");
-  
+    
   c1->cd(2);
   T->Draw("Dark_S");
-  
+
   c1->cd(3);
-  T->Draw("PTV");
+  T->Draw("Dark");
 
   c1->cd(4);
-  T->Draw("Gain");
+  T->Draw("Dark_H:Dark","","colz");
 
   c1->cd(5);
-  T->Draw("Dark");
-  
-  //T->Draw("HPK:Data","","COLZ"); 
-  
-  
+  T->Draw("PTV");
 
-  /* for (int i = 0 ; i < T->GetEntries() ; i++){ */
-  /*   T->GetEntry(i); */
+  c1->cd(6);
+  T->Draw("Gain");
+ 
 
-  /*   cout << " Dark = " << Dark << endl; */
+  TH1F   *h1 = new TH1F("h1","x distribution;X LABEL; Counts",100,0,5000);
+
+  double Dark_arr[30];
+  double Dark_H_arr[30];
+  
+  for (int i = 0 ; i < T->GetEntries() ; i++){
+    T->GetEntry(i);
+
+    Dark_arr[i] = Dark;
+    Dark_H_arr[i] = Dark_H;
     
-  /*   h1->Fill(Dark); */
-  /* } */
+    cout << " Dark = " << Dark << endl;
+    
+    h1->Fill(Dark);
+  }
 
-  /* h1->Draw(); */
-  /* h1->Write(); */
+  c1->cd(7);
+  h1->Draw();
+  h1->Write();
   
+  TGraph *g1 = new TGraph(30,Dark_H_arr,Dark_arr);
+
+  g1->SetTitle(";x;y");
+  
+  c1->cd(8);
+
+  g1->SetMarkerStyle(20);
+  g1->Draw("AP");
+
   T->Write();
+
 }
