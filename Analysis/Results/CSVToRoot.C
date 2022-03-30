@@ -15,16 +15,17 @@ void CSVToRoot(){
 
   //PMT Number, Rig Location, Nominal Voltage [V],Temperature, Dark Rate [Hz] Short Run, Scaled HPK Dark Rate [Hz],
   //Mu,	P:V, HPK P:V, Gain [x10^7], Operating Voltage [V], ∆V, Dark Rate [Hz]  Long Run
-  TString lineFormat = "PMT/I:Loc/I:HV_N/F:Temp/F:Dark_S/F:Dark_H/F:Mu/F:PTV/F:PTV_H/F:Gain/F:HV/F:dV/F:Dark/F";
+  TString lineFormat;
+  lineFormat = "PMT/I:Loc/I:HV_H/F:Temp/F:Dark_S/F:Dark_H/F:Mu/F:PTV/F:PTV_H/F:Gain/F:HV/F:dV/F:Dark/F:Dark_E/F:Dark_N/F:Noise/F";
 
   nlines = T->ReadFile("Results.csv",lineFormat,',');
 
   int   PMT, Loc;
-  float HV_N, Temp, Dark_S, Dark_H, Mu, PTV, PTV_H, Gain, HV, dV, Dark;
+  float HV_H, Temp, Dark_S, Dark_H, Mu, PTV, PTV_H, Gain, HV, dV, Dark,Dark_E,Dark_N,Noise;
   T->SetBranchAddress("PMT",&PMT);
   T->SetBranchAddress("Loc",&Loc);
 
-  T->SetBranchAddress("HV_N",&HV_N);
+  T->SetBranchAddress("HV_H",&HV_H);
   T->SetBranchAddress("Temp",&Temp);
   T->SetBranchAddress("Dark_S",&Dark_S);
   T->SetBranchAddress("Dark_H",&Dark_H);
@@ -37,7 +38,11 @@ void CSVToRoot(){
   T->SetBranchAddress("HV",&HV);
   T->SetBranchAddress("dV",&dV);
   T->SetBranchAddress("Dark",&Dark);
-  
+  T->SetBranchAddress("Dark_E",&Dark_E);
+
+  T->SetBranchAddress("Dark_N",&Dark_N);
+  T->SetBranchAddress("Noise",&Noise);
+
   printf(" Results for %lld PMTs \n",nlines);
 
   Int_t cSize = 500;
@@ -75,7 +80,10 @@ void CSVToRoot(){
     Dark_arr[i] = Dark;
     Dark_H_arr[i] = Dark_H;
     
-    cout << " Dark = " << Dark << endl;
+    cout << " Dark   = " << Dark   << endl;
+    cout << " Dark_E = " << Dark_E << endl;
+    cout << " Dark_N = " << Dark_N << endl;
+    cout << " Noise  = " << Noise  << endl;
     
     h1->Fill(Dark);
   }
@@ -118,7 +126,7 @@ void CSVToRoot(){
 
   TGraph *g2 = new TGraph(30,PTV_H_arr,PTV_arr);
 
-  g2->SetTitle("PTV2;PTV_H;PTV");
+  g2->SetTitle("PTV comparison;x;y");
   g2->Fit("pol1");
   gStyle->SetOptFit();
   c1->cd(10);
@@ -128,5 +136,16 @@ void CSVToRoot(){
 
   T->Write();
 
+  TCanvas * c2 = new TCanvas("c2");
 
+  c2->cd(1);
+
+  T->Draw("HV_H:HV","","colz");
+  
+  TCanvas * c3 = new TCanvas("c3");
+
+  c3->cd(1);
+
+  T->Draw("Dark:Dark_H");
+  
 }
