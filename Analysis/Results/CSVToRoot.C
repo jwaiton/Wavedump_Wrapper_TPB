@@ -7,24 +7,23 @@
 
 void CSVToRoot(){
   
-  TFile *outFile = new TFile("Dark.root","RECREATE");
+  TFile *outFile = new TFile("Results.root","RECREATE");
   
-  TTree *T = new TTree("Dark","Dark counts from CSV file");
+  TTree *T = new TTree("Results","Results from CSV file");
   Long64_t nlines;
-
 
   //PMT Number, Rig Location, Nominal Voltage [V],Temperature, Dark Rate [Hz] Short Run, Scaled HPK Dark Rate [Hz],
   //Mu,	P:V, HPK P:V, Gain [x10^7], Operating Voltage [V], ∆V, Dark Rate [Hz]  Long Run
-  TString lineFormat = "PMT/I:Loc/I:HV_N/F:Temp/F:Dark_S/F:Dark_H/F:Mu/F:PTV/F:PTV_H/F:Gain/F:HV/F:dV/F:Dark/F";
+  TString lineFormat = "PMT/I:Loc/I:HV_H/F:Temp/F:Dark_S/F:Dark_H/F:Mu/F:PTV/F:PTV_H/F:Gain/F:HV/F:dV/F:Dark/F";
 
   nlines = T->ReadFile("Results.csv",lineFormat,',');
 
   int   PMT, Loc;
-  float HV_N, Temp, Dark_S, Dark_H, Mu, PTV, PTV_H, Gain, HV, dV, Dark;
+  float HV_H, Temp, Dark_S, Dark_H, Mu, PTV, PTV_H, Gain, HV, dV, Dark;
   T->SetBranchAddress("PMT",&PMT);
   T->SetBranchAddress("Loc",&Loc);
 
-  T->SetBranchAddress("HV_N",&HV_N);
+  T->SetBranchAddress("HV_H",&HV_H);
   T->SetBranchAddress("Temp",&Temp);
   T->SetBranchAddress("Dark_S",&Dark_S);
   T->SetBranchAddress("Dark_H",&Dark_H);
