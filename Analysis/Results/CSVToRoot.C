@@ -7,21 +7,20 @@
 
 void CSVToRoot(){
   
-  TFile *outFile = new TFile("Dark.root","RECREATE");
+  TFile *outFile = new TFile("Results.root","RECREATE");
   
-  TTree *T = new TTree("Dark","Dark counts from CSV file");
+  TTree *T = new TTree("Results","Results from CSV file");
   Long64_t nlines;
-
 
   //PMT Number, Rig Location, Nominal Voltage [V],Temperature, Dark Rate [Hz] Short Run, Scaled HPK Dark Rate [Hz],
   //Mu,	P:V, HPK P:V, Gain [x10^7], Operating Voltage [V], ∆V, Dark Rate [Hz]  Long Run
   TString lineFormat;
-  lineFormat = "PMT/I:Loc/I:HV_H/F:Temp/F:Dark_S/F:Dark_H/F:Mu/F:PTV/F:PTV_H/F:Gain/F:HV/F:dV/F:Dark/F:Dark_E/F:Dark_N/F:Noise/F";
+  lineFormat = "PMT/I:Loc/I:HV_H/F:Temp/F:Dark_S/F:Dark_H/F:Mu/F:PTV/F:PTV_H/F:Gain/F:HV/F:Dark/F:Dark_E/F:Dark_N/F:Noise/F";
 
   nlines = T->ReadFile("Results.csv",lineFormat,',');
 
   int   PMT, Loc;
-  float HV_H, Temp, Dark_S, Dark_H, Mu, PTV, PTV_H, Gain, HV, dV, Dark,Dark_E,Dark_N,Noise;
+  float HV_H, Temp, Dark_S, Dark_H, Mu, PTV, PTV_H, Gain, HV, Dark,Dark_E,Dark_N,Noise;
   T->SetBranchAddress("PMT",&PMT);
   T->SetBranchAddress("Loc",&Loc);
 
@@ -36,7 +35,6 @@ void CSVToRoot(){
   T->SetBranchAddress("Gain",&Gain);
 
   T->SetBranchAddress("HV",&HV);
-  T->SetBranchAddress("dV",&dV);
   T->SetBranchAddress("Dark",&Dark);
   T->SetBranchAddress("Dark_E",&Dark_E);
 
@@ -71,8 +69,8 @@ void CSVToRoot(){
 
   TH1F   *h1 = new TH1F("h1","x distribution;X LABEL; Counts",100,0,5000);
 
-  double Dark_arr[30];
-  double Dark_H_arr[30];
+  double Dark_arr[38];
+  double Dark_H_arr[38];
   
   for (int i = 0 ; i < T->GetEntries() ; i++){
     T->GetEntry(i);
@@ -92,7 +90,7 @@ void CSVToRoot(){
   h1->Draw();
   h1->Write();
   
-  TGraph *g1 = new TGraph(30,Dark_H_arr,Dark_arr);
+  TGraph *g1 = new TGraph(38,Dark_H_arr,Dark_arr);
 
   g1->SetTitle(";x;y");
   g1->Fit("pol1");
@@ -106,8 +104,8 @@ void CSVToRoot(){
 
   TH1F *W1 = new TH1F("TW1","PTV comparison;PTV;PTV_H",30,1,4);
 
-  double PTV_arr[30];
-  double PTV_H_arr[30];
+  double PTV_arr[38];
+  double PTV_H_arr[38];
 
   for (int i = 0 ; i < T->GetEntries() ; i++){
     T->GetEntry(i);
@@ -124,7 +122,7 @@ void CSVToRoot(){
   W1->Draw();
   W1->Write();
 
-  TGraph *g2 = new TGraph(30,PTV_H_arr,PTV_arr);
+  TGraph *g2 = new TGraph(38,PTV_H_arr,PTV_arr);
 
   g2->SetTitle("PTV comparison;x;y");
   g2->Fit("pol1");
