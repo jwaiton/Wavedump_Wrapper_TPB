@@ -42,7 +42,7 @@ void CSVToRoot(){
   Int_t cSize = 500;
   
   TCanvas * c1 =  new TCanvas("c1","c1",0,0,4*cSize,2*cSize);
-  c1->Divide(4,2);
+  c1->Divide(5,2);
 
   c1->cd(1);
   T->Draw("Temp");
@@ -86,12 +86,46 @@ void CSVToRoot(){
   TGraph *g1 = new TGraph(30,Dark_H_arr,Dark_arr);
 
   g1->SetTitle(";x;y");
-  
+  g1->Fit("pol1");
+  gStyle->SetOptFit();
   c1->cd(8);
 
   g1->SetMarkerStyle(20);
   g1->Draw("AP");
 
   T->Write();
+
+  TH1F *W1 = new TH1F("TW1","PTV comparison;PTV;PTV_H",30,1,4);
+
+  double PTV_arr[30];
+  double PTV_H_arr[30];
+
+  for (int i = 0 ; i < T->GetEntries() ; i++){
+    T->GetEntry(i);
+
+    PTV_arr[i] = PTV;
+    PTV_H_arr[i] = PTV_H;
+
+    cout << " PTV = " << PTV << endl;
+
+    W1->Fill(PTV);
+  }
+
+  c1->cd(9);
+  W1->Draw();
+  W1->Write();
+
+  TGraph *g2 = new TGraph(30,PTV_H_arr,PTV_arr);
+
+  g2->SetTitle("PTV2;PTV_H;PTV");
+  g2->Fit("pol1");
+  gStyle->SetOptFit();
+  c1->cd(10);
+
+  g2->SetMarkerStyle(20);
+  g2->Draw("AP");
+
+  T->Write();
+
 
 }
