@@ -1,25 +1,37 @@
 #include "TFile.h"
 #include "TString.h"
 #include "TH2.h"
-#include "TGraph.h"
+#include "TGraphErrors.h"
 #include "TTree.h"
 #include "TCanvas.h"
 
-void CSVToRoot(){
+#include "wmStyle.C"
+#include "ShippingData.h"
+
+void Results_From_CSV_To_Root(){
+  
+  static const int nPMTs = 38;
   
   TFile *outFile = new TFile("Results.root","RECREATE");
+
+  TStyle *wmStyle = GetwmStyle();
+  wmStyle->SetOptFit(1);
+  // gROOT->SetStyle("wmStyle");
+  // gROOT->ForceStyle();
   
   TTree *T = new TTree("Results","Results from CSV file");
   Long64_t nlines;
 
   //PMT Number, Rig Location, Nominal Voltage [V],Temperature, Dark Rate [Hz] Short Run, Scaled HPK Dark Rate [Hz],
   //Mu,	P:V, HPK P:V, Gain [x10^7], Operating Voltage [V], ∆V, Dark Rate [Hz]  Long Run
+
   TString lineFormat;
   lineFormat = "PMT/I:Loc/I:HV_H/F:Temp/F:Dark_S/F:Dark_H/F:Mu/F:PTV/F:PTV_H/F:Gain/F:HV/F:Dark/F:Dark_E/F:Dark_N/F:Noise/F";
 
   nlines = T->ReadFile("Results.csv",lineFormat,',');
 
   int   PMT, Loc;
+
   float HV_H, Temp, Dark_S, Dark_H, Mu, PTV, PTV_H, Gain, HV, Dark,Dark_E,Dark_N,Noise;
   T->SetBranchAddress("PMT",&PMT);
   T->SetBranchAddress("Loc",&Loc);
@@ -66,50 +78,16 @@ void CSVToRoot(){
   c1->cd(6);
   T->Draw("Gain");
  
-
   TH1F   *h1 = new TH1F("h1","x distribution;X LABEL; Counts",100,0,5000);
-
-  double Dark_arr[38];
-  double Dark_H_arr[38];
-  double Dark_E_arr[38];
-  double Dark_H_E_arr[38];
-
-  for (int i = 0 ; i < T->GetEntries() ; i++){
-    T->GetEntry(i);
-
-    Dark_arr[i]   = Dark;
-    Dark_H_arr[i] = Dark_H;
-    Dark_E_arr[i] = Dark_E;
-    Dark_H_E_arr[i] = 100;
-    
-    cout << " Dark   = " << Dark   << endl;
-    cout << " Dark_E = " << Dark_E << endl;
-    cout << " Dark_N = " << Dark_N << endl;
-    cout << " Noise  = " << Noise  << endl;
-    
-    h1->Fill(Dark);
-  }
 
   c1->cd(7);
   h1->Draw();
   h1->Write();
   
-  TGraph *g1 = new TGraph(38,Dark_H_arr,Dark_arr);
+  TH1F *P2V = new TH1F("TW1","PTV comparison;PTV;PTV_H",60,1,4);
 
-  g1->SetTitle(";x;y");
-  g1->Fit("pol1");
-  gStyle->SetOptFit();
-  c1->cd(8);
-
-  g1->SetMarkerStyle(20);
-  g1->Draw("AP");
-
-  T->Write();
-
-  TH1F *W1 = new TH1F("TW1","PTV comparison;PTV;PTV_H",30,1,4);
-
-  double PTV_arr[38];
-  double PTV_H_arr[38];
+  double PTV_arr[nPMTs];
+  double PTV_H_arr[nPMTs];
 
   for (int i = 0 ; i < T->GetEntries() ; i++){
     T->GetEntry(i);
@@ -119,24 +97,80 @@ void CSVToRoot(){
 
     cout << " PTV = " << PTV << endl;
 
-    W1->Fill(PTV);
+    P2V->Fill(PTV);
   }
+  TCanvas *c5 = new TCanvas("P2V","PTV Comparison");
 
-  c1->cd(9);
-  W1->Draw();
-  W1->Write();
+  c5->cd(1);
+  P2V->Draw();
+  P2V->Write();
 
-  TGraph *g2 = new TGraph(38,PTV_H_arr,PTV_arr);
+  TGraph *g2 = new TGraph(nPMTs,PTV_H_arr,PTV_arr);
 
   g2->SetTitle("PTV comparison;x;y");
   g2->Fit("pol1");
   gStyle->SetOptFit();
-  c1->cd(10);
+
+  c1->cd(9);
 
   g2->SetMarkerStyle(20);
   g2->Draw("AP");
 
   T->Write();
+
+  //ShippingData *ship_data = new ShippingData(0);
+
+  double Dark_arr[nPMTs];
+  double Dark_H_arr[nPMTs];
+  double Dark_E_arr[nPMTs];
+  double Dark_H_Max_arr[nPMTs];
+  double Dark_H_Min_arr[nPMTs];
+  double Dark_H_E_arr[nPMTs];
+ 
+  double tempLow,tempHigh;
+  
+  for (int i = 0 ; i < T->GetEntries() ; i++){
+    T->GetEntry(i);
+    
+    Dark_arr[i]   = Dark;
+    Dark_H_arr[i] = Dark_H;
+    Dark_E_arr[i] = Dark_E;
+    //ship_data = new ShippingData(PMT,0);
+    
+    // if( (int)Dark_H != (int)ship_data->GetDR(Temp) ){
+    // 	cout << " HPK Dark scaled ( function ) = "
+    // 	     << ship_data->GetDR(Temp) << endl;
+    // 	cout << " HPK Dark scaled ( CSV file  ) = "
+    // 	     << Dark_H  << endl;
+    //   }
+
+    // tempLow  = Temp - 1;
+    // tempHigh = Temp + 1;
+    
+    // Dark_H_Min_arr[i] = ship_data->GetDR(tempLow);
+    // Dark_H_Max_arr[i] = ship_data->GetDR(tempHigh);
+
+    Dark_H_E_arr[i] = (Dark_H_Max_arr[i]-Dark_H_Min_arr[i])/2.;
+
+    cout << " Dark_H_Min_arr[i] = " << Dark_H_Min_arr[i] << endl;
+    cout << " Dark_H_Max_arr[i] = " << Dark_H_Max_arr[i] << endl;
+    cout << " Dark_H_arr[i]     = " << Dark_H_arr[i] << endl;
+    cout << " Dark_H_E_arr[i]   = " << Dark_H_E_arr[i] << endl;
+    
+    h1->Fill(Dark);
+    //delete ship_data;
+    
+  }
+
+  TGraph *g1 = new TGraph(nPMTs,Dark_H_arr,Dark_arr);
+  
+  g1->SetTitle(";x;y");
+  g1->Fit("pol1");
+  gStyle->SetOptFit();
+  c1->cd(8);
+  
+  g1->SetMarkerStyle(20);
+  g1->Draw("AP");
 
   TCanvas * c2 = new TCanvas("c2");
 
@@ -144,17 +178,11 @@ void CSVToRoot(){
 
   T->Draw("HV_H:HV","","colz");
   
-  TCanvas * c3 = new TCanvas("c3");
-
-  c3->cd(1);
-  
-  T->Draw("Dark_H:Dark","","colz");
-
   TCanvas *c4 = new TCanvas("c4","Dark rate comparison with errors");
 
   c4->SetGrid(); 
-  const int n = 38;
-  auto *TW2 = new TGraphErrors(n,Dark_H_arr,Dark_arr,Dark_H_E_arr,Dark_E_arr);
+ 
+  auto *TW2 = new TGraphErrors(nPMTs,Dark_H_arr,Dark_arr,Dark_H_E_arr,Dark_E_arr);
 
   TW2->SetTitle("Dark Rate comparison with errors");
   TW2->GetXaxis()->SetTitle("Dark_H");
@@ -162,6 +190,23 @@ void CSVToRoot(){
   TW2->Fit("pol1");
   gStyle->SetOptFit();
   
-  // TW2->SetMarkerStyle(20);
+  TW2->SetMarkerStyle(10);
   TW2->Draw("AP");
+
+  //TCanvas *c5 = new TCanvas("c5", "PTV comparison with PTV_H");
+
+  //c5->SetGrid();
+
+  //TGraph *TW3 = new TGraph(nPMTs,PTV_H_arr,PTV_arr);
+
+  //TW3->SetTitle("PTV comparison with PTV_H");
+  //TW3->GetXaxis()->SetTitle("PTV_H");
+  //TW3->GetYaxis()->SetTitle("PTV");
+
+  //TW3->SetMarkerStyle(20);
+  //TW3->Draw("AP");
+
+  //TW3->Write();
+
+  
 }
