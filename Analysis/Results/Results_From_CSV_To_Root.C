@@ -1,3 +1,5 @@
+#include "TSystem.h"
+
 #include "TFile.h"
 #include "TString.h"
 #include "TH2.h"
@@ -118,7 +120,7 @@ void Results_From_CSV_To_Root(){
 
   T->Write();
 
-  //ShippingData *ship_data = new ShippingData(0);
+  ShippingData *ship_data = new ShippingData(0);
 
   double Dark_arr[nPMTs];
   double Dark_H_arr[nPMTs];
@@ -136,6 +138,10 @@ void Results_From_CSV_To_Root(){
     Dark_H_arr[i] = Dark_H;
     Dark_E_arr[i] = Dark_E;
     //ship_data = new ShippingData(PMT,0);
+
+    //float dark_rate = gSystem->Exec("shipping_data -d 1");
+    //gSystem->Exec("ls");
+    //cout << " dark_rate = " << dark_rate << endl;
     
     // if( (int)Dark_H != (int)ship_data->GetDR(Temp) ){
     // 	cout << " HPK Dark scaled ( function ) = "
