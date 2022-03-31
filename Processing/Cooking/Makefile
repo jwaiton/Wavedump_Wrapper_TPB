@@ -102,7 +102,7 @@ clean:
 realclean:	clean
 		rm -f *.d *~ core
 		rm -f cook_rawDict.* *.pcm
-		rm -f ${WM_COMMON}*.pcm ${WM_COMMON}_C*
+		rm -f ${WM_COMMON}*.pcm ${WM_COMMON}*_C*
 
 cook_rawDict.C: 	$(HDR) CookRaw_LinkDef.h
 		@echo "Generating dictionary cook_rawDict..."
