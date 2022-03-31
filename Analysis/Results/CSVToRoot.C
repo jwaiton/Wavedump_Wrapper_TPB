@@ -71,12 +71,16 @@ void CSVToRoot(){
 
   double Dark_arr[38];
   double Dark_H_arr[38];
-  
+  double Dark_E_arr[38];
+  double Dark_H_E_arr[38];
+
   for (int i = 0 ; i < T->GetEntries() ; i++){
     T->GetEntry(i);
 
-    Dark_arr[i] = Dark;
+    Dark_arr[i]   = Dark;
     Dark_H_arr[i] = Dark_H;
+    Dark_E_arr[i] = Dark_E;
+    Dark_H_E_arr[i] = 100;
     
     cout << " Dark   = " << Dark   << endl;
     cout << " Dark_E = " << Dark_E << endl;
@@ -143,7 +147,21 @@ void CSVToRoot(){
   TCanvas * c3 = new TCanvas("c3");
 
   c3->cd(1);
-
-  T->Draw("Dark:Dark_H");
   
+  T->Draw("Dark_H:Dark","","colz");
+
+  TCanvas *c4 = new TCanvas("c4","Dark rate comparison with errors");
+
+  c4->SetGrid(); 
+  const int n = 38;
+  auto *TW2 = new TGraphErrors(n,Dark_H_arr,Dark_arr,Dark_H_E_arr,Dark_E_arr);
+
+  TW2->SetTitle("Dark Rate comparison with errors");
+  TW2->GetXaxis()->SetTitle("Dark_H");
+  TW2->GetYaxis()->SetTitle("Dark");
+  TW2->Fit("pol1");
+  gStyle->SetOptFit();
+  
+  // TW2->SetMarkerStyle(20);
+  TW2->Draw("AP");
 }
