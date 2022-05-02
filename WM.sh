@@ -34,6 +34,7 @@ export CPATH=${CPATH}:${WM_COMMON}
 export CPATH=${CPATH}:${WM_FITTING}
 export CPATH=${CPATH}:${WM_COOK}
 export CPATH=${CPATH}:${WM_ANALYSE}
+export CPATH=${CPATH}:${WM_SHIPPING}
 
 # binaries
 export PATH=${PATH}:${WM_CODE}
