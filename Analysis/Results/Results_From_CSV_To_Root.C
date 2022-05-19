@@ -32,7 +32,7 @@ void Results_From_CSV_To_Root(){
   TString lineFormat;
   lineFormat = "PMT/I:Loc/I:HV_H/F:Temp/F:Dark_S/F:Dark_H/F:Mu/F:PTV/F:PTV_H/F:Gain/F:HV/F:Dark/F:Dark_E/F:Dark_N/F:Noise/F";
 
-  nlines = T->ReadFile("Results_All.csv",lineFormat,',');
+  nlines = T->ReadFile("Results.csv",lineFormat,',');
 
   int   PMT, Loc;
 
@@ -61,7 +61,7 @@ void Results_From_CSV_To_Root(){
 
   Int_t cSize = 400;
 
-  bool quickPlot = kFALSE;
+  bool quickPlot = kTRUE;
 
   // plot data from the tree directly
   if(quickPlot){
