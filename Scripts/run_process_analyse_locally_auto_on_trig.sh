@@ -6,27 +6,27 @@
 HERE=$PWD
 
 # First run for PMT0000
-cd PMT0000
+##cd PMT0000
 
 # Plot out different folders within subarray
-subarray=(*/)
+##subarray=(*/)
 # Moves into Nominal folder for each, presumably works for more folders hence the for
-for subd in "${subarray[@]}"
-do 
-    echo "$subd"
-    cd $subd
-    source process_trig_locally_auto.sh &
-    echo "Cooking Trigger"
+##for subd in "${subarray[@]}"
+##do 
+##    echo "$subd"
+##    cd $subd
+##    source process_trig_locally_auto.sh &
+##    echo "Cooking Trigger"
 # Jump out of specific folder before going again
-cd ../
-done
+##cd ../
+##done
 # Jump out of PMT0000
-cd ../
+##cd ../
 
 # Next to rest of PMTs, can take loop
 array=(*/)
 # Remove first element (should always be PMT0000, if not fix this)
-array=("${array[@]:1}")
+##array=("${array[@]:1}")
 
 for dir in "${array[@]}"
 do echo $dir

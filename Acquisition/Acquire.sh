@@ -23,6 +23,9 @@ then
 elif [ $test == "after" ]
 then
     length=500s
+elif [ $test == "cool" ]
+then
+    length=3s
 fi
 
 input_to_wavedump(){

@@ -56,7 +56,7 @@ float mu_From_Hist(string rootFileName = "hQ_Fixed_Run_1340_PMT_76_Loc_9_Test_N.
   TFile * file = TFile::Open(rootFileName.c_str());
   
   TH1F * hQ_Fixed = (TH1F*)file->Get(hName.c_str());
-  
+
   float P0 =  Prob_zero_from_TH1F(hQ_Fixed,-500,valley_Q);
   
   cout << endl;

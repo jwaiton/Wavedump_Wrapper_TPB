@@ -1,5 +1,5 @@
 
-void run_mu_From_Hist(int pmt=15, int loc=4, int run=40){
+void run_mu_From_Hist(int pmt=131, int loc=4, int run=40){
   
   string rootFileName;
   rootFileName =  "hQ_Fixed_Run_";
@@ -11,8 +11,8 @@ void run_mu_From_Hist(int pmt=15, int loc=4, int run=40){
   rootFileName += "_Test_N";
 
   string pathToData;
-  pathToData =  "/home/user1/Watchman/Wavedump_Wrapper";
-  pathToData += "/Data_Storage/Gary/Setup";
+  pathToData =  "/Users/gsmith23/Desktop/Watchman/Optical_Detector/PMT/PMT_Performance_Testing/Wavedump_Wrapper/";
+  pathToData += "/Storage/Retest/Rotate_Histograms/";
   pathToData += "/RUN0000";
   pathToData += std::to_string(run);
   pathToData += "/PMT0";
