@@ -116,11 +116,48 @@ def integrate_range(y_data, window = 0, debug = False):
 
     return(integrate(y_data))
 
+def cook_raw(event_name, PATH):
+    '''
+    Collect and process all the ADC values across individual events recursively
+    This function is made to work with CAEN wavedump data which has been
+    converted into ROOT files
 
+    Name inspired by Wavedump's C equivalents
+    '''
+
+    tree = uproot.open(PATH+str(event_name))["T;1"]
+    branches = tree.arrays()
+
+    # asumming CAEN 1730B digitiser is still in use, 2ns sampling rate
+    eventno = len(branches['ADC'][0])
+    timegate = 2
+    time = []
+    # in case we need the time for whatever reason
+    for i in range(eventno):
+        time.append(i*timegate)
+
+    ADC_list = []
+    # lets try this recursive method first, to see how fast it is
+    for i in range(len(branches['ADC'])):
+        # scanning over all events
+        a = ak.to_numpy(branches['ADC'][i])
+
+        # flip to positive
+        a = -a
+        b = subtract_baseline(a, type = 'median')
+        c = integrate_range(b, window = 10, debug=False)
+
+        #if (c < -500):
+        #    print(c)
+        #    plt.plot(plot_numbers,a)
+        #    plt.show()
+
+        ADC_list += (c),
+    return ADC_list
 
 def collate_ADC_data(PATH):
     '''
-    collect all the ADC value across individual events recursively.
+    Collect and process all the ADC values across individual events recursively.
     This function is made to work with lecroy oscilloscope data
     needs to be made workable for CAEN and lecroy or scrapped
     '''
