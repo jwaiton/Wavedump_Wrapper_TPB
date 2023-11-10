@@ -35,7 +35,7 @@ subarray=(*/)
 for subdir in "${subarray[@]}"
 do echo "$subdir"
 cd $subdir
-source process_analyse_locally_auto.sh &
+source ${WD_SCRIPTS}process_analyse_locally_auto.sh
 echo "Cooking PMT Data"
 cd ../
 done
