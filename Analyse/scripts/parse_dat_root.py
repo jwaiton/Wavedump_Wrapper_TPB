@@ -1,8 +1,7 @@
 '''
     John Waiton - 2023
-        Currently this script will take a folder (PATH) and output the lecroy TRC files as a charge histogram with minimalist baseline subtraction.
+        Currently this script will take a folder (PATH) and output the ROOT files as a charge histogram with minimalist baseline subtraction.
         Will be further developed and better commented if need-be
-        --- THIS VERSION IS FOR TESTING MOVING ALL THE GUTS OF THIS CODE TO /CORE/ ---
 
 '''
 
