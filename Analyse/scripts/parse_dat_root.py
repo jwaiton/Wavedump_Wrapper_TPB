@@ -54,7 +54,7 @@ def main():
 
     # collect then save data
     data = proc.cook_raw(event_name, PATH)
-    print(data)
+    #print(data)
     np.save(output_dir + "analysed_data" + "/ADC_data",np.array(data))
 
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     #PATH = "SR_testing/SR_testing_500NS_5kS/"
     storage = str(misc.bash_var("WD_STORAGE"))
-    PATH = storage + "John/testing/RUN000004/PMT/Nominal/"
-    event_name = "wave_1.dat.root"
-    output_dir = storage + "John/testing/RUN000004/PMT/"
+    PATH = storage + "John/testing/RUN000036/PMT/Nominal/"
+    event_name = "wave_6.dat.root"
+    output_dir = storage + "John/testing/RUN000036/PMT/"
     main()

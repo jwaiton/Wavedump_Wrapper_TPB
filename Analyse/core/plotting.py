@@ -38,7 +38,7 @@ def plot_single(test_event, PATH):
     return 0
 
 
-def ADC_plot(ADCs, bins = 100,run_no = -1):
+def ADC_plot(ADCs, bins = 100,run_no = -1, output_dir = False):
     '''
     plot charge histogram of event with ADCs along x and events along y
     '''
@@ -55,7 +55,8 @@ def ADC_plot(ADCs, bins = 100,run_no = -1):
     plt.ylabel(y_label)
     plt.title("Charge histogram")
     plt.yscale('log')
-    plt.savefig(output_dir + "RUN_" + str(run_no) + "/ADC_plot.png")
+    if (output_dir == True):
+        plt.savefig(output_dir + "RUN_" + str(run_no) + "/ADC_plot.png")
     plt.show()
 
 

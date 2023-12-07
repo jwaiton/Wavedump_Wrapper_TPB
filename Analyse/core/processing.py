@@ -7,6 +7,7 @@ from os.path import exists
 from os import mkdir
 from scipy import stats
 import awkward as ak
+from tqdm import tqdm
 
 # all functions required to process the relevant data
 
@@ -35,7 +36,7 @@ def port_event(event_name, PATH, x_data = False, event = 0):
     # if a root file, return first event corresponding to 'event'
     if is_root(str(event_name)):
         print("Root file!")
-        tree = uproot.open(PATH+str(event_name))["T;1"]
+        tree = uproot.open(PATH+str(event_name))["T;19"]
         branches = tree.arrays()
         #print(branches['ADC'])
 
@@ -116,6 +117,49 @@ def integrate_range(y_data, window = 0, debug = False):
 
     return(integrate(y_data))
 
+def raw_read(event_name, PATH, number = 0):
+    '''
+    Reads out all the raw wave forms to a variable
+    '''
+
+    tree = uproot.open(PATH+str(event_name))
+    print("File found, {} branches available: {}".format(len(tree.keys()), tree.keys()))
+
+    y_vals = []
+
+    # just for initial setting of loops
+    key = tree.keys()[0]
+    br = tree[key]
+    branches = br.arrays()
+
+    # set number of events collected
+    if (number == 0):
+        Q = len(branches['ADC'])
+    else:
+        Q = number
+
+    for i in range(len(tree.keys())):
+        print("({}/{})".format(i+1, len(tree.keys())))
+        
+        key = tree.keys()[i]
+        br = tree[key]
+        branches = br.arrays()
+        # asumming CAEN 1730B digitiser is still in use, 2ns sampling rate
+        eventno = len(branches['ADC'][0])
+        timegate = 2
+        time = []
+        # collecting time information
+        for i in range(eventno):
+            time.append(i*timegate)
+
+        # collecting waveforms
+        for i in tqdm(range(Q)):
+            # scanning over all events
+            a = ak.to_numpy(branches['ADC'][i])
+            y_vals.append(a)
+    
+    return (time, y_vals)
+
 def cook_raw(event_name, PATH):
     '''
     Collect and process all the ADC values across individual events recursively
@@ -125,34 +169,43 @@ def cook_raw(event_name, PATH):
     Name inspired by Wavedump's C equivalents
     '''
 
-    tree = uproot.open(PATH+str(event_name))["T;1"]
-    branches = tree.arrays()
-
-    # asumming CAEN 1730B digitiser is still in use, 2ns sampling rate
-    eventno = len(branches['ADC'][0])
-    timegate = 2
-    time = []
-    # in case we need the time for whatever reason
-    for i in range(eventno):
-        time.append(i*timegate)
+    tree = uproot.open(PATH+str(event_name))
+    print("File found, {} branches available: {}".format(len(tree.keys()), tree.keys()))
+    
 
     ADC_list = []
-    # lets try this recursive method first, to see how fast it is
-    for i in range(len(branches['ADC'])):
-        # scanning over all events
-        a = ak.to_numpy(branches['ADC'][i])
 
-        # flip to positive
-        a = -a
-        b = subtract_baseline(a, type = 'median')
-        c = integrate_range(b, window = 10, debug=False)
+    for i in range(len(tree.keys())):
+        print("({}/{})".format(i+1, len(tree.keys())))
+        # take specific branch
+        key = tree.keys()[i]
+        br = tree[key]
+        branches = br.arrays()
+        # asumming CAEN 1730B digitiser is still in use, 2ns sampling rate
+        eventno = len(branches['ADC'][0])
+        timegate = 2
+        time = []
+        # in case we need the time for whatever reason
+        for i in range(eventno):
+            time.append(i*timegate)
 
-        #if (c < -500):
-        #    print(c)
-        #    plt.plot(plot_numbers,a)
-        #    plt.show()
+        
+        # lets try this recursive method first, to see how fast it is
+        for i in tqdm(range(len(branches['ADC']))):
+            # scanning over all events
+            a = ak.to_numpy(branches['ADC'][i])
 
-        ADC_list += (c),
+            # flip to positive
+            a = -a
+            b = subtract_baseline(a, type = 'median')
+            c = integrate_range(b, window = 10, debug=False)
+
+            #if (c < -500):
+            #    print(c)
+            #    plt.plot(plot_numbers,a)
+            #    plt.show()
+
+            ADC_list += (c),
     return ADC_list
 
 def collate_ADC_data(PATH):
