@@ -45,4 +45,4 @@ This will generate the relevant .dat files from the PMT output.
 
 - MOVE THESE DATAFILES TO THE RELATIVE DIRECTORY WITH (source move_dat.sh). It will ask for a run directory, start with 000001, 000002, etc.
 
-- This data will now be stored in $WD_STORAGE, under whatever folder direction it was given in move_dat.sh. Use the TPB_DAQ repository to analyse this data.
+- This data will now be stored in $WD_STORAGE, under whatever folder direction it was given in move_dat.sh. Use parse_dat_root.py convert into a charge histogram.
