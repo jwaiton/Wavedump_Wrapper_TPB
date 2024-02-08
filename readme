@@ -32,3 +32,17 @@ Cooking is not currently integrated in this system due to no input metadata or f
 
 Wiki for the upstream repo is not exactly the same but may be a useful resource
 https://github.com/Watchman-PMT/Wavedump_Wrapper/wiki
+
+HOW TO RUN THE BASIC ACQUISITION SETUP:
+
+DAQ process
+
+- TURN OFF LIGHT/TURN ON PMT
+- ENSURE TRIGGER IS AS DESIRED (STATE 3 ON THE LED GENERATOR)
+- NAVIGATE TO $WD_ACQ
+- RUN THE RELEVANT WAVEDUMP SCRIPT (source run_wavedump_500s.sh)
+This will generate the relevant .dat files from the PMT output.
+
+- MOVE THESE DATAFILES TO THE RELATIVE DIRECTORY WITH (source move_dat.sh). It will ask for a run directory, start with 000001, 000002, etc.
+
+- This data will now be stored in $WD_STORAGE, under whatever folder direction it was given in move_dat.sh. Use the TPB_DAQ repository to analyse this data.
