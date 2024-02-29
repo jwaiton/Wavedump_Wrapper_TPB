@@ -298,13 +298,14 @@ def subtract_baseline(y_data, type = 'median'):
     return y_data - total
 
 
-def read_raw_h5(PATH, save_h5 = False, verbose = False, print_mod = 0):
+def read_raw_h5(PATH, save_h5 = False, cook = False, verbose = False, print_mod = 0):
     '''
     Read in .dat data and output as a pandas array
 
     Args:
         PATH        (str)       :       File path of interest
         save_h5     (bool)      :       Flag for saving data
+        cook        (bool)      :       Flag for whether data should be cooked
         verbose     (bool)      :       Flag for outputting information
         print_mod   (int)       :       Print modifier
 
@@ -372,6 +373,10 @@ def read_raw_h5(PATH, save_h5 = False, verbose = False, print_mod = 0):
         h5f.create_dataset('pmtrw', data=data)
         h5f.close()
 
+    # if cook == True
+    if (cook == True):
+
+
     return data
 
 
@@ -399,7 +404,7 @@ def cook_raw_h5(PATH, Q_HIST = False, FIT = False):
         plots
     '''
 
-    # read in the data into a pandas array
+    
 
 
 
