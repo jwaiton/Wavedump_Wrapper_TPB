@@ -1,6 +1,6 @@
 # move dat folders for processing
 
-PARENT=/home/argonlab/Documents/NEXT/TPB/TPB_WD_Wrapper/storage/John/testing/
+PARENT=${WD_DIR}storage/John/testing/
 
 echo 'Which RUN ? (e.g. 000001 )'
 read -r RUN
