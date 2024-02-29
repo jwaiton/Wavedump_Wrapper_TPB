@@ -39,15 +39,14 @@ parser.add_argument('filepath')
 parser.add_argument('-h5', action='store_true')
 parser.add_argument('-c', '--cook', action='store_true')
 parser.add_argument('-v', '--verbose', action='store_true')
-parser.add_argument('-p', '--print', choices=range(1,1000000))
+parser.add_argument('-p', '--print')
 
 args = parser.parse_args()
     
 
 def main(arguments):
 
-    print(args.filepath, args.h5, args.c, args.v, args.p)
-    proc.read_raw_h5(args.filepath, args.h5, args.c, args.v, args.p)
+    proc.read_raw_h5(args.filepath, args.h5, args.cook, args.verbose, args.print)
 
 
 if __name__ == "__main__":
