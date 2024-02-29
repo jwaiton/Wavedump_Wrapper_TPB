@@ -342,7 +342,7 @@ def read_raw_h5(PATH, save_h5 = False, cook = False, verbose = False, print_mod 
             break
         
         # printing events
-        if (array[4] % print_mod == 0):
+        if (array[4] % int(print_mod) == 0):
             print("Event {}".format(array[4]))
         
         # verbose check
@@ -375,6 +375,7 @@ def read_raw_h5(PATH, save_h5 = False, cook = False, verbose = False, print_mod 
 
     # if cook == True
     if (cook == True):
+        print("Cook data WIP")
 
 
     return data

@@ -11,7 +11,7 @@ echo $PARENT
 
 # set numbers for loop based on channels
 #for i in 1 3 # for example, this is for wave1.dat and wave3.dat
-for i in 1 3
+for i in 6
 do
     #echo 'PMT for wave' $i ' ? (e.g. 0052)'. We currently dont label our PMTs as such
     FOLDER=${PARENT}PMT/Nominal/
