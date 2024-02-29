@@ -13,6 +13,16 @@ import h5py
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
+import sys,os,os.path
+
+# tell python to look for the path to analyse
+module_path = os.path.abspath(os.path.join('..'))
+if module_path not in sys.path:
+    sys.path.append(module_path)
+
+from Analyse.core import processing as proc
+
 def dat_h5(file_path):
     '''
     Convert .dat file to .h5 with h5py
@@ -34,10 +44,14 @@ def dat_h5(file_path):
 
     x = np.linspace(0,len(data), len(data))
 
-    print(data)
+    #print(data)
 
     plt.plot(x, data)
     plt.show()
+
+    proc.read_raw_h5(file_path + "wave_6.dat", verbose = False, save_h5=True, print_mod = 10000)
+
+
 
 
     # load h5 data
