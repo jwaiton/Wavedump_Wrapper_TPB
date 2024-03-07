@@ -15,8 +15,10 @@ for i in 6
 do
     #echo 'PMT for wave' $i ' ? (e.g. 0052)'. We currently dont label our PMTs as such
     FOLDER=${PARENT}PMT/Nominal/
+    O_FOLDER=${PARENT}PMT/Output/
     #echo $FOLDER 
     mkdir -pv $FOLDER
+    mkdir -pv $O_FOLDER
     mv ./wave${i}.dat ${FOLDER}wave_${i}.dat 
 done
 
