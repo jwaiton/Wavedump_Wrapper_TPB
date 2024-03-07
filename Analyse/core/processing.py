@@ -12,7 +12,10 @@ import pandas as pd
 
 import h5py
 
-# all functions required to process the relevant data
+'''
+(jwaiton 2024)
+Messy collection of processing functions for TPB project
+'''
 
 def is_root(file):
     '''
@@ -301,6 +304,8 @@ def subtract_baseline(y_data, type = 'median'):
 def read_raw_h5(PATH, save_h5 = False, cook = False, verbose = False, print_mod = 0):
     '''
     Read in .dat data and output as a pandas array
+    
+    Has flag for saving this is a h5.
 
     Args:
         PATH        (str)       :       File path of interest
@@ -330,7 +335,7 @@ def read_raw_h5(PATH, save_h5 = False, cook = False, verbose = False, print_mod 
     data = []
 
     print("File open! Processing...")
-    # Collect data
+    # Collect data, while true loops are always dangerous but lets ignore that here :)
     while (True):
 
     # take the header information from the file (first 6 elements)
@@ -364,7 +369,7 @@ def read_raw_h5(PATH, save_h5 = False, cook = False, verbose = False, print_mod 
         data.append(np.fromfile(file, dtype=int16bit, count=event_size))
     
     if (save_h5 == True):
-        
+        print("Saving raw waveforms...")
         # change path to dump the h5 file where
         # the .dat file is
         directory = PATH[:-3] + "h5"
@@ -372,10 +377,14 @@ def read_raw_h5(PATH, save_h5 = False, cook = False, verbose = False, print_mod 
         h5f = h5py.File(directory, 'w')
         h5f.create_dataset('pmtrw', data=data)
         h5f.close()
+    else:
+        directory = ""
 
     # if cook == True
     if (cook == True):
-        print("Cook data WIP")
+        print("Cooking data...")
+        ADC_data = cook_raw_h5(data,directory)
+
 
 
     return data
@@ -385,28 +394,63 @@ def read_raw_h5(PATH, save_h5 = False, cook = False, verbose = False, print_mod 
 
 
 
-def cook_raw_h5(PATH, Q_HIST = False, FIT = False):
+def cook_raw_h5(data, directory = "", FIT = False):
     '''
-    Process a .dat file from the CAEN wavedump software, 
-    convert it into a h5 file.
-    
-    This function will have flags for producing charge histogram,
-    and applying an N-gaussian fit.
-
-    Plots will be saved by default
+    Function to produce charge histogram and output to h5 file
 
     Args:
-        PATH    (str)       :       File path of interest
-        Q_HIST  (bool)      :       Flag for producing charge histogram
-        FIT     (bool)      :       Flag for producing gaussian fit
+        data        (array)     :       Waveform data
+
+        directory   (str)       :       Directory for outputting (if one exists)
+                                        This acts as a flag to determine if the ADC values
+                                        should be output to a file or not.
+                                        "" means no, anything else means yes
+
+        FIT         (bool)      :       Flag for producing gaussian fit
 
     Returns:
         h5_file
         plots
     '''
 
-    
 
+    ADC_list = []
+
+    for i in tqdm(range(len(data))):
+
+        a = data[i]
+        # flip to positive
+        a = -a
+        b = subtract_baseline(a, type = 'median')
+        c = integrate_range(b, window = 10, debug=False)
+
+        ADC_list += (c),        
+
+    print("ADC min/max values:")
+    print("Min: {}      Max: {}".format(min(ADC_list), max(ADC_list)))
+
+
+    print("Producing ADC plots")
+    plt.hist(ADC_list, bins = 200)
+    plt.yscale('log')
+    plt.title("Charge histogram plot")
+    plt.xlabel('ADC values')
+    plt.ylabel('Counts')
+    plt.savefig('../Output/Q_HIST.png')
+    plt.show()
+
+    ## check whether or not to write
+    if (directory != ""):
+        print("Writing ADC values...")
+        h5f = h5py.File(directory, 'a')
+        dataset = h5f.create_dataset('ADC', shape = (len(ADC_list),), dtype='f')
+
+        for i, value in enumerate(ADC_list):
+            dataset[i] = value
+
+        h5f.close()
+
+    return ADC_list
 
 
 ### Example usage
