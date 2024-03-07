@@ -26,7 +26,7 @@ do
 	echo "*************************"
 
 	#dat_to_root ${FILE_PATH}
-	python3 ${WD_PROCESS}/data_to_h5.py ${FILE_PATH} -h5 -p 10000
+	python3 ${WD_PROCESS}/data_to_h5.py ${FILE_PATH} -h5 -p 10000 -c
 done
 # this is edited out currently to see if we can use our python code to process the root files
 
