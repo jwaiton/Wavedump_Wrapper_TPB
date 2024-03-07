@@ -1,4 +1,3 @@
-import lecroyparser as parse
 import numpy as np
 import matplotlib.pyplot as plt
 from os import walk
@@ -39,6 +38,9 @@ def port_event(event_name, PATH, x_data = False, event = 0):
 
     :param: x_data      False implies that it isn't required, true implies that time data is required
     '''
+    # ive moved this in here to see if it avoids issues.
+    # This whole function should be moved to a lecroy related file
+    import lecroyparser as parse
     # if a root file, return first event corresponding to 'event'
     if is_root(str(event_name)):
         print("Root file!")
