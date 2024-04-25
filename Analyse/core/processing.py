@@ -100,6 +100,11 @@ def integrate_range(y_data, window = 0, debug = False):
     If no window is given, chooses 10.
 
     Perhaps make 'central value' choice an option later rather than largest value? undecided
+
+    Also provides height and sigma value of the largest peak.
+
+    So returns:
+        (integration value, sigma value, and height)
     '''
         # if window != 0, find index of largest event in data
     if (window == 0 ):
@@ -123,7 +128,19 @@ def integrate_range(y_data, window = 0, debug = False):
     if debug == True:
         print("Max value {:.4g} found at index {:.4g}. Integrating...".format(y_max, peak_index))
 
-    return(integrate(y_data))
+    time = []
+    for i in range(len(y_data)):
+        time.append(i*2)
+    
+        # mean of waveform
+    sumb = np.sum(y_data)
+    mean = np.sum((y_data*time)/sumb)
+
+    sigma = np.sqrt(np.sum((np.square(mean - time)*y_data)/sumb))
+
+
+
+    return(integrate(y_data), sigma,  y_max)
 
 def raw_read(event_name, PATH, number = 0):
     '''
@@ -215,7 +232,7 @@ def cook_raw(event_name, PATH):
             #    plt.plot(plot_numbers,a)
             #    plt.show()
 
-            ADC_list += (c),
+            ADC_list += (c[0]),
     return ADC_list
 
 def collate_ADC_data(PATH):
@@ -254,7 +271,7 @@ def collate_ADC_data(PATH):
             #    plt.plot(plot_numbers,a)
             #    plt.show()
 
-            ADC_list += (c),
+            ADC_list += (c[0]),
 
             # print when used
             if i in display_vals:
@@ -398,7 +415,8 @@ def read_raw_h5(PATH, save_h5 = False, cook = False, verbose = False, print_mod 
 
 def cook_raw_h5(data, directory = "", FIT = False):
     '''
-    Function to produce charge histogram and output to h5 file
+    Function to produce charge histogram and relevant waveform information
+    and output to h5 file
 
     Args:
         data        (array)     :       Waveform data
@@ -415,8 +433,15 @@ def cook_raw_h5(data, directory = "", FIT = False):
         plots
     '''
 
-
+    # information lists
     ADC_list = []
+    sigma_list = []
+    height_list = []
+
+    # subtracted waveform list
+    subwf = []
+    print("Integrating: [1/2]")
+    # we are assuming that the time windows stay consistent. Currently its 2ns windows
 
     for i in tqdm(range(len(data))):
 
@@ -424,9 +449,17 @@ def cook_raw_h5(data, directory = "", FIT = False):
         # flip to positive
         a = -a
         b = subtract_baseline(a, type = 'median')
-        c = integrate_range(b, window = 10, debug=False)
+        # add subtracted baseline data to subwf dataframe
+        subwf.append(b)
 
-        ADC_list += (c),        
+
+        # adc and height list calc
+        c = integrate_range(b, window = 10, debug=False)
+        ADC_list += (c[0]),
+        sigma_list += (c[1]),
+        height_list += (c[2]),
+
+        
 
     print("ADC min/max values:")
     print("Min: {}      Max: {}".format(min(ADC_list), max(ADC_list)))
@@ -441,16 +474,27 @@ def cook_raw_h5(data, directory = "", FIT = False):
     plt.savefig('../Output/Q_HIST.png')
     plt.show()
 
+    
+
+    # create summary dataframe
+    sumdf = pd.DataFrame({'ADC': ADC_list, 'sigma': sigma_list, 'heights': height_list})
     ## check whether or not to write
     if (directory != ""):
-        print("Writing ADC values...")
+        print("Writing data to {}".format(directory))
+        # read/write if exists
         h5f = h5py.File(directory, 'a')
-        dataset = h5f.create_dataset('ADC', shape = (len(ADC_list),), dtype='f')
-
-        for i, value in enumerate(ADC_list):
-            dataset[i] = value
-
+        # create subtracted waveform data
+        h5f.create_dataset('subwf', data=subwf)
         h5f.close()
+        # give ADC values
+        sumdf.to_hdf(directory, key = 'summary', mode = 'r+', format='fixed', data_columns = True)
+
+
+
+        #for i, value in enumerate(ADC_list):
+        #    dataset[i][0] = value
+
+        
 
     return ADC_list
 
