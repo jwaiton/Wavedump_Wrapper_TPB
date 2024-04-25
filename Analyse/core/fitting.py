@@ -79,7 +79,7 @@ def fit_func_fixed(function, x, y, p0):
     return (popt, pcov)
 
 
-def produce_data_points(file_path, bin_no = 100, plot = False):
+def produce_data_points(file_path, bin_no = 100, plot = False, negative = False):
     '''
     Produce data points (x,y) for fitting, and plot if asked for.
     Also includes cleaning the data (removing below zero values, setting values smaller than 1 = 0)
@@ -87,6 +87,7 @@ def produce_data_points(file_path, bin_no = 100, plot = False):
     :param file_path: Source file you're producing from
     :param bin_no: Number of bins in histogram
     :param plot: Plotting toggle
+    :param negative: Include negative values boolean
 
     :return (x,y): tuple of x and y values
     '''
@@ -94,7 +95,8 @@ def produce_data_points(file_path, bin_no = 100, plot = False):
     data = np.load(file_path)
 
     # scrape data < 0 away
-    data = data[(data > 0)]
+    if (negative == False):
+        data = data[(data > 0)]
 
     heights, bin_pos = np.histogram(data, bins = bin_no)
 
@@ -112,21 +114,35 @@ def produce_data_points(file_path, bin_no = 100, plot = False):
     return (bin_pos, heights)
 
 
-def find_PV(x, y, prom = 100, plot = False):
+def find_PV(x, y, prom = 100, peak_no = 1, valley_no= 1, plot = False):
     '''
-    Peak and Valley finding code
+    Peak and Valley finding code. Specify the number of peaks and valleys
+    you want to find
 
     :param x: X values
     :param y: Y values
     :param prom: Prominence of peaks and valleys
+    :param peak_no:   number of peaks you're searching for
+                    choose this carefully! If you're incorrect in
+                    the number of peaks it will fail
+
+    :param valley_no: number of valleys you're searching for
+
     :param plot: Plotting toggle
 
     :return (peaks, valleys): index for x at which y peaks and valleys
     '''
     # hacky way to search for peaks by toggling prominence slightly until finding what you want.
     # warning! really hacky, so you can just get trapped
+    i = 0
+
     while True:
-        
+        i += 1
+        if ((i%10000) == 0):
+            print("Took too long to solve! (> 10000 loops)\nPlease reconsider your peak and valley.")
+            return (0,0)
+        # a checker, to make sure it doesnt get trapped in a forever loop
+
         # find valley
         valleys, _ = find_peaks(-y, prominence = prom)
 
@@ -134,15 +150,17 @@ def find_PV(x, y, prom = 100, plot = False):
         peaks, _ = find_peaks(y, prominence = prom)
 
         # number of peaks is now 1 not 2
-        if ((len(peaks) == 1) and (len(valleys) == 1)):
+        if ((len(peaks) == peak_no) and (len(valleys) == valley_no)):
             break
-        # not enough peaks, decrease prominence
-        elif ((len(peaks) < 2) and (len(valleys) == 0)):
-            # increase prominence incrementally. This will almost 100% break
+            # no valleys, decrease prominence
+        elif ((len(peaks) < (peak_no + 1)) and (len(valleys) == 0)):
             prom = 0.9*prom
         else:
+            # increase prominence incrementally to ensure there arent an abundance
+            # of peaks. This will almost 100% break
             prom = 1.1*prom
-        
+
+
     print("Peak(s) found at: ({}, {})".format(x[peaks], y[peaks]))
     print("Valleys(s) found at: ({}, {})".format(x[valleys], y[valleys]))
 
