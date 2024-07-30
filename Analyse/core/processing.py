@@ -384,7 +384,6 @@ def read_raw_h5(PATH, save_h5 = False, cook = False, verbose = False, print_mod 
         event_size = array[0] // 2
 
         int16bit = np.dtype('<H')
-
         data.append(np.fromfile(file, dtype=int16bit, count=event_size))
     
     if (save_h5 == True):
@@ -410,7 +409,62 @@ def read_raw_h5(PATH, save_h5 = False, cook = False, verbose = False, print_mod 
 
 
 
+def read_ascii_h5(PATH, save_h5 = False, cook = False, verbose = False, print_mod = 0):
+    '''
+    Read in .txt data and output as a pandas array.
+    Only accepts the ascii format output by Wavedump2
+    
+    Has flag for saving this is a h5.
 
+    Args:
+        PATH        (str)       :       File path of interest
+        save_h5     (bool)      :       Flag for saving data
+        cook        (bool)      :       Flag for whether data should be cooked
+        verbose     (bool)      :       Flag for outputting information
+        print_mod   (int)       :       Print modifier
+
+    Returns:
+        data        (int 2D array) :       2D array of events
+                                            First element defines event
+                                            Second element defines ADC value
+    ''' 
+
+    # this should be re-written to work iteratively.
+    with open(PATH, mode = 'rb') as file:
+        data_txt = file.read()
+    # split them by 'Event', first element is empty so ignored
+    data_txt_full = (data_txt.decode('ascii').split('Event n.'))[1:]
+
+
+    if verbose == True:
+        print("Limited functionality because I'm lazy.\n This should display the first events details.")
+        print(data_txt[:63].decode('ascii'))
+
+    # remove majority of nonsense values
+    stripped_data = [item.split(' Sample')[1].split('\n', 1)[1] for item in data_txt_full]
+
+    data = [np.array(item.split('	')[:-1], dtype = int) for item in stripped_data]
+    
+    if (save_h5 == True):
+        print("Saving raw waveforms...")
+        # change path to dump the h5 file where
+        # the .dat file is
+        directory = PATH[:-3] + "h5"
+
+        h5f = h5py.File(directory, 'w')
+        h5f.create_dataset('pmtrw', data=data)
+        h5f.close()
+    else:
+        directory = ""
+
+        # if cook == True
+    if (cook == True):
+        print("Cooking data...")
+        ADC_data = cook_raw_h5(data,directory)
+
+
+    return data
+    
 
 
 def cook_raw_h5(data, directory = "", FIT = False):
@@ -419,7 +473,8 @@ def cook_raw_h5(data, directory = "", FIT = False):
     and output to h5 file
 
     Args:
-        data        (array)     :       Waveform data
+        data        (array)     :       Waveform data, an array with each element being a waveform
+                                        (collection of integers, usually)
 
         directory   (str)       :       Directory for outputting (if one exists)
                                         This acts as a flag to determine if the ADC values

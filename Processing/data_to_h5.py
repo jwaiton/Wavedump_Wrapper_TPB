@@ -33,6 +33,7 @@ argument list:
 parser = argparse.ArgumentParser(description='Process wavedump .dat data.')
 
 parser.add_argument('filepath')
+parser.add_argument('-t', '--type', choices = ['bin', 'txt'], default = 'bin', help = 'file type is either binary (.bin) or asci (.txt), select one')
 parser.add_argument('-h5', action='store_true')
 parser.add_argument('-c', '--cook', action='store_true')
 parser.add_argument('-v', '--verbose', action='store_true')
@@ -43,7 +44,11 @@ args = parser.parse_args()
 
 def main(arguments):
 
-    proc.read_raw_h5(args.filepath, args.h5, args.cook, args.verbose, args.print)
+    if args.type == 'bin':
+        proc.read_raw_h5(args.filepath, args.h5, args.cook, args.verbose, args.print)
+    if args.type == 'txt':
+        proc.read_ascii_h5(args.filepath, args.h5, args.cook, args.verbose, args.print)
+
 
 
 if __name__ == "__main__":
