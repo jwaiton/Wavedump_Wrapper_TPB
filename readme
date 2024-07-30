@@ -1,8 +1,9 @@
 Wavedump wrapper for TPB testing @ UoM
 10/11/2023
 
-Forked from WATCHMAN's Wavedump_Wrapper and modified for our own purposes here at UoM.
+A highly modified version of WATCHMAN's Wavedump_Wrapper used here at UoM.
 
+Please be aware that these instructions most likely no longer work, but are still included for your benefit.
 Instructions from the original repo:
 ( tested on Mac OS 10.13.6, 10.15.7, CentOS7, Scientific Linux 7.6, Ubuntu )
 
