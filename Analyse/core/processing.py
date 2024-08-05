@@ -136,7 +136,13 @@ def integrate_range(y_data, window = 0, debug = False):
     sumb = np.sum(y_data)
     mean = np.sum((y_data*time)/sumb)
 
+    
     sigma = np.sqrt(np.sum((np.square(mean - time)*y_data)/sumb))
+    
+    # safe check
+    if np.isnan(sigma):
+        print("Setting NaN to -9999")
+        sigma = -9999
 
 
 
@@ -539,8 +545,21 @@ def cook_raw_h5(data, directory = "", FIT = False):
         # read/write if exists
         h5f = h5py.File(directory, 'a')
         # create subtracted waveform data
-        h5f.create_dataset('subwf', data=subwf)
+        num_rows = len(subwf)
+        num_cols = len(subwf[0])
+
+        # how many events to write at once
+        batch_size = 100
+        chunk_size = (1, num_cols)
+
+
+        dset = h5f.create_dataset('subwf', shape = (num_rows, num_cols), chunks = chunk_size, compression = 'gzip')
+        
+        for i in tqdm(range(0, num_rows, batch_size)):
+            batched_data = subwf[i:i+batch_size]
+            dset[i:i+batch_size, :] = batched_data
         h5f.close()
+        print("Dataset created, creating summary table")
         # give ADC values
         sumdf.to_hdf(directory, key = 'summary', mode = 'r+', format='fixed', data_columns = True)
 
